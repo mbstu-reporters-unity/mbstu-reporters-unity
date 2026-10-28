@@ -13,7 +13,7 @@ export function TopBar() {
           </span>
           <LiveClock />
         </div>
-        <SocialLinks size="sm" />
+        <SocialLinks size="sm" tooltip="bottom" />
       </div>
     </div>
   )

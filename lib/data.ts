@@ -9,12 +9,21 @@ export const navLinks = [
   { label: 'Contact', bn: 'যোগাযোগ', href: '#contact' },
 ]
 
+export const siteContact = {
+  address: 'Room 214, Student Welfare / Administrative Building, MBSTU, Santosh, Tangail-1902',
+  officeRoom: 'Room 214, Student Welfare / Administrative Building',
+  phone: '+880 1700-000000',
+  email: 'info@mbstu-ru.org',
+  facebook: 'https://facebook.com/mbstureportersunity',
+  youtube: 'https://youtube.com/@mbstureportersunity',
+}
+
 export const socialLinks = [
-  { name: 'Facebook', slug: 'facebook', href: 'https://facebook.com' },
-  { name: 'YouTube', slug: 'youtube', href: 'https://youtube.com' },
-  { name: 'X (Twitter)', slug: 'x', href: 'https://x.com' },
-  { name: 'LinkedIn', slug: 'linkedin', href: 'https://linkedin.com' },
-  { name: 'Instagram', slug: 'instagram', href: 'https://instagram.com' },
+  { name: 'Facebook', slug: 'facebook', href: siteContact.facebook },
+  { name: 'YouTube', slug: 'youtube', href: siteContact.youtube },
+  { name: 'X (Twitter)', slug: 'x', href: 'https://x.com/mbstu_ru' },
+  { name: 'LinkedIn', slug: 'linkedin', href: 'https://linkedin.com/company/mbstu-reporters-unity' },
+  { name: 'Instagram', slug: 'instagram', href: 'https://instagram.com/mbstu.reportersunity' },
 ]
 
 export const tickerHeadlines = [
@@ -173,48 +182,174 @@ export const studentPosts = [
   },
 ]
 
-export const clubNews = [
+export type ClubIcon =
+  | 'megaphone'
+  | 'book'
+  | 'briefcase'
+  | 'mic'
+  | 'camera'
+  | 'star'
+  | 'baby'
+  | 'footprints'
+  | 'flask'
+  | 'droplet'
+
+export type ClubReport = { title: string; date: string; reporter: string }
+
+export type Club = {
+  id: string
+  name: string
+  nameBn: string
+  tag: string
+  icon: ClubIcon
+  activity: string
+  activityBn: string
+  date: string
+  reports: ClubReport[]
+}
+
+export const clubs: Club[] = [
   {
-    club: 'Debating Society',
-    clubBn: 'বিতর্ক সংঘ',
+    id: 'socchar',
+    name: 'Socchar MBSTU Chapter',
+    nameBn: 'সোচ্চার মাভাবিপ্রবি চ্যাপ্টার',
+    tag: 'Social Awareness',
+    icon: 'megaphone',
+    activity: 'Anti-drug awareness campaign held across all residential halls.',
+    activityBn: 'আবাসিক হলগুলোতে মাদকবিরোধী সচেতনতা ক্যাম্পেইন',
+    date: '27 Oct 2026',
+    reports: [
+      { title: 'মাদকবিরোধী র‍্যালি ও আলোচনা সভা অনুষ্ঠিত', date: '27 Oct 2026', reporter: 'Tanvir Ahmed' },
+      { title: 'Socchar hosts seminar on road safety for students', date: '10 Oct 2026', reporter: 'Sadia Islam' },
+    ],
+  },
+  {
+    id: 'reader-zone',
+    name: 'MBSTU Reader Zone',
+    nameBn: 'মাভাবিপ্রবি রিডার জোন',
+    tag: 'Literature',
+    icon: 'book',
+    activity: 'Monthly book review session on contemporary Bangla novels.',
+    activityBn: 'সমকালীন বাংলা উপন্যাস নিয়ে মাসিক বই পর্যালোচনা',
+    date: '25 Oct 2026',
+    reports: [
+      { title: 'রিডার জোনের মাসিক পাঠচক্রে ৮০ জন পাঠক', date: '25 Oct 2026', reporter: 'Ishrat Jahan' },
+      { title: 'Book fair stall draws record footfall at central field', date: '02 Oct 2026', reporter: 'Arif Hossain' },
+    ],
+  },
+  {
+    id: 'career-club',
+    name: 'MBSTU Career Club',
+    nameBn: 'মাভাবিপ্রবি ক্যারিয়ার ক্লাব',
+    tag: 'Career',
+    icon: 'briefcase',
+    activity: 'CV writing & mock interview bootcamp with industry experts.',
+    activityBn: 'সিভি রাইটিং ও মক ইন্টারভিউ বুটক্যাম্প',
+    date: '24 Oct 2026',
+    reports: [
+      { title: 'Career Club bootcamp trains 300 final-year students', date: '24 Oct 2026', reporter: 'Nusrat Jahan Mim' },
+      { title: 'বিসিএস প্রস্তুতি বিষয়ক কর্মশালা অনুষ্ঠিত', date: '08 Oct 2026', reporter: 'Mahmudul Hasan' },
+    ],
+  },
+  {
+    id: 'debating',
+    name: 'MBSTU Debating Society',
+    nameBn: 'মাভাবিপ্রবি ডিবেটিং সোসাইটি',
+    tag: 'Debate',
     icon: 'mic',
-    title: 'আন্তঃবিশ্ববিদ্যালয় বিতর্ক প্রতিযোগিতায় রানার্সআপ',
-    summary: 'MBSTU Debating Society finished runner-up at the National Inter-University Debate Festival.',
+    activity: 'Runner-up at the National Inter-University Debate Festival.',
+    activityBn: 'জাতীয় আন্তঃবিশ্ববিদ্যালয় বিতর্ক উৎসবে রানার্সআপ',
     date: '26 Oct 2026',
+    reports: [
+      { title: 'আন্তঃবিশ্ববিদ্যালয় বিতর্কে রানার্সআপ মাভাবিপ্রবি', date: '26 Oct 2026', reporter: 'Rafsan Chowdhury' },
+      { title: 'Intra-MBSTU parliamentary debate concludes', date: '05 Oct 2026', reporter: 'Tasnim Rahman' },
+    ],
   },
   {
-    club: 'IT Society',
-    clubBn: 'আইটি সোসাইটি',
-    icon: 'cpu',
-    title: 'Hackathon 2026: 40 teams build for social good',
-    summary: '২৪ ঘণ্টার হ্যাকাথনে শিক্ষার্থীরা কৃষি ও স্বাস্থ্যসেবা বিষয়ক উদ্ভাবনী সমাধান তৈরি করেন।',
-    date: '23 Oct 2026',
-  },
-  {
-    club: 'Cultural Club',
-    clubBn: 'সাংস্কৃতিক সংগঠন',
-    icon: 'music',
-    title: 'শরৎ উৎসবে মুখর মুক্তমঞ্চ',
-    summary: 'The Autumn Festival featured folk music, dance and recitation performances by 150 students.',
-    date: '18 Oct 2026',
-  },
-  {
-    club: 'Rover Scout',
-    clubBn: 'রোভার স্কাউট',
-    icon: 'tent',
-    title: 'Rover Scouts organise free blood grouping camp',
-    summary: 'রোভার স্কাউট গ্রুপের উদ্যোগে ৫০০ জনের বিনামূল্যে রক্তের গ্রুপ নির্ণয় করা হয়।',
-    date: '15 Oct 2026',
-  },
-  {
-    club: 'Photographic Society',
-    clubBn: 'আলোকচিত্র সংসদ',
+    id: 'photographic',
+    name: 'MBSTU Photographic Society',
+    nameBn: 'মাভাবিপ্রবি ফটোগ্রাফিক সোসাইটি',
+    tag: 'Photography',
     icon: 'camera',
-    title: 'আলোকচিত্র প্রদর্শনী “ক্যাম্পাসের রং”',
-    summary: 'A week-long exhibition showcased 120 photographs capturing everyday life at MBSTU.',
-    date: '12 Oct 2026',
+    activity: 'Week-long exhibition “Colours of Campus” with 120 photographs.',
+    activityBn: '“ক্যাম্পাসের রং” শীর্ষক আলোকচিত্র প্রদর্শনী',
+    date: '20 Oct 2026',
+    reports: [
+      { title: 'আলোকচিত্র প্রদর্শনী “ক্যাম্পাসের রং” শুরু', date: '20 Oct 2026', reporter: 'Sadia Islam' },
+      { title: 'Photo walk around Santosh draws 60 members', date: '29 Sep 2026', reporter: 'Tanvir Ahmed' },
+    ],
   },
-] as const
+  {
+    id: 'dhrubotara',
+    name: 'Dhrubotara',
+    nameBn: 'ধ্রুবতারা',
+    tag: 'Social Welfare',
+    icon: 'star',
+    activity: 'Free tutoring programme for underprivileged children in Santosh.',
+    activityBn: 'সুবিধাবঞ্চিত শিশুদের জন্য বিনামূল্যে পাঠদান কর্মসূচি',
+    date: '22 Oct 2026',
+    reports: [
+      { title: 'ধ্রুবতারার শিক্ষা সহায়তা কর্মসূচির এক বছর পূর্ণ', date: '22 Oct 2026', reporter: 'Ishrat Jahan' },
+      { title: 'Winter clothes drive announced for November', date: '12 Oct 2026', reporter: 'Arif Hossain' },
+    ],
+  },
+  {
+    id: 'children-heaven',
+    name: 'Children Heaven',
+    nameBn: 'চিলড্রেন হেভেন',
+    tag: 'Child Welfare',
+    icon: 'baby',
+    activity: 'Art & storytelling day organised for orphanage children.',
+    activityBn: 'এতিমখানার শিশুদের নিয়ে চিত্রাঙ্কন ও গল্প বলার দিন',
+    date: '19 Oct 2026',
+    reports: [
+      { title: 'শিশুদের নিয়ে চিত্রাঙ্কন উৎসব আয়োজন করল চিলড্রেন হেভেন', date: '19 Oct 2026', reporter: 'Nusrat Jahan Mim' },
+      { title: 'School supplies distributed to 150 children', date: '30 Sep 2026', reporter: 'Mahmudul Hasan' },
+    ],
+  },
+  {
+    id: 'crc',
+    name: 'Come For Road Child - CRC',
+    nameBn: 'কাম ফর রোড চাইল্ড',
+    tag: 'Child Welfare',
+    icon: 'footprints',
+    activity: 'Weekly meal and basic literacy session for street children.',
+    activityBn: 'পথশিশুদের জন্য সাপ্তাহিক খাবার ও প্রাথমিক শিক্ষা সেশন',
+    date: '17 Oct 2026',
+    reports: [
+      { title: 'পথশিশুদের মুখে হাসি ফোটাল সিআরসি', date: '17 Oct 2026', reporter: 'Tasnim Rahman' },
+      { title: 'CRC volunteers launch health check-up camp', date: '03 Oct 2026', reporter: 'Rafsan Chowdhury' },
+    ],
+  },
+  {
+    id: 'research-society',
+    name: 'MBSTU Research Society',
+    nameBn: 'মাভাবিপ্রবি রিসার্চ সোসাইটি',
+    tag: 'Research',
+    icon: 'flask',
+    activity: 'Research methodology workshop and paper-writing clinic.',
+    activityBn: 'গবেষণা পদ্ধতি ও পেপার রাইটিং কর্মশালা',
+    date: '15 Oct 2026',
+    reports: [
+      { title: 'Research Society workshop on academic publishing', date: '15 Oct 2026', reporter: 'Farhana Akter' },
+      { title: 'স্নাতক গবেষণা প্রস্তাবনা প্রতিযোগিতার ফল প্রকাশ', date: '28 Sep 2026', reporter: 'Tanvir Ahmed' },
+    ],
+  },
+  {
+    id: 'badhan',
+    name: 'Badhan MBSTU Unit',
+    nameBn: 'বাঁধন মাভাবিপ্রবি ইউনিট',
+    tag: 'Blood Donation',
+    icon: 'droplet',
+    activity: 'Free blood grouping camp for 500+ students and staff.',
+    activityBn: '৫০০+ শিক্ষার্থী ও কর্মচারীর বিনামূল্যে রক্তের গ্রুপ নির্ণয়',
+    date: '12 Oct 2026',
+    reports: [
+      { title: 'বাঁধনের রক্তের গ্রুপ নির্ণয় ক্যাম্পে ব্যাপক সাড়া', date: '12 Oct 2026', reporter: 'Sadia Islam' },
+      { title: 'Voluntary blood donation drive collects 120 bags', date: '25 Sep 2026', reporter: 'Arif Hossain' },
+    ],
+  },
+]
 
 export const notices = [
   {

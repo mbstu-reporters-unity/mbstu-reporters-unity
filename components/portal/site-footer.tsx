@@ -1,5 +1,5 @@
 import { Mail, MapPin, Phone } from 'lucide-react'
-import { navLinks } from '@/lib/data'
+import { navLinks, siteContact } from '@/lib/data'
 import { Logo } from './logo'
 import { SocialLinks } from './social-links'
 
@@ -39,18 +39,18 @@ export function SiteFooter() {
           <address className="mt-4 space-y-4 text-sm not-italic">
             <p className="flex gap-3">
               <MapPin className="mt-0.5 size-4 shrink-0 text-gold" aria-hidden="true" />
-              <span>Administrative Building, MBSTU, Santosh, Tangail-1902</span>
+              <span>{siteContact.address}</span>
             </p>
             <p className="flex gap-3">
               <Phone className="mt-0.5 size-4 shrink-0 text-gold" aria-hidden="true" />
-              <a href="tel:+8801700000000" className="hover:text-gold">
-                +880 1700-000000
+              <a href={`tel:${siteContact.phone.replace(/[^+\d]/g, '')}`} className="hover:text-gold">
+                {siteContact.phone}
               </a>
             </p>
             <p className="flex gap-3">
               <Mail className="mt-0.5 size-4 shrink-0 text-gold" aria-hidden="true" />
-              <a href="mailto:info@mbstu-ru.org" className="break-all hover:text-gold">
-                info@mbstu-ru.org
+              <a href={`mailto:${siteContact.email}`} className="break-all hover:text-gold">
+                {siteContact.email}
               </a>
             </p>
           </address>

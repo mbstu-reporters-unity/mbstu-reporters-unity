@@ -28,26 +28,41 @@ function BrandIcon({ slug, className }: { slug: string; className: string }) {
   )
 }
 
-export function SocialLinks({ size = 'md' }: { size?: 'sm' | 'md' }) {
+export function SocialLinks({
+  size = 'md',
+  tooltip = 'top',
+}: {
+  size?: 'sm' | 'md'
+  tooltip?: 'top' | 'bottom'
+}) {
   const box = size === 'sm' ? 'size-7' : 'size-9'
   const icon = size === 'sm' ? 'size-3.5' : 'size-4'
 
   return (
     <ul className="flex items-center gap-2">
       {socialLinks.map((s) => (
-        <li key={s.slug}>
+        <li key={s.slug} className="group relative">
           <a
             href={s.href}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={s.name}
+            aria-label={`${s.name} (opens in new tab)`}
             className={cn(
-              'flex items-center justify-center rounded-full bg-white/10 text-white transition-all hover:-translate-y-0.5 hover:bg-brand focus-visible:bg-brand',
+              'peer flex items-center justify-center rounded-full bg-white/10 text-white transition-all hover:-translate-y-0.5 hover:bg-brand focus-visible:bg-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold',
               box,
             )}
           >
             <BrandIcon slug={s.slug} className={icon} />
           </a>
+          <span
+            role="tooltip"
+            className={cn(
+              'pointer-events-none absolute left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-md bg-white px-2 py-1 text-xs font-semibold text-navy opacity-0 shadow-lg transition-opacity group-hover:opacity-100 peer-focus-visible:opacity-100',
+              tooltip === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
+            )}
+          >
+            {s.name}
+          </span>
         </li>
       ))}
     </ul>

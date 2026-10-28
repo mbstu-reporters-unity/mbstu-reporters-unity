@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Lock, Menu, X } from 'lucide-react'
 import { navLinks } from '@/lib/data'
 import { Logo } from './logo'
-import { AdminLoginModal } from './admin-login-modal'
+import { AdminDashboardModal } from './admin-dashboard-modal'
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -92,7 +92,7 @@ export function SiteHeader() {
         )}
       </header>
 
-      <AdminLoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+      <AdminDashboardModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </>
   )
 }
