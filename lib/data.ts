@@ -9,8 +9,6 @@ export const navLinks = [
   { label: 'Contact', bn: 'যোগাযোগ', href: '#contact' },
 ]
 
-: 'https://youtube.com/@mbstureportersunity',
-}
 export const siteContact = {
   address: 'Room 214, Student Welfare / Administrative Building, MBSTU, Santosh, Tangail-1902',
   officeRoom: 'Room 214, Student Welfare / Administrative Building',
