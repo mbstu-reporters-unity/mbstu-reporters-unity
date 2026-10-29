@@ -12,7 +12,7 @@ export const navLinks = [
 export const siteContact = {
   address: 'Room 214, Student Welfare / Administrative Building, MBSTU, Santosh, Tangail-1902',
   officeRoom: 'Room 214, Student Welfare / Administrative Building',
-  phone: '+880 1753-964870',
+  phone: '+880 1753 964870',
   email: 'mbstureportersunity@gmail.com',
   facebook: 'https://facebook.com/mbstureportersunity',
   youtube: 'https://youtube.com/@mbstureportersunity',
