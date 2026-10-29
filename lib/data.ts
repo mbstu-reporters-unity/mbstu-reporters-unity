@@ -9,21 +9,23 @@ export const navLinks = [
   { label: 'Contact', bn: 'যোগাযোগ', href: '#contact' },
 ]
 
+: 'https://youtube.com/@mbstureportersunity',
+}
 export const siteContact = {
   address: 'Room 214, Student Welfare / Administrative Building, MBSTU, Santosh, Tangail-1902',
   officeRoom: 'Room 214, Student Welfare / Administrative Building',
   phone: '+880 1753 964870',
   email: 'mbstureportersunity@gmail.com',
-  facebook: 'https://facebook.com/mbstureportersunity',
-  youtube: 'https://youtube.com/@mbstureportersunity',
+  facebook: 'https://www.facebook.com/share/19jdL8Wtk5/',
+  youtube: 'https://youtube.com/@mbstureportersunity?si=Dwz5c6v-J500O_TU',
 }
 
 export const socialLinks = [
-  { name: 'Facebook', slug: 'facebook', href: siteContact.facebook },
-  { name: 'YouTube', slug: 'youtube', href: siteContact.youtube },
-  { name: 'X (Twitter)', slug: 'x', href: 'https://x.com/mbstu_ru' },
-  { name: 'LinkedIn', slug: 'linkedin', href: 'https://linkedin.com/company/mbstu-reporters-unity' },
-  { name: 'Instagram', slug: 'instagram', href: 'https://instagram.com/mbstu.reportersunity' },
+  { name: 'Facebook', slug: 'facebook', href: 'https://www.facebook.com/share/19jdL8Wtk5/' },
+  { name: 'YouTube', slug: 'youtube', href: 'https://youtube.com/@mbstureportersunity?si=Dwz5c6v-J500O_TU' },
+  { name: 'X (Twitter)', slug: 'x', href: 'https://twitter.com' },
+  { name: 'LinkedIn', slug: 'linkedin', href: 'https://linkedin.com' },
+  { name: 'Instagram', slug: 'instagram', href: 'https://instagram.com' },
 ]
 
 export const tickerHeadlines = [
