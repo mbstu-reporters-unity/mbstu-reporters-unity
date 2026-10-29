@@ -17,7 +17,9 @@ const notoSerif = Noto_Serif_Bengali({
   display: 'swap',
 })
 
-export const metadata: Metadata = {
+export const metadata: Metadata = {verification: {
+    google: 'bgEmoniEQzftOcdJ0oOMdhpsUKg6Fv5NDbWBYs1YYAU',
+  },
   title: "MBSTU Reporters' Unity | মাভাবিপ্রবি রিপোর্টার্স ইউনিটি",
   description:
     "Official news and organizational portal of Mawlana Bhashani Science and Technology University Reporters' Unity — campus news, club updates, student corner and official notices from Santosh, Tangail.",
