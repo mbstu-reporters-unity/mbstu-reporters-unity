@@ -249,3 +249,24 @@ export async function deleteComment(token: string, id: string) {
     })
   )
 }
+/* ---------- পাসওয়ার্ড রিসেট ---------- */
+
+export async function requestReset(email: string, redirectTo: string) {
+  await ok(
+    await fetch(`${SB_URL}/auth/v1/recover?redirect_to=${encodeURIComponent(redirectTo)}`, {
+      method: "POST",
+      headers: hdr(undefined, true),
+      body: JSON.stringify({ email }),
+    })
+  )
+}
+
+export async function updatePassword(token: string, password: string) {
+  await ok(
+    await fetch(`${SB_URL}/auth/v1/user`, {
+      method: "PUT",
+      headers: hdr(token, true),
+      body: JSON.stringify({ password }),
+    })
+  )
+}
