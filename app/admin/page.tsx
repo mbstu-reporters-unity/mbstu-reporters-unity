@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react"
 import {
-  login, getPosts, createPost, updatePost, deletePost, uploadImage,
+  login, signUp, getMe, getPosts, createPost, updatePost, deletePost, uploadImage,
   getPendingComments, approveComment, deleteComment,
+  getReporters, approveReporter, removeReporter,
 } from "../../lib/sb"
-import type { Post, PendingComment } from "../../lib/sb"
+import type { Post, PendingComment, Profile } from "../../lib/sb"
 
 const TOKEN_KEY = "mbstu_admin_token"
 const CATS = ["সাধারণ ক্যাম্পাস", "ক্লাব", "স্টুডেন্ট কর্নার", "একাডেমিক", "গবেষণা", "খেলাধুলা", "সংস্কৃতি", "পরিবেশ"]
@@ -27,11 +28,23 @@ async function shrink(file: File): Promise<Blob> {
 export default function AdminPage() {
   const [ready, setReady] = useState(false)
   const [token, setToken] = useState("")
+  const [me, setMe] = useState<Profile | null>(null)
+  const [mode, setMode] = useState<"login" | "signup">("login")
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [tab, setTab] = useState<"posts" | "comments">("posts")
+  const [fullName, setFullName] = useState("")
+  const [dept, setDept] = useState("")
+  const [batch, setBatch] = useState("")
+  const [sid, setSid] = useState("")
+  const [phone, setPhone] = useState("")
+
+  const [tab, setTab] = useState<"posts" | "comments" | "reporters">("posts")
   const [posts, setPosts] = useState<Post[]>([])
   const [pending, setPending] = useState<PendingComment[]>([])
+  const [waiting, setWaiting] = useState<Profile[]>([])
+  const [active, setActive] = useState<Profile[]>([])
+
   const [editId, setEditId] = useState<string | null>(null)
   const [title, setTitle] = useState("")
   const [heading, setHeading] = useState("")
@@ -44,9 +57,12 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState("")
 
+  const isAdmin = me?.role === "admin" && me.approved
+
   function logout() {
     try { localStorage.removeItem(TOKEN_KEY) } catch {}
     setToken("")
+    setMe(null)
   }
 
   function fail(e: unknown) {
@@ -59,11 +75,31 @@ export default function AdminPage() {
     setMsg("❌ " + m)
   }
 
-  async function refresh(t: string) {
+  async function refresh(t: string, profile: Profile | null) {
     try {
-      const [p, c] = await Promise.all([getPosts(100), getPendingComments(t)])
+      const p = await getPosts(100)
       setPosts(p)
-      setPending(c)
+      if (profile?.role === "admin" && profile.approved) {
+        const [c, w, a] = await Promise.all([
+          getPendingComments(t),
+          getReporters(t, false),
+          getReporters(t, true),
+        ])
+        setPending(c)
+        setWaiting(w)
+        setActive(a)
+      }
+    } catch (e) { fail(e) }
+  }
+
+  async function loadMe(t: string) {
+    try {
+      const p = await getMe(t)
+      setMe(p)
+      if (p) {
+        setAuthor((a) => a || p.full_name)
+        await refresh(t, p)
+      }
     } catch (e) { fail(e) }
   }
 
@@ -76,7 +112,7 @@ export default function AdminPage() {
   }, [])
 
   useEffect(() => {
-    if (token) refresh(token)
+    if (token) loadMe(token)
   }, [token])
 
   async function onLogin() {
@@ -87,6 +123,35 @@ export default function AdminPage() {
       try { localStorage.setItem(TOKEN_KEY, t) } catch {}
       setToken(t)
       setPassword("")
+    } catch (e) {
+      const m = e instanceof Error ? e.message : ""
+      setMsg(/invalid/i.test(m) ? "❌ ইমেইল বা পাসওয়ার্ড ভুল" : "❌ " + m)
+    }
+    setBusy(false)
+  }
+
+  async function onSignup() {
+    if (!fullName.trim() || !dept.trim() || !batch.trim() || !sid.trim() || !phone.trim() || !email.trim()) {
+      setMsg("❌ সব তথ্য পূরণ করুন")
+      return
+    }
+    if (password.length < 6) {
+      setMsg("❌ পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে")
+      return
+    }
+    setBusy(true)
+    setMsg("")
+    try {
+      await signUp(email.trim(), password, {
+        full_name: fullName.trim(),
+        department: dept.trim(),
+        batch: batch.trim(),
+        student_id: sid.trim(),
+        phone: phone.trim(),
+      })
+      setMode("login")
+      setPassword("")
+      setMsg("✅ নিবন্ধন সম্পন্ন। অ্যাডমিন অনুমোদন দিলে পোস্ট করতে পারবেন। এখন লগইন করুন।")
     } catch (e) { fail(e) }
     setBusy(false)
   }
@@ -98,7 +163,7 @@ export default function AdminPage() {
 
   function resetForm() {
     setEditId(null); setTitle(""); setHeading(""); setBody("")
-    setCategory(CATS[0]); setAuthor(""); setOldImage(null); pick(null)
+    setCategory(CATS[0]); setAuthor(me?.full_name || ""); setOldImage(null); pick(null)
   }
 
   async function submit() {
@@ -116,14 +181,14 @@ export default function AdminPage() {
         heading: heading.trim() || null,
         body: body.trim(),
         category,
-        author: author.trim() || null,
+        author: author.trim() || me?.full_name || null,
         image_url: url,
       }
       if (editId) await updatePost(token, editId, data)
       else await createPost(token, data)
       resetForm()
       setMsg("✅ প্রকাশিত হয়েছে")
-      await refresh(token)
+      await refresh(token, me)
     } catch (e) { fail(e) }
     setBusy(false)
   }
@@ -140,41 +205,90 @@ export default function AdminPage() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  async function onDelete(id: string) {
-    if (!confirm("সত্যিই মুছে ফেলবেন?")) return
-    try { await deletePost(token, id); await refresh(token) } catch (e) { fail(e) }
-  }
-
-  async function onApprove(id: string) {
-    try { await approveComment(token, id); await refresh(token) } catch (e) { fail(e) }
-  }
-
-  async function onDeleteComment(id: string) {
-    if (!confirm("কমেন্ট মুছবেন?")) return
-    try { await deleteComment(token, id); await refresh(token) } catch (e) { fail(e) }
+  async function act(fn: () => Promise<void>, ask?: string) {
+    if (ask && !confirm(ask)) return
+    try { await fn(); await refresh(token, me) } catch (e) { fail(e) }
   }
 
   if (!ready) return null
 
+  /* ---------- লগইন / সাইনআপ ---------- */
   if (!token) {
     return (
       <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-white rounded-2xl shadow p-6 space-y-4">
-          <h1 className="text-xl font-bold text-green-800">অ্যাডমিন লগইন</h1>
-          <input className={inp} type="email" placeholder="ইমেইল" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <input className={inp} type="password" placeholder="পাসওয়ার্ড" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <button className={btn} onClick={onLogin} disabled={busy}>{busy ? "অপেক্ষা করুন..." : "লগইন"}</button>
-          {msg && <p className="text-sm text-red-600">{msg}</p>}
+        <div className="w-full max-w-sm bg-white rounded-2xl shadow p-6 space-y-3">
+          <h1 className="text-xl font-bold text-green-800">
+            {mode === "login" ? "সাংবাদিক লগইন" : "সাংবাদিক নিবন্ধন"}
+          </h1>
+
+          {mode === "signup" && (
+            <>
+              <input className={inp} placeholder="পূর্ণ নাম *" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+              <input className={inp} placeholder="বিভাগ (যেমন: ইংরেজি) *" value={dept} onChange={(e) => setDept(e.target.value)} />
+              <input className={inp} placeholder="ব্যাচ / সেশন (যেমন: ২০২২-২৩) *" value={batch} onChange={(e) => setBatch(e.target.value)} />
+              <input className={inp} placeholder="স্টুডেন্ট আইডি *" value={sid} onChange={(e) => setSid(e.target.value)} />
+              <input className={inp} type="tel" placeholder="মোবাইল নম্বর *" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </>
+          )}
+
+          <input className={inp} type="email" placeholder="জিমেইল *" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input className={inp} type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর) *" value={password} onChange={(e) => setPassword(e.target.value)} />
+
+          <button className={btn} onClick={mode === "login" ? onLogin : onSignup} disabled={busy}>
+            {busy ? "অপেক্ষা করুন..." : mode === "login" ? "লগইন" : "নিবন্ধন করুন"}
+          </button>
+
+          <button
+            className="w-full text-sm underline text-green-800"
+            onClick={() => { setMode(mode === "login" ? "signup" : "login"); setMsg("") }}
+          >
+            {mode === "login" ? "নতুন সাংবাদিক? নিবন্ধন করুন" : "আগে নিবন্ধন করেছেন? লগইন করুন"}
+          </button>
+
+          {msg && <p className="text-sm">{msg}</p>}
+          <a href="/" className="block text-center text-sm underline">সাইটে ফিরুন</a>
         </div>
       </main>
     )
   }
 
+  /* ---------- অনুমোদনের অপেক্ষা ---------- */
+  if (me && !me.approved) {
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-white rounded-2xl shadow p-6 space-y-3 text-center">
+          <h1 className="text-xl font-bold text-green-800">অনুমোদনের অপেক্ষায়</h1>
+          <p>{me.full_name}, আপনার নিবন্ধন সম্পন্ন হয়েছে। অ্যাডমিন যাচাই করে অনুমোদন দিলে আপনি পোস্ট করতে পারবেন।</p>
+          <button onClick={() => loadMe(token)} className={btn}>আবার দেখুন</button>
+          <button onClick={logout} className="text-sm text-red-600 underline">লগআউট</button>
+        </div>
+      </main>
+    )
+  }
+
+  if (!me) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center space-y-3">
+          <p>প্রোফাইল পাওয়া যায়নি।</p>
+          {msg && <p className="text-sm">{msg}</p>}
+          <button onClick={logout} className="underline text-red-600">লগআউট</button>
+        </div>
+      </main>
+    )
+  }
+
+  /* ---------- ড্যাশবোর্ড ---------- */
+  const canDelete = (p: Post) => isAdmin || true
+
   return (
     <main className="min-h-screen bg-gray-50 p-4 pb-16">
       <div className="max-w-xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-green-800">অ্যাডমিন ড্যাশবোর্ড</h1>
+          <div>
+            <h1 className="text-xl font-bold text-green-800">ড্যাশবোর্ড</h1>
+            <p className="text-xs text-gray-500">{me.full_name} · {isAdmin ? "অ্যাডমিন" : "সাংবাদিক"}</p>
+          </div>
           <div className="flex gap-3 text-sm">
             <a href="/" className="underline">সাইট</a>
             <button onClick={logout} className="text-red-600">লগআউট</button>
@@ -182,13 +296,18 @@ export default function AdminPage() {
         </div>
 
         <div className="flex gap-2">
-          <button onClick={() => setTab("posts")} className={`flex-1 rounded-xl py-2 ${tab === "posts" ? "bg-green-700 text-white" : "bg-white border"}`}>সংবাদ</button>
-          <button onClick={() => setTab("comments")} className={`flex-1 rounded-xl py-2 ${tab === "comments" ? "bg-green-700 text-white" : "bg-white border"}`}>কমেন্ট ({pending.length})</button>
+          <button onClick={() => setTab("posts")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "posts" ? "bg-green-700 text-white" : "bg-white border"}`}>সংবাদ</button>
+          {isAdmin && (
+            <>
+              <button onClick={() => setTab("comments")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "comments" ? "bg-green-700 text-white" : "bg-white border"}`}>কমেন্ট ({pending.length})</button>
+              <button onClick={() => setTab("reporters")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "reporters" ? "bg-green-700 text-white" : "bg-white border"}`}>সাংবাদিক ({waiting.length})</button>
+            </>
+          )}
         </div>
 
         {msg && <p className="text-sm">{msg}</p>}
 
-        {tab === "posts" ? (
+        {tab === "posts" && (
           <>
             <div className="bg-white rounded-2xl shadow p-4 space-y-3">
               <h2 className="font-semibold">{editId ? "সংবাদ এডিট করুন" : "নতুন সংবাদ"}</h2>
@@ -222,10 +341,12 @@ export default function AdminPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate">{p.title}</p>
-                    <p className="text-xs text-gray-500">{new Date(p.created_at).toLocaleDateString("bn-BD")}</p>
+                    <p className="text-xs text-gray-500">{p.author} · {new Date(p.created_at).toLocaleDateString("bn-BD")}</p>
                     <div className="flex gap-4 mt-2 text-sm">
                       <button onClick={() => startEdit(p)} className="text-green-700">এডিট</button>
-                      <button onClick={() => onDelete(p.id)} className="text-red-600">ডিলিট</button>
+                      {canDelete(p) && (
+                        <button onClick={() => act(() => deletePost(token, p.id), "সত্যিই মুছে ফেলবেন?")} className="text-red-600">ডিলিট</button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -233,7 +354,9 @@ export default function AdminPage() {
               {posts.length === 0 && <p className="text-sm text-gray-500">এখনো কোনো সংবাদ নেই।</p>}
             </div>
           </>
-        ) : (
+        )}
+
+        {tab === "comments" && isAdmin && (
           <div className="space-y-3">
             {pending.map((c) => (
               <div key={c.id} className="bg-white rounded-2xl shadow p-4 space-y-2">
@@ -241,12 +364,49 @@ export default function AdminPage() {
                 <p className="font-semibold">{c.name || "নামহীন"}</p>
                 <p className="whitespace-pre-line">{c.message}</p>
                 <div className="flex gap-4 text-sm">
-                  <button onClick={() => onApprove(c.id)} className="text-green-700">অনুমোদন</button>
-                  <button onClick={() => onDeleteComment(c.id)} className="text-red-600">মুছুন</button>
+                  <button onClick={() => act(() => approveComment(token, c.id))} className="text-green-700">অনুমোদন</button>
+                  <button onClick={() => act(() => deleteComment(token, c.id), "কমেন্ট মুছবেন?")} className="text-red-600">মুছুন</button>
                 </div>
               </div>
             ))}
             {pending.length === 0 && <p className="text-sm text-gray-500">অপেক্ষমাণ কোনো কমেন্ট নেই।</p>}
+          </div>
+        )}
+
+        {tab === "reporters" && isAdmin && (
+          <div className="space-y-5">
+            <div className="space-y-3">
+              <h2 className="font-semibold">অনুমোদনের অপেক্ষায়</h2>
+              {waiting.map((r) => (
+                <div key={r.id} className="bg-white rounded-2xl shadow p-4 space-y-1 text-sm">
+                  <p className="font-semibold text-base">{r.full_name}</p>
+                  <p>বিভাগ: {r.department} · ব্যাচ: {r.batch}</p>
+                  <p>আইডি: {r.student_id}</p>
+                  <p>মোবাইল: {r.phone}</p>
+                  <p>ইমেইল: {r.email}</p>
+                  <div className="flex gap-4 pt-2">
+                    <button onClick={() => act(() => approveReporter(token, r.id))} className="text-green-700">অনুমোদন</button>
+                    <button onClick={() => act(() => removeReporter(token, r.id), "বাতিল করবেন?")} className="text-red-600">বাতিল</button>
+                  </div>
+                </div>
+              ))}
+              {waiting.length === 0 && <p className="text-sm text-gray-500">কেউ অপেক্ষায় নেই।</p>}
+            </div>
+
+            <div className="space-y-3">
+              <h2 className="font-semibold">অনুমোদিত সাংবাদিক ({active.length})</h2>
+              {active.map((r) => (
+                <div key={r.id} className="bg-white rounded-2xl shadow p-3 text-sm flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold">{r.full_name} {r.role === "admin" && "(অ্যাডমিন)"}</p>
+                    <p className="text-gray-500">{r.department} · {r.batch}</p>
+                  </div>
+                  {r.id !== me.id && (
+                    <button onClick={() => act(() => removeReporter(token, r.id), "এই সাংবাদিককে সরাবেন?")} className="text-red-600">সরান</button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
