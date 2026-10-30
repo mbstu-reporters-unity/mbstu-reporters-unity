@@ -10,6 +10,7 @@ export type Post = {
   category: string | null
   author: string | null
   image_url: string | null
+  video_url: string | null
   created_at: string
 }
 export type PostInput = Omit<Post, "id" | "created_at">
@@ -33,7 +34,7 @@ export type Profile = {
   email: string | null
   role: string
   approved: boolean
-    newspaper_name?: string | null
+  newspaper_name?: string | null
   avatar_url?: string | null
   created_at: string
 }
@@ -43,7 +44,7 @@ export type SignupInfo = {
   batch: string
   student_id: string
   phone: string
-    newspaper_name?: string
+  newspaper_name?: string
 }
 
 function hdr(token?: string, json = false): Record<string, string> {
@@ -63,7 +64,7 @@ async function ok(res: Response): Promise<Response> {
   throw new Error(msg)
 }
 
-/* ---------- লগইন, সাইনআপ ও প্রোফাইল উদ্ধার ---------- */
+/* ---------- লগইন, সাইনআপ ও প্রোফাইল ---------- */
 
 export async function login(email: string, password: string): Promise<string> {
   const res = await ok(
@@ -89,64 +90,32 @@ export async function signUp(email: string, password: string, info: SignupInfo) 
 }
 
 export async function getMe(token: string): Promise<Profile | null> {
-  try {
-    const u = await ok(
-      await fetch(`${SB_URL}/auth/v1/user`, { headers: hdr(token), cache: "no-store" })
-    )
-    const user = await u.json()
-    if (!user || !user.id) return null
+  const u = await ok(
+    await fetch(`${SB_URL}/auth/v1/user`, { headers: hdr(token), cache: "no-store" })
+  )
+  const user = await u.json()
+  if (!user || !user.id) return null
 
-    // ১. প্রথমে ডেটাবেসে প্রোফাইল খোঁজা
-    let rows: Profile[] = []
+  let rows: Profile[] = []
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/profiles?select=*&id=eq.${encodeURIComponent(user.id)}`,
+      { headers: hdr(token), cache: "no-store" }
+    )
+    if (res.ok) rows = await res.json()
+  } catch {}
+
+  if (!rows || rows.length === 0) {
     try {
       const res = await fetch(
-        `${SB_URL}/rest/v1/profiles?select=*&id=eq.${encodeURIComponent(user.id)}`,
+        `${SB_URL}/rest/v1/profiles?select=*&email=eq.${encodeURIComponent(user.email)}`,
         { headers: hdr(token), cache: "no-store" }
       )
       if (res.ok) rows = await res.json()
     } catch {}
-
-    if (!rows || rows.length === 0) {
-      try {
-        const res = await fetch(
-          `${SB_URL}/rest/v1/profiles?select=*&email=eq.${encodeURIComponent(user.email)}`,
-          { headers: hdr(token), cache: "no-store" }
-        )
-        if (res.ok) rows = await res.json()
-      } catch {}
-    }
-
-    // ২. ডেটাবেসে প্রোফাইল পাওয়া গেলে সরাসরি রিটার্ন
-    if (rows && rows.length > 0) {
-      return rows[0]
-    }
-
-    // ৩. স্মার্ট রিকভারি: ডেটাবেসে কোনো কারণে না পেলেও আপনি অ্যাডমিন হলে ড্যাশবোর্ড সরাসরি ওপেন হবে
-    const isAdminEmail = user.email?.toLowerCase().includes("mbstureportersunity@gmail.com")
-    const fallbackProfile: Profile = {
-      id: user.id,
-      email: user.email,
-      full_name: user.user_metadata?.full_name || (isAdminEmail ? "প্রধান অ্যাডমিন" : "ক্যাম্পাস সাংবাদিক"),
-      department: user.user_metadata?.department || "মাভাবিপ্রবি",
-      batch: user.user_metadata?.batch || "২০২১-২২",
-      student_id: user.user_metadata?.student_id || "CP22015",
-      phone: user.user_metadata?.phone || "01753964870",
-      role: isAdminEmail ? "admin" : "moderator",
-      approved: isAdminEmail ? true : false,
-      created_at: new Date().toISOString(),
-    }
-
-    // ব্যাকগ্রাউন্ডে ডেটাবেসে সেভ করার চেষ্টা
-    fetch(`${SB_URL}/rest/v1/profiles`, {
-      method: "POST",
-      headers: { ...hdr(token, true), Prefer: "resolution=merge-duplicates" },
-      body: JSON.stringify(fallbackProfile),
-    }).catch(() => {})
-
-    return fallbackProfile
-  } catch (e) {
-    throw e
   }
+
+  return rows && rows.length > 0 ? rows[0] : null
 }
 
 /* ---------- সাংবাদিক ও মডারেটর ব্যবস্থাপনা ---------- */
@@ -179,6 +148,20 @@ export async function removeReporter(token: string, id: string) {
     await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`, {
       method: "DELETE",
       headers: hdr(token),
+    })
+  )
+}
+
+export async function updateMyProfile(
+  token: string,
+  id: string,
+  data: Partial<Pick<Profile, "full_name" | "department" | "batch" | "phone" | "newspaper_name" | "avatar_url">>
+) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify(data),
     })
   )
 }
@@ -241,7 +224,7 @@ export async function deletePost(token: string, id: string) {
   )
 }
 
-/* ---------- সরাসরি ফোন থেকে ছবি আপলোড ---------- */
+/* ---------- ছবি ও ভিডিও আপলোড ---------- */
 
 export async function uploadImage(token: string, file: Blob): Promise<string> {
   const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`
@@ -257,7 +240,22 @@ export async function uploadImage(token: string, file: Blob): Promise<string> {
   return `${SB_URL}/storage/v1/object/public/${BUCKET}/${name}`
 }
 
-/* ---------- কমেন্ট ও পাসওয়ার্ড রিকভারি ---------- */
+export async function uploadVideo(token: string, file: File): Promise<string> {
+  const ext = (file.name.split(".").pop() || "mp4").toLowerCase().replace(/[^a-z0-9]/g, "")
+  const name = `video-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext || "mp4"}`
+  const h = hdr(token)
+  h["Content-Type"] = file.type || "video/mp4"
+  await ok(
+    await fetch(`${SB_URL}/storage/v1/object/${BUCKET}/${name}`, {
+      method: "POST",
+      headers: h,
+      body: file,
+    })
+  )
+  return `${SB_URL}/storage/v1/object/public/${BUCKET}/${name}`
+}
+
+/* ---------- কমেন্ট ও পাসওয়ার্ড রিকভারি ---------- */
 
 export async function getApprovedComments(postId: string): Promise<PublicComment[]> {
   try {
@@ -330,19 +328,6 @@ export async function updatePassword(token: string, password: string) {
       method: "PUT",
       headers: hdr(token, true),
       body: JSON.stringify({ password }),
-    })
-  )
-}
-export async function updateMyProfile(
-  token: string,
-  id: string,
-  data: Partial<Pick<Profile, "full_name" | "department" | "batch" | "phone" | "newspaper_name" | "avatar_url">>
-) {
-  await ok(
-    await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`, {
-      method: "PATCH",
-      headers: { ...hdr(token, true), Prefer: "return=minimal" },
-      body: JSON.stringify(data),
     })
   )
 }
