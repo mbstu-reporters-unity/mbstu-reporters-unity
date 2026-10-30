@@ -496,8 +496,6 @@ export default function AdminPage() {
         {tab === "leaders" && isAdmin && (
   <LeadershipManager token={token} members={active} shrink={shrink} />
 )}
-
-        {tab === "leaders" && isAdmin && (
         {tab === "reporters" && isAdmin && (
           <div className="space-y-5">
             <div className="space-y-3">
