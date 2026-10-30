@@ -33,6 +33,8 @@ export type Profile = {
   email: string | null
   role: string
   approved: boolean
+    newspaper_name?: string | null
+  avatar_url?: string | null
   created_at: string
 }
 export type SignupInfo = {
