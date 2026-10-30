@@ -11,9 +11,10 @@ export type Post = {
   author: string | null
   image_url: string | null
   video_url: string | null
+  user_id: string | null
   created_at: string
 }
-export type PostInput = Omit<Post, "id" | "created_at">
+export type PostInput = Omit<Post, "id" | "created_at" | "user_id">
 export type PublicComment = {
   id: string
   name: string | null
@@ -328,6 +329,75 @@ export async function updatePassword(token: string, password: string) {
       method: "PUT",
       headers: hdr(token, true),
       body: JSON.stringify({ password }),
+    })
+  )
+}
+/* ---------- নেতৃত্ব বোর্ড ---------- */
+
+export const POSITIONS = [
+  { key: "president", en: "President", bn: "সভাপতি" },
+  { key: "vice_president", en: "Vice President", bn: "সহ-সভাপতি" },
+  { key: "general_secretary", en: "General Secretary", bn: "সাধারণ সম্পাদক" },
+  { key: "office_secretary", en: "Office Secretary", bn: "দপ্তর সম্পাদক" },
+  { key: "treasurer", en: "Treasurer", bn: "কোষাধ্যক্ষ" },
+  { key: "publicity_secretary", en: "Publicity & Publication Secretary", bn: "প্রচার ও প্রকাশনা সম্পাদক" },
+  { key: "executive_member", en: "Executive Member", bn: "কার্যনির্বাহী সদস্য" },
+] as const
+
+export type Leader = {
+  id: string
+  profile_id: string
+  position: string
+  sort_order: number
+  display_name: string
+  department: string | null
+  message: string | null
+  photo_url: string | null
+  is_visible: boolean
+  term_year: number
+}
+export type LeaderInput = Omit<Leader, "id" | "term_year"> & { term_year?: number }
+
+export async function getLeaders(token?: string): Promise<Leader[]> {
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/leaders?select=*&order=sort_order.asc`, {
+      headers: hdr(token),
+      cache: "no-store",
+    })
+    if (!res.ok) return []
+    const rows: Leader[] = await res.json()
+    const rank = (k: string) => POSITIONS.findIndex((p) => p.key === k)
+    return rows.sort((a, b) => rank(a.position) - rank(b.position) || a.sort_order - b.sort_order)
+  } catch {
+    return []
+  }
+}
+
+export async function addLeader(token: string, data: LeaderInput) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/leaders`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify(data),
+    })
+  )
+}
+
+export async function updateLeader(token: string, id: string, data: Partial<LeaderInput>) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/leaders?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify(data),
+    })
+  )
+}
+
+export async function removeLeader(token: string, id: string) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/leaders?id=eq.${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: hdr(token),
     })
   )
 }
