@@ -333,3 +333,16 @@ export async function updatePassword(token: string, password: string) {
     })
   )
 }
+export async function updateMyProfile(
+  token: string,
+  id: string,
+  data: Partial<Pick<Profile, "full_name" | "department" | "batch" | "phone" | "newspaper_name" | "avatar_url">>
+) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify(data),
+    })
+  )
+}
