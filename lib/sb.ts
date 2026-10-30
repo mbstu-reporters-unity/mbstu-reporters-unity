@@ -43,6 +43,7 @@ export type SignupInfo = {
   batch: string
   student_id: string
   phone: string
+    newspaper_name?: string
 }
 
 function hdr(token?: string, json = false): Record<string, string> {
