@@ -5,6 +5,7 @@ import {
   login, signUp, getMe, getPosts, createPost, updatePost, deletePost, uploadImage,
   getPendingComments, approveComment, deleteComment,
   getReporters, approveReporter, removeReporter,
+  updateMyProfile,
 } from "../../lib/sb"
 import type { Post, PendingComment, Profile } from "../../lib/sb"
 
@@ -38,8 +39,9 @@ export default function AdminPage() {
   const [batch, setBatch] = useState("")
   const [sid, setSid] = useState("")
   const [phone, setPhone] = useState("")
+  const [paper, setPaper] = useState("")
 
-  const [tab, setTab] = useState<"posts" | "comments" | "reporters">("posts")
+  const [tab, setTab] = useState<"posts" | "comments" | "reporters" | "profile">("posts")
   const [posts, setPosts] = useState<Post[]>([])
   const [pending, setPending] = useState<PendingComment[]>([])
   const [waiting, setWaiting] = useState<Profile[]>([])
@@ -57,9 +59,26 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState("")
 
+  const [pName, setPName] = useState("")
+  const [pPaper, setPPaper] = useState("")
+  const [pDept, setPDept] = useState("")
+  const [pBatch, setPBatch] = useState("")
+  const [pPhone, setPPhone] = useState("")
+  const [pFile, setPFile] = useState<File | null>(null)
+
   const isAdmin = me?.role === "admin" && me.approved
 
-    function logout() {
+  useEffect(() => {
+    if (me) {
+      setPName(me.full_name || "")
+      setPPaper(me.newspaper_name || "")
+      setPDept(me.department || "")
+      setPBatch(me.batch || "")
+      setPPhone(me.phone || "")
+    }
+  }, [me])
+
+  function logout() {
     try { localStorage.removeItem(TOKEN_KEY) } catch {}
     setToken("")
     setMe(null)
@@ -132,7 +151,7 @@ export default function AdminPage() {
   }
 
   async function onSignup() {
-    if (!fullName.trim() || !dept.trim() || !batch.trim() || !sid.trim() || !phone.trim() || !email.trim()) {
+    if (!paper.trim() || !fullName.trim() || !dept.trim() || !batch.trim() || !sid.trim() || !phone.trim() || !email.trim()) {
       setMsg("❌ সব তথ্য পূরণ করুন")
       return
     }
@@ -149,10 +168,33 @@ export default function AdminPage() {
         batch: batch.trim(),
         student_id: sid.trim(),
         phone: phone.trim(),
+        newspaper_name: paper.trim(),
       })
       setMode("login")
       setPassword("")
       setMsg("✅ নিবন্ধন সম্পন্ন। অ্যাডমিন অনুমোদন দিলে পোস্ট করতে পারবেন। এখন লগইন করুন।")
+    } catch (e) { fail(e) }
+    setBusy(false)
+  }
+
+  async function saveProfile() {
+    if (!me) return
+    setBusy(true)
+    setMsg("")
+    try {
+      let avatar = me.avatar_url || null
+      if (pFile) avatar = await uploadImage(token, await shrink(pFile))
+      await updateMyProfile(token, me.id, {
+        full_name: pName.trim(),
+        newspaper_name: pPaper.trim(),
+        department: pDept.trim(),
+        batch: pBatch.trim(),
+        phone: pPhone.trim(),
+        avatar_url: avatar,
+      })
+      setPFile(null)
+      setMsg("✅ প্রোফাইল সেভ হয়েছে")
+      await loadMe(token)
     } catch (e) { fail(e) }
     setBusy(false)
   }
@@ -225,6 +267,7 @@ export default function AdminPage() {
           {mode === "signup" && (
             <>
               <input className={inp} placeholder="পূর্ণ নাম *" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+              <input className={inp} placeholder="পত্রিকার নাম *" value={paper} onChange={(e) => setPaper(e.target.value)} />
               <input className={inp} placeholder="বিভাগ (যেমন: ইংরেজি) *" value={dept} onChange={(e) => setDept(e.target.value)} />
               <input className={inp} placeholder="ব্যাচ / সেশন (যেমন: ২০২২-২৩) *" value={batch} onChange={(e) => setBatch(e.target.value)} />
               <input className={inp} placeholder="স্টুডেন্ট আইডি *" value={sid} onChange={(e) => setSid(e.target.value)} />
@@ -246,7 +289,7 @@ export default function AdminPage() {
             {mode === "login" ? "নতুন সাংবাদিক? নিবন্ধন করুন" : "আগে নিবন্ধন করেছেন? লগইন করুন"}
           </button>
 
-                    {mode === "login" && (
+          {mode === "login" && (
             <a href="/reset" className="block text-center text-sm underline text-green-800">পাসওয়ার্ড ভুলে গেছেন?</a>
           )}
           {msg && <p className="text-sm">{msg}</p>}
@@ -281,17 +324,22 @@ export default function AdminPage() {
       </main>
     )
   }
-
-  /* ---------- ড্যাশবোর্ড ---------- */
+    /* ---------- ড্যাশবোর্ড ---------- */
   const canDelete = (p: Post) => isAdmin || true
 
   return (
     <main className="min-h-screen bg-gray-50 p-4 pb-16">
       <div className="max-w-xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-green-800">ড্যাশবোর্ড</h1>
-            <p className="text-xs text-gray-500">{me.full_name} · {isAdmin ? "অ্যাডমিন" : "সাংবাদিক"}</p>
+          <div className="flex items-center gap-3">
+            {me.avatar_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={me.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+            )}
+            <div>
+              <h1 className="text-xl font-bold text-green-800">ড্যাশবোর্ড</h1>
+              <p className="text-xs text-gray-500">{me.full_name} · {isAdmin ? "অ্যাডমিন" : "সাংবাদিক"}</p>
+            </div>
           </div>
           <div className="flex gap-3 text-sm">
             <a href="/" className="underline">সাইট</a>
@@ -301,6 +349,7 @@ export default function AdminPage() {
 
         <div className="flex gap-2">
           <button onClick={() => setTab("posts")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "posts" ? "bg-green-700 text-white" : "bg-white border"}`}>সংবাদ</button>
+          <button onClick={() => setTab("profile")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "profile" ? "bg-green-700 text-white" : "bg-white border"}`}>প্রোফাইল</button>
           {isAdmin && (
             <>
               <button onClick={() => setTab("comments")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "comments" ? "bg-green-700 text-white" : "bg-white border"}`}>কমেন্ট ({pending.length})</button>
@@ -360,6 +409,26 @@ export default function AdminPage() {
           </>
         )}
 
+        {tab === "profile" && (
+          <div className="bg-white rounded-2xl shadow p-4 space-y-3">
+            <h2 className="font-semibold">আমার প্রোফাইল</h2>
+            {(pFile || me.avatar_url) && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={pFile ? URL.createObjectURL(pFile) : me.avatar_url || ""} alt="" className="w-28 h-28 rounded-full object-cover mx-auto" />
+            )}
+            <label className="block">
+              <span className="text-sm text-gray-600">আমার ছবি (গ্যালারি থেকে)</span>
+              <input className="block mt-1 text-sm" type="file" accept="image/*" onChange={(e) => setPFile(e.target.files?.[0] || null)} />
+            </label>
+            <input className={inp} placeholder="পূর্ণ নাম" value={pName} onChange={(e) => setPName(e.target.value)} />
+            <input className={inp} placeholder="পত্রিকার নাম" value={pPaper} onChange={(e) => setPPaper(e.target.value)} />
+            <input className={inp} placeholder="বিভাগ" value={pDept} onChange={(e) => setPDept(e.target.value)} />
+            <input className={inp} placeholder="ব্যাচ" value={pBatch} onChange={(e) => setPBatch(e.target.value)} />
+            <input className={inp} type="tel" placeholder="মোবাইল" value={pPhone} onChange={(e) => setPPhone(e.target.value)} />
+            <button className={btn} onClick={saveProfile} disabled={busy}>{busy ? "অপেক্ষা করুন..." : "সেভ করুন"}</button>
+          </div>
+        )}
+
         {tab === "comments" && isAdmin && (
           <div className="space-y-3">
             {pending.map((c) => (
@@ -384,6 +453,7 @@ export default function AdminPage() {
               {waiting.map((r) => (
                 <div key={r.id} className="bg-white rounded-2xl shadow p-4 space-y-1 text-sm">
                   <p className="font-semibold text-base">{r.full_name}</p>
+                  {r.newspaper_name && <p>পত্রিকা: {r.newspaper_name}</p>}
                   <p>বিভাগ: {r.department} · ব্যাচ: {r.batch}</p>
                   <p>আইডি: {r.student_id}</p>
                   <p>মোবাইল: {r.phone}</p>
@@ -400,10 +470,16 @@ export default function AdminPage() {
             <div className="space-y-3">
               <h2 className="font-semibold">অনুমোদিত সাংবাদিক ({active.length})</h2>
               {active.map((r) => (
-                <div key={r.id} className="bg-white rounded-2xl shadow p-3 text-sm flex justify-between items-center">
-                  <div>
-                    <p className="font-semibold">{r.full_name} {r.role === "admin" && "(অ্যাডমিন)"}</p>
-                    <p className="text-gray-500">{r.department} · {r.batch}</p>
+                <div key={r.id} className="bg-white rounded-2xl shadow p-3 text-sm flex justify-between items-center gap-3">
+                  <div className="flex items-center gap-3">
+                    {r.avatar_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={r.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                    )}
+                    <div>
+                      <p className="font-semibold">{r.full_name} {r.role === "admin" && "(অ্যাডমিন)"}</p>
+                      <p className="text-gray-500">{r.newspaper_name || r.department} · {r.batch}</p>
+                    </div>
                   </div>
                   {r.id !== me.id && (
                     <button onClick={() => act(() => removeReporter(token, r.id), "এই সাংবাদিককে সরাবেন?")} className="text-red-600">সরান</button>
