@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import {
-  login, signUp, getMe, getPosts, createPost, updatePost, deletePost, uploadImage,
+  login, signUp, getMe, getPosts, createPost, updatePost, deletePost, uploadImage, uploadVideo,
   getPendingComments, approveComment, deleteComment,
   getReporters, approveReporter, removeReporter,
   updateMyProfile,
@@ -10,6 +10,7 @@ import {
 import type { Post, PendingComment, Profile } from "../../lib/sb"
 
 const TOKEN_KEY = "mbstu_admin_token"
+const MAX_VIDEO_MB = 50
 const CATS = ["সাধারণ ক্যাম্পাস", "ক্লাব", "স্টুডেন্ট কর্নার", "একাডেমিক", "গবেষণা", "খেলাধুলা", "সংস্কৃতি", "পরিবেশ"]
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
@@ -56,6 +57,8 @@ export default function AdminPage() {
   const [oldImage, setOldImage] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [videoFile, setVideoFile] = useState<File | null>(null)
+  const [oldVideo, setOldVideo] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState("")
 
@@ -204,9 +207,20 @@ export default function AdminPage() {
     setPreview(f ? URL.createObjectURL(f) : null)
   }
 
+  function pickVideo(f: File | null) {
+    if (f && f.size > MAX_VIDEO_MB * 1024 * 1024) {
+      setMsg(`❌ ভিডিও ${MAX_VIDEO_MB} MB-এর বেশি হতে পারবে না (আপনারটি ${(f.size / 1048576).toFixed(1)} MB)`)
+      setVideoFile(null)
+      return
+    }
+    setMsg("")
+    setVideoFile(f)
+  }
+
   function resetForm() {
     setEditId(null); setTitle(""); setHeading(""); setBody("")
-    setCategory(CATS[0]); setAuthor(me?.full_name || ""); setOldImage(null); pick(null)
+    setCategory(CATS[0]); setAuthor(me?.full_name || ""); setOldImage(null)
+    setOldVideo(null); setVideoFile(null); pick(null)
   }
 
   async function submit() {
@@ -219,6 +233,13 @@ export default function AdminPage() {
     try {
       let url = oldImage
       if (file) url = await uploadImage(token, await shrink(file))
+
+      let vurl = oldVideo
+      if (videoFile) {
+        setMsg("ভিডিও আপলোড হচ্ছে, অপেক্ষা করুন...")
+        vurl = await uploadVideo(token, videoFile)
+      }
+
       const data = {
         title: title.trim(),
         heading: heading.trim() || null,
@@ -226,6 +247,7 @@ export default function AdminPage() {
         category,
         author: author.trim() || me?.full_name || null,
         image_url: url,
+        video_url: vurl,
       }
       if (editId) await updatePost(token, editId, data)
       else await createPost(token, data)
@@ -244,6 +266,8 @@ export default function AdminPage() {
     setCategory(p.category || CATS[0])
     setAuthor(p.author || "")
     setOldImage(p.image_url)
+    setOldVideo(p.video_url || null)
+    setVideoFile(null)
     pick(null)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
@@ -324,8 +348,9 @@ export default function AdminPage() {
       </main>
     )
   }
-    /* ---------- ড্যাশবোর্ড ---------- */
-  const canDelete = (p: Post) => isAdmin || true
+
+  /* ---------- ড্যাশবোর্ড ---------- */
+  const canDelete = (_p: Post) => !!isAdmin || true
 
   return (
     <main className="min-h-screen bg-gray-50 p-4 pb-16">
@@ -371,6 +396,7 @@ export default function AdminPage() {
                 {CATS.map((c) => <option key={c}>{c}</option>)}
               </select>
               <input className={inp} placeholder="প্রতিবেদকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
+
               <label className="block">
                 <span className="text-sm text-gray-600">ছবি (গ্যালারি থেকে)</span>
                 <input className="block mt-1 text-sm" type="file" accept="image/*" onChange={(e) => pick(e.target.files?.[0] || null)} />
@@ -379,6 +405,23 @@ export default function AdminPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={preview || oldImage || ""} alt="" className="w-full max-h-60 object-cover rounded-xl" />
               )}
+
+              <label className="block">
+                <span className="text-sm text-gray-600">ভিডিও (সর্বোচ্চ {MAX_VIDEO_MB} MB)</span>
+                <input className="block mt-1 text-sm" type="file" accept="video/*" onChange={(e) => pickVideo(e.target.files?.[0] || null)} />
+              </label>
+              {videoFile && (
+                <p className="text-xs text-gray-600">
+                  {videoFile.name} ({(videoFile.size / 1048576).toFixed(1)} MB)
+                </p>
+              )}
+              {!videoFile && oldVideo && (
+                <div className="space-y-1">
+                  <video src={oldVideo} controls className="w-full max-h-60 rounded-xl" />
+                  <button type="button" onClick={() => setOldVideo(null)} className="text-sm text-red-600">ভিডিও সরান</button>
+                </div>
+              )}
+
               <button className={btn} onClick={submit} disabled={busy}>
                 {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "প্রকাশ করুন"}
               </button>
@@ -394,7 +437,10 @@ export default function AdminPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate">{p.title}</p>
-                    <p className="text-xs text-gray-500">{p.author} · {new Date(p.created_at).toLocaleDateString("bn-BD")}</p>
+                    <p className="text-xs text-gray-500">
+                      {p.author} · {new Date(p.created_at).toLocaleDateString("bn-BD")}
+                      {p.video_url ? " · 🎥" : ""}
+                    </p>
                     <div className="flex gap-4 mt-2 text-sm">
                       <button onClick={() => startEdit(p)} className="text-green-700">এডিট</button>
                       {canDelete(p) && (
