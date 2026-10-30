@@ -246,6 +246,9 @@ export default function AdminPage() {
             {mode === "login" ? "নতুন সাংবাদিক? নিবন্ধন করুন" : "আগে নিবন্ধন করেছেন? লগইন করুন"}
           </button>
 
+                    {mode === "login" && (
+            <a href="/reset" className="block text-center text-sm underline text-green-800">পাসওয়ার্ড ভুলে গেছেন?</a>
+          )}
           {msg && <p className="text-sm">{msg}</p>}
           <a href="/" className="block text-center text-sm underline">সাইটে ফিরুন</a>
         </div>
