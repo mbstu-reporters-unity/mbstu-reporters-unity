@@ -8,6 +8,7 @@ import {
   updateMyProfile,
 } from "../../lib/sb"
 import type { Post, PendingComment, Profile } from "../../lib/sb"
+import LeadershipManager from "./leadership-manager"
 
 const TOKEN_KEY = "mbstu_admin_token"
 const MAX_VIDEO_MB = 50
@@ -42,7 +43,7 @@ export default function AdminPage() {
   const [phone, setPhone] = useState("")
   const [paper, setPaper] = useState("")
 
-  const [tab, setTab] = useState<"posts" | "comments" | "reporters" | "profile">("posts")
+  const [tab, setTab] = useState<"posts" | "comments" | "reporters" | "profile" | "leaders">("posts")
   const [posts, setPosts] = useState<Post[]>([])
   const [pending, setPending] = useState<PendingComment[]>([])
   const [waiting, setWaiting] = useState<Profile[]>([])
@@ -350,7 +351,7 @@ export default function AdminPage() {
   }
 
   /* ---------- ড্যাশবোর্ড ---------- */
-  const canDelete = (_p: Post) => !!isAdmin || true
+  const canManage = (p: Post) => !!isAdmin || p.user_id === me.id
 
   return (
     <main className="min-h-screen bg-gray-50 p-4 pb-16">
@@ -363,7 +364,7 @@ export default function AdminPage() {
             )}
             <div>
               <h1 className="text-xl font-bold text-green-800">ড্যাশবোর্ড</h1>
-              <p className="text-xs text-gray-500">{me.full_name} · {isAdmin ? "অ্যাডমিন" : "সাংবাদিক"}</p>
+              <p className="text-xs text-gray-500">{me.full_name} · {isAdmin ? "অ্যাডমিন" : "মডারেটর"}</p>
             </div>
           </div>
           <div className="flex gap-3 text-sm">
@@ -372,13 +373,14 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button onClick={() => setTab("posts")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "posts" ? "bg-green-700 text-white" : "bg-white border"}`}>সংবাদ</button>
           <button onClick={() => setTab("profile")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "profile" ? "bg-green-700 text-white" : "bg-white border"}`}>প্রোফাইল</button>
           {isAdmin && (
             <>
               <button onClick={() => setTab("comments")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "comments" ? "bg-green-700 text-white" : "bg-white border"}`}>কমেন্ট ({pending.length})</button>
               <button onClick={() => setTab("reporters")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "reporters" ? "bg-green-700 text-white" : "bg-white border"}`}>সাংবাদিক ({waiting.length})</button>
+              <button onClick={() => setTab("leaders")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "leaders" ? "bg-green-700 text-white" : "bg-white border"}`}>নেতৃত্ব</button>
             </>
           )}
         </div>
@@ -441,12 +443,12 @@ export default function AdminPage() {
                       {p.author} · {new Date(p.created_at).toLocaleDateString("bn-BD")}
                       {p.video_url ? " · 🎥" : ""}
                     </p>
-                    <div className="flex gap-4 mt-2 text-sm">
-                      <button onClick={() => startEdit(p)} className="text-green-700">এডিট</button>
-                      {canDelete(p) && (
-                        <button onClick={() => act(() => deletePost(token, p.id), "সত্যিই মুছে ফেলবেন?")} className="text-red-600">ডিলিট</button>
-                      )}
-                    </div>
+                    {canManage(p) && (
+  <div className="flex gap-4 mt-2 text-sm">
+    <button onClick={() => startEdit(p)} className="text-green-700">এডিট</button>
+    <button onClick={() => act(() => deletePost(token, p.id), "সত্যিই মুছে ফেলবেন?")} className="text-red-600">ডিলিট</button>
+  </div>
+)}
                   </div>
                 </div>
               ))}
@@ -491,7 +493,11 @@ export default function AdminPage() {
             {pending.length === 0 && <p className="text-sm text-gray-500">অপেক্ষমাণ কোনো কমেন্ট নেই।</p>}
           </div>
         )}
+        {tab === "leaders" && isAdmin && (
+  <LeadershipManager token={token} members={active} shrink={shrink} />
+)}
 
+        {tab === "leaders" && isAdmin && (
         {tab === "reporters" && isAdmin && (
           <div className="space-y-5">
             <div className="space-y-3">
