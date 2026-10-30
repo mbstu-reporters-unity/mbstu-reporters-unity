@@ -59,18 +59,11 @@ export default function AdminPage() {
 
   const isAdmin = me?.role === "admin" && me.approved
 
-  function logout() {
-    try { 
-      localStorage.clear();
-      sessionStorage.clear();
-    } catch {}
-    setToken("")
-    setMe(null)
-    window.location.href = "/admin"
-  } {
+    function logout() {
     try { localStorage.removeItem(TOKEN_KEY) } catch {}
     setToken("")
     setMe(null)
+    setMsg("")
   }
 
   function fail(e: unknown) {
