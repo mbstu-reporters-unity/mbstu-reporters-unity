@@ -4,16 +4,9 @@ import { useState } from 'react'
 import { Lock, Menu, X } from 'lucide-react'
 import { navLinks } from '@/lib/data'
 import { Logo } from './logo'
-import { AdminDashboardModal } from './admin-dashboard-modal'
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [loginOpen, setLoginOpen] = useState(false)
-
-  const openLogin = () => {
-    setMenuOpen(false)
-    setLoginOpen(true)
-  }
 
   return (
     <>
@@ -37,14 +30,13 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={openLogin}
+            <a
+              href="/admin"
               className="hidden items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-[0_0_18px_rgba(4,106,56,0.55)] transition-all hover:bg-brand-dark hover:shadow-[0_0_26px_rgba(4,106,56,0.75)] sm:inline-flex"
             >
               <Lock className="size-4" aria-hidden="true" />
-              Admin Portal / লগইন
-            </button>
+              সাংবাদিক লগইন
+            </a>
             <button
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
@@ -78,21 +70,18 @@ export function SiteHeader() {
                 </li>
               ))}
               <li className="sm:col-span-2">
-                <button
-                  type="button"
-                  onClick={openLogin}
+                <a
+                  href="/admin"
                   className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white"
                 >
                   <Lock className="size-4" aria-hidden="true" />
-                  Admin Portal / লগইন
-                </button>
+                  সাংবাদিক লগইন / নিবন্ধন
+                </a>
               </li>
             </ul>
           </nav>
         )}
       </header>
-
-      <AdminDashboardModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </>
   )
 }
