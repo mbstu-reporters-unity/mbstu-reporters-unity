@@ -13,6 +13,7 @@ export type Post = {
   video_url: string | null
   user_id: string | null
   created_at: string
+  hidden?: boolean | null
 }
 export type PostInput = Omit<Post, "id" | "created_at" | "user_id">
 export type PublicComment = {
@@ -398,6 +399,44 @@ export async function removeLeader(token: string, id: string) {
     await fetch(`${SB_URL}/rest/v1/leaders?id=eq.${encodeURIComponent(id)}`, {
       method: "DELETE",
       headers: hdr(token),
+    })
+  )
+}
+
+/* ---------- হাইড করা সংবাদ নিয়ন্ত্রণ ---------- */
+
+export async function getVisiblePosts(limit = 50): Promise<Post[]> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/posts?select=*&hidden=eq.false&order=created_at.desc&limit=${limit}`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return []
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
+export async function getAllPosts(limit = 100): Promise<Post[]> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/posts?select=*&order=created_at.desc&limit=${limit}`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return []
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
+export async function setPostHidden(token: string, id: string, hidden: boolean) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/posts?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify({ hidden }),
     })
   )
 }
