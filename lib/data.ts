@@ -6,7 +6,7 @@ export const navLinks = [
   { label: 'General News', bn: 'সাধারণ সংবাদ', href: '#general-news' },
   { label: 'Club News', bn: 'ক্লাব নিউজ', href: '#club-news' },
   { label: 'Student Corner', bn: 'স্টুডেন্ট কর্নার', href: '#student-corner' },
-  { label: 'Notices', bn: 'নোটিশ', href: '#notices' },
+    { label: 'Notices', bn: 'নোটিশ', href: '/notices' },
   { label: 'Contact', bn: 'যোগাযোগ', href: '#contact' },
 ]
 
