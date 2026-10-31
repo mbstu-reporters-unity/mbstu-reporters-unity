@@ -1,6 +1,15 @@
 import { SB_URL, SB_KEY } from "./sb"
 
 export const MAX_LIVE_TICKER = 5
+export const DEFAULT_SPEED = 70
+
+// গতি: পিক্সেল প্রতি সেকেন্ড
+export const SPEEDS = [
+  { v: 40, t: "ধীর" },
+  { v: 70, t: "মাঝারি" },
+  { v: 110, t: "দ্রুত" },
+  { v: 160, t: "খুব দ্রুত" },
+]
 
 export type TickerLevel = "normal" | "urgent"
 
@@ -14,6 +23,9 @@ export type TickerItem = {
   sort_order: number
   expires_at: string | null
   author_name: string | null
+  text_color: string | null
+  bg_color: string | null
+  speed: number
   created_at: string
   updated_at: string
 }
