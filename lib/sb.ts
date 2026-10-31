@@ -14,6 +14,7 @@ export type Post = {
   user_id: string | null
   created_at: string
   hidden?: boolean | null
+  link_url?: string | null
 }
 export type PostInput = Omit<Post, "id" | "created_at" | "user_id">
 export type PublicComment = {
@@ -437,6 +438,57 @@ export async function setPostHidden(token: string, id: string, hidden: boolean) 
       method: "PATCH",
       headers: { ...hdr(token, true), Prefer: "return=minimal" },
       body: JSON.stringify({ hidden }),
+    })
+  )
+}
+
+/* ---------- ক্যাটাগরি ও হোম সেটিং ---------- */
+
+export async function getCategoryNames(): Promise<string[]> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/categories?select=name&order=sort_order.asc,created_at.asc`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return []
+    const rows: { name: string }[] = await res.json()
+    return rows.map((r) => r.name)
+  } catch {
+    return []
+  }
+}
+
+export async function addCategory(token: string, name: string) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/categories`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify({ name, sort_order: 100 }),
+    })
+  )
+}
+
+export async function getHomeLimit(): Promise<number> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/app_config?select=value&key=eq.home_news_limit`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return 12
+    const rows: { value: string }[] = await res.json()
+    const n = parseInt(rows[0]?.value || "12", 10)
+    return n > 0 ? n : 12
+  } catch {
+    return 12
+  }
+}
+
+export async function saveHomeLimit(token: string, n: number) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/app_config`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ key: "home_news_limit", value: String(n) }),
     })
   )
 }
