@@ -4,8 +4,10 @@ import { useEffect, useState } from "react"
 import { CalendarCheck, Globe2, Newspaper, Quote, Users } from "lucide-react"
 import { stats } from "@/lib/data"
 import { getLeaders, POSITIONS } from "@/lib/sb"
-import type { Leader } from "@/lib/sb"
+import { DEFAULT_STYLE, getGlobalStyle, styleFor } from "@/lib/photo-style"
+import type { LeaderWithStyle, PhotoStyle } from "@/lib/photo-style"
 import { SectionHeading } from "./section-heading"
+import { PhotoFrame } from "./photo-frame"
 
 const statIcons = {
   calendar: CalendarCheck,
@@ -18,10 +20,12 @@ const initials = (n: string) =>
   n.trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0)).join("").toUpperCase()
 
 export function LeadershipSection() {
-  const [leaders, setLeaders] = useState<Leader[]>([])
+  const [leaders, setLeaders] = useState<LeaderWithStyle[]>([])
+  const [globalStyle, setGlobalStyle] = useState<PhotoStyle>(DEFAULT_STYLE)
 
   useEffect(() => {
-    getLeaders().then((rows) => setLeaders(rows.filter((l) => l.is_visible)))
+    getLeaders().then((rows) => setLeaders((rows as LeaderWithStyle[]).filter((l) => l.is_visible)))
+    getGlobalStyle().then(setGlobalStyle)
   }, [])
 
   return (
@@ -37,35 +41,34 @@ export function LeadershipSection() {
         <div className="grid gap-6 lg:grid-cols-2">
           {leaders.map((leader) => {
             const pos = POSITIONS.find((p) => p.key === leader.position)
+            const ps = styleFor(leader, globalStyle)
             return (
               <article
                 key={leader.id}
-                className="relative overflow-hidden rounded-2xl border border-border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg sm:p-8"
+                className="relative rounded-2xl border border-border bg-white p-6 shadow-sm transition-shadow hover:shadow-lg sm:p-8"
               >
                 <Quote className="absolute right-6 top-6 size-14 text-brand/10" aria-hidden="true" />
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-4">
                   <div className="relative shrink-0">
-                    {leader.photo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={leader.photo_url}
-                        alt={leader.display_name}
-                        className="size-20 rounded-full object-cover ring-4 ring-brand-soft"
-                      />
-                    ) : (
-                      <div
-                        className="flex size-20 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-dark font-serif text-2xl font-bold text-white ring-4 ring-brand-soft"
-                        role="img"
-                        aria-label={`Portrait placeholder for ${leader.display_name}`}
-                      >
-                        {initials(leader.display_name)}
-                      </div>
-                    )}
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gold px-2 py-0.5 text-[10px] font-bold text-navy">
+                    <PhotoFrame
+                      src={leader.photo_url}
+                      alt={leader.display_name}
+                      style={ps}
+                      fallback={
+                        <div
+                          className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand to-brand-dark font-serif text-2xl font-bold text-white"
+                          role="img"
+                          aria-label={`Portrait placeholder for ${leader.display_name}`}
+                        >
+                          {initials(leader.display_name)}
+                        </div>
+                      }
+                    />
+                    <span className="absolute -bottom-2 left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-full bg-gold px-2 py-0.5 text-[10px] font-bold text-navy">
                       {pos?.bn}
                     </span>
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1 basis-40">
                     <p className="text-xs font-semibold uppercase tracking-wider text-crimson">{pos?.en}</p>
                     <h3 className="font-serif text-xl font-bold text-navy">{leader.display_name}</h3>
                     {leader.department && <p className="text-sm text-muted-foreground">{leader.department}</p>}
