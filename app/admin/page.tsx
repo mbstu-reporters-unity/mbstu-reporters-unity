@@ -11,6 +11,7 @@ import type { Post, PendingComment, Profile } from "../../lib/sb"
 import LeadershipManager from "./leadership-manager"
 import NoticeManager from "./notice-manager"
 import HeroManager from "./hero-manager"
+import TickerManager from "./ticker-manager"
 
 const TOKEN_KEY = "mbstu_admin_token"
 const MAX_VIDEO_MB = 50
@@ -45,7 +46,7 @@ export default function AdminPage() {
   const [phone, setPhone] = useState("")
   const [paper, setPaper] = useState("")
 
-  const [tab, setTab] = useState<"posts" | "comments" | "reporters" | "profile" | "leaders" | "notices" | "hero">("posts")
+  const [tab, setTab] = useState<"posts" | "comments" | "reporters" | "profile" | "leaders" | "notices" | "hero" | "ticker">("posts")
   const [posts, setPosts] = useState<Post[]>([])
   const [pending, setPending] = useState<PendingComment[]>([])
   const [waiting, setWaiting] = useState<Profile[]>([])
@@ -384,6 +385,7 @@ export default function AdminPage() {
           {isAdmin && (
             <>
               <button onClick={() => setTab("hero")} className={tabCls("hero")}>হিরো</button>
+              <button onClick={() => setTab("ticker")} className={tabCls("ticker")}>টিকার</button>
               <button onClick={() => setTab("comments")} className={tabCls("comments")}>কমেন্ট ({pending.length})</button>
               <button onClick={() => setTab("reporters")} className={tabCls("reporters")}>সাংবাদিক ({waiting.length})</button>
               <button onClick={() => setTab("leaders")} className={tabCls("leaders")}>নেতৃত্ব</button>
@@ -469,6 +471,9 @@ export default function AdminPage() {
 
         {tab === "hero" && isAdmin && (
           <HeroManager token={token} shrink={shrink} />
+        )}
+                {tab === "ticker" && isAdmin && (
+          <TickerManager token={token} author={me.full_name} />
         )}
 
         {tab === "profile" && (
