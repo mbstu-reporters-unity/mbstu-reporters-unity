@@ -1,33 +1,20 @@
 import { ArrowRight, CalendarDays, User, Video } from 'lucide-react'
-import { generalNews } from '@/lib/data'
-import { getPosts } from '@/lib/sb'
+import { getVisiblePosts } from '@/lib/sb'
 import { SectionHeading } from './section-heading'
 
 export async function GeneralNews() {
-  const posts = await getPosts(6)
-  const items = posts.length
-    ? posts.map((p) => ({
-        key: p.id,
-        href: `/post/${p.id}`,
-        image: p.image_url,
-        category: p.category || 'সংবাদ',
-        title: p.title,
-        excerpt: (p.heading || p.body || '').slice(0, 140),
-        date: new Date(p.created_at).toLocaleDateString('bn-BD'),
-        author: p.author || '',
-        video: !!p.video_url,
-      }))
-    : generalNews.map((n) => ({
-        key: n.title,
-        href: '#general-news',
-        image: n.image as string | null,
-        category: n.category,
-        title: n.title,
-        excerpt: n.excerpt,
-        date: n.date,
-        author: n.author,
-        video: false,
-      }))
+  const posts = await getVisiblePosts(100)
+  const items = posts.map((p) => ({
+    key: p.id,
+    href: `/post/${p.id}`,
+    image: p.image_url,
+    category: p.category || 'সংবাদ',
+    title: p.title,
+    excerpt: (p.heading || p.body || '').slice(0, 140),
+    date: new Date(p.created_at).toLocaleDateString('bn-BD'),
+    author: p.author || '',
+    video: !!p.video_url,
+  }))
 
   return (
     <section id="general-news" className="py-16 sm:py-20">
@@ -37,13 +24,13 @@ export async function GeneralNews() {
           title="সাধারণ ক্যাম্পাস সংবাদ"
           subtitle="Verified reports from across MBSTU."
         />
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
           {items.map((n) => (
             <article key={n.key} className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl">
-              <a href={n.href} className="relative block aspect-[16/10] overflow-hidden bg-gray-100">
+              <a href={n.href} className="relative block overflow-hidden bg-gray-100">
                 {n.image && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={n.image} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <img src={n.image} alt="" className="block h-auto w-full transition-transform duration-500 group-hover:scale-105" />
                 )}
                 <span className="absolute left-4 top-4 rounded bg-brand px-2.5 py-1 text-xs font-bold text-white">{n.category}</span>
                 {n.video && (
