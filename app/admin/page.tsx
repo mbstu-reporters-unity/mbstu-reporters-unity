@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import {
-  login, signUp, getMe, getAllPosts, setPostHidden, createPost, updatePost, deletePost, uploadImage, uploadVideo,
+  login, signUp, getMe, getAllPosts, setPostHidden,getCategoryNames, addCategory, getHomeLimit, saveHomeLimit, createPost, updatePost, deletePost, uploadImage, uploadVideo,
   getPendingComments, approveComment, deleteComment,
   getReporters, approveReporter, removeReporter,
   updateMyProfile,
@@ -15,7 +15,7 @@ import TickerManager from "./ticker-manager"
 
 const TOKEN_KEY = "mbstu_admin_token"
 const MAX_VIDEO_MB = 50
-const CATS = ["সাধারণ ক্যাম্পাস", "ক্লাব", "স্টুডেন্ট কর্নার", "একাডেমিক", "গবেষণা", "খেলাধুলা", "সংস্কৃতি", "পরিবেশ"]
+const CATS = ["ক্যাম্পাস সংবাদ", "ক্লাব", "স্টুডেন্ট কর্নার", "একাডেমিক", "গবেষণা", "খেলাধুলা", "সংস্কৃতি", "পরিবেশ"]
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
 
@@ -64,6 +64,9 @@ export default function AdminPage() {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [oldVideo, setOldVideo] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+    const [cats, setCats] = useState<string[]>(CATS)
+  const [linkUrl, setLinkUrl] = useState("")
+  const [homeLimit, setHomeLimit] = useState("12")
   const [msg, setMsg] = useState("")
 
   const [pName, setPName] = useState("")
@@ -106,6 +109,9 @@ export default function AdminPage() {
     try {
       const p = await getAllPosts(100)
       setPosts(p)
+            const names = await getCategoryNames()
+      if (names.length) setCats(names)
+      setHomeLimit(String(await getHomeLimit()))
       if (profile?.role === "admin" && profile.approved) {
         const [c, w, a] = await Promise.all([
           getPendingComments(t),
@@ -222,9 +228,26 @@ export default function AdminPage() {
   }
 
   function resetForm() {
+    setLinkUrl("")
     setEditId(null); setTitle(""); setHeading(""); setBody("")
     setCategory(CATS[0]); setAuthor(me?.full_name || ""); setOldImage(null)
     setOldVideo(null); setVideoFile(null); pick(null)
+  }
+    async function addCat() {
+    const name = window.prompt("নতুন ক্যাটাগরির নাম লিখুন")?.trim()
+    if (!name) return
+    try {
+      await addCategory(token, name)
+      setCats(await getCategoryNames())
+      setCategory(name)
+    } catch (e) { fail(e) }
+  }
+
+  async function saveLimit() {
+    try {
+      await saveHomeLimit(token, Number(homeLimit) || 12)
+      setMsg("✅ সংখ্যা সেভ হয়েছে")
+    } catch (e) { fail(e) }
   }
 
   async function submit() {
@@ -252,6 +275,7 @@ export default function AdminPage() {
         author: author.trim() || me?.full_name || null,
         image_url: url,
         video_url: vurl,
+        link_url: linkUrl.trim() || null,
       }
       if (editId) await updatePost(token, editId, data)
       else await createPost(token, data)
@@ -271,6 +295,7 @@ export default function AdminPage() {
     setAuthor(p.author || "")
     setOldImage(p.image_url)
     setOldVideo(p.video_url || null)
+    setLinkUrl(p.link_url || "")
     setVideoFile(null)
     pick(null)
     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -397,15 +422,26 @@ export default function AdminPage() {
 
         {tab === "posts" && (
           <>
+                        {isAdmin && (
+              <div className="bg-white rounded-2xl shadow p-4 space-y-2">
+                <h2 className="font-semibold">হোম পেজে নিউজ দেখানোর সংখ্যা</h2>
+                <div className="flex gap-2">
+                  <input className={inp} type="number" min={1} value={homeLimit} onChange={(e) => setHomeLimit(e.target.value)} />
+                  <button className="rounded-xl bg-green-700 px-5 text-white" onClick={saveLimit}>সেভ</button>
+                </div>
+              </div>
+            )}
             <div className="bg-white rounded-2xl shadow p-4 space-y-3">
               <h2 className="font-semibold">{editId ? "সংবাদ এডিট করুন" : "নতুন সংবাদ"}</h2>
               <input className={inp} placeholder="শিরোনাম (টাইটেল) *" value={title} onChange={(e) => setTitle(e.target.value)} />
               <input className={inp} placeholder="হেডিং (উপশিরোনাম)" value={heading} onChange={(e) => setHeading(e.target.value)} />
               <textarea className={inp} rows={6} placeholder="ক্যাপশন / বিস্তারিত লেখা *" value={body} onChange={(e) => setBody(e.target.value)} />
               <select className={inp} value={category} onChange={(e) => setCategory(e.target.value)}>
-                {CATS.map((c) => <option key={c}>{c}</option>)}
+                {(cats.includes(category) ? cats : [...cats, category]).map((c) => <option key={c}>{c}</option>)}
               </select>
+              <button type="button" onClick={addCat} className="text-sm text-green-700 underline">+ নতুন ক্যাটাগরি যোগ করুন</button>
               <input className={inp} placeholder="প্রতিবেদকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
+              <input className={inp} placeholder="লিংক (ঐচ্ছিক): /council অথবা https://..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
 
               <label className="block">
                 <span className="text-sm text-gray-600">ছবি (গ্যালারি থেকে)</span>
