@@ -3,7 +3,7 @@ export const navLinks = [
   { label: 'About', bn: 'পরিচিতি', href: '#about' },
   { label: 'Leadership', bn: 'নেতৃত্ব', href: '#leadership' },
   { label: 'Council', bn: 'কার্যনির্বাহী পরিষদ', href: '/council' },
-  { label: 'General News', bn: 'সাধারণ সংবাদ', href: '#general-news' },
+  { label: 'Campus News', bn: 'ক্যাম্পাস সংবাদ', href: '#general-news' },
   { label: 'Club News', bn: 'ক্লাব নিউজ', href: '#club-news' },
   { label: 'Student Corner', bn: 'স্টুডেন্ট কর্নার', href: '#student-corner' },
     { label: 'Notices', bn: 'নোটিশ', href: '/notices' },
