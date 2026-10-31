@@ -9,6 +9,7 @@ import {
 } from "../../lib/sb"
 import type { Post, PendingComment, Profile } from "../../lib/sb"
 import LeadershipManager from "./leadership-manager"
+import NoticeManager from "./notice-manager"
 
 const TOKEN_KEY = "mbstu_admin_token"
 const MAX_VIDEO_MB = 50
@@ -43,7 +44,7 @@ export default function AdminPage() {
   const [phone, setPhone] = useState("")
   const [paper, setPaper] = useState("")
 
-  const [tab, setTab] = useState<"posts" | "comments" | "reporters" | "profile" | "leaders">("posts")
+  const [tab, setTab] = useState<"posts" | "comments" | "reporters" | "profile" | "leaders" | "notices">("posts")
   const [posts, setPosts] = useState<Post[]>([])
   const [pending, setPending] = useState<PendingComment[]>([])
   const [waiting, setWaiting] = useState<Profile[]>([])
@@ -352,6 +353,8 @@ export default function AdminPage() {
 
   /* ---------- ড্যাশবোর্ড ---------- */
   const canManage = (p: Post) => !!isAdmin || p.user_id === me.id
+  const tabCls = (name: string) =>
+    `flex-1 rounded-xl py-2 text-sm ${tab === name ? "bg-green-700 text-white" : "bg-white border"}`
 
   return (
     <main className="min-h-screen bg-gray-50 p-4 pb-16">
@@ -374,13 +377,14 @@ export default function AdminPage() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => setTab("posts")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "posts" ? "bg-green-700 text-white" : "bg-white border"}`}>সংবাদ</button>
-          <button onClick={() => setTab("profile")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "profile" ? "bg-green-700 text-white" : "bg-white border"}`}>প্রোফাইল</button>
+          <button onClick={() => setTab("posts")} className={tabCls("posts")}>সংবাদ</button>
+          <button onClick={() => setTab("notices")} className={tabCls("notices")}>নোটিশ</button>
+          <button onClick={() => setTab("profile")} className={tabCls("profile")}>প্রোফাইল</button>
           {isAdmin && (
             <>
-              <button onClick={() => setTab("comments")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "comments" ? "bg-green-700 text-white" : "bg-white border"}`}>কমেন্ট ({pending.length})</button>
-              <button onClick={() => setTab("reporters")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "reporters" ? "bg-green-700 text-white" : "bg-white border"}`}>সাংবাদিক ({waiting.length})</button>
-              <button onClick={() => setTab("leaders")} className={`flex-1 rounded-xl py-2 text-sm ${tab === "leaders" ? "bg-green-700 text-white" : "bg-white border"}`}>নেতৃত্ব</button>
+              <button onClick={() => setTab("comments")} className={tabCls("comments")}>কমেন্ট ({pending.length})</button>
+              <button onClick={() => setTab("reporters")} className={tabCls("reporters")}>সাংবাদিক ({waiting.length})</button>
+              <button onClick={() => setTab("leaders")} className={tabCls("leaders")}>নেতৃত্ব</button>
             </>
           )}
         </div>
@@ -444,17 +448,21 @@ export default function AdminPage() {
                       {p.video_url ? " · 🎥" : ""}
                     </p>
                     {canManage(p) && (
-  <div className="flex gap-4 mt-2 text-sm">
-    <button onClick={() => startEdit(p)} className="text-green-700">এডিট</button>
-    <button onClick={() => act(() => deletePost(token, p.id), "সত্যিই মুছে ফেলবেন?")} className="text-red-600">ডিলিট</button>
-  </div>
-)}
+                      <div className="flex gap-4 mt-2 text-sm">
+                        <button onClick={() => startEdit(p)} className="text-green-700">এডিট</button>
+                        <button onClick={() => act(() => deletePost(token, p.id), "সত্যিই মুছে ফেলবেন?")} className="text-red-600">ডিলিট</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
               {posts.length === 0 && <p className="text-sm text-gray-500">এখনো কোনো সংবাদ নেই।</p>}
             </div>
           </>
+        )}
+
+        {tab === "notices" && (
+          <NoticeManager token={token} isAdmin={!!isAdmin} />
         )}
 
         {tab === "profile" && (
@@ -493,9 +501,11 @@ export default function AdminPage() {
             {pending.length === 0 && <p className="text-sm text-gray-500">অপেক্ষমাণ কোনো কমেন্ট নেই।</p>}
           </div>
         )}
+
         {tab === "leaders" && isAdmin && (
-  <LeadershipManager token={token} members={active} shrink={shrink} />
-)}
+          <LeadershipManager token={token} members={active} shrink={shrink} />
+        )}
+
         {tab === "reporters" && isAdmin && (
           <div className="space-y-5">
             <div className="space-y-3">
