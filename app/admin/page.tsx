@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import {
-  login, signUp, getMe, getPosts, createPost, updatePost, deletePost, uploadImage, uploadVideo,
+  login, signUp, getMe, getAllPosts, setPostHidden, createPost, updatePost, deletePost, uploadImage, uploadVideo,
   getPendingComments, approveComment, deleteComment,
   getReporters, approveReporter, removeReporter,
   updateMyProfile,
@@ -104,7 +104,7 @@ export default function AdminPage() {
 
   async function refresh(t: string, profile: Profile | null) {
     try {
-      const p = await getPosts(100)
+      const p = await getAllPosts(100)
       setPosts(p)
       if (profile?.role === "admin" && profile.approved) {
         const [c, w, a] = await Promise.all([
@@ -354,7 +354,7 @@ export default function AdminPage() {
   }
 
   /* ---------- ড্যাশবোর্ড ---------- */
-  const canManage = (p: Post) => !!isAdmin || p.user_id === me.id
+  const canManage = (p: Post) => me.role === "admin" || me.role === "moderator" || p.user_id === me.id
   const tabCls = (name: string) =>
     `flex-1 rounded-xl py-2 text-sm ${tab === name ? "bg-green-700 text-white" : "bg-white border"}`
 
@@ -446,7 +446,7 @@ export default function AdminPage() {
                     <img src={p.image_url} alt="" className="w-20 h-20 object-cover rounded-lg" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold truncate">{p.title}</p>
+                    <p className="font-semibold truncate">{p.hidden ? "🙈 " : ""}{p.title}</p>
                     <p className="text-xs text-gray-500">
                       {p.author} · {new Date(p.created_at).toLocaleDateString("bn-BD")}
                       {p.video_url ? " · 🎥" : ""}
@@ -454,6 +454,7 @@ export default function AdminPage() {
                     {canManage(p) && (
                       <div className="flex gap-4 mt-2 text-sm">
                         <button onClick={() => startEdit(p)} className="text-green-700">এডিট</button>
+                        <button onClick={() => act(() => setPostHidden(token, p.id, !p.hidden))} className="text-amber-600">{p.hidden ? "দেখান" : "হাইড"}</button>
                         <button onClick={() => act(() => deletePost(token, p.id), "সত্যিই মুছে ফেলবেন?")} className="text-red-600">ডিলিট</button>
                       </div>
                     )}
