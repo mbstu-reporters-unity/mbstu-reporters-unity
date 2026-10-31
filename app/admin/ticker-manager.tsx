@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from "react"
 import {
-  MAX_LIVE_TICKER, bn, getAllTicker, createTickerItem, updateTickerItem, deleteTickerItem,
+  MAX_LIVE_TICKER, SPEEDS, DEFAULT_SPEED, bn,
+  getAllTicker, createTickerItem, updateTickerItem, deleteTickerItem,
 } from "../../lib/ticker"
 import type { TickerItem, TickerInput, TickerLevel } from "../../lib/ticker"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const MAX_CHARS = 100
+const DEF_TEXT = "#1e293b"
+const DEF_BG = "#ffffff"
 
-const PRESETS = [
+const EXPIRY = [
   { v: "30", t: "৩০ মিনিট" },
   { v: "60", t: "১ ঘণ্টা" },
   { v: "120", t: "২ ঘণ্টা" },
@@ -32,14 +35,16 @@ export default function TickerManager({ token, author }: { token: string; author
   const [busy, setBusy] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
+  const [editId, setEditId] = useState<string | null>(null)
   const [title, setTitle] = useState("")
   const [url, setUrl] = useState("")
   const [level, setLevel] = useState<TickerLevel>("normal")
+  const [textColor, setTextColor] = useState<string | null>(null)
+  const [bgColor, setBgColor] = useState<string | null>(null)
+  const [speed, setSpeed] = useState(DEFAULT_SPEED)
   const [exp, setExp] = useState("60")
+  const [oldExpires, setOldExpires] = useState<string | null>(null)
   const [sound, setSound] = useState(false)
-
-  const [editId, setEditId] = useState<string | null>(null)
-  const [editText, setEditText] = useState("")
 
   const fail = (e: unknown) => setMsg("❌ " + (e instanceof Error ? e.message : "কিছু ভুল হয়েছে"))
 
@@ -49,13 +54,32 @@ export default function TickerManager({ token, author }: { token: string; author
 
   useEffect(() => { load() }, [token])
 
-  // লাইভ কাউন্টডাউন
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
 
-  async function publish() {
+  function resetForm() {
+    setEditId(null); setTitle(""); setUrl(""); setLevel("normal")
+    setTextColor(null); setBgColor(null); setSpeed(DEFAULT_SPEED)
+    setExp("60"); setOldExpires(null); setSound(false)
+  }
+
+  function preset(kind: TickerLevel) {
+    setLevel(kind)
+    if (kind === "urgent") { setTextColor("#ffffff"); setBgColor("#dc2626") }
+    else { setTextColor(null); setBgColor(null) }
+  }
+
+  function startEdit(s: TickerItem) {
+    setEditId(s.id); setTitle(s.title); setUrl(s.url || ""); setLevel(s.level)
+    setTextColor(s.text_color); setBgColor(s.bg_color); setSpeed(s.speed || DEFAULT_SPEED)
+    setSound(s.sound_alert); setExp("keep"); setOldExpires(s.expires_at)
+    setMsg("")
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  async function save() {
     const t = title.trim()
     if (!t) { setMsg("❌ শিরোনাম লিখুন"); return }
     const u = url.trim()
@@ -66,20 +90,32 @@ export default function TickerManager({ token, author }: { token: string; author
     setBusy(true)
     setMsg("")
     try {
-      // নতুন শিরোনাম সবার আগে বসবে
-      const first = list.length ? Math.min(...list.map((s) => s.sort_order)) - 10 : 0
-      await createTickerItem(token, {
+      let expires: string | null
+      if (exp === "keep") expires = oldExpires
+      else if (exp === "none") expires = null
+      else expires = new Date(Date.now() + Number(exp) * 60000).toISOString()
+
+      const base = {
         title: t,
         url: u || null,
         level,
+        text_color: textColor,
+        bg_color: bgColor,
+        speed,
         sound_alert: sound,
-        is_active: true,
-        sort_order: first,
-        expires_at: exp === "none" ? null : new Date(Date.now() + Number(exp) * 60000).toISOString(),
-        author_name: author || null,
-      })
-      setTitle(""); setUrl(""); setLevel("normal"); setSound(false)
-      setMsg("🚀 লাইভ হয়েছে")
+        expires_at: expires,
+      }
+
+      if (editId) {
+        await updateTickerItem(token, editId, base)
+        setMsg("✅ আপডেট হয়েছে")
+      } else {
+        // নতুন শিরোনাম সবার আগে বসবে
+        const first = list.length ? Math.min(...list.map((s) => s.sort_order)) - 10 : 0
+        await createTickerItem(token, { ...base, is_active: true, sort_order: first, author_name: author || null })
+        setMsg("🚀 লাইভ হয়েছে")
+      }
+      resetForm()
       await load()
     } catch (e) { fail(e) }
     setBusy(false)
@@ -95,7 +131,6 @@ export default function TickerManager({ token, author }: { token: string; author
   function toggle(s: TickerItem) {
     const expired = !!s.expires_at && new Date(s.expires_at).getTime() <= now
     if (!s.is_active && expired) {
-      // মেয়াদ-শেষ শিরোনাম আবার চালু করলে ১ ঘণ্টা বাড়ে
       patch(s.id, { is_active: true, expires_at: new Date(Date.now() + 3600 * 1000).toISOString() })
     } else {
       patch(s.id, { is_active: !s.is_active })
@@ -119,17 +154,11 @@ export default function TickerManager({ token, author }: { token: string; author
     } catch (e) { setList(prev); fail(e) }
   }
 
-  async function saveEdit() {
-    const t = editText.trim()
-    if (!editId || !t) return
-    await patch(editId, { title: t })
-    setEditId(null)
-  }
-
   async function remove(id: string) {
     if (!confirm("এই শিরোনাম মুছে ফেলবেন?")) return
     const prev = list
     setList((l) => l.filter((s) => s.id !== id))
+    if (editId === id) resetForm()
     try { await deleteTickerItem(token, id) } catch (e) { setList(prev); fail(e) }
   }
 
@@ -143,18 +172,20 @@ export default function TickerManager({ token, author }: { token: string; author
     return idx < MAX_LIVE_TICKER ? `লাইভ (${bn(idx + 1)})` : `অপেক্ষায় (${bn(MAX_LIVE_TICKER)}টির বেশি)`
   }
 
+  const speedName = (v: number) => SPEEDS.find((x) => x.v === v)?.t || `${bn(v)}`
+
   return (
     <div className="space-y-4">
       {msg && <p className="text-sm">{msg}</p>}
 
-      {/* দ্রুত প্রকাশ */}
+      {/* প্রকাশ / এডিট ফর্ম */}
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
-        <h2 className="font-semibold">⚡ দ্রুত ব্রেকিং প্রকাশ</h2>
+        <h2 className="font-semibold">{editId ? "✏️ শিরোনাম এডিট করুন" : "⚡ দ্রুত ব্রেকিং প্রকাশ"}</h2>
 
         <div>
           <input
             className={inp}
-            placeholder="ব্রেকিং শিরোনাম *"
+            placeholder="শিরোনাম *"
             maxLength={MAX_CHARS}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -164,29 +195,87 @@ export default function TickerManager({ token, author }: { token: string; author
           </p>
         </div>
 
-        <input className={inp} placeholder="লিংক (ঐচ্ছিক, https://... বা /notices)" value={url} onChange={(e) => setUrl(e.target.value)} />
+        <div>
+          <input
+            className={inp}
+            placeholder="মূল সংবাদের লিংক (ঐচ্ছিক)"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            সাইটে সংবাদটি খুলে ব্রাউজারের ঠিকানা কপি করে এখানে পেস্ট করুন। শিরোনামে চাপলে সেখানে যাবে।
+          </p>
+        </div>
 
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => setLevel("normal")}
+            onClick={() => preset("normal")}
             className={`flex-1 rounded-xl py-2 text-sm border ${level === "normal" ? "bg-slate-800 text-white" : "bg-white"}`}
           >
-            সাধারণ ব্রেকিং
+            সাধারণ
           </button>
           <button
             type="button"
-            onClick={() => setLevel("urgent")}
+            onClick={() => preset("urgent")}
             className={`flex-1 rounded-xl py-2 text-sm border ${level === "urgent" ? "bg-red-600 text-white border-red-600" : "bg-white"}`}
           >
             🚨 রেড অ্যালার্ট
           </button>
         </div>
 
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <span className="text-sm text-gray-600">লেখার রং</span>
+            <div className="flex items-center gap-2 mt-1">
+              <input
+                type="color"
+                aria-label="লেখার রং"
+                value={textColor || DEF_TEXT}
+                onChange={(e) => setTextColor(e.target.value)}
+                className="h-10 w-12 rounded border bg-white p-0.5"
+              />
+              <button type="button" onClick={() => setTextColor(null)} className="text-xs underline">
+                {textColor ? "ডিফল্ট" : "ডিফল্ট ✓"}
+              </button>
+            </div>
+          </div>
+          <div>
+            <span className="text-sm text-gray-600">পিছনের রং</span>
+            <div className="flex items-center gap-2 mt-1">
+              <input
+                type="color"
+                aria-label="পিছনের রং"
+                value={bgColor || DEF_BG}
+                onChange={(e) => setBgColor(e.target.value)}
+                className="h-10 w-12 rounded border bg-white p-0.5"
+              />
+              <button type="button" onClick={() => setBgColor(null)} className="text-xs underline">
+                {bgColor ? "ডিফল্ট" : "ডিফল্ট ✓"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="rounded-lg border px-3 py-2 text-sm font-medium"
+          style={{ background: bgColor || DEF_BG, color: textColor || DEF_TEXT }}
+        >
+          {title.trim() || "নমুনা শিরোনাম এভাবে দেখাবে"}
+        </div>
+
+        <label className="block">
+          <span className="text-sm text-gray-600">স্ক্রলের গতি</span>
+          <select className={inp} value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
+            {SPEEDS.map((p) => <option key={p.v} value={p.v}>{p.t}</option>)}
+          </select>
+        </label>
+
         <label className="block">
           <span className="text-sm text-gray-600">কতক্ষণ থাকবে</span>
           <select className={inp} value={exp} onChange={(e) => setExp(e.target.value)}>
-            {PRESETS.map((p) => <option key={p.v} value={p.v}>{p.t}</option>)}
+            {editId && <option value="keep">আগের মেয়াদ রাখুন{oldExpires ? "" : " (স্থায়ী)"}</option>}
+            {EXPIRY.map((p) => <option key={p.v} value={p.v}>{p.t}</option>)}
           </select>
         </label>
 
@@ -196,73 +285,64 @@ export default function TickerManager({ token, author }: { token: string; author
         </label>
 
         <button
-          onClick={publish}
+          onClick={save}
           disabled={busy}
           className="w-full bg-red-600 text-white rounded-xl py-3 font-bold disabled:opacity-50"
         >
-          {busy ? "অপেক্ষা করুন..." : "🚀 GO LIVE"}
+          {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "🚀 GO LIVE"}
         </button>
+        {editId && <button onClick={resetForm} className="w-full text-sm underline">বাতিল</button>}
       </div>
 
-      {/* সক্রিয় তালিকা */}
+      {/* তালিকা */}
       <div className="space-y-3">
         <h2 className="font-semibold">সব শিরোনাম ({bn(list.length)})</h2>
         <p className="text-xs text-gray-500">
-          সর্বোচ্চ {bn(MAX_LIVE_TICKER)}টি শিরোনাম টিকারে চলে। উপরেরটি আগে আসে, নতুনটি সবার আগে বসে। প্রতি ২০ সেকেন্ডে পাঠকের স্ক্রিনে আপডেট পৌঁছায়।
+          সর্বোচ্চ {bn(MAX_LIVE_TICKER)}টি শিরোনাম টিকারে একটার পর একটা চলে। উপরেরটি আগে আসে, নতুনটি সবার আগে বসে।
         </p>
 
         {list.map((s, i) => {
           const rem = s.expires_at ? left(s.expires_at, now) : null
           return (
             <div key={s.id} className="bg-white rounded-2xl shadow p-3 text-sm space-y-2">
-              {editId === s.id ? (
-                <div className="space-y-2">
-                  <input className={inp} maxLength={MAX_CHARS} value={editText} onChange={(e) => setEditText(e.target.value)} />
-                  <div className="flex gap-4">
-                    <button onClick={saveEdit} className="text-green-700">সেভ</button>
-                    <button onClick={() => setEditId(null)} className="text-gray-600">বাতিল</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-start gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold break-words">{s.title}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      <span className={`inline-block rounded px-1.5 py-0.5 mr-1 text-white ${s.level === "urgent" ? "bg-red-600" : "bg-slate-700"}`}>
-                        {s.level === "urgent" ? "রেড অ্যালার্ট" : "সাধারণ"}
-                      </span>
-                      {status(s)}
-                      {s.sound_alert ? " · 🔊" : ""}
-                      {s.url ? " · 🔗" : ""}
-                    </p>
-                    {s.expires_at ? (
-                      <p className="text-xs text-gray-500">
-                        {rem ? `⏱️ মেয়াদ শেষ হতে বাকি: ${rem}` : "⏱️ মেয়াদ শেষ হয়েছে"}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-gray-500">⏱️ মেয়াদ: নিজে বন্ধ না করা পর্যন্ত</p>
-                    )}
-                  </div>
-                  <button
-                    role="switch"
-                    aria-checked={s.is_active}
-                    aria-label="চালু/বন্ধ"
-                    onClick={() => toggle(s)}
-                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${s.is_active ? "bg-green-600" : "bg-gray-300"}`}
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p
+                    className="rounded border px-2 py-1 font-semibold break-words"
+                    style={{ background: s.bg_color || DEF_BG, color: s.text_color || DEF_TEXT }}
                   >
-                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${s.is_active ? "left-[22px]" : "left-0.5"}`} />
-                  </button>
+                    {s.title}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {status(s)} · গতি: {speedName(s.speed)}
+                    {s.sound_alert ? " · 🔊" : ""}
+                    {s.url ? " · 🔗" : ""}
+                  </p>
+                  {s.expires_at ? (
+                    <p className="text-xs text-gray-500">
+                      {rem ? `⏱️ মেয়াদ শেষ হতে বাকি: ${rem}` : "⏱️ মেয়াদ শেষ হয়েছে"}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500">⏱️ মেয়াদ: নিজে বন্ধ না করা পর্যন্ত</p>
+                  )}
                 </div>
-              )}
+                <button
+                  role="switch"
+                  aria-checked={s.is_active}
+                  aria-label="চালু/বন্ধ"
+                  onClick={() => toggle(s)}
+                  className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${s.is_active ? "bg-green-600" : "bg-gray-300"}`}
+                >
+                  <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${s.is_active ? "left-[22px]" : "left-0.5"}`} />
+                </button>
+              </div>
 
-              {editId !== s.id && (
-                <div className="flex flex-wrap gap-4">
-                  <button onClick={() => move(i, -1)} disabled={i === 0} className="disabled:opacity-30">⬆ উপরে</button>
-                  <button onClick={() => move(i, 1)} disabled={i === list.length - 1} className="disabled:opacity-30">⬇ নিচে</button>
-                  <button onClick={() => { setEditId(s.id); setEditText(s.title) }} className="text-green-700">✏️ এডিট</button>
-                  <button onClick={() => remove(s.id)} className="text-red-600">মুছুন</button>
-                </div>
-              )}
+              <div className="flex flex-wrap gap-4">
+                <button onClick={() => move(i, -1)} disabled={i === 0} className="disabled:opacity-30">⬆ উপরে</button>
+                <button onClick={() => move(i, 1)} disabled={i === list.length - 1} className="disabled:opacity-30">⬇ নিচে</button>
+                <button onClick={() => startEdit(s)} className="text-green-700">✏️ এডিট</button>
+                <button onClick={() => remove(s.id)} className="text-red-600">মুছুন</button>
+              </div>
             </div>
           )
         })}
