@@ -1,8 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { getLeaders, addLeader, updateLeader, removeLeader, uploadImage, POSITIONS } from "../../lib/sb"
-import type { Leader, Profile } from "../../lib/sb"
+import type { Profile } from "../../lib/sb"
+import { DEFAULT_STYLE, getGlobalStyle } from "@/lib/photo-style"
+import type { LeaderWithStyle, PhotoStyle } from "@/lib/photo-style"
+import { PhotoFrame } from "@/components/portal/photo-frame"
+import { GlobalStylePanel, StyleControls } from "./photo-style-editor"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
@@ -16,7 +20,7 @@ export default function LeadershipManager({
   members: Profile[]
   shrink: (f: File) => Promise<Blob>
 }) {
-  const [list, setList] = useState<Leader[]>([])
+  const [list, setList] = useState<LeaderWithStyle[]>([])
   const [editId, setEditId] = useState<string | null>(null)
   const [profileId, setProfileId] = useState("")
   const [position, setPosition] = useState<string>(POSITIONS[0].key)
@@ -29,18 +33,30 @@ export default function LeadershipManager({
   const [file, setFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState("")
+  const [globalStyle, setGlobalStyle] = useState<PhotoStyle>(DEFAULT_STYLE)
+  const [custom, setCustom] = useState(false)
+  const [style, setStyle] = useState<PhotoStyle>(DEFAULT_STYLE)
 
   async function load() {
-    setList(await getLeaders(token))
+    setList((await getLeaders(token)) as LeaderWithStyle[])
   }
   useEffect(() => { load() }, [token])
+  useEffect(() => {
+    getGlobalStyle().then((g) => {
+      setGlobalStyle(g)
+      setStyle(g)
+    })
+  }, [])
 
   const available = members.filter((m) => !list.some((l) => l.profile_id === m.id))
   const label = (k: string) => POSITIONS.find((p) => p.key === k)?.bn || k
+  const filePreview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file])
+  const previewSrc = filePreview || oldPhoto
 
   function reset() {
     setEditId(null); setProfileId(""); setPosition(POSITIONS[0].key); setName("")
     setDept(""); setMessage(""); setOrder(0); setVisible(true); setOldPhoto(null); setFile(null)
+    setCustom(false); setStyle(globalStyle)
   }
 
   function pickMember(id: string) {
@@ -53,10 +69,12 @@ export default function LeadershipManager({
     }
   }
 
-  function startEdit(l: Leader) {
+  function startEdit(l: LeaderWithStyle) {
     setEditId(l.id); setProfileId(l.profile_id); setPosition(l.position)
     setName(l.display_name); setDept(l.department || ""); setMessage(l.message || "")
     setOrder(l.sort_order); setVisible(l.is_visible); setOldPhoto(l.photo_url); setFile(null)
+    setCustom(!!l.photo_style)
+    setStyle(l.photo_style ? { ...globalStyle, ...l.photo_style } : globalStyle)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -79,6 +97,7 @@ export default function LeadershipManager({
         message: message.trim() || null,
         photo_url: photo,
         is_visible: visible,
+        photo_style: custom ? style : null,
       }
       if (editId) await updateLeader(token, editId, data)
       else await addLeader(token, data)
@@ -100,6 +119,16 @@ export default function LeadershipManager({
 
   return (
     <div className="space-y-4">
+      <GlobalStylePanel
+        token={token}
+        previewSrc={list[0]?.photo_url}
+        previewName={list[0]?.display_name}
+        onSaved={(s) => {
+          setGlobalStyle(s)
+          if (!custom) setStyle(s)
+        }}
+      />
+
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
         <h2 className="font-semibold">{editId ? "নেতৃত্বের তথ্য এডিট" : "নেতৃত্বে যোগ করুন"}</h2>
 
@@ -133,10 +162,34 @@ export default function LeadershipManager({
           <span className="text-sm text-gray-600">ছবি (ফাঁকা রাখলে প্রোফাইলের ছবি)</span>
           <input className="block mt-1 text-sm" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
         </label>
-        {(file || oldPhoto) && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={file ? URL.createObjectURL(file) : oldPhoto || ""} alt="" className="w-24 h-24 rounded-full object-cover mx-auto" />
-        )}
+
+        <div className="space-y-3 rounded-xl border p-3">
+          <p className="text-sm font-semibold">ছবির স্টাইল</p>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={custom}
+              onChange={(e) => {
+                setCustom(e.target.checked)
+                if (e.target.checked) setStyle(globalStyle)
+              }}
+            />
+            <span>এই সদস্যের জন্য আলাদা স্টাইল (বন্ধ থাকলে সবার ডিফল্ট স্টাইল প্রযোজ্য)</span>
+          </label>
+          {custom ? (
+            <StyleControls value={style} onChange={setStyle} previewSrc={previewSrc} previewName={name} />
+          ) : (
+            <div className="flex justify-center py-4">
+              <PhotoFrame
+                src={previewSrc}
+                alt={name || "preview"}
+                style={globalStyle}
+                fallback={<div className="flex h-full w-full items-center justify-center bg-green-700 text-xl font-bold text-white">ছবি</div>}
+              />
+            </div>
+          )}
+        </div>
 
         <button className={btn} onClick={save} disabled={busy}>
           {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "যোগ করুন"}
@@ -152,11 +205,15 @@ export default function LeadershipManager({
             <div className="flex items-center gap-3">
               {l.photo_url && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={l.photo_url} alt="" className="w-12 h-12 rounded-full object-cover" />
+                <img src={l.photo_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
               )}
               <div className="min-w-0">
                 <p className="font-semibold truncate">{l.display_name}</p>
-                <p className="text-gray-500">{label(l.position)}{!l.is_visible && " · লুকানো"}</p>
+                <p className="text-gray-500">
+                  {label(l.position)}
+                  {!l.is_visible && " · লুকানো"}
+                  {l.photo_style && " · আলাদা স্টাইল"}
+                </p>
               </div>
             </div>
             <div className="flex gap-4">
