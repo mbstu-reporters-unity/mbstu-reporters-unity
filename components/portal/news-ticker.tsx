@@ -1,43 +1,99 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Volume2, VolumeX } from 'lucide-react'
-import { getLiveTicker, bn } from '@/lib/ticker'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
+import { Radio, Volume2, VolumeX } from 'lucide-react'
+import { getLiveTicker, DEFAULT_SPEED } from '@/lib/ticker'
 import type { TickerItem } from '@/lib/ticker'
 
-const INTERVAL = 6000
 const POLL = 20000
 
-const CSS = `
-@keyframes tkUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes tkDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes tkGlow{0%,100%{box-shadow:0 0 0 0 rgba(225,29,72,0)}50%{box-shadow:0 0 18px 2px rgba(225,29,72,.45)}}
-.tk-up{animation:tkUp .45s cubic-bezier(.22,1,.36,1)}
-.tk-down{animation:tkDown .45s cubic-bezier(.22,1,.36,1)}
-.tk-glow{animation:tkGlow 2s ease-in-out infinite}
-@media (prefers-reduced-motion:reduce){.tk-up,.tk-down,.tk-glow{animation:none}}
-`
+// দুই প্রান্তে লেখা ফেড ইন / ফেড আউট
+const MASK = 'linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)'
+
+const CSS = `@keyframes tkScroll{from{transform:translateX(var(--from))}to{transform:translateX(var(--to))}}`
 
 const alive = (t: TickerItem) => !t.expires_at || new Date(t.expires_at).getTime() > Date.now()
 
-function ago(iso: string) {
-  const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
-  if (m < 1) return 'এইমাত্র'
-  if (m < 60) return `${bn(m)} মিনিট আগে`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${bn(h)} ঘণ্টা আগে`
-  return `${bn(Math.floor(h / 24))} দিন আগে`
-}
+function Slide({ item, paused, onEnd }: { item: TickerItem; paused: boolean; onEnd: () => void }) {
+  const boxRef = useRef<HTMLDivElement>(null)
+  const textRef = useRef<HTMLDivElement>(null)
+  const endRef = useRef(onEnd)
+  endRef.current = onEnd
+  const [dim, setDim] = useState<{ cw: number; tw: number } | null>(null)
+  const [still, setStill] = useState(false)
 
-function Radar() {
+  // মাপ নিয়ে তবেই স্ক্রল শুরু হয়
+  useLayoutEffect(() => {
+    setStill(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    setDim({
+      cw: boxRef.current?.clientWidth || 0,
+      tw: textRef.current?.offsetWidth || 0,
+    })
+  }, [])
+
+  // যারা অ্যানিমেশন বন্ধ রাখেন, তাদের জন্য স্থির লেখা, ৬ সেকেন্ড পরপর বদলায়
+  useEffect(() => {
+    if (!still) return
+    const id = setTimeout(() => endRef.current(), 6000)
+    return () => clearTimeout(id)
+  }, [still])
+
+  const external = !!item.url && /^https?:\/\//i.test(item.url)
+  const speed = Math.max(20, item.speed || DEFAULT_SPEED)
+  const dur = dim ? (dim.cw + dim.tw) / speed : 0
+
+  const vars = {
+    '--from': `${dim?.cw ?? 0}px`,
+    '--to': `-${dim?.tw ?? 0}px`,
+  } as CSSProperties
+
+  const moving: CSSProperties = still
+    ? { position: 'relative', paddingLeft: 12, maxWidth: '100%', overflow: 'hidden' }
+    : {
+        ...vars,
+        visibility: dim ? 'visible' : 'hidden',
+        animationName: dim ? 'tkScroll' : 'none',
+        animationDuration: `${dur}s`,
+        animationTimingFunction: 'linear',
+        animationDelay: '0.3s',
+        animationFillMode: 'both',
+        animationPlayState: paused ? 'paused' : 'running',
+      }
+
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" className="shrink-0">
-      <circle cx="8" cy="8" r="3" fill="currentColor" />
-      <circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <animate attributeName="r" from="3" to="8" dur="1.6s" repeatCount="indefinite" />
-        <animate attributeName="opacity" from="0.8" to="0" dur="1.6s" repeatCount="indefinite" />
-      </circle>
-    </svg>
+    <div
+      ref={boxRef}
+      className="relative h-10 overflow-hidden"
+      style={{ WebkitMaskImage: MASK, maskImage: MASK }}
+    >
+      <div
+        ref={textRef}
+        onAnimationEnd={onEnd}
+        className="absolute left-0 top-0 flex h-full items-center whitespace-nowrap text-sm font-medium"
+        style={moving}
+      >
+        <span
+          className="mr-3 size-1.5 shrink-0 rounded-full bg-crimson"
+          style={item.text_color ? { backgroundColor: item.text_color } : undefined}
+          aria-hidden="true"
+        />
+        {item.url ? (
+          <a
+            href={item.url}
+            {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            className="hover:underline focus-visible:underline focus-visible:outline-none"
+          >
+            {item.title}
+          </a>
+        ) : (
+          <>
+            <span className="mr-2 text-xs opacity-70">[সংক্ষেপ]</span>
+            <span>{item.title}</span>
+          </>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -45,7 +101,7 @@ export function NewsTicker() {
   const [items, setItems] = useState<TickerItem[]>([])
   const [loaded, setLoaded] = useState(false)
   const [index, setIndex] = useState(0)
-  const [dir, setDir] = useState<'up' | 'down'>('up')
+  const [cycle, setCycle] = useState(0)
   const [paused, setPaused] = useState(false)
   const [soundOn, setSoundOn] = useState(false)
   const [announce, setAnnounce] = useState('')
@@ -91,8 +147,8 @@ export function NewsTicker() {
       setItems(rows)
       setLoaded(true)
       if (fresh.length > 0) {
-        setDir('up')
         setIndex(Math.max(0, rows.findIndex((r) => r.id === fresh[0].id)))
+        setCycle((c) => c + 1)
         setAnnounce(fresh[0].title)
         if (soundRef.current && fresh.some((f) => f.sound_alert)) ping()
       }
@@ -110,21 +166,11 @@ export function NewsTicker() {
     }
   }, [ping])
 
-  // ৬ সেকেন্ডে অটো-পরিবর্তন, হাত রাখলে থামে
-  useEffect(() => {
-    if (paused || total < 2) return
-    const id = setTimeout(() => {
-      setDir('up')
-      setIndex((i) => (i + 1) % total)
-    }, INTERVAL)
-    return () => clearTimeout(id)
-  }, [paused, total, index])
-
-  function go(d: 1 | -1) {
-    if (total < 2) return
-    setDir(d === 1 ? 'up' : 'down')
-    setIndex((i) => (((i % total) + d + total) % total))
-  }
+  // একটার স্ক্রল শেষ হলে পরেরটা
+  const next = useCallback(() => {
+    setIndex((i) => i + 1)
+    setCycle((c) => c + 1)
+  }, [])
 
   function toggleSound() {
     if (!soundOn) {
@@ -150,97 +196,48 @@ export function NewsTicker() {
   }
   function onTouchEnd() {
     if (touchTimer.current) clearTimeout(touchTimer.current)
-    touchTimer.current = setTimeout(() => setPaused(false), 5000)
+    touchTimer.current = setTimeout(() => setPaused(false), 2000)
   }
 
-  // ডেটাবেসে কোনো লাইভ শিরোনাম না থাকলে বার দেখাবে না
+  // কোনো লাইভ শিরোনাম না থাকলে বার দেখাবে না
   if (!loaded || total === 0) return null
 
   const cur = list[idx]
-  const urgent = cur.level === 'urgent'
-  const external = !!cur.url && /^https?:\/\//i.test(cur.url)
-  const ctrl = 'flex h-11 w-11 items-center justify-center transition-colors hover:bg-white/10 focus-visible:bg-white/10 focus-visible:outline-none'
 
   return (
-    <section
-      role="region"
-      aria-label="ব্রেকিং নিউজ"
-      className={
-        urgent
-          ? 'tk-glow relative z-20 border-b-2 border-rose-600 bg-rose-950/95 text-rose-50'
-          : 'relative z-20 border-b border-slate-700 bg-slate-900 text-slate-100'
-      }
-    >
+    <div className="border-b border-border bg-white" role="region" aria-label="সর্বশেষ সংবাদ">
       <style>{CSS}</style>
-      <div
-        className="mx-auto flex max-w-7xl items-stretch"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        onFocus={() => setPaused(true)}
-        onBlur={() => setPaused(false)}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-      >
-        <div className="flex shrink-0 items-center gap-2 bg-red-600 px-3 text-xs font-bold text-white sm:px-4 sm:text-sm">
-          <Radar />
-          <span>{urgent ? '🚨 জরুরি' : 'ব্রেকিং'}</span>
+      <div className="mx-auto flex max-w-7xl items-stretch">
+        <div className="relative z-10 flex shrink-0 items-center gap-2 bg-crimson px-3 py-2.5 text-xs font-bold text-white sm:px-4 sm:text-sm">
+          <Radio className="size-4 animate-pulse" aria-hidden="true" />
+          <span>
+            সর্বশেষ <span className="hidden sm:inline">/ LIVE UPDATES</span>
+          </span>
         </div>
 
-        <div className="relative min-w-0 flex-1 overflow-hidden">
-          <div
-            key={cur.id}
-            className={`${dir === 'up' ? 'tk-up' : 'tk-down'} flex h-11 items-center gap-2 px-3 sm:px-4`}
-          >
-            {cur.url ? (
-              <a
-                href={cur.url}
-                {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                className="min-w-0 truncate text-sm font-medium leading-7 hover:underline focus-visible:underline focus-visible:outline-none sm:text-base"
-              >
-                {cur.title}
-              </a>
-            ) : (
-              <>
-                <span className="shrink-0 rounded border border-current px-1.5 text-xs leading-5 opacity-80">[সংক্ষেপ]</span>
-                <span className="min-w-0 truncate text-sm font-medium leading-7 sm:text-base">{cur.title}</span>
-              </>
-            )}
-            <span className="hidden shrink-0 text-xs opacity-70 md:inline">{ago(cur.created_at)}</span>
-          </div>
+        <div
+          className="min-w-0 flex-1 text-navy transition-colors duration-500"
+          style={{ backgroundColor: cur.bg_color || undefined, color: cur.text_color || undefined }}
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          <Slide key={`${cur.id}-${cur.updated_at}-${cycle}`} item={cur} paused={paused} onEnd={next} />
         </div>
 
-        <div className="flex shrink-0 items-center">
-          {total > 1 && (
-            <span
-              className="px-1 text-xs tabular-nums opacity-80 sm:px-2"
-              aria-label={`${bn(total)}টির মধ্যে ${bn(idx + 1)} নম্বর`}
-            >
-              {bn(idx + 1)}/{bn(total)}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={toggleSound}
-            aria-pressed={soundOn}
-            aria-label={soundOn ? 'অ্যালার্ট শব্দ বন্ধ করুন' : 'অ্যালার্ট শব্দ চালু করুন'}
-            className={`${ctrl} hidden sm:flex`}
-          >
-            {soundOn ? <Volume2 className="size-4" aria-hidden="true" /> : <VolumeX className="size-4" aria-hidden="true" />}
-          </button>
-          {total > 1 && (
-            <>
-              <button type="button" onClick={() => go(-1)} aria-label="আগের শিরোনাম" className={ctrl}>
-                <ChevronLeft className="size-5" aria-hidden="true" />
-              </button>
-              <button type="button" onClick={() => go(1)} aria-label="পরের শিরোনাম" className={ctrl}>
-                <ChevronRight className="size-5" aria-hidden="true" />
-              </button>
-            </>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={toggleSound}
+          aria-pressed={soundOn}
+          aria-label={soundOn ? 'অ্যালার্ট শব্দ বন্ধ করুন' : 'অ্যালার্ট শব্দ চালু করুন'}
+          className="hidden h-10 w-10 shrink-0 items-center justify-center text-navy/60 hover:text-navy sm:flex"
+        >
+          {soundOn ? <Volume2 className="size-4" aria-hidden="true" /> : <VolumeX className="size-4" aria-hidden="true" />}
+        </button>
       </div>
 
       <div className="sr-only" role="status" aria-live="polite">{announce}</div>
-    </section>
+    </div>
   )
 }
