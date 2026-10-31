@@ -1,6 +1,7 @@
 import { ArrowRight, CalendarDays, User, Video } from 'lucide-react'
 import { getVisiblePosts, getHomeLimit } from '@/lib/sb'
 import { SectionHeading } from './section-heading'
+import { ReactionBar } from './reaction-bar'
 
 export async function GeneralNews() {
   const limit = await getHomeLimit()
@@ -58,6 +59,7 @@ export async function GeneralNews() {
                   <a href={n.href} {...ext} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand">
                     বিস্তারিত <ArrowRight className="size-4" aria-hidden="true" />
                   </a>
+                  <ReactionBar postId={n.key} title={n.title} />
                 </div>
               </article>
             )
