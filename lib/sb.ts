@@ -39,6 +39,7 @@ export type Profile = {
   approved: boolean
   newspaper_name?: string | null
   avatar_url?: string | null
+  director_visible?: boolean | null
   created_at: string
 }
 export type SignupInfo = {
@@ -169,6 +170,17 @@ export async function updateMyProfile(
   )
 }
 
+/* ---------- ডিরেক্টর প্যানেলে দৃশ্যমানতা (শুধু অ্যাডমিন) ---------- */
+
+export async function setDirectorVisible(token: string, id: string, visible: boolean) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify({ director_visible: visible }),
+    })
+  )
+}
 /* ---------- সংবাদ পোস্ট ও এডিট ---------- */
 
 export async function getPosts(limit = 50): Promise<Post[]> {
@@ -441,7 +453,6 @@ export async function setPostHidden(token: string, id: string, hidden: boolean) 
     })
   )
 }
-
 /* ---------- ক্যাটাগরি ও হোম সেটিং ---------- */
 
 export async function getCategoryNames(): Promise<string[]> {
@@ -468,8 +479,7 @@ export async function addCategory(token: string, name: string) {
   )
 }
 
-export async function getHomeLimit(): Promise<number> {
-  /* ---------- ক্যাটাগরি ব্যবস্থাপনা (শুধু অ্যাডমিন) ---------- */
+/* ---------- ক্যাটাগরি ব্যবস্থাপনা (শুধু অ্যাডমিন) ---------- */
 
 export type CategoryRow = {
   name: string
@@ -514,6 +524,8 @@ export async function deleteCategory(token: string, name: string) {
     })
   )
 }
+
+export async function getHomeLimit(): Promise<number> {
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/app_config?select=value&key=eq.home_news_limit`,
