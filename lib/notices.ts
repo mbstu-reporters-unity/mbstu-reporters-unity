@@ -216,3 +216,19 @@ export function timeAgo(iso: string) {
 export function isImageType(type: string | null) {
   return !!type && type.startsWith("image/")
 }
+
+/* নতুন নোটিশ তৈরি করে id ফেরত দেয় (ছবি জোড়ার জন্য) */
+export async function createNoticeReturningId(
+  token: string,
+  data: NoticeInput
+): Promise<string | null> {
+  const res = await ok(
+    await fetch(`${SB_URL}/rest/v1/board_notices?select=id`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "return=representation" },
+      body: JSON.stringify(data),
+    })
+  )
+  const rows: { id: string }[] = await res.json()
+  return rows[0]?.id ?? null
+}
