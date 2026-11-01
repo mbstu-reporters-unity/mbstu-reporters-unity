@@ -11,10 +11,10 @@ export function SiteFooter() {
         <div className="lg:col-span-2">
           <Logo inverted />
           <p className="mt-5 max-w-md text-pretty text-sm leading-relaxed">
-            {"MBSTU Reporters' Unity is the organisation of campus journalists at Mawlana Bhashani Science and Technology University, dedicated to truthful, objective and responsible reporting."}
+            {"MBSTU Reporters' Unity (MBSTURU), formally Mawlana Bhashani Science and Technology University Reporters' Unity, is the organisation of campus journalists at Mawlana Bhashani Science and Technology University, Santosh, Tangail, dedicated to truthful, objective and responsible reporting."}
           </p>
           <p className="mt-3 max-w-md text-sm leading-relaxed">
-            মাভাবিপ্রবি রিপোর্টার্স ইউনিটি — সত্য, বস্তুনিষ্ঠ ও দায়িত্বশীল ক্যাম্পাস সাংবাদিকতার প্রতিশ্রুতি।
+            মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয় রিপোর্টার্স ইউনিটি (মাভাবিপ্রবি রিপোর্টার্স ইউনিটি) — সত্য, বস্তুনিষ্ঠ ও দায়িত্বশীল ক্যাম্পাস সাংবাদিকতার প্রতিশ্রুতি।
           </p>
           <div className="mt-6">
             <SocialLinks />
@@ -58,7 +58,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-white/10">
         <p className="mx-auto max-w-7xl px-4 py-5 text-center text-xs text-white/55">
-          {"© 2026 MBSTU Reporters' Unity. All Rights Reserved."}
+          {"© 2026 MBSTU Reporters' Unity (MBSTURU) | মাভাবিপ্রবি রিপোর্টার্স ইউনিটি. All Rights Reserved."}
         </p>
       </div>
     </footer>
