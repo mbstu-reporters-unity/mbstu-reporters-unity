@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react"
 import {
-  login, signUp, getMe, getAllPosts, setPostHidden, getCategoryNames, addCategory, getHomeLimit, saveHomeLimit, createPost, updatePost, deletePost, uploadImage, uploadVideo,
+  login, signUp, getMe, getAllPosts, setPostHidden, getCategoryNames, addCategory, getHomeLimit, saveHomeLimit, updatePost, deletePost, uploadImage, uploadVideo,
   getPendingComments, approveComment, deleteComment,
   getReporters, approveReporter, removeReporter,
   updateMyProfile,
+  createPostReturningId, addImages, removeImage, removeAllImages, getImages,
 } from "../../lib/sb"
-import type { Post, PendingComment, Profile } from "../../lib/sb"
+import type { Post, PendingComment, Profile, ImageRow } from "../../lib/sb"
 import LeadershipManager from "./leadership-manager"
 import NoticeManager from "./notice-manager"
 import HeroManager from "./hero-manager"
@@ -16,6 +17,7 @@ import StudentManager from "./student-manager"
 import SectionLimits from "./section-limits"
 import DirectorManager from "./director-manager"
 import CategoryManager from "./category-manager"
+import MultiImagePicker from "../../components/portal/multi-image-picker"
 
 const TOKEN_KEY = "mbstu_admin_token"
 const MAX_VIDEO_MB = 50
@@ -67,8 +69,9 @@ export default function AdminPage() {
   const [category, setCategory] = useState(CATS[0])
   const [author, setAuthor] = useState("")
   const [oldImage, setOldImage] = useState<string | null>(null)
-  const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
+  const [existingImgs, setExistingImgs] = useState<ImageRow[]>([])
+  const [removedIds, setRemovedIds] = useState<string[]>([])
+  const [newFiles, setNewFiles] = useState<File[]>([])
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [oldVideo, setOldVideo] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -220,11 +223,6 @@ export default function AdminPage() {
     setBusy(false)
   }
 
-  function pick(f: File | null) {
-    setFile(f)
-    setPreview(f ? URL.createObjectURL(f) : null)
-  }
-
   function pickVideo(f: File | null) {
     if (f && f.size > MAX_VIDEO_MB * 1024 * 1024) {
       setMsg(`❌ ভিডিও ${MAX_VIDEO_MB} MB-এর বেশি হতে পারবে না (আপনারটি ${(f.size / 1048576).toFixed(1)} MB)`)
@@ -239,7 +237,8 @@ export default function AdminPage() {
     setLinkUrl("")
     setEditId(null); setTitle(""); setHeading(""); setBody("")
     setCategory(CATS[0]); setAuthor(me?.full_name || ""); setOldImage(null)
-    setOldVideo(null); setVideoFile(null); pick(null)
+    setOldVideo(null); setVideoFile(null)
+    setExistingImgs([]); setRemovedIds([]); setNewFiles([])
   }
 
   async function addCat() {
@@ -267,8 +266,13 @@ export default function AdminPage() {
     setBusy(true)
     setMsg("")
     try {
-      let url = oldImage
-      if (file) url = await uploadImage(token, await shrink(file))
+      const remaining = existingImgs.filter((i) => !removedIds.includes(i.id))
+
+      const newUrls: string[] = []
+      for (let i = 0; i < newFiles.length; i++) {
+        setMsg(`ছবি আপলোড হচ্ছে (${i + 1}/${newFiles.length})...`)
+        newUrls.push(await uploadImage(token, await shrink(newFiles[i])))
+      }
 
       let vurl = oldVideo
       if (videoFile) {
@@ -276,26 +280,45 @@ export default function AdminPage() {
         vurl = await uploadVideo(token, videoFile)
       }
 
+      const cover = oldImage || remaining[0]?.url || newUrls[0] || null
+
       const data = {
         title: title.trim(),
         heading: heading.trim() || null,
         body: body.trim(),
         category,
         author: author.trim() || me?.full_name || null,
-        image_url: url,
+        image_url: cover,
         video_url: vurl,
         link_url: linkUrl.trim() || null,
       }
+
+      let postId = editId
       if (editId) await updatePost(token, editId, data)
-      else await createPost(token, data)
+      else postId = await createPostReturningId(token, data)
+
+      let imgWarn = ""
+      if (postId) {
+        try {
+          for (const id of removedIds) await removeImage(token, id)
+          const toAdd = [...newUrls]
+          if (oldImage && !remaining.some((r) => r.url === oldImage) && newUrls.length > 0) {
+            toAdd.unshift(oldImage)
+          }
+          await addImages(token, "post", postId, toAdd, remaining.length)
+        } catch (e) {
+          imgWarn = " (সংবাদ সেভ হয়েছে, কিন্তু ছবির তালিকা জোড়া যায়নি: " + (e instanceof Error ? e.message : "ত্রুটি") + ")"
+        }
+      }
+
       resetForm()
-      setMsg("✅ প্রকাশিত হয়েছে")
+      setMsg("✅ প্রকাশিত হয়েছে" + imgWarn)
       await refresh(token, me)
     } catch (e) { fail(e) }
     setBusy(false)
   }
 
-  function startEdit(p: Post) {
+  async function startEdit(p: Post) {
     setEditId(p.id)
     setTitle(p.title)
     setHeading(p.heading || "")
@@ -306,8 +329,13 @@ export default function AdminPage() {
     setOldVideo(p.video_url || null)
     setLinkUrl(p.link_url || "")
     setVideoFile(null)
-    pick(null)
+    setNewFiles([])
+    setRemovedIds([])
+    setExistingImgs([])
     window.scrollTo({ top: 0, behavior: "smooth" })
+    const rows = await getImages("post", p.id)
+    setExistingImgs(rows)
+    if (p.image_url && rows.some((r) => r.url === p.image_url)) setOldImage(null)
   }
 
   async function act(fn: () => Promise<void>, ask?: string) {
@@ -449,14 +477,27 @@ export default function AdminPage() {
               <input className={inp} placeholder="প্রতিবেদকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
               <input className={inp} placeholder="লিংক (ঐচ্ছিক): /council অথবা https://..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
 
-              <label className="block">
-                <span className="text-sm text-gray-600">ছবি (গ্যালারি থেকে)</span>
-                <input className="block mt-1 text-sm" type="file" accept="image/*" onChange={(e) => pick(e.target.files?.[0] || null)} />
-              </label>
-              {(preview || oldImage) && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={preview || oldImage || ""} alt="" className="w-full max-h-60 object-cover rounded-xl" />
+              {oldImage && (
+                <div className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={oldImage} alt="" className="w-full max-h-60 object-cover rounded-xl" />
+                  <button
+                    type="button"
+                    onClick={() => setOldImage(null)}
+                    className="absolute top-2 right-2 bg-red-600 text-white rounded-full px-3 py-1 text-xs"
+                  >
+                    ✕ ছবি সরান
+                  </button>
+                </div>
               )}
+
+              <MultiImagePicker
+                existing={existingImgs.filter((i) => !removedIds.includes(i.id))}
+                files={newFiles}
+                onAdd={(f) => setNewFiles((prev) => [...prev, ...f])}
+                onRemoveExisting={(id) => setRemovedIds((prev) => [...prev, id])}
+                onRemoveNew={(idx) => setNewFiles((prev) => prev.filter((_, i) => i !== idx))}
+              />
 
               <label className="block">
                 <span className="text-sm text-gray-600">ভিডিও (সর্বোচ্চ {MAX_VIDEO_MB} MB)</span>
@@ -497,7 +538,17 @@ export default function AdminPage() {
                       <div className="flex gap-4 mt-2 text-sm">
                         <button onClick={() => startEdit(p)} className="text-green-700">এডিট</button>
                         <button onClick={() => act(() => setPostHidden(token, p.id, !p.hidden))} className="text-amber-600">{p.hidden ? "দেখান" : "হাইড"}</button>
-                        <button onClick={() => act(() => deletePost(token, p.id), "সত্যিই মুছে ফেলবেন?")} className="text-red-600">ডিলিট</button>
+                        <button
+                          onClick={() =>
+                            act(async () => {
+                              try { await removeAllImages(token, "post", p.id) } catch {}
+                              await deletePost(token, p.id)
+                            }, "সত্যিই মুছে ফেলবেন?")
+                          }
+                          className="text-red-600"
+                        >
+                          ডিলিট
+                        </button>
                       </div>
                     )}
                   </div>
