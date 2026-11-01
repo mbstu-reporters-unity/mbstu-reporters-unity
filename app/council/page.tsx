@@ -54,7 +54,7 @@ export default function CouncilPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-4 pb-16">
       <div className="max-w-xl mx-auto space-y-5">
-        <h1 className="text-2xl font-bold text-green-800 text-center">কার্যনির্বাহী পরিষদ</h1>
+        <h1 className="text-2xl font-bold text-green-800 text-center">ডিরেক্টর প্যানেল / Director Panel</h1>
 
         {loading && <p className="text-center text-sm text-gray-500">লোড হচ্ছে...</p>}
 
@@ -68,7 +68,7 @@ export default function CouncilPage() {
         {others.length > 0 && (
           <div className="space-y-2">
             <h2 className="font-semibold text-green-800">মডারেটর ({others.length})</h2>
-            {others.map((m) => <Card key={m.id} m={m} />)}
+            {others.map((m) =>e-center"y={m.id} m={m} />)}
           </div>
         )}
 
