@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import {
-  login, signUp, getMe, getAllPosts, setPostHidden,getCategoryNames, addCategory, getHomeLimit, saveHomeLimit, createPost, updatePost, deletePost, uploadImage, uploadVideo,
+  login, signUp, getMe, getAllPosts, setPostHidden, getCategoryNames, addCategory, getHomeLimit, saveHomeLimit, createPost, updatePost, deletePost, uploadImage, uploadVideo,
   getPendingComments, approveComment, deleteComment,
   getReporters, approveReporter, removeReporter,
   updateMyProfile,
@@ -14,12 +14,18 @@ import HeroManager from "./hero-manager"
 import TickerManager from "./ticker-manager"
 import StudentManager from "./student-manager"
 import SectionLimits from "./section-limits"
+import DirectorManager from "./director-manager"
+import CategoryManager from "./category-manager"
 
 const TOKEN_KEY = "mbstu_admin_token"
 const MAX_VIDEO_MB = 50
 const CATS = ["ক্যাম্পাস সংবাদ", "ক্লাব", "একাডেমিক", "গবেষণা", "খেলাধুলা", "সংস্কৃতি", "পরিবেশ"]
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
+
+type Tab =
+  | "posts" | "comments" | "reporters" | "profile" | "leaders" | "notices"
+  | "hero" | "ticker" | "students" | "limits" | "directors" | "categories"
 
 async function shrink(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file)
@@ -48,7 +54,7 @@ export default function AdminPage() {
   const [phone, setPhone] = useState("")
   const [paper, setPaper] = useState("")
 
-  const [tab, setTab] = useState<"posts" | "comments" | "reporters" | "profile" | "leaders" | "notices" | "hero" | "ticker" | "students" | "limits">("posts")
+  const [tab, setTab] = useState<Tab>("posts")
   const [posts, setPosts] = useState<Post[]>([])
   const [pending, setPending] = useState<PendingComment[]>([])
   const [waiting, setWaiting] = useState<Profile[]>([])
@@ -66,7 +72,7 @@ export default function AdminPage() {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [oldVideo, setOldVideo] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-    const [cats, setCats] = useState<string[]>(CATS)
+  const [cats, setCats] = useState<string[]>(CATS)
   const [linkUrl, setLinkUrl] = useState("")
   const [homeLimit, setHomeLimit] = useState("12")
   const [msg, setMsg] = useState("")
@@ -111,7 +117,7 @@ export default function AdminPage() {
     try {
       const p = await getAllPosts(100)
       setPosts(p)
-            const names = await getCategoryNames()
+      const names = await getCategoryNames()
       if (names.length) setCats(names)
       setHomeLimit(String(await getHomeLimit()))
       if (profile?.role === "admin" && profile.approved) {
@@ -235,7 +241,8 @@ export default function AdminPage() {
     setCategory(CATS[0]); setAuthor(me?.full_name || ""); setOldImage(null)
     setOldVideo(null); setVideoFile(null); pick(null)
   }
-    async function addCat() {
+
+  async function addCat() {
     const name = window.prompt("নতুন ক্যাটাগরির নাম লিখুন")?.trim()
     if (!name) return
     try {
@@ -416,7 +423,9 @@ export default function AdminPage() {
               <button onClick={() => setTab("comments")} className={tabCls("comments")}>কমেন্ট ({pending.length})</button>
               <button onClick={() => setTab("reporters")} className={tabCls("reporters")}>সাংবাদিক ({waiting.length})</button>
               <button onClick={() => setTab("leaders")} className={tabCls("leaders")}>নেতৃত্ব</button>
-                            <button onClick={() => setTab("students")} className={tabCls("students")}>স্টুডেন্ট কর্নার</button>
+              <button onClick={() => setTab("directors")} className={tabCls("directors")}>ডিরেক্টর প্যানেল</button>
+              <button onClick={() => setTab("categories")} className={tabCls("categories")}>ক্যাটাগরি</button>
+              <button onClick={() => setTab("students")} className={tabCls("students")}>স্টুডেন্ট কর্নার</button>
               <button onClick={() => setTab("limits")} className={tabCls("limits")}>হোম সেটিং</button>
             </>
           )}
@@ -426,7 +435,7 @@ export default function AdminPage() {
 
         {tab === "posts" && (
           <>
-              <div className="bg-white rounded-2xl shadow p-4 space-y-3">
+            <div className="bg-white rounded-2xl shadow p-4 space-y-3">
               <h2 className="font-semibold">{editId ? "সংবাদ এডিট করুন" : "নতুন সংবাদ"}</h2>
               <input className={inp} placeholder="শিরোনাম (টাইটেল) *" value={title} onChange={(e) => setTitle(e.target.value)} />
               <input className={inp} placeholder="হেডিং (উপশিরোনাম)" value={heading} onChange={(e) => setHeading(e.target.value)} />
@@ -434,7 +443,9 @@ export default function AdminPage() {
               <select className={inp} value={category} onChange={(e) => setCategory(e.target.value)}>
                 {(cats.includes(category) ? cats : [...cats, category]).map((c) => <option key={c}>{c}</option>)}
               </select>
-              <button type="button" onClick={addCat} className="text-sm text-green-700 underline">+ নতুন ক্যাটাগরি যোগ করুন</button>
+              {isAdmin && (
+                <button type="button" onClick={addCat} className="text-sm text-green-700 underline">+ নতুন ক্যাটাগরি যোগ করুন</button>
+              )}
               <input className={inp} placeholder="প্রতিবেদকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
               <input className={inp} placeholder="লিংক (ঐচ্ছিক): /council অথবা https://..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
 
@@ -504,15 +515,25 @@ export default function AdminPage() {
         {tab === "hero" && isAdmin && (
           <HeroManager token={token} shrink={shrink} />
         )}
-                {tab === "ticker" && isAdmin && (
+
+        {tab === "ticker" && isAdmin && (
           <TickerManager token={token} author={me.full_name} />
         )}
-                {tab === "students" && isAdmin && (
+
+        {tab === "students" && isAdmin && (
           <StudentManager token={token} shrink={shrink} />
         )}
 
         {tab === "limits" && isAdmin && (
           <SectionLimits token={token} cats={cats} />
+        )}
+
+        {tab === "directors" && isAdmin && (
+          <DirectorManager token={token} members={active} onChanged={() => refresh(token, me)} />
+        )}
+
+        {tab === "categories" && isAdmin && (
+          <CategoryManager token={token} onChanged={() => refresh(token, me)} />
         )}
 
         {tab === "profile" && (
