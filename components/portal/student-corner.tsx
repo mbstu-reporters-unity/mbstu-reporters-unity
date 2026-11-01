@@ -1,5 +1,5 @@
 import { ArrowUpRight, Award, BookOpen, Feather, GraduationCap, MessageSquareQuote } from 'lucide-react'
-import { getStudentItems, getLimits, CAT_STUDENT } from '@/lib/sb'
+import { getStudentItems, getLimits, getImages, CAT_STUDENT } from '@/lib/sb'
 import { SectionHeading } from './section-heading'
 
 const typeIcon: Record<string, typeof Award> = {
@@ -38,6 +38,12 @@ export async function StudentCorner() {
   const rest = all.filter((i) => i.id !== featured.id).slice(0, Math.max(0, limit - 1))
   const FeaturedIcon = typeIcon[featured.kind] || MessageSquareQuote
 
+  const imgRows = await getImages('student', featured.id)
+  const urls = imgRows.length > 0 ? imgRows.map((i) => i.url) : featured.image_url ? [featured.image_url] : []
+  const cover = urls[0] || null
+  const thumbs = urls.length > 1 ? urls.slice(0, 4) : []
+  const extra = urls.length - thumbs.length
+
   return (
     <section id="student-corner" className="bg-brand-soft/60 py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4">
@@ -50,15 +56,33 @@ export async function StudentCorner() {
         <div className="grid gap-6 lg:grid-cols-2">
           <article className="group relative overflow-hidden rounded-2xl bg-navy text-white shadow-lg">
             <div className="relative aspect-[4/3] sm:aspect-[16/11]">
-              {featured.image_url && (
+              {cover && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={featured.image_url}
+                  src={cover}
                   alt=""
                   className="absolute inset-0 h-full w-full object-cover opacity-80 transition-transform duration-500 group-hover:scale-105"
                 />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/40 to-transparent" />
+              {thumbs.length > 0 && (
+                <div className="absolute right-3 top-3 flex items-center gap-1.5">
+                  {thumbs.map((u, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={u + i}
+                      src={u}
+                      alt=""
+                      className="size-12 rounded-lg border-2 border-white/70 object-cover"
+                    />
+                  ))}
+                  {extra > 0 && (
+                    <span className="inline-flex size-12 items-center justify-center rounded-lg bg-black/60 text-xs font-bold">
+                      +{extra}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
               <span className="inline-flex items-center gap-1.5 rounded bg-crimson px-2.5 py-1 text-xs font-bold">
