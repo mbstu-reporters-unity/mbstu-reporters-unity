@@ -469,6 +469,51 @@ export async function addCategory(token: string, name: string) {
 }
 
 export async function getHomeLimit(): Promise<number> {
+  /* ---------- ক্যাটাগরি ব্যবস্থাপনা (শুধু অ্যাডমিন) ---------- */
+
+export type CategoryRow = {
+  name: string
+  sort_order: number | null
+  is_hidden: boolean
+  is_locked: boolean
+  created_at: string
+}
+
+export async function getCategories(token: string): Promise<CategoryRow[]> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/categories?select=*&order=sort_order.asc,created_at.asc`,
+      { headers: hdr(token), cache: "no-store" }
+    )
+    if (!res.ok) return []
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
+export async function updateCategory(
+  token: string,
+  name: string,
+  data: Partial<Pick<CategoryRow, "name" | "is_hidden" | "is_locked">>
+) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/categories?name=eq.${encodeURIComponent(name)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify(data),
+    })
+  )
+}
+
+export async function deleteCategory(token: string, name: string) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/categories?name=eq.${encodeURIComponent(name)}`, {
+      method: "DELETE",
+      headers: hdr(token),
+    })
+  )
+}
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/app_config?select=value&key=eq.home_news_limit`,
