@@ -753,3 +753,103 @@ export async function createPostReturningId(token: string, data: PostInput): Pro
   const rows: { id: string }[] = await res.json()
   return rows[0]?.id ?? null
 }
+
+/* ---------- ক্যাপশন, ক্রেডিট ও ছবির সাজানো ---------- */
+
+export type ImageMeta = ImageRow & { caption?: string | null; credit?: string | null }
+export type NewImage = { url: string; caption: string; credit: string }
+
+export async function getImagesMeta(type: ParentType, id: string): Promise<ImageMeta[]> {
+  return (await getImages(type, id)) as ImageMeta[]
+}
+
+export async function getImagesMetaForMany(
+  type: ParentType,
+  ids: string[]
+): Promise<Record<string, ImageMeta[]>> {
+  return (await getImagesForMany(type, ids)) as Record<string, ImageMeta[]>
+}
+
+export async function addImagesWithMeta(
+  token: string,
+  type: ParentType,
+  id: string,
+  items: NewImage[],
+  startOrder = 0
+) {
+  if (items.length === 0) return
+  const rows = items.map((it, i) => ({
+    parent_type: type,
+    parent_id: id,
+    url: it.url,
+    caption: it.caption.trim() || null,
+    credit: it.credit.trim() || null,
+    sort_order: startOrder + i,
+  }))
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/post_images`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify(rows),
+    })
+  )
+}
+
+export async function updateImageMeta(
+  token: string,
+  imageId: string,
+  data: { caption: string | null; credit: string | null }
+) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/post_images?id=eq.${encodeURIComponent(imageId)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify(data),
+    })
+  )
+}
+
+export async function getLayout(type: ParentType, id: string): Promise<string> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/image_layouts?select=layout&parent_type=eq.${type}&parent_id=eq.${encodeURIComponent(id)}`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return "grid"
+    const rows: { layout: string }[] = await res.json()
+    return rows[0]?.layout || "grid"
+  } catch {
+    return "grid"
+  }
+}
+
+export async function getLayoutsForMany(
+  type: ParentType,
+  ids: string[]
+): Promise<Record<string, string>> {
+  const out: Record<string, string> = {}
+  if (ids.length === 0) return out
+  try {
+    const list = ids.map((i) => encodeURIComponent(i)).join(",")
+    const res = await fetch(
+      `${SB_URL}/rest/v1/image_layouts?select=parent_id,layout&parent_type=eq.${type}&parent_id=in.(${list})`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return out
+    const rows: { parent_id: string; layout: string }[] = await res.json()
+    rows.forEach((r) => { out[r.parent_id] = r.layout })
+    return out
+  } catch {
+    return out
+  }
+}
+
+export async function saveLayout(token: string, type: ParentType, id: string, layout: string) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/image_layouts`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ parent_type: type, parent_id: id, layout }),
+    })
+  )
+}
