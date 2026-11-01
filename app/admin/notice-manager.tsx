@@ -2,14 +2,29 @@
 
 import { useEffect, useState } from "react"
 import {
-  BRANCHES, MAX_NOTICE_FILE_MB, getNotices, getNoticeOwners, createNotice, updateNotice,
+  BRANCHES, MAX_NOTICE_FILE_MB, getNotices, getNoticeOwners, createNoticeReturningId, updateNotice,
   deleteNotice, uploadNoticeFile, getNoticeComments, deleteNoticeComment,
   fmtDateTime, isImageType,
 } from "../../lib/notices"
 import type { Notice, NoticeOwner, NoticeComment } from "../../lib/notices"
+import { uploadImage, getImages, addImages, removeImage, removeAllImages } from "../../lib/sb"
+import type { ImageRow } from "../../lib/sb"
+import MultiImagePicker from "../../components/portal/multi-image-picker"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
+
+async function shrink(file: File): Promise<Blob> {
+  const bmp = await createImageBitmap(file)
+  const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height))
+  const c = document.createElement("canvas")
+  c.width = Math.round(bmp.width * scale)
+  c.height = Math.round(bmp.height * scale)
+  c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height)
+  return new Promise((res, rej) =>
+    c.toBlob((b) => (b ? res(b) : rej(new Error("ছবি প্রসেস করা যায়নি"))), "image/jpeg", 0.82)
+  )
+}
 
 function ManageComments({ id, token }: { id: string; token: string }) {
   const [list, setList] = useState<NoticeComment[]>([])
@@ -51,6 +66,9 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
   const [expiry, setExpiry] = useState("")
   const [file, setFile] = useState<File | null>(null)
   const [old, setOld] = useState<{ url: string; name: string | null; type: string | null } | null>(null)
+  const [existingImgs, setExistingImgs] = useState<ImageRow[]>([])
+  const [removedIds, setRemovedIds] = useState<string[]>([])
+  const [newFiles, setNewFiles] = useState<File[]>([])
   const [openC, setOpenC] = useState("")
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState("")
@@ -71,16 +89,19 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
     setEditId(null); setBranch(BRANCHES[0].key); setTitle(""); setHeading(""); setRef("")
     setBody(""); setLink(""); setShowName(true); setPinned(false); setExpiry("")
     setFile(null); setOld(null)
+    setExistingImgs([]); setRemovedIds([]); setNewFiles([])
   }
 
-  function startEdit(n: Notice) {
+  async function startEdit(n: Notice) {
     setEditId(n.id); setBranch(n.branch); setTitle(n.title); setHeading(n.heading || "")
     setRef(n.ref_number || ""); setBody(n.body || ""); setLink(n.link_url || "")
     setShowName(n.show_name); setPinned(n.is_pinned)
     setExpiry(n.expires_at ? new Date(n.expires_at).toLocaleDateString("en-CA", { timeZone: "Asia/Dhaka" }) : "")
     setFile(null)
     setOld(n.file_url ? { url: n.file_url, name: n.file_name, type: n.file_type } : null)
+    setNewFiles([]); setRemovedIds([]); setExistingImgs([])
     window.scrollTo({ top: 0, behavior: "smooth" })
+    setExistingImgs(await getImages("notice", n.id))
   }
 
   function pickFile(f: File | null) {
@@ -94,13 +115,16 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
   }
 
   async function save() {
+    const remaining = existingImgs.filter((i) => !removedIds.includes(i.id))
+    const hasImages = remaining.length + newFiles.length > 0
+
     if (!title.trim()) { setMsg("❌ শিরোনাম লিখুন"); return }
     if (link.trim() && !/^https?:\/\//i.test(link.trim())) {
       setMsg("❌ লিংক http:// বা https:// দিয়ে শুরু হতে হবে")
       return
     }
-    if (!body.trim() && !link.trim() && !file && !old) {
-      setMsg("❌ লেখা, লিংক বা ফাইল— অন্তত একটি দিন")
+    if (!body.trim() && !link.trim() && !file && !old && !hasImages) {
+      setMsg("❌ লেখা, লিংক, ছবি বা ফাইল— অন্তত একটি দিন")
       return
     }
     setBusy(true)
@@ -112,6 +136,13 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
         const u = await uploadNoticeFile(token, file)
         f = { url: u.url, name: u.name, type: u.type }
       }
+
+      const newUrls: string[] = []
+      for (let i = 0; i < newFiles.length; i++) {
+        setMsg(`ছবি আপলোড হচ্ছে (${i + 1}/${newFiles.length})...`)
+        newUrls.push(await uploadImage(token, await shrink(newFiles[i])))
+      }
+
       const data = {
         branch,
         title: title.trim(),
@@ -126,10 +157,25 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
         is_pinned: isAdmin ? pinned : false,
         expires_at: expiry ? new Date(expiry + "T23:59:59+06:00").toISOString() : null,
       }
+
+      let noticeId = editId
       if (editId) await updateNotice(token, editId, data)
-      else await createNotice(token, data)
+      else noticeId = await createNoticeReturningId(token, data)
+
+      let warn = ""
+      if (noticeId) {
+        try {
+          for (const id of removedIds) await removeImage(token, id)
+          await addImages(token, "notice", noticeId, newUrls, remaining.length)
+        } catch (e) {
+          warn = " (নোটিশ সেভ হয়েছে, কিন্তু ছবির তালিকা জোড়া যায়নি: " + (e instanceof Error ? e.message : "ত্রুটি") + ")"
+        }
+      } else if (newUrls.length > 0) {
+        warn = " (নোটিশ সেভ হয়েছে, কিন্তু ছবি জোড়া যায়নি)"
+      }
+
       reset()
-      setMsg("✅ সেভ হয়েছে")
+      setMsg("✅ সেভ হয়েছে" + warn)
       await load()
     } catch (e) {
       setMsg("❌ " + (e instanceof Error ? e.message : "কিছু ভুল হয়েছে"))
@@ -158,8 +204,16 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
         <textarea className={inp} rows={6} placeholder="নোটিশের লেখা" value={body} onChange={(e) => setBody(e.target.value)} />
         <input className={inp} type="url" placeholder="অন্য ওয়েবসাইটের লিংক (https://...)" value={link} onChange={(e) => setLink(e.target.value)} />
 
+        <MultiImagePicker
+          existing={existingImgs.filter((i) => !removedIds.includes(i.id))}
+          files={newFiles}
+          onAdd={(f) => setNewFiles((prev) => [...prev, ...f])}
+          onRemoveExisting={(id) => setRemovedIds((prev) => [...prev, id])}
+          onRemoveNew={(idx) => setNewFiles((prev) => prev.filter((_, i) => i !== idx))}
+        />
+
         <label className="block">
-          <span className="text-sm text-gray-600">ছবি / PDF / DOC (ফোন বা কম্পিউটার থেকে, সর্বোচ্চ {MAX_NOTICE_FILE_MB} MB)</span>
+          <span className="text-sm text-gray-600">ছবি / PDF / DOC ফাইল (ডাউনলোডের জন্য, সর্বোচ্চ {MAX_NOTICE_FILE_MB} MB)</span>
           <input
             className="block mt-1 text-sm"
             type="file"
@@ -233,7 +287,17 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
                     </button>
                   )}
                   <button onClick={() => setOpenC(openC === n.id ? "" : n.id)} className="text-gray-700">কমেন্ট</button>
-                  <button onClick={() => run(() => deleteNotice(token, n.id), "নোটিশ মুছে ফেলবেন?")} className="text-red-600">মুছুন</button>
+                  <button
+                    onClick={() =>
+                      run(async () => {
+                        try { await removeAllImages(token, "notice", n.id) } catch {}
+                        await deleteNotice(token, n.id)
+                      }, "নোটিশ মুছে ফেলবেন?")
+                    }
+                    className="text-red-600"
+                  >
+                    মুছুন
+                  </button>
                 </div>
               ) : (
                 <p className="text-xs text-gray-400">শুধু দেখা যাবে</p>
