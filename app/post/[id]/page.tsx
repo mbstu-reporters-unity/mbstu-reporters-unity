@@ -2,8 +2,9 @@ import { cache } from 'react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { ReactionBar } from '@/components/portal/reaction-bar'
-import { getPost, getApprovedComments } from '@/lib/sb'
+import { getPost, getApprovedComments, getImagesMeta, getLayout } from '@/lib/sb'
 import { CommentForm } from '@/components/portal/comment-form'
+import RichGallery from '@/components/portal/rich-gallery'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,6 +52,15 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const post = await loadPost(id)
   if (!post) notFound()
   const comments = await getApprovedComments(id)
+  const rows = await getImagesMeta('post', id)
+  const layout = rows.length > 1 ? await getLayout('post', id) : 'grid'
+  const items =
+    rows.length > 0
+      ? rows.map((i) => ({ url: i.url, caption: i.caption, credit: i.credit }))
+      : post.image_url
+        ? [{ url: post.image_url }]
+        : []
+  const urls = items.map((i) => i.url)
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -58,7 +68,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     headline: post.title,
     datePublished: post.created_at,
     mainEntityOfPage: `${BASE}/post/${id}`,
-    ...(post.image_url ? { image: [post.image_url] } : {}),
+    ...(urls.length > 0 ? { image: urls } : {}),
     ...(post.author ? { author: { '@type': 'Person', name: post.author } } : {}),
     publisher: {
       '@type': 'Organization',
@@ -81,10 +91,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         <p className="text-xs text-gray-500">
           {post.author} · {new Date(post.created_at).toLocaleDateString('bn-BD')}
         </p>
-        {post.image_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={post.image_url} alt="" className="w-full rounded-xl" />
-        )}
+        <RichGallery items={items} layout={layout} />
         {post.video_url && (
           <video src={post.video_url} controls playsInline className="w-full rounded-xl bg-black" />
         )}
