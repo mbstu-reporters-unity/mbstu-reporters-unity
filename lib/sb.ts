@@ -492,3 +492,104 @@ export async function saveHomeLimit(token: string, n: number) {
     })
   )
 }
+
+/* ---------- সেকশন, সংখ্যা ও স্টুডেন্ট কর্নার ---------- */
+
+export const CAT_CAMPUS = "ক্যাম্পাস সংবাদ"
+export const CAT_CLUB = "ক্লাব"
+export const CAT_STUDENT = "স্টুডেন্ট কর্নার"
+
+export function limitKey(cat: string) {
+  return cat === CAT_CAMPUS ? "home_news_limit" : `limit:${cat}`
+}
+
+export async function getLimits(): Promise<Record<string, number>> {
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/app_config?select=key,value`, {
+      headers: hdr(),
+      cache: "no-store",
+    })
+    if (!res.ok) return {}
+    const rows: { key: string; value: string }[] = await res.json()
+    const o: Record<string, number> = {}
+    rows.forEach((r) => {
+      const n = parseInt(r.value, 10)
+      if (n > 0) o[r.key] = n
+    })
+    return o
+  } catch {
+    return {}
+  }
+}
+
+export async function saveLimit(token: string, key: string, n: number) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/app_config`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ key, value: String(n) }),
+    })
+  )
+}
+
+export type StudentItem = {
+  id: string
+  kind: string
+  title: string
+  excerpt: string | null
+  author: string | null
+  dept: string | null
+  batch: string | null
+  image_url: string | null
+  link_url: string | null
+  featured: boolean
+  hidden: boolean
+  sort_order: number
+  created_at: string
+}
+export type StudentInput = Omit<StudentItem, "id" | "created_at">
+
+export async function getStudentItems(includeHidden = false): Promise<StudentItem[]> {
+  try {
+    const f = includeHidden ? "" : "&hidden=eq.false"
+    const res = await fetch(
+      `${SB_URL}/rest/v1/student_items?select=*${f}&order=featured.desc,sort_order.asc,created_at.desc`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return []
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
+export async function saveStudentItem(token: string, id: string | null, data: Partial<StudentInput>) {
+  if (data.featured) {
+    await ok(
+      await fetch(`${SB_URL}/rest/v1/student_items?featured=eq.true`, {
+        method: "PATCH",
+        headers: { ...hdr(token, true), Prefer: "return=minimal" },
+        body: JSON.stringify({ featured: false }),
+      })
+    )
+  }
+  await ok(
+    await fetch(
+      id ? `${SB_URL}/rest/v1/student_items?id=eq.${encodeURIComponent(id)}` : `${SB_URL}/rest/v1/student_items`,
+      {
+        method: id ? "PATCH" : "POST",
+        headers: { ...hdr(token, true), Prefer: "return=minimal" },
+        body: JSON.stringify(data),
+      }
+    )
+  )
+}
+
+export async function deleteStudentItem(token: string, id: string) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/student_items?id=eq.${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: hdr(token),
+    })
+  )
+}
