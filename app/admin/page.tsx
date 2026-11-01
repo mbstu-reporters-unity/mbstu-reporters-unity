@@ -6,9 +6,9 @@ import {
   getPendingComments, approveComment, deleteComment,
   getReporters, approveReporter, removeReporter,
   updateMyProfile,
-  createPostReturningId, addImages, removeImage, removeAllImages, getImages,
+  createPostReturningId, removeAllImages,
 } from "../../lib/sb"
-import type { Post, PendingComment, Profile, ImageRow } from "../../lib/sb"
+import type { Post, PendingComment, Profile } from "../../lib/sb"
 import LeadershipManager from "./leadership-manager"
 import NoticeManager from "./notice-manager"
 import HeroManager from "./hero-manager"
@@ -17,7 +17,7 @@ import StudentManager from "./student-manager"
 import SectionLimits from "./section-limits"
 import DirectorManager from "./director-manager"
 import CategoryManager from "./category-manager"
-import MultiImagePicker from "../../components/portal/multi-image-picker"
+import ImageSection, { useImageSection } from "../../components/portal/image-section"
 
 const TOKEN_KEY = "mbstu_admin_token"
 const MAX_VIDEO_MB = 50
@@ -69,9 +69,6 @@ export default function AdminPage() {
   const [category, setCategory] = useState(CATS[0])
   const [author, setAuthor] = useState("")
   const [oldImage, setOldImage] = useState<string | null>(null)
-  const [existingImgs, setExistingImgs] = useState<ImageRow[]>([])
-  const [removedIds, setRemovedIds] = useState<string[]>([])
-  const [newFiles, setNewFiles] = useState<File[]>([])
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [oldVideo, setOldVideo] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -79,6 +76,8 @@ export default function AdminPage() {
   const [linkUrl, setLinkUrl] = useState("")
   const [homeLimit, setHomeLimit] = useState("12")
   const [msg, setMsg] = useState("")
+
+  const imgs = useImageSection("post")
 
   const [pName, setPName] = useState("")
   const [pPaper, setPPaper] = useState("")
@@ -238,7 +237,7 @@ export default function AdminPage() {
     setEditId(null); setTitle(""); setHeading(""); setBody("")
     setCategory(CATS[0]); setAuthor(me?.full_name || ""); setOldImage(null)
     setOldVideo(null); setVideoFile(null)
-    setExistingImgs([]); setRemovedIds([]); setNewFiles([])
+    imgs.reset()
   }
 
   async function addCat() {
@@ -266,13 +265,7 @@ export default function AdminPage() {
     setBusy(true)
     setMsg("")
     try {
-      const remaining = existingImgs.filter((i) => !removedIds.includes(i.id))
-
-      const newUrls: string[] = []
-      for (let i = 0; i < newFiles.length; i++) {
-        setMsg(`ছবি আপলোড হচ্ছে (${i + 1}/${newFiles.length})...`)
-        newUrls.push(await uploadImage(token, await shrink(newFiles[i])))
-      }
+      const up = await imgs.uploadNew(token, shrink, (i, n) => setMsg(`ছবি আপলোড হচ্ছে (${i}/${n})...`))
 
       let vurl = oldVideo
       if (videoFile) {
@@ -280,7 +273,7 @@ export default function AdminPage() {
         vurl = await uploadVideo(token, videoFile)
       }
 
-      const cover = oldImage || remaining[0]?.url || newUrls[0] || null
+      const cover = oldImage || imgs.visible[0]?.url || up[0]?.url || null
 
       const data = {
         title: title.trim(),
@@ -300,15 +293,12 @@ export default function AdminPage() {
       let imgWarn = ""
       if (postId) {
         try {
-          for (const id of removedIds) await removeImage(token, id)
-          const toAdd = [...newUrls]
-          if (oldImage && !remaining.some((r) => r.url === oldImage) && newUrls.length > 0) {
-            toAdd.unshift(oldImage)
-          }
-          await addImages(token, "post", postId, toAdd, remaining.length)
+          await imgs.commit(token, postId, up, oldImage)
         } catch (e) {
           imgWarn = " (সংবাদ সেভ হয়েছে, কিন্তু ছবির তালিকা জোড়া যায়নি: " + (e instanceof Error ? e.message : "ত্রুটি") + ")"
         }
+      } else if (up.length > 0) {
+        imgWarn = " (সংবাদ সেভ হয়েছে, কিন্তু ছবি জোড়া যায়নি)"
       }
 
       resetForm()
@@ -329,12 +319,8 @@ export default function AdminPage() {
     setOldVideo(p.video_url || null)
     setLinkUrl(p.link_url || "")
     setVideoFile(null)
-    setNewFiles([])
-    setRemovedIds([])
-    setExistingImgs([])
     window.scrollTo({ top: 0, behavior: "smooth" })
-    const rows = await getImages("post", p.id)
-    setExistingImgs(rows)
+    const rows = await imgs.load(p.id)
     if (p.image_url && rows.some((r) => r.url === p.image_url)) setOldImage(null)
   }
 
@@ -491,13 +477,7 @@ export default function AdminPage() {
                 </div>
               )}
 
-              <MultiImagePicker
-                existing={existingImgs.filter((i) => !removedIds.includes(i.id))}
-                files={newFiles}
-                onAdd={(f) => setNewFiles((prev) => [...prev, ...f])}
-                onRemoveExisting={(id) => setRemovedIds((prev) => [...prev, id])}
-                onRemoveNew={(idx) => setNewFiles((prev) => prev.filter((_, i) => i !== idx))}
-              />
+              <ImageSection s={imgs} />
 
               <label className="block">
                 <span className="text-sm text-gray-600">ভিডিও (সর্বোচ্চ {MAX_VIDEO_MB} MB)</span>
