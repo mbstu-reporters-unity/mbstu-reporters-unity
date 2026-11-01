@@ -141,7 +141,7 @@ function NoticeCard({ n, highlight }: { n: Notice; highlight: boolean }) {
 
       <div className="text-xs text-gray-500 space-y-0.5">
         <p>
-          প্রকাশক: {n.poster_name || "কার্যনির্বাহী পরিষদ"}
+          প্রকাশক: {n.poster_name || "ডিরেক্টর প্যানেল"}
         </p>
         <p>
           {fmtDateTime(n.created_at)} · {timeAgo(n.created_at)}
