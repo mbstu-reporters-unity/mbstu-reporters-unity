@@ -2,7 +2,7 @@ export const navLinks = [
   { label: 'Home', bn: 'হোম', href: '#home' },
   { label: 'About', bn: 'পরিচিতি', href: '#about' },
   { label: 'Leadership', bn: 'নেতৃত্ব', href: '#leadership' },
-  { label: 'Council', bn: 'কার্যনির্বাহী পরিষদ', href: '/council' },
+    { label: 'Director Panel', bn: 'ডিরেক্টর প্যানেল', href: '/council' },
   { label: 'Campus News', bn: 'ক্যাম্পাস সংবাদ', href: '#general-news' },
   { label: 'Club News', bn: 'ক্লাব নিউজ', href: '#club-news' },
   { label: 'Student Corner', bn: 'স্টুডেন্ট কর্নার', href: '#student-corner' },
