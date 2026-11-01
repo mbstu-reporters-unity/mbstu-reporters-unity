@@ -6,6 +6,8 @@ import {
   downloadUrl, fmtDateTime, timeAgo, isImageType,
 } from "../../lib/notices"
 import type { Notice, NoticeComment } from "../../lib/notices"
+import { getImagesForMany } from "../../lib/sb"
+import ImageGallery from "../../components/portal/image-gallery"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const safeUrl = (u: string | null) => !!u && /^https?:\/\//i.test(u)
@@ -55,7 +57,7 @@ function Comments({ id }: { id: string }) {
   )
 }
 
-function NoticeCard({ n, highlight }: { n: Notice; highlight: boolean }) {
+function NoticeCard({ n, highlight, images }: { n: Notice; highlight: boolean; images: string[] }) {
   const [open, setOpen] = useState(false)
   const [more, setMore] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -112,6 +114,8 @@ function NoticeCard({ n, highlight }: { n: Notice; highlight: boolean }) {
         </div>
       )}
 
+      <ImageGallery urls={images} />
+
       {n.file_url && isImageType(n.file_type) && (
         <a href={n.file_url} target="_blank" rel="noopener noreferrer">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -164,6 +168,7 @@ function NoticeCard({ n, highlight }: { n: Notice; highlight: boolean }) {
 
 export default function NoticesPage() {
   const [list, setList] = useState<Notice[]>([])
+  const [imgs, setImgs] = useState<Record<string, string[]>>({})
   const [loading, setLoading] = useState(true)
   const [branch, setBranch] = useState("all")
   const [q, setQ] = useState("")
@@ -172,7 +177,14 @@ export default function NoticesPage() {
   useEffect(() => {
     const n = new URLSearchParams(window.location.search).get("n")
     if (n) setHl(n)
-    getNotices().then((r) => { setList(r); setLoading(false) })
+    getNotices().then(async (r) => {
+      setList(r)
+      setLoading(false)
+      const map = await getImagesForMany("notice", r.map((x) => x.id))
+      const out: Record<string, string[]> = {}
+      Object.keys(map).forEach((k) => { out[k] = map[k].map((i) => i.url) })
+      setImgs(out)
+    })
   }, [])
 
   const shown = useMemo(() => {
@@ -212,7 +224,7 @@ export default function NoticesPage() {
           <p className="text-center text-sm text-gray-500">কোনো নোটিশ পাওয়া যায়নি।</p>
         )}
 
-        {shown.map((n) => <NoticeCard key={n.id} n={n} highlight={n.id === hl} />)}
+        {shown.map((n) => <NoticeCard key={n.id} n={n} highlight={n.id === hl} images={imgs[n.id] || []} />)}
 
         <div className="flex justify-center gap-4 text-sm">
           <a href="/" className="underline">সাইটে ফিরুন</a>
