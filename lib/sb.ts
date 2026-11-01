@@ -650,3 +650,106 @@ export async function deleteStudentItem(token: string, id: string) {
     })
   )
 }
+/* ---------- একাধিক ছবি (সংবাদ, নোটিশ, স্টুডেন্ট কর্নার) ---------- */
+
+export type ParentType = "post" | "notice" | "student"
+
+export type ImageRow = {
+  id: string
+  parent_type: ParentType
+  parent_id: string
+  url: string
+  sort_order: number
+  created_at: string
+}
+
+export async function getImages(type: ParentType, id: string): Promise<ImageRow[]> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/post_images?select=*&parent_type=eq.${type}&parent_id=eq.${encodeURIComponent(id)}&order=sort_order.asc,created_at.asc`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return []
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
+export async function getImagesForMany(
+  type: ParentType,
+  ids: string[]
+): Promise<Record<string, ImageRow[]>> {
+  const out: Record<string, ImageRow[]> = {}
+  if (ids.length === 0) return out
+  try {
+    const list = ids.map((i) => encodeURIComponent(i)).join(",")
+    const res = await fetch(
+      `${SB_URL}/rest/v1/post_images?select=*&parent_type=eq.${type}&parent_id=in.(${list})&order=sort_order.asc,created_at.asc`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return out
+    const rows: ImageRow[] = await res.json()
+    rows.forEach((r) => {
+      if (!out[r.parent_id]) out[r.parent_id] = []
+      out[r.parent_id].push(r)
+    })
+    return out
+  } catch {
+    return out
+  }
+}
+
+export async function addImages(
+  token: string,
+  type: ParentType,
+  id: string,
+  urls: string[],
+  startOrder = 0
+) {
+  if (urls.length === 0) return
+  const rows = urls.map((url, i) => ({
+    parent_type: type,
+    parent_id: id,
+    url,
+    sort_order: startOrder + i,
+  }))
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/post_images`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify(rows),
+    })
+  )
+}
+
+export async function removeImage(token: string, imageId: string) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/post_images?id=eq.${encodeURIComponent(imageId)}`, {
+      method: "DELETE",
+      headers: hdr(token),
+    })
+  )
+}
+
+export async function removeAllImages(token: string, type: ParentType, id: string) {
+  await ok(
+    await fetch(
+      `${SB_URL}/rest/v1/post_images?parent_type=eq.${type}&parent_id=eq.${encodeURIComponent(id)}`,
+      { method: "DELETE", headers: hdr(token) }
+    )
+  )
+}
+
+/* নতুন সংবাদ তৈরি করে তার id ফেরত দেয় (ছবি জোড়ার জন্য দরকার) */
+export async function createPostReturningId(token: string, data: PostInput): Promise<string | null> {
+  const res = await ok(
+    await fetch(`${SB_URL}/rest/v1/posts?select=id`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "return=representation" },
+      body: JSON.stringify(data),
+    })
+  )
+  const rows: { id: string }[] = await res.json()
+  return rows[0]?.id ?? null
+}
