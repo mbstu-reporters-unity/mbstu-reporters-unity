@@ -68,7 +68,7 @@ export default function CouncilPage() {
         {others.length > 0 && (
           <div className="space-y-2">
             <h2 className="font-semibold text-green-800">মডারেটর ({others.length})</h2>
-            {others.map((m) =>e-center"y={m.id} m={m} />)}
+            {others.map((m) => <Card key={m.id} m={m} />)}
           </div>
         )}
 
