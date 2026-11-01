@@ -12,10 +12,12 @@ import LeadershipManager from "./leadership-manager"
 import NoticeManager from "./notice-manager"
 import HeroManager from "./hero-manager"
 import TickerManager from "./ticker-manager"
+import StudentManager from "./student-manager"
+import SectionLimits from "./section-limits"
 
 const TOKEN_KEY = "mbstu_admin_token"
 const MAX_VIDEO_MB = 50
-const CATS = ["ক্যাম্পাস সংবাদ", "ক্লাব", "স্টুডেন্ট কর্নার", "একাডেমিক", "গবেষণা", "খেলাধুলা", "সংস্কৃতি", "পরিবেশ"]
+const CATS = ["ক্যাম্পাস সংবাদ", "ক্লাব", "একাডেমিক", "গবেষণা", "খেলাধুলা", "সংস্কৃতি", "পরিবেশ"]
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
 
@@ -46,7 +48,7 @@ export default function AdminPage() {
   const [phone, setPhone] = useState("")
   const [paper, setPaper] = useState("")
 
-  const [tab, setTab] = useState<"posts" | "comments" | "reporters" | "profile" | "leaders" | "notices" | "hero" | "ticker">("posts")
+  const [tab, setTab] = useState<"posts" | "comments" | "reporters" | "profile" | "leaders" | "notices" | "hero" | "ticker" | "students" | "limits">("posts")
   const [posts, setPosts] = useState<Post[]>([])
   const [pending, setPending] = useState<PendingComment[]>([])
   const [waiting, setWaiting] = useState<Profile[]>([])
@@ -414,6 +416,8 @@ export default function AdminPage() {
               <button onClick={() => setTab("comments")} className={tabCls("comments")}>কমেন্ট ({pending.length})</button>
               <button onClick={() => setTab("reporters")} className={tabCls("reporters")}>সাংবাদিক ({waiting.length})</button>
               <button onClick={() => setTab("leaders")} className={tabCls("leaders")}>নেতৃত্ব</button>
+                            <button onClick={() => setTab("students")} className={tabCls("students")}>স্টুডেন্ট কর্নার</button>
+              <button onClick={() => setTab("limits")} className={tabCls("limits")}>হোম সেটিং</button>
             </>
           )}
         </div>
@@ -422,16 +426,7 @@ export default function AdminPage() {
 
         {tab === "posts" && (
           <>
-                        {isAdmin && (
-              <div className="bg-white rounded-2xl shadow p-4 space-y-2">
-                <h2 className="font-semibold">হোম পেজে নিউজ দেখানোর সংখ্যা</h2>
-                <div className="flex gap-2">
-                  <input className={inp} type="number" min={1} value={homeLimit} onChange={(e) => setHomeLimit(e.target.value)} />
-                  <button className="rounded-xl bg-green-700 px-5 text-white" onClick={saveLimit}>সেভ</button>
-                </div>
-              </div>
-            )}
-            <div className="bg-white rounded-2xl shadow p-4 space-y-3">
+              <div className="bg-white rounded-2xl shadow p-4 space-y-3">
               <h2 className="font-semibold">{editId ? "সংবাদ এডিট করুন" : "নতুন সংবাদ"}</h2>
               <input className={inp} placeholder="শিরোনাম (টাইটেল) *" value={title} onChange={(e) => setTitle(e.target.value)} />
               <input className={inp} placeholder="হেডিং (উপশিরোনাম)" value={heading} onChange={(e) => setHeading(e.target.value)} />
@@ -511,6 +506,13 @@ export default function AdminPage() {
         )}
                 {tab === "ticker" && isAdmin && (
           <TickerManager token={token} author={me.full_name} />
+        )}
+                {tab === "students" && isAdmin && (
+          <StudentManager token={token} shrink={shrink} />
+        )}
+
+        {tab === "limits" && isAdmin && (
+          <SectionLimits token={token} cats={cats} />
         )}
 
         {tab === "profile" && (
