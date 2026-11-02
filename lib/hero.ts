@@ -51,6 +51,7 @@ export type HeroSlide = {
   video_url?: string | null
   button_text?: string | null
   title_color?: string | null
+  title_bg_color?: string | null
   badge_color?: string | null
   font_family?: string | null
   font_weight?: string | null
@@ -58,11 +59,12 @@ export type HeroSlide = {
   content_pos_v?: "top" | "center" | "bottom" | null
   content_pos_h?: "left" | "center" | "right" | null
   show_card_bg?: boolean | null
-  card_width?: "sm" | "md" | "lg" | "full" | null
-  card_padding?: "sm" | "md" | "lg" | null
-  card_radius?: "none" | "md" | "xl" | "2xl" | "full" | null
+  card_width_pct?: number | null
+  card_radius_pct?: number | null
+  card_padding_val?: number | null
   card_bg_color?: string | null
   card_opacity?: number | null
+  fit_mode?: "contain" | "cover" | null
   link_url: string | null
   sort_order: number
   is_active: boolean
@@ -113,7 +115,7 @@ export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   }
 }
 
-// সাইটের পোস্টগুলো লোড করা
+// সাইটের পোস্টগুলো ড্রপডাউনে লোড করা
 export async function getRecentPosts(): Promise<Array<{ id: string; title: string; image_url?: string; summary?: string }>> {
   try {
     const res = await fetch(
