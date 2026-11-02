@@ -63,6 +63,11 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [fontWeight, setFontWeight] = useState("700")
   const [textAlign, setTextAlign] = useState<"left" | "center" | "right">("left")
 
+  // কাস্টম পজিশন ও কার্ড ব্যাকগ্রাউন্ড
+  const [contentPosV, setContentPosV] = useState<"top" | "center" | "bottom">("bottom")
+  const [contentPosH, setContentPosH] = useState<"left" | "center" | "right">("left")
+  const [showCardBg, setShowCardBg] = useState(true)
+
   async function load() {
     setList(await getHeroSlides(token))
     getRecentPosts().then(setPosts)
@@ -76,14 +81,13 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         setBTitle(s.breaking_title || "")
         setBText(s.breaking_text || "")
         setBLink(s.breaking_link || "")
-        setSlideSpeed(s.slide_speed || 4500)
+        setSlideSpeed(s.slide_speed ?? 4500)
         setTransType(s.transition_type || "fade")
         setTextMotion(s.text_motion ?? true)
       }
     })
   }, [token])
 
-  // সাইটের পোস্ট সিলেক্ট করলে তথ্য নিজে থেকেই ফর্মে বসে যাবে
   function handlePostSelect(postId: string) {
     const p = posts.find((x) => x.id === postId)
     if (!p) return
@@ -147,11 +151,14 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setFontFamily(FONTS[0].value)
     setFontWeight("700")
     setTextAlign("left")
+    setContentPosV("bottom")
+    setContentPosH("left")
+    setShowCardBg(true)
   }
 
   function startEdit(s: HeroSlide) {
     setEditId(s.id)
-    setTitle(s.title)
+    setTitle(s.title || "")
     setSummary(s.summary || "")
     setCategory(s.category || "")
     setLink(s.link_url || "")
@@ -169,12 +176,16 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setFontFamily(s.font_family || FONTS[0].value)
     setFontWeight(s.font_weight || "700")
     setTextAlign(s.text_align || "left")
+    setContentPosV(s.content_pos_v || "bottom")
+    setContentPosH(s.content_pos_h || "left")
+    setShowCardBg(s.show_card_bg ?? true)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   async function save() {
-    if (!title.trim()) {
-      setMsg("❌ শিরোনাম লিখুন")
+    // শিরোনাম বা লেখা বাধ্যতামূলক নয়, শুধু নিশ্চিত করা যে খালি কোনো স্লাইড সেভ হচ্ছে না
+    if (!title.trim() && !file && !oldImage && !videoUrl.trim()) {
+      setMsg("❌ অন্তত একটি ছবি, ভিডিও অথবা শিরোনাম দিন")
       return
     }
     const l = link.trim()
@@ -194,7 +205,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
 
       const data = {
         category: category.trim() || null,
-        title: title.trim(),
+        title: title.trim() || null,
         summary: summary.trim() || null,
         image_url: img,
         image_pos: pos,
@@ -209,6 +220,9 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         font_family: fontFamily,
         font_weight: fontWeight,
         text_align: textAlign,
+        content_pos_v: contentPosV,
+        content_pos_h: contentPosH,
+        show_card_bg: showCardBg,
       }
       if (editId) await updateHeroSlide(token, editId, data)
       else {
@@ -267,12 +281,15 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         <h2 className="font-semibold text-gray-800">⚙️ স্লাইডার গতি ও ট্রানজিশন নিয়ন্ত্রণ</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
-            <span className="text-xs text-gray-600">প্রতি স্লাইডের সময় (গতি)</span>
+            <span className="text-xs text-gray-600">স্লাইড পরিবর্তনের গতি / সময়</span>
             <select className={inp} value={slideSpeed} onChange={(e) => setSlideSpeed(Number(e.target.value))}>
-              <option value={2500}>দ্রুত (২.৫ সেকেন্ড)</option>
+              <option value={0}>♾️ আনলিমিটেড (অটোপ্লে বন্ধ - পাঠক নিজে বদলাবে)</option>
+              <option value={2500}>খুব দ্রুত (২.৫ সেকেন্ড)</option>
               <option value={4500}>স্বাভাবিক (৪.৫ সেকেন্ড)</option>
               <option value={7000}>ধীরগতি (৭ সেকেন্ড)</option>
-              <option value={10000}>খুব ধীর (১০ সেকেন্ড)</option>
+              <option value={12000}>খুব ধীর (১২ সেকেন্ড)</option>
+              <option value={20000}>২০ সেকেন্ড</option>
+              <option value={30000}>৩০ সেকেন্ড</option>
             </select>
           </label>
 
@@ -289,7 +306,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
 
         <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer pt-1">
           <input type="checkbox" checked={textMotion} onChange={(e) => setTextMotion(e.target.checked)} className="rounded" />
-          শিরোনামে টাইপরাইটার/মোশন অ্যানিমেশন চালু রাখুন
+          শিরোনামে মোশন অ্যানিমেশন চালু রাখুন
         </label>
 
         <button onClick={saveSliderSettings} className="bg-slate-800 text-white text-sm px-4 py-2 rounded-xl font-medium hover:bg-slate-700">
@@ -320,22 +337,20 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
         <h2 className="font-semibold">{editId ? "স্লাইড এডিট করুন" : "নতুন স্লাইড যোগ করুন"}</h2>
 
-        {/* সাইটের পোস্ট থেকে স্বয়ংক্রিয়ভাবে নেওয়ার অপশন */}
+        {/* সাইটের পোস্ট থেকে স্বয়ংক্রিয় নেওয়ার অপশন */}
         {posts.length > 0 && !editId && (
           <div className="p-3 bg-green-50 border border-green-200 rounded-xl space-y-1">
             <span className="text-xs font-semibold text-green-800">📰 ওয়েবসাইটের কোনো পোস্ট স্লাইডারে আনুন (এক ক্লিকে)</span>
             <select className={inp} onChange={(e) => handlePostSelect(e.target.value)} defaultValue="">
               <option value="">-- ওয়েবসাইট থেকে খবর বেছে নিন --</option>
               {posts.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title}
-                </option>
+                <option key={p.id} value={p.id}>{p.title}</option>
               ))}
             </select>
           </div>
         )}
 
-        {/* মিডিয়া চয়েস: ছবি নাকি ভিডিও */}
+        {/* মিডিয়া চয়েস */}
         <div className="flex gap-4 p-2 bg-gray-50 rounded-xl text-sm">
           <label className="flex items-center gap-1.5 cursor-pointer font-medium">
             <input type="radio" name="mtype" checked={mediaType === "image"} onChange={() => setMediaType("image")} />
@@ -343,19 +358,54 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           </label>
           <label className="flex items-center gap-1.5 cursor-pointer font-medium">
             <input type="radio" name="mtype" checked={mediaType === "video"} onChange={() => setMediaType("video")} />
-            🎥 ভিডিও (ইউটিউব, ফেসবুক বা সরাসরি লিংক)
+            🎥 ভিডিও (সাউন্ডসহ স্বয়ংক্রিয় প্লে)
           </label>
         </div>
 
-        <input className={inp} placeholder="শিরোনাম *" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
-        <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ" value={summary} onChange={(e) => setSummary(e.target.value)} />
+        {/* শিরোনাম ও বিবরণ (সম্পূর্ণ ঐচ্ছিক) */}
+        <div>
+          <span className="text-xs text-gray-500">শিরোনাম (ঐচ্ছিক - ফাঁকা রাখলে শুধু ছবি/ভিডিও দেখাবে)</span>
+          <input className={inp} placeholder="শিরোনাম লিখুন (না চাইলে খালি রাখুন)" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
+        </div>
+        <div>
+          <span className="text-xs text-gray-500">সংক্ষিপ্ত বিবরণ (ঐচ্ছিক)</span>
+          <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ (না চাইলে খালি রাখুন)" value={summary} onChange={(e) => setSummary(e.target.value)} />
+        </div>
 
-        {/* ফন্ট নির্বাচন (১০টি ফন্ট, থিকনেস ও অ্যালাইনমেন্ট) */}
+        {/* লেখার অবস্থান নির্ধারণ (পজিশন কন্ট্রোল) */}
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
+          <span className="text-xs font-semibold text-amber-900">📍 হিরো সেকশনে লেখার অবস্থান (Custom Position)</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="block">
+              <span className="text-xs text-gray-600">উপরে-নিচে অবস্থান</span>
+              <select className={inp} value={contentPosV} onChange={(e) => setContentPosV(e.target.value as any)}>
+                <option value="bottom">নিচে (Bottom - প্রমিত)</option>
+                <option value="center">মাঝামাঝি (Center)</option>
+                <option value="top">উপরে (Top)</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-xs text-gray-600">ডানে-বামে অবস্থান</span>
+              <select className={inp} value={contentPosH} onChange={(e) => setContentPosH(e.target.value as any)}>
+                <option value="left">বামে (Left - প্রমিত)</option>
+                <option value="center">মাঝে (Center)</option>
+                <option value="right">ডানে (Right)</option>
+              </select>
+            </label>
+          </div>
+
+          <label className="flex items-center gap-2 text-xs font-medium text-gray-800 cursor-pointer pt-1">
+            <input type="checkbox" checked={showCardBg} onChange={(e) => setShowCardBg(e.target.checked)} className="rounded" />
+            লেখা স্পষ্ট করতে পেছনের সেমি-ট্রান্সপারেন্ট গ্লাস কার্ড চালু রাখুন
+          </label>
+        </div>
+
+        {/* ফন্ট নির্বাচন */}
         <div className="p-3 bg-gray-50 rounded-xl space-y-2 border border-gray-100">
-          <span className="text-xs font-semibold text-gray-700">🔤 ফন্ট, স্টাইল ও অ্যালাইনমেন্ট নিয়ন্ত্রণ</span>
+          <span className="text-xs font-semibold text-gray-700">🔤 ফন্ট, স্টাইল ও টেক্সট দিক</span>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <label className="block">
-              <span className="text-xs text-gray-500">ফন্ট নির্বাচন (১০টি)</span>
+              <span className="text-xs text-gray-500">ফন্ট (১০টি)</span>
               <select className={inp} value={fontFamily} onChange={(e) => setFontFamily(e.target.value)}>
                 {FONTS.map((f) => (
                   <option key={f.label} value={f.value}>{f.label}</option>
@@ -364,7 +414,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             </label>
 
             <label className="block">
-              <span className="text-xs text-gray-500">ফন্টের থিকনেস (বোল্ডনেস)</span>
+              <span className="text-xs text-gray-500">থিকনেস (বোল্ডনেস)</span>
               <select className={inp} value={fontWeight} onChange={(e) => setFontWeight(e.target.value)}>
                 {FONT_WEIGHTS.map((w) => (
                   <option key={w.label} value={w.value}>{w.label}</option>
@@ -373,7 +423,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             </label>
 
             <label className="block">
-              <span className="text-xs text-gray-500">লেখার অ্যালাইনমেন্ট</span>
+              <span className="text-xs text-gray-500">টেক্সট দিক</span>
               <select className={inp} value={textAlign} onChange={(e) => setTextAlign(e.target.value as any)}>
                 <option value="left">বামে (Left)</option>
                 <option value="center">মাঝে (Center)</option>
@@ -385,7 +435,8 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
 
         {/* ব্যাজ নির্বাচন */}
         <div className="space-y-2">
-          <input className={inp} placeholder="কাস্টম ব্যাজ লিখুন (যেমন: এইমাত্র পাওয়া)" value={category} onChange={(e) => setCategory(e.target.value)} />
+          <span className="text-xs text-gray-500">ব্যাজ (ঐচ্ছিক)</span>
+          <input className={inp} placeholder="কাস্টম ব্যাজ (না চাইলে খালি রাখুন)" value={category} onChange={(e) => setCategory(e.target.value)} />
           <div className="flex flex-wrap gap-1.5">
             {BADGES.map((b) => (
               <button
@@ -420,20 +471,26 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
 
         {/* বাটন টেক্সট ও লিংক */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input className={inp} placeholder="বাটনের লেখা (যেমন: বিস্তারিত পড়ুন)" value={btnText} onChange={(e) => setBtnText(e.target.value)} />
-          <input className={inp} placeholder="ক্লিক লিংক (ফাঁকা রাখলে পপ-আপে বিস্তারিত দেখাবে)" value={link} onChange={(e) => setLink(e.target.value)} />
+          <div>
+            <span className="text-xs text-gray-500">বাটনের লেখা (ঐচ্ছিক)</span>
+            <input className={inp} placeholder="বাটনের লেখা (যেমন: বিস্তারিত)" value={btnText} onChange={(e) => setBtnText(e.target.value)} />
+          </div>
+          <div>
+            <span className="text-xs text-gray-500">ক্লিক লিংক (ঐচ্ছিক)</span>
+            <input className={inp} placeholder="লিংক (না দিলে পপ-আপে পূর্ণ বিবরণ দেখাবে)" value={link} onChange={(e) => setLink(e.target.value)} />
+          </div>
         </div>
 
-        {/* ছবি বা ভিডিও ইনপুট */}
+        {/* মিডিয়া ইনপুট */}
         {mediaType === "video" ? (
           <div>
-            <span className="text-xs text-gray-600">ভিডিও লিঙ্ক (ইউটিউব লিঙ্ক বা সরাসরি MP4 লিঙ্ক)</span>
+            <span className="text-xs text-gray-600">ভিডিও লিঙ্ক (ইউটিউব বা সরাসরি MP4 ভিডিও লিংক)</span>
             <input className={inp} placeholder="https://www.youtube.com/watch?v=..." value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
           </div>
         ) : (
           <>
             <label className="block">
-              <span className="text-xs text-gray-600">ছবি (১৬:৯ আকারের হলে সবচেয়ে ভালো)</span>
+              <span className="text-xs text-gray-600">ছবি আপলোড</span>
               <input className="block mt-1 text-sm" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
             </label>
             {(file || oldImage) && (
@@ -482,9 +539,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       {/* স্লাইড তালিকা */}
       <div className="space-y-3">
         <h2 className="font-semibold text-gray-800">সব স্লাইড ({list.length})</h2>
-        <p className="text-xs text-gray-500">
-          সর্বোচ্চ {MAX_LIVE}টি স্লাইড হোমপেজে ঘুরবে। যেকোনো সময় স্লাইড উপরে বা নিচে সাজানো যাবে।
-        </p>
+        <p className="text-xs text-gray-500">সর্বোচ্চ {MAX_LIVE}টি স্লাইড হোমপেজে ঘুরবে।</p>
         {list.map((s, i) => (
           <div key={s.id} className="bg-white rounded-2xl shadow p-3 text-sm space-y-2 border border-gray-100">
             <div className="flex gap-3">
@@ -496,10 +551,12 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={s.image_url} alt="" className="w-20 h-14 object-cover rounded-lg shrink-0" style={{ objectPosition: s.image_pos }} />
               ) : (
-                <div className="w-20 h-14 bg-gray-100 rounded-lg shrink-0" />
+                <div className="w-20 h-14 bg-gray-100 rounded-lg shrink-0 flex items-center justify-center text-xs text-gray-400">
+                  কোনো ছবি নেই
+                </div>
               )}
               <div className="min-w-0 flex-1">
-                <p className="font-semibold truncate">{s.title}</p>
+                <p className="font-semibold truncate">{s.title || "কোনো শিরোনাম নেই"}</p>
                 <p className="text-xs text-gray-500">
                   {s.category ? `${s.category} · ` : ""}{status(s)}
                 </p>
