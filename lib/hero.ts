@@ -14,6 +14,55 @@ export const BADGES = [
   "সংস্কৃতি",
 ]
 
+// ২০টি জনপ্রিয় ট্রানজিশন
+export const TRANSITIONS = [
+  { label: "১. ফেড (Smooth Fade)", value: "fade" },
+  { label: "২. স্লাইড বামে (Slide Left)", value: "slide-left" },
+  { label: "৩. স্লাইড ডানে (Slide Right)", value: "slide-right" },
+  { label: "৪. স্লাইড উপরে (Slide Up)", value: "slide-up" },
+  { label: "৫. স্লাইড নিচে (Slide Down)", value: "slide-down" },
+  { label: "৬. জুম ইন (Zoom In)", value: "zoom-in" },
+  { label: "৭. জুম আউট (Zoom Out)", value: "zoom-out" },
+  { label: "৮. ফ্লিপ হরাইজন্টাল (Flip Horizontal 3D)", value: "flip-h" },
+  { label: "৯. ফ্লিপ ভার্টিক্যাল (Flip Vertical 3D)", value: "flip-v" },
+  { label: "১০. রোটেট ইন (Rotate In 3D)", value: "rotate-in" },
+  { label: "১১. কিউব ৩ডি (3D Cube Turn)", value: "cube-3d" },
+  { label: "১২. ফ্ল্যাশ ব্লার ফেড (Flash Blur)", value: "blur-fade" },
+  { label: "১৩. বাউন্স ইন (Bounce In)", value: "bounce-in" },
+  { label: "১৪. স্লাইড ও জুম (Slide & Zoom)", value: "slide-zoom" },
+  { label: "১৫. স্কেল ফেড (Scale Fade)", value: "scale-fade" },
+  { label: "১৬. প্যারালাক্স বামে (Parallax Left)", value: "parallax-left" },
+  { label: "১৭. প্যারালাক্স ডানে (Parallax Right)", value: "parallax-right" },
+  { label: "১৮. সুইং ইন (Swing In 3D)", value: "swing-in" },
+  { label: "১৯. টুইস্ট ইন (Twist 3D)", value: "twist-in" },
+  { label: "২০. সিনেমাটিক কেন-বার্নস (Ken Burns Pan)", value: "ken-burns" },
+]
+
+// ২১টি অ্যানিমেটেড ব্রেকিং ব্যাজ ও শেপ
+export const BREAKING_BADGES = [
+  { label: "🔴 ১. পালসিং রেড ডট (Pulsing Dot)", value: "pulse-circle" },
+  { label: "📡 ২. রাডার ওয়েভ (Radar Wave)", value: "radar-wave" },
+  { label: "💡 ৩. নিয়ন গ্লো বীকন (Neon Beacon)", value: "neon-beacon" },
+  { label: "🔥 ৪. ফায়ার ফ্লেম (Fire Flame)", value: "fire-flame" },
+  { label: "⚡ ৫. ফ্ল্যাশ লাইটনিং (Flash Lightning)", value: "flash-lightning" },
+  { label: "💓 ৬. হার্টবিট পালস (Heartbeat)", value: "heartbeat" },
+  { label: "⭐ ৭. স্পিনিং স্টার (Rotating Star)", value: "spinning-star" },
+  { label: "🔄 ৮. বর্ডার স্পিনার (Border Spinner)", value: "border-spinner" },
+  { label: "🌈 ৯. নিয়ন বক্স গ্লো (Neon Glow)", value: "neon-glow" },
+  { label: "🏷️ ১০. থ্রি-ডি ফ্লিপ ব্যাজ (3D Flip)", value: "flip-badge" },
+  { label: "📶 ১১. সাউন্ডওয়েভ বার (Soundwave)", value: "soundwave" },
+  { label: "👑 ১২. গোল্ডেন ক্রাউন এলার্ট (Golden Crown)", value: "golden-crown" },
+  { label: "📻 ১৩. লাইভ সিগন্যাল অ্যান্টেনা (Live Antenna)", value: "antenna-signal" },
+  { label: "🔔 ১৪. কাঁপন্ত অ্যালার্ট বেল (Shaking Bell)", value: "shaking-bell" },
+  { label: "⭕ ১৫. এক্সপ্যান্ডিং রিং (Expanding Ring)", value: "expanding-ring" },
+  { label: "⏩ ১৬. ডাবল অ্যারো ব্লিঙ্ক (Arrow Blink)", value: "arrow-blink" },
+  { label: "💎 ১৭. ডায়মন্ড পালস (Pulsing Diamond)", value: "diamond-pulse" },
+  { label: "🚥 ১৮. সাইরেন স্ট্রোব (Police Siren Strobe)", value: "siren-strobe" },
+  { label: "🚨 ১৯. ভাইব্রেট এলার্ম (Vibrating Alarm)", value: "vibrating-alarm" },
+  { label: "✨ ২০. ডিজিটাল এলইডি টিকার (Digital LED)", value: "led-ticker" },
+  { label: "🎆 ২১. রেইনবো শিফট (Rainbow Shift)", value: "rainbow-shift" },
+]
+
 // ১০টি জনপ্রিয় বাংলা ও ইংরেজি ফন্ট
 export const FONTS = [
   { label: "হিন্দ শিলিগুড়ি (Hind Siliguri - বাংলা)", value: "'Hind Siliguri', sans-serif" },
@@ -38,7 +87,8 @@ export const FONT_WEIGHTS = [
   { label: "অতিরিক্ত গাঢ় (Extra Bold 800)", value: "800" },
 ]
 
-export const MAX_LIVE = 5
+// স্লাইড সংখ্যা এখন আনলিমিটেড (১০০টি পর্যন্ত সাপোর্ট)
+export const MAX_LIVE = 100
 
 export type HeroSlide = {
   id: string
@@ -49,6 +99,7 @@ export type HeroSlide = {
   image_pos: "top" | "center" | "bottom"
   media_type?: "image" | "video" | null
   video_url?: string | null
+  extra_media?: string | null
   button_text?: string | null
   title_color?: string | null
   title_bg_color?: string | null
@@ -62,6 +113,7 @@ export type HeroSlide = {
   card_width_pct?: number | null
   card_radius_pct?: number | null
   card_padding_val?: number | null
+  card_blur?: number | null
   card_bg_color?: string | null
   card_opacity?: number | null
   fit_mode?: "contain" | "cover" | null
@@ -80,15 +132,18 @@ export type HeroSettings = {
   breaking_title: string | null
   breaking_text: string | null
   breaking_link: string | null
+  breaking_btn_text?: string | null
   breaking_media_type?: "none" | "image" | "video" | null
   breaking_media_url?: string | null
   breaking_bg_color?: string | null
   breaking_bg_gradient?: string | null
-  breaking_shape?: "circle" | "square" | "diamond" | "badge" | null
+  breaking_shape?: string | null
+  breaking_badge_style?: string | null
   breaking_pulse_speed?: "slow" | "normal" | "fast" | null
-  breaking_btn_text?: string | null
+  breaking_pulse_speed_pct?: number | null
+  max_slides?: number | null
   slide_speed?: number | null
-  transition_type?: "fade" | "slide-left" | "slide-right" | "slide-up" | null
+  transition_type?: string | null
   text_motion?: boolean | null
 }
 
@@ -112,7 +167,7 @@ async function ok(res: Response): Promise<Response> {
 export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/hero_slides?select=*&order=sort_order.asc,created_at.desc&limit=60`,
+      `${SB_URL}/rest/v1/hero_slides?select=*&order=sort_order.asc,created_at.desc&limit=100`,
       { headers: hdr(token), cache: "no-store" }
     )
     if (!res.ok) return []
@@ -126,7 +181,7 @@ export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
 export async function getRecentPosts(): Promise<Array<{ id: string; title: string; image_url?: string; summary?: string }>> {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/posts?select=id,title,image_url,summary&order=created_at.desc&limit=30`,
+      `${SB_URL}/rest/v1/posts?select=id,title,image_url,summary&order=created_at.desc&limit=40`,
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
