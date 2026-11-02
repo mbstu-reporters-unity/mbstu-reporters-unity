@@ -1,6 +1,9 @@
 import { MapPin } from 'lucide-react'
 import { LiveClock } from './live-clock'
 import { SocialLinks } from './social-links'
+import { LangSwitcher } from './lang-switcher'
+import { ThemeSwitcher } from './theme-switcher'
+import { Tx } from '@/lib/i18n'
 
 export function TopBar() {
   return (
@@ -9,11 +12,15 @@ export function TopBar() {
         <div className="flex flex-wrap items-center justify-center gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 font-medium">
             <MapPin className="size-3.5" aria-hidden="true" />
-            Santosh, Tangail
+            <Tx bn="সন্তোষ, টাঙ্গাইল" en="Santosh, Tangail" />
           </span>
           <LiveClock />
         </div>
-        <SocialLinks size="sm" tooltip="bottom" />
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <LangSwitcher />
+          <ThemeSwitcher />
+          <SocialLinks size="sm" tooltip="bottom" />
+        </div>
       </div>
     </div>
   )
