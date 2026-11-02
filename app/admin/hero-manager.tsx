@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import { uploadImage } from "../../lib/sb"
 import {
   BADGES,
+  FONTS,
+  FONT_WEIGHTS,
   MAX_LIVE,
   getHeroSlides,
   createHeroSlide,
@@ -11,6 +13,7 @@ import {
   deleteHeroSlide,
   getHeroSettings,
   saveHeroSettings,
+  getRecentPosts,
 } from "../../lib/hero"
 import type { HeroSlide } from "../../lib/hero"
 
@@ -22,6 +25,7 @@ const isLive = (s: HeroSlide) => s.is_active && (!s.expires_at || new Date(s.exp
 
 export default function HeroManager({ token, shrink }: { token: string; shrink: (f: File) => Promise<Blob> }) {
   const [list, setList] = useState<HeroSlide[]>([])
+  const [posts, setPosts] = useState<Array<{ id: string; title: string; image_url?: string; summary?: string }>>([])
   const [msg, setMsg] = useState("")
   const [busy, setBusy] = useState(false)
 
@@ -49,15 +53,19 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [oldImage, setOldImage] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
 
-  // নতুন মিডিয়া ও স্টাইল স্টেট
+  // মিডিয়া, কালার ও ফন্ট স্টেট
   const [mediaType, setMediaType] = useState<"image" | "video">("image")
   const [videoUrl, setVideoUrl] = useState("")
   const [btnText, setBtnText] = useState("বিস্তারিত")
   const [titleColor, setTitleColor] = useState("#FFFFFF")
   const [badgeColor, setBadgeColor] = useState("#EAB308")
+  const [fontFamily, setFontFamily] = useState(FONTS[0].value)
+  const [fontWeight, setFontWeight] = useState("700")
+  const [textAlign, setTextAlign] = useState<"left" | "center" | "right">("left")
 
   async function load() {
     setList(await getHeroSlides(token))
+    getRecentPosts().then(setPosts)
   }
 
   useEffect(() => {
@@ -74,6 +82,18 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       }
     })
   }, [token])
+
+  // সাইটের পোস্ট সিলেক্ট করলে তথ্য নিজে থেকেই ফর্মে বসে যাবে
+  function handlePostSelect(postId: string) {
+    const p = posts.find((x) => x.id === postId)
+    if (!p) return
+    setTitle(p.title)
+    if (p.summary) setSummary(p.summary)
+    if (p.image_url) setOldImage(p.image_url)
+    setLink(`/post/${p.id}`)
+    setBtnText("বিস্তারিত পড়ুন")
+    setMsg("✅ পোস্টের তথ্য ও লিংক ফর্মে যুক্ত হয়েছে")
+  }
 
   async function saveBreaking(on: boolean) {
     if (on && !bTitle.trim()) {
@@ -124,6 +144,9 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setBtnText("বিস্তারিত")
     setTitleColor("#FFFFFF")
     setBadgeColor("#EAB308")
+    setFontFamily(FONTS[0].value)
+    setFontWeight("700")
+    setTextAlign("left")
   }
 
   function startEdit(s: HeroSlide) {
@@ -143,6 +166,9 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setBtnText(s.button_text || "বিস্তারিত")
     setTitleColor(s.title_color || "#FFFFFF")
     setBadgeColor(s.badge_color || "#EAB308")
+    setFontFamily(s.font_family || FONTS[0].value)
+    setFontWeight(s.font_weight || "700")
+    setTextAlign(s.text_align || "left")
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -180,6 +206,9 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         button_text: btnText.trim() || "বিস্তারিত",
         title_color: titleColor,
         badge_color: badgeColor,
+        font_family: fontFamily,
+        font_weight: fontWeight,
+        text_align: textAlign,
       }
       if (editId) await updateHeroSlide(token, editId, data)
       else {
@@ -233,7 +262,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     <div className="space-y-4">
       {msg && <p className="p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-xl text-sm font-medium">{msg}</p>}
 
-      {/* স্লাইডার গতি ও মোশন কন্ট্রোল */}
+      {/* স্লাইডার গতি ও ট্রানজিশন কন্ট্রোল */}
       <div className="bg-white rounded-2xl shadow p-4 space-y-3 border border-gray-100">
         <h2 className="font-semibold text-gray-800">⚙️ স্লাইডার গতি ও ট্রানজিশন নিয়ন্ত্রণ</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -291,6 +320,21 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
         <h2 className="font-semibold">{editId ? "স্লাইড এডিট করুন" : "নতুন স্লাইড যোগ করুন"}</h2>
 
+        {/* সাইটের পোস্ট থেকে স্বয়ংক্রিয়ভাবে নেওয়ার অপশন */}
+        {posts.length > 0 && !editId && (
+          <div className="p-3 bg-green-50 border border-green-200 rounded-xl space-y-1">
+            <span className="text-xs font-semibold text-green-800">📰 ওয়েবসাইটের কোনো পোস্ট স্লাইডারে আনুন (এক ক্লিকে)</span>
+            <select className={inp} onChange={(e) => handlePostSelect(e.target.value)} defaultValue="">
+              <option value="">-- ওয়েবসাইট থেকে খবর বেছে নিন --</option>
+              {posts.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* মিডিয়া চয়েস: ছবি নাকি ভিডিও */}
         <div className="flex gap-4 p-2 bg-gray-50 rounded-xl text-sm">
           <label className="flex items-center gap-1.5 cursor-pointer font-medium">
@@ -299,12 +343,45 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           </label>
           <label className="flex items-center gap-1.5 cursor-pointer font-medium">
             <input type="radio" name="mtype" checked={mediaType === "video"} onChange={() => setMediaType("video")} />
-            🎥 ভিডিও (ইউটিউব বা সরাসরি লিংক)
+            🎥 ভিডিও (ইউটিউব, ফেসবুক বা সরাসরি লিংক)
           </label>
         </div>
 
         <input className={inp} placeholder="শিরোনাম *" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
         <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ" value={summary} onChange={(e) => setSummary(e.target.value)} />
+
+        {/* ফন্ট নির্বাচন (১০টি ফন্ট, থিকনেস ও অ্যালাইনমেন্ট) */}
+        <div className="p-3 bg-gray-50 rounded-xl space-y-2 border border-gray-100">
+          <span className="text-xs font-semibold text-gray-700">🔤 ফন্ট, স্টাইল ও অ্যালাইনমেন্ট নিয়ন্ত্রণ</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <label className="block">
+              <span className="text-xs text-gray-500">ফন্ট নির্বাচন (১০টি)</span>
+              <select className={inp} value={fontFamily} onChange={(e) => setFontFamily(e.target.value)}>
+                {FONTS.map((f) => (
+                  <option key={f.label} value={f.value}>{f.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-xs text-gray-500">ফন্টের থিকনেস (বোল্ডনেস)</span>
+              <select className={inp} value={fontWeight} onChange={(e) => setFontWeight(e.target.value)}>
+                {FONT_WEIGHTS.map((w) => (
+                  <option key={w.label} value={w.value}>{w.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-xs text-gray-500">লেখার অ্যালাইনমেন্ট</span>
+              <select className={inp} value={textAlign} onChange={(e) => setTextAlign(e.target.value as any)}>
+                <option value="left">বামে (Left)</option>
+                <option value="center">মাঝে (Center)</option>
+                <option value="right">ডানে (Right)</option>
+              </select>
+            </label>
+          </div>
+        </div>
 
         {/* ব্যাজ নির্বাচন */}
         <div className="space-y-2">
@@ -343,8 +420,8 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
 
         {/* বাটন টেক্সট ও লিংক */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input className={inp} placeholder="বাটনের লেখা (ডিফল্ট: বিস্তারিত)" value={btnText} onChange={(e) => setBtnText(e.target.value)} />
-          <input className={inp} placeholder="ক্লিক লিংক (https://... বা /notices)" value={link} onChange={(e) => setLink(e.target.value)} />
+          <input className={inp} placeholder="বাটনের লেখা (যেমন: বিস্তারিত পড়ুন)" value={btnText} onChange={(e) => setBtnText(e.target.value)} />
+          <input className={inp} placeholder="ক্লিক লিংক (ফাঁকা রাখলে পপ-আপে বিস্তারিত দেখাবে)" value={link} onChange={(e) => setLink(e.target.value)} />
         </div>
 
         {/* ছবি বা ভিডিও ইনপুট */}
