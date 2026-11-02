@@ -1,6 +1,19 @@
 import { SB_URL, SB_KEY } from "./sb"
 
-export const BADGES = ["ব্রেকিং", "অনুসন্ধান", "ক্যাম্পাস", "সাক্ষাৎকার", "কর্মশালা", "গবেষণা", "সংস্কৃতি"]
+// নতুন প্রস্তাবিত ব্যাজসহ পূর্ণ তালিকা
+export const BADGES = [
+  "ব্রেকিং",
+  "এইমাত্র পাওয়া",
+  "আজকের খবর",
+  "আপডেট",
+  "অনুসন্ধান",
+  "ক্যাম্পাস",
+  "সাক্ষাৎকার",
+  "কর্মশালা",
+  "গবেষণা",
+  "সংস্কৃতি",
+]
+
 export const MAX_LIVE = 5
 
 export type HeroSlide = {
@@ -10,6 +23,11 @@ export type HeroSlide = {
   summary: string | null
   image_url: string | null
   image_pos: "top" | "center" | "bottom"
+  media_type?: "image" | "video" | null
+  video_url?: string | null
+  button_text?: string | null
+  title_color?: string | null
+  badge_color?: string | null
   link_url: string | null
   sort_order: number
   is_active: boolean
@@ -25,6 +43,9 @@ export type HeroSettings = {
   breaking_title: string | null
   breaking_text: string | null
   breaking_link: string | null
+  slide_speed?: number | null
+  transition_type?: "fade" | "slide-left" | "slide-right" | "slide-up" | null
+  text_motion?: boolean | null
 }
 
 function hdr(token?: string, json = false): Record<string, string> {
@@ -43,7 +64,7 @@ async function ok(res: Response): Promise<Response> {
   throw new Error(msg)
 }
 
-// token দিলে অ্যাডমিন সব স্লাইড দেখে; না দিলে শুধু চালু ও মেয়াদ-না-ফুরানো স্লাইড
+// স্লাইড লোড করা
 export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   try {
     const res = await fetch(
@@ -57,6 +78,7 @@ export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   }
 }
 
+// নতুন স্লাইড তৈরি
 export async function createHeroSlide(token: string, data: HeroInput) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/hero_slides`, {
@@ -67,6 +89,7 @@ export async function createHeroSlide(token: string, data: HeroInput) {
   )
 }
 
+// স্লাইড আপডেট করা
 export async function updateHeroSlide(token: string, id: string, data: Partial<HeroInput>) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/hero_slides?id=eq.${encodeURIComponent(id)}`, {
@@ -77,6 +100,7 @@ export async function updateHeroSlide(token: string, id: string, data: Partial<H
   )
 }
 
+// স্লাইড ডিলিট করা
 export async function deleteHeroSlide(token: string, id: string) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/hero_slides?id=eq.${encodeURIComponent(id)}`, {
@@ -86,6 +110,7 @@ export async function deleteHeroSlide(token: string, id: string) {
   )
 }
 
+// স্লাইডারের সাধারণ সেটিংস (গতি, ট্রানজিশন, মোশন ও ব্রেকিং)
 export async function getHeroSettings(): Promise<HeroSettings | null> {
   try {
     const res = await fetch(`${SB_URL}/rest/v1/hero_settings?select=*&id=eq.1`, {
@@ -100,7 +125,7 @@ export async function getHeroSettings(): Promise<HeroSettings | null> {
   }
 }
 
-export async function saveHeroSettings(token: string, data: HeroSettings) {
+export async function saveHeroSettings(token: string, data: Partial<HeroSettings>) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/hero_settings?id=eq.1`, {
       method: "PATCH",
