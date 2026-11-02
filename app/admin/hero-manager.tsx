@@ -58,20 +58,22 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [videoUrl, setVideoUrl] = useState("")
   const [btnText, setBtnText] = useState("বিস্তারিত")
   const [titleColor, setTitleColor] = useState("#FFFFFF")
+  const [titleBgColor, setTitleBgColor] = useState("")
   const [badgeColor, setBadgeColor] = useState("#EAB308")
   const [fontFamily, setFontFamily] = useState(FONTS[0].value)
   const [fontWeight, setFontWeight] = useState("700")
   const [textAlign, setTextAlign] = useState<"left" | "center" | "right">("left")
+  const [fitMode, setFitMode] = useState<"contain" | "cover">("contain")
 
   // কাস্টম পজিশন
   const [contentPosV, setContentPosV] = useState<"top" | "center" | "bottom">("bottom")
   const [contentPosH, setContentPosH] = useState<"left" | "center" | "right">("left")
   const [showCardBg, setShowCardBg] = useState(true)
 
-  // গ্লাস কার্ড কাস্টমাইজেশন স্টেট
-  const [cardWidth, setCardWidth] = useState<"sm" | "md" | "lg" | "full">("md")
-  const [cardPadding, setCardPadding] = useState<"sm" | "md" | "lg">("md")
-  const [cardRadius, setCardRadius] = useState<"none" | "md" | "xl" | "2xl" | "full">("xl")
+  // ০-১০০% স্লাইডার স্টেট
+  const [cardWidthPct, setCardWidthPct] = useState<number>(90)
+  const [cardRadiusPct, setCardRadiusPct] = useState<number>(20)
+  const [cardPaddingVal, setCardPaddingVal] = useState<number>(20)
   const [cardBgColor, setCardBgColor] = useState("#000000")
   const [cardOpacity, setCardOpacity] = useState<number>(60)
 
@@ -154,6 +156,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setVideoUrl("")
     setBtnText("বিস্তারিত")
     setTitleColor("#FFFFFF")
+    setTitleBgColor("")
     setBadgeColor("#EAB308")
     setFontFamily(FONTS[0].value)
     setFontWeight("700")
@@ -161,11 +164,12 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setContentPosV("bottom")
     setContentPosH("left")
     setShowCardBg(true)
-    setCardWidth("md")
-    setCardPadding("md")
-    setCardRadius("xl")
+    setCardWidthPct(90)
+    setCardRadiusPct(20)
+    setCardPaddingVal(20)
     setCardBgColor("#000000")
     setCardOpacity(60)
+    setFitMode("contain")
   }
 
   function startEdit(s: HeroSlide) {
@@ -184,6 +188,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setVideoUrl(s.video_url || "")
     setBtnText(s.button_text || "বিস্তারিত")
     setTitleColor(s.title_color || "#FFFFFF")
+    setTitleBgColor(s.title_bg_color || "")
     setBadgeColor(s.badge_color || "#EAB308")
     setFontFamily(s.font_family || FONTS[0].value)
     setFontWeight(s.font_weight || "700")
@@ -191,11 +196,12 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setContentPosV(s.content_pos_v || "bottom")
     setContentPosH(s.content_pos_h || "left")
     setShowCardBg(s.show_card_bg ?? true)
-    setCardWidth(s.card_width || "md")
-    setCardPadding(s.card_padding || "md")
-    setCardRadius(s.card_radius || "xl")
+    setCardWidthPct(s.card_width_pct ?? 90)
+    setCardRadiusPct(s.card_radius_pct ?? 20)
+    setCardPaddingVal(s.card_padding_val ?? 20)
     setCardBgColor(s.card_bg_color || "#000000")
     setCardOpacity(s.card_opacity ?? 60)
+    setFitMode(s.fit_mode || "contain")
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -232,6 +238,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         video_url: videoUrl.trim() || null,
         button_text: btnText.trim() || "বিস্তারিত",
         title_color: titleColor,
+        title_bg_color: titleBgColor.trim() || null,
         badge_color: badgeColor,
         font_family: fontFamily,
         font_weight: fontWeight,
@@ -239,11 +246,12 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         content_pos_v: contentPosV,
         content_pos_h: contentPosH,
         show_card_bg: showCardBg,
-        card_width: cardWidth,
-        card_padding: cardPadding,
-        card_radius: cardRadius,
+        card_width_pct: Number(cardWidthPct),
+        card_radius_pct: Number(cardRadiusPct),
+        card_padding_val: Number(cardPaddingVal),
         card_bg_color: cardBgColor,
         card_opacity: Number(cardOpacity),
+        fit_mode: fitMode,
       }
       if (editId) await updateHeroSlide(token, editId, data)
       else {
@@ -304,12 +312,11 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           <label className="block">
             <span className="text-xs text-gray-600">স্লাইড পরিবর্তনের গতি / সময়</span>
             <select className={inp} value={slideSpeed} onChange={(e) => setSlideSpeed(Number(e.target.value))}>
-              <option value={0}>♾️ আনলিমিটেড (অটোপ্লে বন্ধ - পাঠক নিজে বদলাবে)</option>
-              <option value={2500}>খুব দ্রুত (২.৫ সেকেন্ড)</option>
-              <option value={4500}>স্বাভাবিক (৪.৫ সেকেন্ড)</option>
-              <option value={7000}>ধীরগতি (৭ সেকেন্ড)</option>
-              <option value={12000}>খুব ধীর (১২ সেকেন্ড)</option>
-              <option value={20000}>২০ সেকেন্ড</option>
+              <option value={0}>♾️ আনলিমিটেড (অটোপ্লে বন্ধ - ভিডিও দেখতে সুবিধা)</option>
+              <option value={3000}>৩ সেকেন্ড</option>
+              <option value={5000}>৫ সেকেন্ড (স্বাভাবিক)</option>
+              <option value={8000}>৮ সেকেন্ড</option>
+              <option value={15000}>১৫ সেকেন্ড</option>
               <option value={30000}>৩০ সেকেন্ড</option>
             </select>
           </label>
@@ -355,8 +362,8 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       </div>
 
       {/* স্লাইড তৈরির ফর্ম */}
-      <div className="bg-white rounded-2xl shadow p-4 space-y-3">
-        <h2 className="font-semibold">{editId ? "স্লাইড এডিট করুন" : "নতুন স্লাইড যোগ করুন"}</h2>
+      <div className="bg-white rounded-2xl shadow p-4 space-y-4">
+        <h2 className="font-semibold text-lg text-gray-800">{editId ? "স্লাইড এডিট করুন" : "নতুন স্লাইড যোগ করুন"}</h2>
 
         {/* সাইটের পোস্ট থেকে স্বয়ংক্রিয় নেওয়ার অপশন */}
         {posts.length > 0 && !editId && (
@@ -379,25 +386,61 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           </label>
           <label className="flex items-center gap-1.5 cursor-pointer font-medium">
             <input type="radio" name="mtype" checked={mediaType === "video"} onChange={() => setMediaType("video")} />
-            🎥 ভিডিও (সাউন্ডসহ স্বয়ংক্রিয় প্লে)
+            🎥 ইউটিউব / ফেসবুক ভিডিও প্লেয়ার (প্রথম আলোর মতো টেনে দেখা যাবে)
           </label>
         </div>
 
+        {/* ছবি বা ভিডিও ফিট মোড (কাটবে কি না) */}
+        <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+          <span className="text-xs font-semibold text-gray-700">ছবি/ভিডিওর মাপ:</span>
+          <div className="flex gap-3 text-xs">
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input type="radio" name="fit" checked={fitMode === "contain"} onChange={() => setFitMode("contain")} />
+              অটো-ফিট (কাটবে না - প্রমিত)
+            </label>
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input type="radio" name="fit" checked={fitMode === "cover"} onChange={() => setFitMode("cover")} />
+              ফুল-কভার (পুরো স্ক্রিন)
+            </label>
+          </div>
+        </div>
+
         {/* শিরোনাম ও বিবরণ */}
-        <div>
-          <span className="text-xs text-gray-500">শিরোনাম (ঐচ্ছিক)</span>
-          <input className={inp} placeholder="শিরোনাম লিখুন (না চাইলে খালি রাখুন)" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
-        </div>
-        <div>
-          <span className="text-xs text-gray-500">সংক্ষিপ্ত বিবরণ (ঐচ্ছিক)</span>
-          <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ (না চাইলে খালি রাখুন)" value={summary} onChange={(e) => setSummary(e.target.value)} />
+        <div className="space-y-2">
+          <div>
+            <span className="text-xs text-gray-500">শিরোনাম (ঐচ্ছিক)</span>
+            <input className={inp} placeholder="শিরোনাম লিখুন (না চাইলে খালি রাখুন)" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
+          </div>
+
+          {/* শিরোনামের নিজস্ব ব্যাকগ্রাউন্ড হাইলাইট কালার */}
+          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg text-xs">
+            <span className="text-gray-600">শিরোনামের পেছনের ব্যাকগ্রাউন্ড কালার (ঐচ্ছিক):</span>
+            <input type="color" value={titleBgColor || "#000000"} onChange={(e) => setTitleBgColor(e.target.value)} className="w-6 h-6 rounded cursor-pointer border" />
+            {titleBgColor ? (
+              <button type="button" onClick={() => setTitleBgColor("")} className="text-red-500 text-xs underline">বাদ দিন</button>
+            ) : (
+              <span className="text-gray-400">কোনো ব্যাকগ্রাউন্ড নেই</span>
+            )}
+          </div>
+
+          <div>
+            <span className="text-xs text-gray-500">সংক্ষিপ্ত বিবরণ (ঐচ্ছিক)</span>
+            <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ (না চাইলে খালি রাখুন)" value={summary} onChange={(e) => setSummary(e.target.value)} />
+          </div>
         </div>
 
-        {/* লেখার অবস্থান ও গ্লাস কার্ডের মাপ কন্ট্রোল */}
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
-          <span className="text-xs font-semibold text-amber-900 block">📍 লেখার অবস্থান ও গ্লাস কার্ড সেটিংস</span>
+        {/* গ্লাস কার্ড ও ০-১০০% স্লাইডার কন্ট্রোল */}
+        <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-amber-950">📍 সেমি-ট্রান্সপারেন্ট গ্লাস লেয়ার ও পজিশন সেটিংস</span>
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 cursor-pointer">
+              <input type="checkbox" checked={showCardBg} onChange={(e) => setShowCardBg(e.target.checked)} className="rounded" />
+              কার্ড চালু রাখুন
+            </label>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {/* পজিশন ড্রপডাউন */}
+          <div className="grid grid-cols-2 gap-2">
             <label className="block">
               <span className="text-xs text-gray-600">উপরে-নিচে অবস্থান</span>
               <select className={inp} value={contentPosV} onChange={(e) => setContentPosV(e.target.value as any)}>
@@ -416,66 +459,82 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             </label>
           </div>
 
-          <label className="flex items-center gap-2 text-xs font-medium text-gray-800 cursor-pointer pt-1">
-            <input type="checkbox" checked={showCardBg} onChange={(e) => setShowCardBg(e.target.checked)} className="rounded" />
-            সেমি-ট্রান্সপারেন্ট গ্লাস কার্ড বক্স চালু রাখুন
-          </label>
-
-          {/* গ্লাস কার্ডের দৈর্ঘ্য, প্রস্থ, রাউন্ডনেস, রঙ ও অপাসিটি */}
+          {/* ০ থেকে ১০০% স্লাইডার বারসমূহ */}
           {showCardBg && (
             <div className="p-3 bg-white rounded-xl border border-amber-200 space-y-3 pt-2">
-              <span className="text-xs font-semibold text-gray-700 block">🎨 গ্লাস কার্ডের সাইজ ও স্টাইল নিয়ন্ত্রণ</span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <label className="block">
-                  <span className="text-xs text-gray-500">কার্ডের প্রস্থ (Width)</span>
-                  <select className={inp} value={cardWidth} onChange={(e) => setCardWidth(e.target.value as any)}>
-                    <option value="sm">ছোট (~৩২০px)</option>
-                    <option value="md">মাঝারি (~৪৮০px)</option>
-                    <option value="lg">বড় (~৬৪০px)</option>
-                    <option value="full">পুরো জায়গা (Full)</option>
-                  </select>
-                </label>
+              <span className="text-xs font-semibold text-gray-700 block">🎚️ ০-১০০% স্লাইডার দিয়ে কার্ডের আকার ও স্টাইল পরিবর্তন:</span>
 
-                <label className="block">
-                  <span className="text-xs text-gray-500">কার্ডের প্যাডিং/দৈর্ঘ্য</span>
-                  <select className={inp} value={cardPadding} onChange={(e) => setCardPadding(e.target.value as any)}>
-                    <option value="sm">কম (Compact)</option>
-                    <option value="md">স্বাভাবিক (Standard)</option>
-                    <option value="lg">বেশি (Spacious)</option>
-                  </select>
-                </label>
-
-                <label className="block">
-                  <span className="text-xs text-gray-500">রাউন্ডনেস (Roundness)</span>
-                  <select className={inp} value={cardRadius} onChange={(e) => setCardRadius(e.target.value as any)}>
-                    <option value="none">সোজা চৌকো (০px)</option>
-                    <option value="md">হালকা গোল (১২px)</option>
-                    <option value="xl">মাঝারি গোল (১৮px)</option>
-                    <option value="2xl">বেশি গোল (২৪px)</option>
-                    <option value="full">ক্যাপসুল গোল (Full)</option>
-                  </select>
-                </label>
+              {/* প্রস্থ স্লাইডার */}
+              <div>
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span>কার্ডের প্রস্থ (Width):</span>
+                  <span className="font-bold text-green-700">{cardWidthPct}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="100"
+                  value={cardWidthPct}
+                  onChange={(e) => setCardWidthPct(Number(e.target.value))}
+                  className="w-full accent-green-700 cursor-pointer"
+                />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                <label className="block text-xs">
-                  <span className="text-gray-600 block mb-1">কার্ডের ব্যাকগ্রাউন্ড রঙ (RGB)</span>
-                  <div className="flex items-center gap-2">
-                    <input type="color" value={cardBgColor} onChange={(e) => setCardBgColor(e.target.value)} className="w-8 h-8 rounded border cursor-pointer" />
-                    <span className="text-xs font-mono">{cardBgColor}</span>
-                  </div>
-                </label>
+              {/* রাউন্ডনেস স্লাইডার */}
+              <div>
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span>রাউন্ডনেস (০% = চতুর্ভুজাকার চারকোনা, ১০০% = সম্পূর্ণ গোল):</span>
+                  <span className="font-bold text-green-700">{cardRadiusPct}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={cardRadiusPct}
+                  onChange={(e) => setCardRadiusPct(Number(e.target.value))}
+                  className="w-full accent-green-700 cursor-pointer"
+                />
+              </div>
 
-                <label className="block">
-                  <span className="text-xs text-gray-600">কার্ডের স্বচ্ছতা (অপাসিটি %)</span>
-                  <select className={inp} value={cardOpacity} onChange={(e) => setCardOpacity(Number(e.target.value))}>
-                    <option value={20}>২০% (খুব হালকা স্বচ্ছ)</option>
-                    <option value={40}>৪০% (মাঝারি স্বচ্ছ)</option>
-                    <option value={60}>৬০% (প্রমিত গ্লাস)</option>
-                    <option value={80}>৮০% (গাঢ় গ্লাস)</option>
-                    <option value={95}>৯৫% (প্রায় অস্বচ্ছ)</option>
-                  </select>
-                </label>
+              {/* প্যাডিং / দৈর্ঘ্য স্লাইডার */}
+              <div>
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span>কার্ডের ভেতরের ফাঁকা জায়গা (Padding):</span>
+                  <span className="font-bold text-green-700">{cardPaddingVal}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="8"
+                  max="50"
+                  value={cardPaddingVal}
+                  onChange={(e) => setCardPaddingVal(Number(e.target.value))}
+                  className="w-full accent-green-700 cursor-pointer"
+                />
+              </div>
+
+              {/* স্বচ্ছতা স্লাইডার */}
+              <div>
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span>স্বচ্ছতা / অপাসিটি (০% = অদৃশ্য, ১০০% = পুরোপুরি স্পষ্ট):</span>
+                  <span className="font-bold text-green-700">{cardOpacity}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={cardOpacity}
+                  onChange={(e) => setCardOpacity(Number(e.target.value))}
+                  className="w-full accent-green-700 cursor-pointer"
+                />
+              </div>
+
+              {/* ব্যাকগ্রাউন্ড আরজিবি রঙ */}
+              <div className="flex items-center justify-between pt-1 border-t">
+                <span className="text-xs text-gray-600">কার্ডের ব্যাকগ্রাউন্ড RGB রঙ:</span>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={cardBgColor} onChange={(e) => setCardBgColor(e.target.value)} className="w-8 h-8 rounded border cursor-pointer" />
+                  <span className="text-xs font-mono">{cardBgColor}</span>
+                </div>
               </div>
             </div>
           )}
@@ -565,7 +624,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         {/* মিডিয়া ইনপুট */}
         {mediaType === "video" ? (
           <div>
-            <span className="text-xs text-gray-600">ভিডিও লিঙ্ক (ইউটিউব বা সরাসরি MP4 ভিডিও লিংক)</span>
+            <span className="text-xs text-gray-600">ইউটিউব বা ভিডিও লিঙ্ক</span>
             <input className={inp} placeholder="https://www.youtube.com/watch?v=..." value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
           </div>
         ) : (
@@ -625,8 +684,8 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           <div key={s.id} className="bg-white rounded-2xl shadow p-3 text-sm space-y-2 border border-gray-100">
             <div className="flex gap-3">
               {s.media_type === "video" ? (
-                <div className="w-20 h-14 bg-slate-800 rounded-lg shrink-0 flex items-center justify-center text-white text-xs font-semibold">
-                  🎥 ভিডিও
+                <div className="w-20 h-14 bg-red-600 rounded-lg shrink-0 flex items-center justify-center text-white text-xs font-semibold">
+                  ▶ ভিডিও
                 </div>
               ) : s.image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
