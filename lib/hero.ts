@@ -63,6 +63,31 @@ export const BREAKING_BADGES = [
   { label: "🎆 ২১. রেইনবো শিফট (Rainbow Shift)", value: "rainbow-shift" },
 ]
 
+// ব্রেকিং শিরোনাম ও বিবরণের জন্য ২০টি ডাইনামিক টেক্সট ইফেক্ট
+export const BREAKING_TEXT_EFFECTS = [
+  { label: "🎲 স্বয়ংক্রিয় প্যাটার্ন (Auto Rotation - একা একাই বদলাবে)", value: "auto" },
+  { label: "১. টাইপরাইটার ইফেক্ট (Typewriter)", value: "typewriter" },
+  { label: "২. জুম ইন পপ (Zoom Pop)", value: "zoom-pop" },
+  { label: "৩. নিয়ন পালস গ্লো (Neon Glow)", value: "neon-pulse" },
+  { label: "৪. টেক্সট বাউন্স ইন (Text Bounce)", value: "bounce-in" },
+  { label: "৫. ফ্লিপ ৩ডি ইন (3D Flip In)", value: "flip-3d" },
+  { label: "৬. সাইবার গ্লিচ ইফেক্ট (Cyber Glitch)", value: "cyber-glitch" },
+  { label: "৭. স্মোক ফেড ইন (Smoke Fade)", value: "smoke-fade" },
+  { label: "৮. লেটার ওয়েভ অ্যানিমেশন (Letter Wave)", value: "letter-wave" },
+  { label: "৯. স্লাইড বামে (Slide Left)", value: "slide-left" },
+  { label: "১০. স্লাইড ডানে (Slide Right)", value: "slide-right" },
+  { label: "১১. স্লাইড আপ ড্রপ (Slide Up Drop)", value: "slide-up-drop" },
+  { label: "১২. রোটেট ড্রপ ৩ডি (Rotate 3D Drop)", value: "rotate-drop" },
+  { label: "১৩. ব্লিঙ্ক ফ্ল্যাশ অ্যালার্ট (Blink Flash)", value: "flash-blink" },
+  { label: "১৪. কাঁপন / শেইক অ্যালার্ট (Vibrating Shake)", value: "shake-alert" },
+  { label: "১৫. রেইনবো কালার শিফট (Rainbow Shift)", value: "rainbow-shift" },
+  { label: "১৬. লেটার স্পেসিং এক্সপ্যান্ড (Tracking Expand)", value: "tracking-expand" },
+  { label: "১৭. শ্যাডো এক্সপ্লোশন (Shadow Burst)", value: "shadow-burst" },
+  { label: "১৮. গোল্ডেন শাইন শিমার (Golden Shimmer)", value: "golden-shimmer" },
+  { label: "১৯. টুইস্ট ইন ৩ডি (Twist 3D)", value: "twist-3d" },
+  { label: "২০. স্মুথ ফ্লোটিং (Smooth Float)", value: "smooth-float" },
+]
+
 // ১০টি জনপ্রিয় বাংলা ও ইংরেজি ফন্ট
 export const FONTS = [
   { label: "হিন্দ শিলিগুড়ি (Hind Siliguri - বাংলা)", value: "'Hind Siliguri', sans-serif" },
@@ -87,7 +112,6 @@ export const FONT_WEIGHTS = [
   { label: "অতিরিক্ত গাঢ় (Extra Bold 800)", value: "800" },
 ]
 
-// স্লাইড সংখ্যা এখন আনলিমিটেড (১০০টি পর্যন্ত সাপোর্ট)
 export const MAX_LIVE = 100
 
 export type HeroSlide = {
@@ -135,12 +159,15 @@ export type HeroSettings = {
   breaking_btn_text?: string | null
   breaking_media_type?: "none" | "image" | "video" | null
   breaking_media_url?: string | null
+  breaking_extra_media?: string | null
   breaking_bg_color?: string | null
   breaking_bg_gradient?: string | null
   breaking_shape?: string | null
   breaking_badge_style?: string | null
   breaking_pulse_speed?: "slow" | "normal" | "fast" | null
   breaking_pulse_speed_pct?: number | null
+  breaking_text_effect?: string | null
+  breaking_text_speed_pct?: number | null
   max_slides?: number | null
   slide_speed?: number | null
   transition_type?: string | null
