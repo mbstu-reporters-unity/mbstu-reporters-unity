@@ -2,7 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, PointerEvent } from 'react'
-import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Pause, Play, X, ExternalLink } from 'lucide-react'
+import {
+  ArrowRight,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Pause,
+  Play,
+  X,
+  ExternalLink,
+  Volume2,
+  VolumeX,
+} from 'lucide-react'
 import { heroSlides } from '@/lib/data'
 import { getHeroSlides, getHeroSettings, MAX_LIVE } from '@/lib/hero'
 import type { HeroSlide, HeroSettings } from '@/lib/hero'
@@ -12,10 +23,10 @@ type Slide = {
   key: string
   image: string
   pos: string
-  category: string
+  category: string | null
   date: string
-  title: string
-  summary: string
+  title: string | null
+  summary: string | null
   link: string | null
   alt: string
   mediaType: 'image' | 'video'
@@ -26,9 +37,12 @@ type Slide = {
   fontFamily: string | null
   fontWeight: string | null
   textAlign: 'left' | 'center' | 'right'
+  contentPosV: 'top' | 'center' | 'bottom'
+  contentPosH: 'left' | 'center' | 'right'
+  showCardBg: boolean
 }
 
-// ডেটাবেসে স্লাইড না থাকলে নমুনা স্লাইড
+// নমুনা স্লাইড
 const fallback: Slide[] = heroSlides.map((s) => ({
   key: s.image,
   image: s.image,
@@ -47,27 +61,29 @@ const fallback: Slide[] = heroSlides.map((s) => ({
   fontFamily: "'Hind Siliguri', sans-serif",
   fontWeight: '700',
   textAlign: 'left',
+  contentPosV: 'bottom',
+  contentPosH: 'left',
+  showCardBg: true,
 }))
 
 function toSlide(s: HeroSlide): Slide {
-  // যদি ভিডিও স্লাইড হয় এবং আলাদা লিংক না থাকে, তবে ভিডিওর লিংককেই মূল লিংক ধরা হবে
   const finalLink = s.link_url?.trim() || (s.media_type === 'video' && s.video_url ? s.video_url.trim() : null)
 
   return {
     key: s.id,
     image: s.image_url || '/images/hero-1.png',
     pos: s.image_pos,
-    category: s.category || 'সংবাদ',
+    category: s.category?.trim() || null,
     date: new Date(s.created_at).toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
       timeZone: 'Asia/Dhaka',
     }),
-    title: s.title,
-    summary: s.summary || '',
+    title: s.title?.trim() || null,
+    summary: s.summary?.trim() || null,
     link: finalLink,
-    alt: s.title,
+    alt: s.title || 'Hero Banner',
     mediaType: s.media_type || 'image',
     videoUrl: s.video_url || null,
     buttonText: s.button_text?.trim() || 'বিস্তারিত',
@@ -76,6 +92,9 @@ function toSlide(s: HeroSlide): Slide {
     fontFamily: s.font_family || "'Hind Siliguri', sans-serif",
     fontWeight: s.font_weight || '700',
     textAlign: s.text_align || 'left',
+    contentPosV: s.content_pos_v || 'bottom',
+    contentPosH: s.content_pos_h || 'left',
+    showCardBg: s.show_card_bg ?? true,
   }
 }
 
@@ -83,13 +102,14 @@ const isExternal = (u: string) => /^https?:\/\//i.test(u)
 const bn = (n: number) => n.toLocaleString('bn-BD')
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold'
 
-// ইউটিউব লিঙ্ক কনভার্ট করা
-function getYoutubeEmbed(url: string | null) {
+// ইউটিউব লিঙ্ক কনভার্ট করা (সাউন্ড কন্ট্রোলসহ)
+function getYoutubeEmbed(url: string | null, isMuted: boolean) {
   if (!url) return null
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
   const match = url.match(regExp)
   if (match && match[2].length === 11) {
-    return `https://www.youtube-nocookie.com/embed/${match[2]}?autoplay=1&mute=1&loop=1&playlist=${match[2]}&controls=0&modestbranding=1`
+    const id = match[2]
+    return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=${id}&controls=0&modestbranding=1&enablejsapi=1`
   }
   return null
 }
@@ -106,14 +126,17 @@ export function HeroCarousel() {
   const [tabHidden, setTabHidden] = useState(false)
   const [reduceMotion, setReduceMotion] = useState(false)
 
-  // লিংক না থাকলে পপ-আপ দেখানোর স্টেট
+  // শব্দ চালু/বন্ধ স্টেট (ডিফল্ট সাউন্ড অফ থাকে যাতে ব্রাউজার ব্লক না করে, বোতাম চাপলেই সাউন্ড চালু)
+  const [isMuted, setIsMuted] = useState(true)
+
+  // লিংক না থাকলে পপ-আপ স্টেট
   const [modalSlide, setModalSlide] = useState<Slide | null>(null)
 
   const startRef = useRef<{ x: number; y: number } | null>(null)
-  const didSwipeRef = useRef(false)
   const total = slides.length
 
-  const slideMs = settings?.slide_speed || 4500
+  const slideMs = settings?.slide_speed ?? 4500
+  const isUnlimited = slideMs <= 0 // ০ বা নেগেটিভ হলে আনলিমিটেড
   const transMode = settings?.transition_type || 'fade'
   const isMotionEnabled = settings?.text_motion ?? true
 
@@ -149,7 +172,8 @@ export function HeroCarousel() {
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [])
 
-  const canAutoplay = total > 1 && !reduceMotion && !modalSlide
+  // আনলিমিটেড হলে অটোপ্লে হবে না
+  const canAutoplay = total > 1 && !reduceMotion && !modalSlide && !isUnlimited
   const running = canAutoplay && !userPaused && !hoverPaused && !focusPaused && !dragging && !tabHidden
 
   const next = useCallback(() => setIndex((i) => (i + 1) % total), [total])
@@ -175,7 +199,6 @@ export function HeroCarousel() {
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
     if ((e.target as HTMLElement).closest('button, a')) return
     startRef.current = { x: e.clientX, y: e.clientY }
-    didSwipeRef.current = false
     setDragging(true)
   }
 
@@ -187,7 +210,6 @@ export function HeroCarousel() {
     const dx = e.clientX - st.x
     const dy = e.clientY - st.y
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      didSwipeRef.current = true
       go(index + (dx < 0 ? 1 : -1))
     }
   }
@@ -195,7 +217,7 @@ export function HeroCarousel() {
   if (!loaded) {
     return (
       <section id="home" className="bg-navy">
-        <div className="h-[480px] sm:h-[540px] lg:h-[600px]" />
+        <div className="h-[480px] sm:h-[540px] lg:h-[620px]" />
       </section>
     )
   }
@@ -205,7 +227,7 @@ export function HeroCarousel() {
     const bLink = settings.breaking_link
     return (
       <section id="home" className="bg-navy">
-        <div className="relative flex h-[480px] items-center overflow-hidden bg-gradient-to-br from-crimson via-navy to-navy sm:h-[540px] lg:h-[600px]">
+        <div className="relative flex h-[480px] items-center overflow-hidden bg-gradient-to-br from-crimson via-navy to-navy sm:h-[540px] lg:h-[620px]">
           <div className="mx-auto w-full max-w-5xl px-6 sm:px-12">
             <span className="inline-flex items-center gap-2 rounded bg-white px-3 py-1 text-sm font-bold tracking-wider text-crimson">
               <span className="size-2.5 animate-pulse rounded-full bg-crimson" aria-hidden="true" />
@@ -250,7 +272,7 @@ export function HeroCarousel() {
 
   return (
     <section id="home" aria-roledescription="carousel" aria-label="Featured stories" className="bg-navy relative">
-      {/* গুগল ফন্ট লোড লিংক */}
+      {/* গুগল ফন্ট লিংক */}
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link
         rel="stylesheet"
@@ -280,7 +302,7 @@ export function HeroCarousel() {
         onFocus={(e) => setFocusPaused(e.target.matches(':focus-visible'))}
         onBlur={() => setFocusPaused(false)}
         style={{ touchAction: 'pan-y' }}
-        className={cn('relative h-[480px] select-none overflow-hidden sm:h-[540px] lg:h-[600px]', focusRing)}
+        className={cn('relative h-[480px] select-none overflow-hidden sm:h-[540px] lg:h-[620px]', focusRing)}
       >
         <div className="sr-only" aria-live={running ? 'off' : 'polite'} aria-atomic="true">
           {`${bn(total)} টির মধ্যে ${bn(index + 1)} নম্বর স্লাইড`}
@@ -288,7 +310,8 @@ export function HeroCarousel() {
 
         {slides.map((slide, i) => {
           const isActive = i === index
-          const ytUrl = slide.mediaType === 'video' ? getYoutubeEmbed(slide.videoUrl) : null
+          const ytUrl = slide.mediaType === 'video' ? getYoutubeEmbed(slide.videoUrl, isMuted) : null
+          const hasAnyText = Boolean(slide.title || slide.summary || slide.category)
 
           return (
             <div
@@ -299,20 +322,20 @@ export function HeroCarousel() {
               aria-hidden={!isActive}
               className={cn('absolute inset-0 transition-all duration-700 ease-in-out', getTransitionClass(isActive))}
             >
-              {/* ব্যাকগ্রাউন্ড মিডিয়া: কোনো কালার ব্লেন্ড ছাড়া ক্রিস্টাল ক্লিয়ার */}
+              {/* ব্যাকগ্রাউন্ড মিডিয়া */}
               {slide.mediaType === 'video' ? (
                 ytUrl ? (
                   <iframe
                     src={ytUrl}
                     className="absolute inset-0 h-full w-full pointer-events-none object-cover scale-125"
                     allow="autoplay; encrypted-media"
-                    title={slide.title}
+                    title="Video"
                   />
                 ) : slide.videoUrl ? (
                   <video
                     src={slide.videoUrl}
                     autoPlay
-                    muted
+                    muted={isMuted}
                     loop
                     playsInline
                     className="absolute inset-0 h-full w-full object-cover"
@@ -335,108 +358,155 @@ export function HeroCarousel() {
                 />
               )}
 
-              {/* অত্যন্ত হালকা ন্যাচারাল শ্যাডো (ভিডিও বা ছবি নষ্ট করবে না, কিন্তু টেক্সট স্পষ্ট করবে) */}
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+              {/* ভিডিওতে শব্দ চালু/বন্ধ বোতাম */}
+              {slide.mediaType === 'video' && isActive && (
+                <button
+                  type="button"
+                  onClick={() => setIsMuted((m) => !m)}
+                  className="absolute top-4 right-4 z-30 flex items-center gap-1.5 rounded-full bg-black/60 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur border border-white/20 hover:bg-white hover:text-black transition-all shadow-lg"
+                  aria-label={isMuted ? 'শব্দ চালু করুন' : 'শব্দ বন্ধ করুন'}
+                >
+                  {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+                  <span>{isMuted ? 'সাউন্ড বন্ধ' : 'সাউন্ড চালু'}</span>
+                </button>
+              )}
 
-              {/* কন্টেন্ট বক্স */}
-              <div
-                className={cn(
-                  'absolute inset-x-0 bottom-0 mx-auto max-w-7xl px-6 pb-16 sm:px-12 sm:pb-20 z-10 flex flex-col',
-                  slide.textAlign === 'center'
-                    ? 'items-center text-center'
-                    : slide.textAlign === 'right'
-                      ? 'items-end text-right'
-                      : 'items-start text-left',
-                )}
-              >
+              {/* কন্টেন্ট বক্স (কাস্টম পজিশন: উপরে/মাঝে/নিচে এবং বামে/মাঝে/ডানে) */}
+              {hasAnyText && (
                 <div
-                  className="max-w-3xl"
-                  style={
-                    isActive && isMotionEnabled && !reduceMotion
-                      ? { animation: 'textEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards' }
-                      : {}
-                  }
+                  className={cn(
+                    'absolute inset-0 pointer-events-none p-6 pb-20 sm:p-12 sm:pb-24 z-10 flex',
+                    slide.contentPosV === 'top'
+                      ? 'items-start pt-12 sm:pt-16'
+                      : slide.contentPosV === 'center'
+                        ? 'items-center'
+                        : 'items-end',
+                    slide.contentPosH === 'right'
+                      ? 'justify-end'
+                      : slide.contentPosH === 'center'
+                        ? 'justify-center'
+                        : 'justify-start',
+                  )}
                 >
                   <div
                     className={cn(
-                      'flex flex-wrap items-center gap-3',
+                      'pointer-events-auto max-w-2xl w-full',
+                      slide.showCardBg
+                        ? 'bg-black/60 backdrop-blur-md p-5 sm:p-7 rounded-2xl border border-white/15 shadow-2xl'
+                        : '',
                       slide.textAlign === 'center'
-                        ? 'justify-center'
+                        ? 'text-center'
                         : slide.textAlign === 'right'
-                          ? 'justify-end'
-                          : 'justify-start',
+                          ? 'text-right'
+                          : 'text-left',
                     )}
+                    style={
+                      isActive && isMotionEnabled && !reduceMotion
+                        ? { animation: 'textEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards' }
+                        : {}
+                    }
                   >
-                    <span
-                      className="rounded px-2.5 py-1 text-xs font-bold tracking-wider text-navy"
-                      style={{ backgroundColor: slide.badgeColor || '#EAB308' }}
-                    >
-                      {slide.category}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 text-sm text-white/90">
-                      <CalendarDays className="size-4" aria-hidden="true" />
-                      {slide.date}
-                    </span>
-                  </div>
-
-                  <h2
-                    className="mt-4 text-balance text-2xl leading-snug sm:text-4xl lg:text-5xl"
-                    style={{
-                      color: slide.titleColor || '#FFFFFF',
-                      fontFamily: slide.fontFamily || undefined,
-                      fontWeight: slide.fontWeight || '700',
-                    }}
-                  >
-                    {slide.title}
-                  </h2>
-
-                  {slide.summary && (
-                    <p className="mt-3 line-clamp-3 text-pretty text-sm leading-relaxed text-white/90 sm:text-base">
-                      {slide.summary}
-                    </p>
-                  )}
-
-                  {/* বিস্তারিত বাটন: লিংক থাকলে সরাসরি যাবে, না থাকলে পপ-আপ খুলবে */}
-                  <div className="mt-6">
-                    {slide.link && slide.link !== '#' && slide.link !== '#general-news' ? (
-                      <a
-                        href={slide.link}
-                        {...(isExternal(slide.link) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                        tabIndex={isActive ? 0 : -1}
-                        className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-all hover:gap-3 hover:bg-white hover:text-brand shadow-lg"
+                    {/* ব্যাজ ও তারিখ */}
+                    {(slide.category || slide.date) && (
+                      <div
+                        className={cn(
+                          'flex flex-wrap items-center gap-3',
+                          slide.textAlign === 'center'
+                            ? 'justify-center'
+                            : slide.textAlign === 'right'
+                              ? 'justify-end'
+                              : 'justify-start',
+                        )}
                       >
-                        {slide.buttonText}
-                        {isExternal(slide.link) ? <ExternalLink className="size-4" /> : <ArrowRight className="size-4" />}
-                      </a>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setModalSlide(slide)}
-                        tabIndex={isActive ? 0 : -1}
-                        className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-all hover:gap-3 hover:bg-white hover:text-brand shadow-lg"
+                        {slide.category && (
+                          <span
+                            className="rounded px-2.5 py-1 text-xs font-bold tracking-wider text-navy"
+                            style={{ backgroundColor: slide.badgeColor || '#EAB308' }}
+                          >
+                            {slide.category}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-white/90">
+                          <CalendarDays className="size-4" aria-hidden="true" />
+                          {slide.date}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* শিরোনাম (ঐচ্ছিক) */}
+                    {slide.title && (
+                      <h2
+                        className="mt-3 text-balance text-xl sm:text-3xl lg:text-4xl leading-snug"
+                        style={{
+                          color: slide.titleColor || '#FFFFFF',
+                          fontFamily: slide.fontFamily || undefined,
+                          fontWeight: slide.fontWeight || '700',
+                        }}
                       >
-                        {slide.buttonText}
-                        <ArrowRight className="size-4" />
-                      </button>
+                        {slide.title}
+                      </h2>
+                    )}
+
+                    {/* সংক্ষিপ্ত বিবরণ (ঐচ্ছিক) */}
+                    {slide.summary && (
+                      <p className="mt-2.5 line-clamp-3 text-pretty text-sm sm:text-base leading-relaxed text-white/90">
+                        {slide.summary}
+                      </p>
+                    )}
+
+                    {/* বাটন (ঐচ্ছিক) */}
+                    {(slide.link || slide.summary) && (
+                      <div
+                        className={cn(
+                          'mt-5',
+                          slide.textAlign === 'center'
+                            ? 'flex justify-center'
+                            : slide.textAlign === 'right'
+                              ? 'flex justify-end'
+                              : 'flex justify-start',
+                        )}
+                      >
+                        {slide.link && slide.link !== '#' && slide.link !== '#general-news' ? (
+                          <a
+                            href={slide.link}
+                            {...(isExternal(slide.link) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                            tabIndex={isActive ? 0 : -1}
+                            className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-xs sm:text-sm font-semibold text-white transition-all hover:gap-3 hover:bg-white hover:text-brand shadow-lg"
+                          >
+                            {slide.buttonText}
+                            {isExternal(slide.link) ? <ExternalLink className="size-4" /> : <ArrowRight className="size-4" />}
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setModalSlide(slide)}
+                            tabIndex={isActive ? 0 : -1}
+                            className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-xs sm:text-sm font-semibold text-white transition-all hover:gap-3 hover:bg-white hover:text-brand shadow-lg"
+                          >
+                            {slide.buttonText}
+                            <ArrowRight className="size-4" />
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )
         })}
 
-        {/* নেভিগেশন কন্ট্রোল তীর ও বাটন */}
+        {/* নেভিগেশন কন্ট্রোল */}
         {total > 1 && (
           <>
             <div className="absolute bottom-6 right-6 flex items-center gap-2 sm:bottom-8 sm:right-10 z-20">
-              {!reduceMotion && (
+              {!reduceMotion && !isUnlimited && (
                 <button
                   type="button"
                   onClick={() => setUserPaused((p) => !p)}
                   aria-label={userPaused ? 'অটোপ্লে চালু করুন' : 'অটোপ্লে বন্ধ করুন'}
                   className={cn(
-                    'flex size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand',
+                    'flex size-9 sm:size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand',
                     focusRing,
                   )}
                 >
@@ -448,7 +518,7 @@ export function HeroCarousel() {
                 onClick={() => go(index - 1)}
                 aria-label="আগের স্লাইড"
                 className={cn(
-                  'flex size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand',
+                  'flex size-9 sm:size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand',
                   focusRing,
                 )}
               >
@@ -459,7 +529,7 @@ export function HeroCarousel() {
                 onClick={() => go(index + 1)}
                 aria-label="পরের স্লাইড"
                 className={cn(
-                  'flex size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand',
+                  'flex size-9 sm:size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand',
                   focusRing,
                 )}
               >
@@ -486,7 +556,7 @@ export function HeroCarousel() {
           </>
         )}
 
-        {/* প্রোগ্রেস বার */}
+        {/* প্রোগ্রেস বার (আনলিমিটেড মোডে বন্ধ থাকবে) */}
         {canAutoplay && (
           <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 z-20" aria-hidden="true">
             <div
@@ -502,7 +572,7 @@ export function HeroCarousel() {
         )}
       </div>
 
-      {/* লিংক না থাকলে পূর্ণ বিবরণ দেখানোর পপ-আপ (Modal) */}
+      {/* লিংক না থাকলে বিস্তারিত দেখানোর পপ-আপ (Modal) */}
       {modalSlide && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
           <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl space-y-4">
@@ -525,21 +595,25 @@ export function HeroCarousel() {
             )}
 
             <div className="flex items-center gap-2">
-              <span
-                className="rounded px-2.5 py-1 text-xs font-bold text-navy"
-                style={{ backgroundColor: modalSlide.badgeColor || '#EAB308' }}
-              >
-                {modalSlide.category}
-              </span>
+              {modalSlide.category && (
+                <span
+                  className="rounded px-2.5 py-1 text-xs font-bold text-navy"
+                  style={{ backgroundColor: modalSlide.badgeColor || '#EAB308' }}
+                >
+                  {modalSlide.category}
+                </span>
+              )}
               <span className="text-xs text-gray-500">{modalSlide.date}</span>
             </div>
 
-            <h3
-              className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug"
-              style={{ fontFamily: modalSlide.fontFamily || undefined }}
-            >
-              {modalSlide.title}
-            </h3>
+            {modalSlide.title && (
+              <h3
+                className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug"
+                style={{ fontFamily: modalSlide.fontFamily || undefined }}
+              >
+                {modalSlide.title}
+              </h3>
+            )}
 
             <p className="text-gray-700 leading-relaxed text-sm sm:text-base whitespace-pre-line">
               {modalSlide.summary || 'কোনো অতিরিক্ত বিবরণ দেওয়া হয়নি।'}
