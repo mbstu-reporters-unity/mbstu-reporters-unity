@@ -9,6 +9,7 @@ import {
   MAX_LIVE,
   TRANSITIONS,
   BREAKING_BADGES,
+  BREAKING_TEXT_EFFECTS,
   getHeroSlides,
   createHeroSlide,
   updateHeroSlide,
@@ -38,7 +39,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [transType, setTransType] = useState<string>("fade")
   const [textMotion, setTextMotion] = useState<boolean>(true)
 
-  // ডাইনামিক ব্রেকিং মোড স্টেট (২১টি ব্যাজ ও ০-১০০% স্পিড)
+  // ডাইনামিক ব্রেকিং মোড স্টেট (২০টি টেক্সট ইফেক্ট ও আনলিমিটেড মিডিয়া)
   const [bOn, setBOn] = useState(false)
   const [bTitle, setBTitle] = useState("")
   const [bText, setBText] = useState("")
@@ -47,10 +48,14 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [bMediaType, setBMediaType] = useState<"none" | "image" | "video">("none")
   const [bMediaUrl, setBMediaUrl] = useState("")
   const [bFile, setBFile] = useState<File | null>(null)
+  const [bVideoFile, setBVideoFile] = useState<File | null>(null)
+  const [bExtraMedia, setBExtraMedia] = useState("")
   const [bBgColor, setBBgColor] = useState("#881337")
   const [bBgGradient, setBBgGradient] = useState("#0f172a")
   const [bBadgeStyle, setBBadgeStyle] = useState("pulse-circle")
   const [bPulseSpeedPct, setBPulseSpeedPct] = useState<number>(50)
+  const [bTextEffect, setBTextEffect] = useState("auto")
+  const [bTextSpeedPct, setBTextSpeedPct] = useState<number>(50)
 
   // একক স্লাইড ফর্ম স্টেট
   const [editId, setEditId] = useState<string | null>(null)
@@ -105,10 +110,13 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         setBBtnText(s.breaking_btn_text || "বিস্তারিত")
         setBMediaType(s.breaking_media_type || "none")
         setBMediaUrl(s.breaking_media_url || "")
+        setBExtraMedia(s.breaking_extra_media || "")
         setBBgColor(s.breaking_bg_color || "#881337")
         setBBgGradient(s.breaking_bg_gradient || "#0f172a")
         setBBadgeStyle(s.breaking_badge_style || "pulse-circle")
         setBPulseSpeedPct(s.breaking_pulse_speed_pct ?? 50)
+        setBTextEffect(s.breaking_text_effect || "auto")
+        setBTextSpeedPct(s.breaking_text_speed_pct ?? 50)
         setSlideSpeed(s.slide_speed ?? 4500)
         setTransType(s.transition_type || "fade")
         setTextMotion(s.text_motion ?? true)
@@ -146,6 +154,8 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       let mediaUrl = bMediaUrl
       if (bFile && bMediaType === "image") {
         mediaUrl = await uploadImage(token, await shrink(bFile))
+      } else if (bVideoFile && bMediaType === "video") {
+        mediaUrl = await uploadImage(token, bVideoFile)
       }
 
       await saveHeroSettings(token, {
@@ -156,13 +166,16 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         breaking_btn_text: bBtnText.trim() || "বিস্তারিত",
         breaking_media_type: bMediaType,
         breaking_media_url: mediaUrl.trim() || null,
+        breaking_extra_media: bExtraMedia.trim() || null,
         breaking_bg_color: bBgColor,
         breaking_bg_gradient: bBgGradient,
         breaking_badge_style: bBadgeStyle,
         breaking_pulse_speed_pct: Number(bPulseSpeedPct),
+        breaking_text_effect: bTextEffect,
+        breaking_text_speed_pct: Number(bTextSpeedPct),
       })
       setBOn(on)
-      setMsg(on ? "🔴 ব্রেকিং মোড চালু হয়েছে" : "✅ ব্রেকিং মোড বন্ধ, স্বাভাবিক স্লাইডার ফিরেছে")
+      setMsg(on ? "🔴 ব্রেকিং মোড আপডেট ও চালু হয়েছে" : "✅ ব্রেকিং মোড বন্ধ, স্বাভাবিক স্লাইডার ফিরেছে")
     } catch (e) {
       setMsg("❌ " + (e instanceof Error ? e.message : "কিছু ভুল হয়েছে"))
     }
@@ -387,7 +400,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       </div>
 
       {/* ========================================================
-          সেকশন ২: 🔴 জরুরি ব্রেকিং মোড (২১টি অ্যানিমেটেড ব্যাজ ও ০-১০০% স্পিড)
+          সেকশন ২: 🔴 জরুরি ব্রেকিং মোড (২০টি টেক্সট ইফেক্ট ও আনলিমিটেড মিডিয়া)
       ======================================================== */}
       <div className={`${cardBox} ${bOn ? "border-red-600/60 bg-red-950/20" : ""}`}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -398,43 +411,71 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           {bOn && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full font-bold">LIVE</span>}
         </div>
 
-        <p className="text-xs text-gray-400">
-          চালু করলে সম্পূর্ণ হোমপেজ স্লাইডারের জায়গায় এই ব্রেকিং স্ক্রিনটি দেখাবে।
-        </p>
-
-        {/* ২১টি অ্যানিমেটেড ব্রেকিং ব্যাজ ও ০-১০০% স্পিড স্লাইডার */}
+        {/* ২১টি অ্যানিমেটেড ব্রেকিং ব্যাজ ও ০-১০০% শেপ স্পিড */}
         <div className="p-3.5 bg-slate-950/60 border border-slate-800 rounded-xl space-y-3">
-          <span className="text-xs font-bold text-red-400 uppercase tracking-wider block">২১টি অ্যানিমেটেড ব্যাজ ও স্পিড কন্ট্রোল</span>
+          <span className="text-xs font-bold text-red-400 uppercase tracking-wider block">১. অ্যানিমেটেড ব্যাজ ও প্রতীক নিয়ন্ত্রণ</span>
 
-          <div>
-            <label className="text-xs text-gray-400 block mb-1">অ্যানিমেটেড ব্যাজ/প্রতীক নির্বাচন (২১টি)</label>
-            <select className={selectInp} value={bBadgeStyle} onChange={(e) => setBBadgeStyle(e.target.value)}>
-              {BREAKING_BADGES.map((b) => (
-                <option key={b.value} value={b.value}>{b.label}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* ০-১০০% শেপ স্পিড স্লাইডার */}
-          <div>
-            <div className="flex justify-between text-xs text-gray-400 mb-1">
-              <span>শেপ অ্যানিমেশনের গতি (০-১০০%):</span>
-              <span className="font-bold text-red-400">{bPulseSpeedPct}%</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-gray-400 block mb-1">অ্যানিমেটেড ব্যাজ/প্রতীক (২১টি)</label>
+              <select className={selectInp} value={bBadgeStyle} onChange={(e) => setBBadgeStyle(e.target.value)}>
+                {BREAKING_BADGES.map((b) => (
+                  <option key={b.value} value={b.value}>{b.label}</option>
+                ))}
+              </select>
             </div>
-            <input
-              type="range"
-              min="5"
-              max="100"
-              value={bPulseSpeedPct}
-              onChange={(e) => setBPulseSpeedPct(Number(e.target.value))}
-              className="w-full accent-red-600 cursor-pointer"
-            />
+
+            <div>
+              <div className="flex justify-between text-xs text-gray-400 mb-1">
+                <span>শেপ অ্যানিমেশনের গতি (০-১০০%):</span>
+                <span className="font-bold text-red-400">{bPulseSpeedPct}%</span>
+              </div>
+              <input
+                type="range"
+                min="5"
+                max="100"
+                value={bPulseSpeedPct}
+                onChange={(e) => setBPulseSpeedPct(Number(e.target.value))}
+                className="w-full accent-red-600 cursor-pointer pt-1"
+              />
+            </div>
           </div>
         </div>
 
-        {/* ব্রেকিং মিডিয়া পছন্দ */}
-        <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-2.5">
-          <span className="text-xs font-semibold text-gray-300 block">মিডিয়া ব্যাকগ্রাউন্ড (ঐচ্ছিক):</span>
+        {/* ২০টি টেক্সট অ্যানিমেশন ইফেক্ট ও ০-১০০% টেক্সট স্পিড */}
+        <div className="p-3.5 bg-slate-950/60 border border-slate-800 rounded-xl space-y-3">
+          <span className="text-xs font-bold text-amber-400 uppercase tracking-wider block">২. শিরোনাম ও বিবরণের ২০টি টেক্সট অ্যানিমেশন ইফেক্ট</span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-gray-400 block mb-1">টেক্সট ইফেক্ট (স্বয়ংক্রিয় বা নির্দিষ্ট)</label>
+              <select className={selectInp} value={bTextEffect} onChange={(e) => setBTextEffect(e.target.value)}>
+                {BREAKING_TEXT_EFFECTS.map((eff) => (
+                  <option key={eff.value} value={eff.value}>{eff.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs text-gray-400 mb-1">
+                <span>টেক্সট অ্যানিমেশনের গতি (০-১০০%):</span>
+                <span className="font-bold text-amber-400">{bTextSpeedPct}%</span>
+              </div>
+              <input
+                type="range"
+                min="5"
+                max="100"
+                value={bTextSpeedPct}
+                onChange={(e) => setBTextSpeedPct(Number(e.target.value))}
+                className="w-full accent-amber-500 cursor-pointer pt-1"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ব্রেকিং মিডিয়া পছন্দ (ছবি/ভিডিও আপলোড ও আনলিমিটেড মিডিয়া) */}
+        <div className="p-3.5 bg-slate-950/60 border border-slate-800 rounded-xl space-y-3">
+          <span className="text-xs font-bold text-blue-400 uppercase tracking-wider block">৩. ব্রেকিং মিডিয়া ব্যাকগ্রাউন্ড (ঐচ্ছিক)</span>
           <div className="flex gap-4 text-xs">
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input type="radio" name="bmedia" checked={bMediaType === "none"} onChange={() => setBMediaType("none")} />
@@ -442,28 +483,32 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             </label>
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input type="radio" name="bmedia" checked={bMediaType === "image"} onChange={() => setBMediaType("image")} />
-              ছবি
+              ছবি আপলোড
             </label>
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input type="radio" name="bmedia" checked={bMediaType === "video"} onChange={() => setBMediaType("video")} />
-              ভিডিও
+              ভিডিও ফাইল বা লিঙ্ক
             </label>
           </div>
 
           {bMediaType === "image" && (
-            <div className="pt-2">
+            <div className="pt-1">
               <input type="file" accept="image/*" onChange={(e) => setBFile(e.target.files?.[0] || null)} className="text-xs text-gray-400" />
             </div>
           )}
 
           {bMediaType === "video" && (
-            <div className="pt-2">
+            <div className="space-y-2 pt-1">
               <input className={inp} placeholder="ইউটিউব বা ভিডিও লিঙ্ক (https://...)" value={bMediaUrl} onChange={(e) => setBMediaUrl(e.target.value)} />
+              <div>
+                <span className="text-xs text-gray-400 block mb-1">অথবা সরাসরি ভিডিও ফাইল আপলোড করুন (MP4):</span>
+                <input type="file" accept="video/*" onChange={(e) => setBVideoFile(e.target.files?.[0] || null)} className="text-xs text-gray-400" />
+              </div>
             </div>
           )}
 
           {bMediaType === "none" && (
-            <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="grid grid-cols-2 gap-3 pt-1">
               <label className="block text-xs">
                 <span className="text-gray-400 block mb-1">মূল রঙ (RGB 1)</span>
                 <div className="flex items-center gap-2">
@@ -480,14 +525,29 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
               </label>
             </div>
           )}
+
+          {/* আনলিমিটেড মিডিয়া স্লাইড শো */}
+          <div className="pt-2 border-t border-slate-800">
+            <span className="text-xs text-gray-400 block mb-1">আনলিমিটেড অতিরিক্ত ছবি ও ভিডিও লিঙ্ক (প্রতি লাইনে একটি করে লিঙ্ক দিলে স্বয়ংক্রিয় স্লাইড শো হবে):</span>
+            <textarea
+              className={inp}
+              rows={2}
+              placeholder="https://...ছবি১.jpg&#10;https://...ছবি২.jpg&#10;https://youtube.com/..."
+              value={bExtraMedia}
+              onChange={(e) => setBExtraMedia(e.target.value)}
+            />
+          </div>
         </div>
 
-        <input className={inp} placeholder="ব্রেকিং শিরোনাম (ঐচ্ছিক)" value={bTitle} onChange={(e) => setBTitle(e.target.value)} />
-        <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ (ঐচ্ছিক)" value={bText} onChange={(e) => setBText(e.target.value)} />
+        {/* ব্রেকিং টেক্সট ইনপুট */}
+        <div className="space-y-3">
+          <input className={inp} placeholder="ব্রেকিং শিরোনাম (ঐচ্ছিক)" value={bTitle} onChange={(e) => setBTitle(e.target.value)} />
+          <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ (ঐচ্ছিক)" value={bText} onChange={(e) => setBText(e.target.value)} />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input className={inp} placeholder="বাটন লেখা (ডিফল্ট: বিস্তারিত)" value={bBtnText} onChange={(e) => setBBtnText(e.target.value)} />
-          <input className={inp} placeholder="ক্লিক লিঙ্ক (ঐচ্ছিক)" value={bLink} onChange={(e) => setBLink(e.target.value)} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input className={inp} placeholder="বাটন লেখা (ডিফল্ট: বিস্তারিত)" value={bBtnText} onChange={(e) => setBBtnText(e.target.value)} />
+            <input className={inp} placeholder="ক্লিক লিঙ্ক (ঐচ্ছিক)" value={bLink} onChange={(e) => setBLink(e.target.value)} />
+          </div>
         </div>
 
         <div className="flex gap-3 pt-2">
@@ -576,7 +636,6 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             </div>
           )}
 
-          {/* একাধিক মিডিয়া / নেস্টেড স্লাইড শো */}
           <div>
             <span className="text-xs text-gray-400 block mb-1">একাধিক ছবি/ভিডিও লিঙ্ক (ঐচ্ছিক - প্রতি লাইনে একটি করে লিঙ্ক দিন):</span>
             <textarea
@@ -605,7 +664,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             <div>
               <span className="text-xs text-gray-400 block mb-1">থিকনেস</span>
               <select className={selectInp} value={fontWeight} onChange={(e) => setFontWeight(e.target.value)}>
-                {FONT_WEIGHTS.map((w) => <option key={w.label} value={w.value}>{w.label}</option>)}
+                {FONT_WEIGHTS.map((w) => <option key={w.label} value={w.label}>{w.label}</option>)}
               </select>
             </div>
             <div>
@@ -725,7 +784,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
               {/* প্যাডিং */}
               <div>
                 <div className="flex justify-between text-xs text-gray-400 mb-1">
-                  <span>কার্ডের ভেতরের ফাঁকা জায়গা (Padding):</span>
+                  <span>কার্ডের প্যাডিং/দৈর্ঘ্য:</span>
                   <span className="font-bold text-green-400">{cardPaddingVal}px</span>
                 </div>
                 <input type="range" min="8" max="60" value={cardPaddingVal} onChange={(e) => setCardPaddingVal(Number(e.target.value))} className="w-full accent-green-600 cursor-pointer" />
