@@ -3,8 +3,14 @@
 import { useEffect, useState } from "react"
 import { uploadImage } from "../../lib/sb"
 import {
-  BADGES, MAX_LIVE, getHeroSlides, createHeroSlide, updateHeroSlide, deleteHeroSlide,
-  getHeroSettings, saveHeroSettings,
+  BADGES,
+  MAX_LIVE,
+  getHeroSlides,
+  createHeroSlide,
+  updateHeroSlide,
+  deleteHeroSlide,
+  getHeroSettings,
+  saveHeroSettings,
 } from "../../lib/hero"
 import type { HeroSlide } from "../../lib/hero"
 
@@ -25,7 +31,12 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [bText, setBText] = useState("")
   const [bLink, setBLink] = useState("")
 
-  // স্লাইড ফর্ম
+  // সার্বিক স্লাইডার গতি ও ট্রানজিশন সেটিংস
+  const [slideSpeed, setSlideSpeed] = useState<number>(4500)
+  const [transType, setTransType] = useState<"fade" | "slide-left" | "slide-right" | "slide-up">("fade")
+  const [textMotion, setTextMotion] = useState<boolean>(true)
+
+  // একক স্লাইড ফর্ম
   const [editId, setEditId] = useState<string | null>(null)
   const [title, setTitle] = useState("")
   const [summary, setSummary] = useState("")
@@ -37,6 +48,13 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [oldExpires, setOldExpires] = useState<string | null>(null)
   const [oldImage, setOldImage] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
+
+  // নতুন মিডিয়া ও স্টাইল স্টেট
+  const [mediaType, setMediaType] = useState<"image" | "video">("image")
+  const [videoUrl, setVideoUrl] = useState("")
+  const [btnText, setBtnText] = useState("বিস্তারিত")
+  const [titleColor, setTitleColor] = useState("#FFFFFF")
+  const [badgeColor, setBadgeColor] = useState("#EAB308")
 
   async function load() {
     setList(await getHeroSlides(token))
@@ -50,6 +68,9 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         setBTitle(s.breaking_title || "")
         setBText(s.breaking_text || "")
         setBLink(s.breaking_link || "")
+        setSlideSpeed(s.slide_speed || 4500)
+        setTransType(s.transition_type || "fade")
+        setTextMotion(s.text_motion ?? true)
       }
     })
   }, [token])
@@ -73,21 +94,63 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     }
   }
 
+  async function saveSliderSettings() {
+    try {
+      await saveHeroSettings(token, {
+        slide_speed: Number(slideSpeed),
+        transition_type: transType,
+        text_motion: textMotion,
+      })
+      setMsg("✅ স্লাইডারের গতি ও ট্রানজিশন সেটিংস সফলভাবে সেভ হয়েছে")
+    } catch (e) {
+      setMsg("❌ " + (e instanceof Error ? e.message : "কিছু ভুল হয়েছে"))
+    }
+  }
+
   function reset() {
-    setEditId(null); setTitle(""); setSummary(""); setCategory(""); setLink("")
-    setPos("center"); setActive(true); setExpSel("none"); setOldExpires(null)
-    setOldImage(null); setFile(null)
+    setEditId(null)
+    setTitle("")
+    setSummary("")
+    setCategory("")
+    setLink("")
+    setPos("center")
+    setActive(true)
+    setExpSel("none")
+    setOldExpires(null)
+    setOldImage(null)
+    setFile(null)
+    setMediaType("image")
+    setVideoUrl("")
+    setBtnText("বিস্তারিত")
+    setTitleColor("#FFFFFF")
+    setBadgeColor("#EAB308")
   }
 
   function startEdit(s: HeroSlide) {
-    setEditId(s.id); setTitle(s.title); setSummary(s.summary || ""); setCategory(s.category || "")
-    setLink(s.link_url || ""); setPos(s.image_pos); setActive(s.is_active)
-    setExpSel("keep"); setOldExpires(s.expires_at); setOldImage(s.image_url); setFile(null)
+    setEditId(s.id)
+    setTitle(s.title)
+    setSummary(s.summary || "")
+    setCategory(s.category || "")
+    setLink(s.link_url || "")
+    setPos(s.image_pos)
+    setActive(s.is_active)
+    setExpSel("keep")
+    setOldExpires(s.expires_at)
+    setOldImage(s.image_url)
+    setFile(null)
+    setMediaType(s.media_type || "image")
+    setVideoUrl(s.video_url || "")
+    setBtnText(s.button_text || "বিস্তারিত")
+    setTitleColor(s.title_color || "#FFFFFF")
+    setBadgeColor(s.badge_color || "#EAB308")
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   async function save() {
-    if (!title.trim()) { setMsg("❌ শিরোনাম লিখুন"); return }
+    if (!title.trim()) {
+      setMsg("❌ শিরোনাম লিখুন")
+      return
+    }
     const l = link.trim()
     if (l && !/^(https?:\/\/|\/)/i.test(l)) {
       setMsg("❌ লিংক https:// বা / দিয়ে শুরু হতে হবে")
@@ -97,7 +160,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setMsg("")
     try {
       let img = oldImage
-      if (file) img = await uploadImage(token, await shrink(file))
+      if (file && mediaType === "image") img = await uploadImage(token, await shrink(file))
 
       let expires: string | null = oldExpires
       if (expSel === "none") expires = null
@@ -112,15 +175,19 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         link_url: l || null,
         is_active: active,
         expires_at: expires,
+        media_type: mediaType,
+        video_url: videoUrl.trim() || null,
+        button_text: btnText.trim() || "বিস্তারিত",
+        title_color: titleColor,
+        badge_color: badgeColor,
       }
       if (editId) await updateHeroSlide(token, editId, data)
       else {
-        // নতুন স্লাইড সবার আগে বসবে
         const first = list.length ? Math.min(...list.map((s) => s.sort_order)) - 10 : 0
         await createHeroSlide(token, { ...data, sort_order: first })
       }
       reset()
-      setMsg("✅ সেভ হয়েছে")
+      setMsg("✅ স্লাইড সেভ হয়েছে")
       await load()
     } catch (e) {
       setMsg("❌ " + (e instanceof Error ? e.message : "কিছু ভুল হয়েছে"))
@@ -145,7 +212,10 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
 
   async function run(fn: () => Promise<void>, ask?: string) {
     if (ask && !confirm(ask)) return
-    try { await fn(); await load() } catch (e) {
+    try {
+      await fn()
+      await load()
+    } catch (e) {
       setMsg("❌ " + (e instanceof Error ? e.message : "কিছু ভুল হয়েছে"))
     }
   }
@@ -161,40 +231,91 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
 
   return (
     <div className="space-y-4">
-      {msg && <p className="text-sm">{msg}</p>}
+      {msg && <p className="p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-xl text-sm font-medium">{msg}</p>}
 
-      {/* ব্রেকিং মোড */}
+      {/* স্লাইডার গতি ও মোশন কন্ট্রোল */}
+      <div className="bg-white rounded-2xl shadow p-4 space-y-3 border border-gray-100">
+        <h2 className="font-semibold text-gray-800">⚙️ স্লাইডার গতি ও ট্রানজিশন নিয়ন্ত্রণ</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label className="block">
+            <span className="text-xs text-gray-600">প্রতি স্লাইডের সময় (গতি)</span>
+            <select className={inp} value={slideSpeed} onChange={(e) => setSlideSpeed(Number(e.target.value))}>
+              <option value={2500}>দ্রুত (২.৫ সেকেন্ড)</option>
+              <option value={4500}>স্বাভাবিক (৪.৫ সেকেন্ড)</option>
+              <option value={7000}>ধীরগতি (৭ সেকেন্ড)</option>
+              <option value={10000}>খুব ধীর (১০ সেকেন্ড)</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-xs text-gray-600">ট্রানজিশনের ধরন</span>
+            <select className={inp} value={transType} onChange={(e) => setTransType(e.target.value as any)}>
+              <option value="fade">ফেড (মসৃণভাবে মিলিয়ে আসা)</option>
+              <option value="slide-left">ডান থেকে বামে স্লাইড</option>
+              <option value="slide-right">বাম থেকে ডানে স্লাইড</option>
+              <option value="slide-up">নিচ থেকে উপরে স্লাইড</option>
+            </select>
+          </label>
+        </div>
+
+        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer pt-1">
+          <input type="checkbox" checked={textMotion} onChange={(e) => setTextMotion(e.target.checked)} className="rounded" />
+          শিরোনামে টাইপরাইটার/মোশন অ্যানিমেশন চালু রাখুন
+        </label>
+
+        <button onClick={saveSliderSettings} className="bg-slate-800 text-white text-sm px-4 py-2 rounded-xl font-medium hover:bg-slate-700">
+          গতি ও ট্রানজিশন সংরক্ষণ করুন
+        </button>
+      </div>
+
+      {/* জরুরি ব্রেকিং মোড */}
       <div className={`rounded-2xl shadow p-4 space-y-3 ${bOn ? "bg-red-50 border border-red-300" : "bg-white"}`}>
         <h2 className="font-semibold">🔴 জরুরি ব্রেকিং মোড {bOn && "(চালু আছে)"}</h2>
         <p className="text-xs text-gray-600">চালু করলে স্লাইডারের জায়গায় একটি বড় ব্রেকিং বক্স দেখাবে। বন্ধ করলে স্বাভাবিক স্লাইডার ফিরে আসবে।</p>
         <input className={inp} placeholder="ব্রেকিং শিরোনাম *" value={bTitle} onChange={(e) => setBTitle(e.target.value)} />
-        <textarea className={inp} rows={3} placeholder="সংক্ষিপ্ত বিবরণ" value={bText} onChange={(e) => setBText(e.target.value)} />
+        <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ" value={bText} onChange={(e) => setBText(e.target.value)} />
         <input className={inp} placeholder="লিংক (ঐচ্ছিক)" value={bLink} onChange={(e) => setBLink(e.target.value)} />
         <div className="flex gap-2">
           <button onClick={() => saveBreaking(true)} className="flex-1 bg-red-600 text-white rounded-xl py-3 font-semibold">
             {bOn ? "আপডেট করুন" : "ব্রেকিং মোড চালু করুন"}
           </button>
           {bOn && (
-            <button onClick={() => saveBreaking(false)} className="flex-1 border rounded-xl py-3 font-semibold">বন্ধ করুন</button>
+            <button onClick={() => saveBreaking(false)} className="flex-1 border rounded-xl py-3 font-semibold">
+              বন্ধ করুন
+            </button>
           )}
         </div>
       </div>
 
-      {/* স্লাইড ফর্ম */}
+      {/* স্লাইড তৈরির ফর্ম */}
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
-        <h2 className="font-semibold">{editId ? "স্লাইড এডিট করুন" : "নতুন স্লাইড"}</h2>
-        <input className={inp} placeholder="শিরোনাম *" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
-        <textarea className={inp} rows={3} placeholder="সংক্ষিপ্ত বিবরণ" value={summary} onChange={(e) => setSummary(e.target.value)} />
+        <h2 className="font-semibold">{editId ? "স্লাইড এডিট করুন" : "নতুন স্লাইড যোগ করুন"}</h2>
 
+        {/* মিডিয়া চয়েস: ছবি নাকি ভিডিও */}
+        <div className="flex gap-4 p-2 bg-gray-50 rounded-xl text-sm">
+          <label className="flex items-center gap-1.5 cursor-pointer font-medium">
+            <input type="radio" name="mtype" checked={mediaType === "image"} onChange={() => setMediaType("image")} />
+            🖼️ ছবি
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer font-medium">
+            <input type="radio" name="mtype" checked={mediaType === "video"} onChange={() => setMediaType("video")} />
+            🎥 ভিডিও (ইউটিউব বা সরাসরি লিংক)
+          </label>
+        </div>
+
+        <input className={inp} placeholder="শিরোনাম *" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
+        <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ" value={summary} onChange={(e) => setSummary(e.target.value)} />
+
+        {/* ব্যাজ নির্বাচন */}
         <div className="space-y-2">
-          <input className={inp} placeholder="ব্যাজ (যেমন: ব্রেকিং)" value={category} onChange={(e) => setCategory(e.target.value)} />
-          <div className="flex flex-wrap gap-2">
+          <input className={inp} placeholder="কাস্টম ব্যাজ লিখুন (যেমন: এইমাত্র পাওয়া)" value={category} onChange={(e) => setCategory(e.target.value)} />
+          <div className="flex flex-wrap gap-1.5">
             {BADGES.map((b) => (
               <button
                 key={b}
                 type="button"
                 onClick={() => setCategory(b)}
-                className={`rounded-full px-3 py-1 text-xs border ${category === b ? "bg-green-700 text-white" : "bg-white"}`}
+                className={`rounded-full px-3 py-1 text-xs border ${category === b ? "bg-green-700 text-white" : "bg-gray-50 text-gray-700"}`}
               >
                 {b}
               </button>
@@ -202,31 +323,64 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           </div>
         </div>
 
-        <input className={inp} placeholder="বিস্তারিত লিংক (https://... বা /notices)" value={link} onChange={(e) => setLink(e.target.value)} />
+        {/* কালার পছন্দ */}
+        <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl">
+          <label className="block text-xs">
+            <span className="text-gray-600 block mb-1">শিরোনামের লেখার রঙ</span>
+            <div className="flex items-center gap-2">
+              <input type="color" value={titleColor} onChange={(e) => setTitleColor(e.target.value)} className="w-8 h-8 rounded border cursor-pointer" />
+              <span className="text-xs font-mono">{titleColor}</span>
+            </div>
+          </label>
+          <label className="block text-xs">
+            <span className="text-gray-600 block mb-1">ব্যাজের ব্যাকগ্রাউন্ড রঙ</span>
+            <div className="flex items-center gap-2">
+              <input type="color" value={badgeColor} onChange={(e) => setBadgeColor(e.target.value)} className="w-8 h-8 rounded border cursor-pointer" />
+              <span className="text-xs font-mono">{badgeColor}</span>
+            </div>
+          </label>
+        </div>
 
-        <label className="block">
-          <span className="text-sm text-gray-600">ছবি (গ্যালারি থেকে, ১৬:৯ আকারের হলে সবচেয়ে ভালো)</span>
-          <input className="block mt-1 text-sm" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-        </label>
-        {(file || oldImage) && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={file ? URL.createObjectURL(file) : oldImage || ""}
-            alt=""
-            className="w-full h-40 object-cover rounded-xl"
-            style={{ objectPosition: pos }}
-          />
+        {/* বাটন টেক্সট ও লিংক */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input className={inp} placeholder="বাটনের লেখা (ডিফল্ট: বিস্তারিত)" value={btnText} onChange={(e) => setBtnText(e.target.value)} />
+          <input className={inp} placeholder="ক্লিক লিংক (https://... বা /notices)" value={link} onChange={(e) => setLink(e.target.value)} />
+        </div>
+
+        {/* ছবি বা ভিডিও ইনপুট */}
+        {mediaType === "video" ? (
+          <div>
+            <span className="text-xs text-gray-600">ভিডিও লিঙ্ক (ইউটিউব লিঙ্ক বা সরাসরি MP4 লিঙ্ক)</span>
+            <input className={inp} placeholder="https://www.youtube.com/watch?v=..." value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
+          </div>
+        ) : (
+          <>
+            <label className="block">
+              <span className="text-xs text-gray-600">ছবি (১৬:৯ আকারের হলে সবচেয়ে ভালো)</span>
+              <input className="block mt-1 text-sm" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            </label>
+            {(file || oldImage) && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={file ? URL.createObjectURL(file) : oldImage || ""}
+                alt=""
+                className="w-full h-36 object-cover rounded-xl"
+                style={{ objectPosition: pos }}
+              />
+            )}
+            <label className="block">
+              <span className="text-xs text-gray-600">ছবির ফোকাস অবস্থান</span>
+              <select className={inp} value={pos} onChange={(e) => setPos(e.target.value as "top" | "center" | "bottom")}>
+                {(Object.keys(POS) as Array<keyof typeof POS>).map((k) => (
+                  <option key={k} value={k}>{POS[k]}</option>
+                ))}
+              </select>
+            </label>
+          </>
         )}
 
         <label className="block">
-          <span className="text-sm text-gray-600">ছবির কোন অংশ ফোকাসে থাকবে</span>
-          <select className={inp} value={pos} onChange={(e) => setPos(e.target.value as "top" | "center" | "bottom")}>
-            {(Object.keys(POS) as Array<keyof typeof POS>).map((k) => <option key={k} value={k}>{POS[k]}</option>)}
-          </select>
-        </label>
-
-        <label className="block">
-          <span className="text-sm text-gray-600">স্লাইডারে কতক্ষণ থাকবে</span>
+          <span className="text-xs text-gray-600">স্লাইডারে কতক্ষণ থাকবে</span>
           <select className={inp} value={expSel} onChange={(e) => setExpSel(e.target.value)}>
             {editId && <option value="keep">আগের মেয়াদ রাখুন{oldExpires ? "" : " (স্থায়ী)"}</option>}
             <option value="none">স্থায়ী (নিজে সরানো পর্যন্ত)</option>
@@ -239,52 +393,57 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
 
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
-          স্লাইডারে দেখান
+          স্লাইডারে চালু রাখুন (Show)
         </label>
 
         <button className={btn} onClick={save} disabled={busy}>
-          {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "যোগ করুন"}
+          {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "স্লাইড যোগ করুন"}
         </button>
-        {editId && <button onClick={reset} className="w-full text-sm underline">বাতিল</button>}
+        {editId && <button onClick={reset} className="w-full text-sm underline text-gray-600">বাতিল</button>}
       </div>
 
-      {/* তালিকা */}
+      {/* স্লাইড তালিকা */}
       <div className="space-y-3">
-        <h2 className="font-semibold">সব স্লাইড ({list.length})</h2>
+        <h2 className="font-semibold text-gray-800">সব স্লাইড ({list.length})</h2>
         <p className="text-xs text-gray-500">
-          সর্বোচ্চ {MAX_LIVE}টি স্লাইড দেখায়। উপরের স্লাইড আগে আসে, নতুন স্লাইড সবার আগে বসে।
+          সর্বোচ্চ {MAX_LIVE}টি স্লাইড হোমপেজে ঘুরবে। যেকোনো সময় স্লাইড উপরে বা নিচে সাজানো যাবে।
         </p>
         {list.map((s, i) => (
-          <div key={s.id} className="bg-white rounded-2xl shadow p-3 text-sm space-y-2">
+          <div key={s.id} className="bg-white rounded-2xl shadow p-3 text-sm space-y-2 border border-gray-100">
             <div className="flex gap-3">
-              {s.image_url && (
+              {s.media_type === "video" ? (
+                <div className="w-20 h-14 bg-slate-800 rounded-lg shrink-0 flex items-center justify-center text-white text-xs font-semibold">
+                  🎥 ভিডিও
+                </div>
+              ) : s.image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={s.image_url} alt="" className="w-20 h-14 object-cover rounded-lg shrink-0" style={{ objectPosition: s.image_pos }} />
+              ) : (
+                <div className="w-20 h-14 bg-gray-100 rounded-lg shrink-0" />
               )}
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="font-semibold truncate">{s.title}</p>
                 <p className="text-xs text-gray-500">
                   {s.category ? `${s.category} · ` : ""}{status(s)}
                 </p>
                 {s.expires_at && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-400">
                     মেয়াদ: {new Date(s.expires_at).toLocaleString("bn-BD", { timeZone: "Asia/Dhaka", dateStyle: "medium", timeStyle: "short" })}
                   </p>
                 )}
               </div>
             </div>
-            <div className="flex flex-wrap gap-4">
-              <button onClick={() => move(i, -1)} disabled={i === 0} className="disabled:opacity-30">⬆ উপরে</button>
-              <button onClick={() => move(i, 1)} disabled={i === list.length - 1} className="disabled:opacity-30">⬇ নিচে</button>
-              <button onClick={() => startEdit(s)} className="text-green-700">এডিট</button>
-              <button onClick={() => run(() => updateHeroSlide(token, s.id, { is_active: !s.is_active }))} className="text-gray-700">
+            <div className="flex flex-wrap gap-4 pt-1 border-t text-xs">
+              <button onClick={() => move(i, -1)} disabled={i === 0} className="disabled:opacity-30 font-medium">⬆ উপরে</button>
+              <button onClick={() => move(i, 1)} disabled={i === list.length - 1} className="disabled:opacity-30 font-medium">⬇ নিচে</button>
+              <button onClick={() => startEdit(s)} className="text-green-700 font-medium">এডিট</button>
+              <button onClick={() => run(() => updateHeroSlide(token, s.id, { is_active: !s.is_active }))} className="text-gray-700 font-medium">
                 {s.is_active ? "লুকান" : "দেখান"}
               </button>
-              <button onClick={() => run(() => deleteHeroSlide(token, s.id), "স্লাইড মুছে ফেলবেন?")} className="text-red-600">মুছুন</button>
+              <button onClick={() => run(() => deleteHeroSlide(token, s.id), "স্লাইডটি মুছে ফেলবেন?")} className="text-red-600 font-medium">মুছুন</button>
             </div>
           </div>
         ))}
-        {list.length === 0 && <p className="text-sm text-gray-500">এখনো কোনো স্লাইড নেই। এখন হোমপেজে পুরনো নমুনা স্লাইড দেখাচ্ছে।</p>}
       </div>
     </div>
   )
