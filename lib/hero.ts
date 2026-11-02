@@ -80,6 +80,13 @@ export type HeroSettings = {
   breaking_title: string | null
   breaking_text: string | null
   breaking_link: string | null
+  breaking_media_type?: "none" | "image" | "video" | null
+  breaking_media_url?: string | null
+  breaking_bg_color?: string | null
+  breaking_bg_gradient?: string | null
+  breaking_shape?: "circle" | "square" | "diamond" | "badge" | null
+  breaking_pulse_speed?: "slow" | "normal" | "fast" | null
+  breaking_btn_text?: string | null
   slide_speed?: number | null
   transition_type?: "fade" | "slide-left" | "slide-right" | "slide-up" | null
   text_motion?: boolean | null
