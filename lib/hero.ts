@@ -58,6 +58,11 @@ export type HeroSlide = {
   content_pos_v?: "top" | "center" | "bottom" | null
   content_pos_h?: "left" | "center" | "right" | null
   show_card_bg?: boolean | null
+  card_width?: "sm" | "md" | "lg" | "full" | null
+  card_padding?: "sm" | "md" | "lg" | null
+  card_radius?: "none" | "md" | "xl" | "2xl" | "full" | null
+  card_bg_color?: string | null
+  card_opacity?: number | null
   link_url: string | null
   sort_order: number
   is_active: boolean
@@ -73,7 +78,7 @@ export type HeroSettings = {
   breaking_title: string | null
   breaking_text: string | null
   breaking_link: string | null
-  slide_speed?: number | null // 0 বা নেগেটিভ হলে আনলিমিটেড (অটোপ্লে বন্ধ)
+  slide_speed?: number | null
   transition_type?: "fade" | "slide-left" | "slide-right" | "slide-up" | null
   text_motion?: boolean | null
 }
@@ -108,7 +113,7 @@ export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   }
 }
 
-// সাইটের পোস্টগুলো ড্রপডাউনে লোড করা
+// সাইটের পোস্টগুলো লোড করা
 export async function getRecentPosts(): Promise<Array<{ id: string; title: string; image_url?: string; summary?: string }>> {
   try {
     const res = await fetch(
