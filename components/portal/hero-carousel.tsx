@@ -11,8 +11,6 @@ import {
   Play,
   X,
   ExternalLink,
-  Volume2,
-  VolumeX,
 } from 'lucide-react'
 import { heroSlides } from '@/lib/data'
 import { getHeroSlides, getHeroSettings, MAX_LIVE } from '@/lib/hero'
@@ -33,6 +31,7 @@ type Slide = {
   videoUrl: string | null
   buttonText: string
   titleColor: string | null
+  titleBgColor: string | null
   badgeColor: string | null
   fontFamily: string | null
   fontWeight: string | null
@@ -40,14 +39,14 @@ type Slide = {
   contentPosV: 'top' | 'center' | 'bottom'
   contentPosH: 'left' | 'center' | 'right'
   showCardBg: boolean
-  cardWidth: 'sm' | 'md' | 'lg' | 'full'
-  cardPadding: 'sm' | 'md' | 'lg'
-  cardRadius: 'none' | 'md' | 'xl' | '2xl' | 'full'
+  cardWidthPct: number
+  cardRadiusPct: number
+  cardPaddingVal: number
   cardBgColor: string
   cardOpacity: number
+  fitMode: 'contain' | 'cover'
 }
 
-// হেক্স কালার ও অপাসিটি থেকে আরজিবিএ (RGBA) বানানোর ফাংশন
 function hexToRgba(hex: string | null | undefined, opacity: number | null | undefined) {
   const alpha = (opacity ?? 60) / 100
   if (!hex || !hex.startsWith('#')) return `rgba(0, 0, 0, ${alpha})`
@@ -76,6 +75,7 @@ const fallback: Slide[] = heroSlides.map((s) => ({
   videoUrl: null,
   buttonText: 'বিস্তারিত',
   titleColor: null,
+  titleBgColor: null,
   badgeColor: null,
   fontFamily: "'Hind Siliguri', sans-serif",
   fontWeight: '700',
@@ -83,11 +83,12 @@ const fallback: Slide[] = heroSlides.map((s) => ({
   contentPosV: 'bottom',
   contentPosH: 'left',
   showCardBg: true,
-  cardWidth: 'md',
-  cardPadding: 'md',
-  cardRadius: 'xl',
+  cardWidthPct: 90,
+  cardRadiusPct: 20,
+  cardPaddingVal: 20,
   cardBgColor: '#000000',
   cardOpacity: 60,
+  fitMode: 'contain',
 }))
 
 function toSlide(s: HeroSlide): Slide {
@@ -112,6 +113,7 @@ function toSlide(s: HeroSlide): Slide {
     videoUrl: s.video_url || null,
     buttonText: s.button_text?.trim() || 'বিস্তারিত',
     titleColor: s.title_color || null,
+    titleBgColor: s.title_bg_color || null,
     badgeColor: s.badge_color || null,
     fontFamily: s.font_family || "'Hind Siliguri', sans-serif",
     fontWeight: s.font_weight || '700',
@@ -119,11 +121,12 @@ function toSlide(s: HeroSlide): Slide {
     contentPosV: s.content_pos_v || 'bottom',
     contentPosH: s.content_pos_h || 'left',
     showCardBg: s.show_card_bg ?? true,
-    cardWidth: s.card_width || 'md',
-    cardPadding: s.card_padding || 'md',
-    cardRadius: s.card_radius || 'xl',
+    cardWidthPct: s.card_width_pct ?? 90,
+    cardRadiusPct: s.card_radius_pct ?? 20,
+    cardPaddingVal: s.card_padding_val ?? 20,
     cardBgColor: s.card_bg_color || '#000000',
     cardOpacity: s.card_opacity ?? 60,
+    fitMode: s.fit_mode || 'contain',
   }
 }
 
@@ -131,13 +134,14 @@ const isExternal = (u: string) => /^https?:\/\//i.test(u)
 const bn = (n: number) => n.toLocaleString('bn-BD')
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold'
 
-function getYoutubeEmbed(url: string | null, isMuted: boolean) {
+// ইউটিউব আসল প্লেয়ার লিঙ্ক (টাইমলাইন, সাউন্ড ও ফুলস্ক্রিন কন্ট্রোলসহ)
+function getYoutubeInteractiveEmbed(url: string | null) {
   if (!url) return null
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
   const match = url.match(regExp)
   if (match && match[2].length === 11) {
     const id = match[2]
-    return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=${id}&controls=0&modestbranding=1&enablejsapi=1`
+    return `https://www.youtube.com/embed/${id}?enablejsapi=1&controls=1&rel=0&modestbranding=1&playsinline=1`
   }
   return null
 }
@@ -153,7 +157,6 @@ export function HeroCarousel() {
   const [userPaused, setUserPaused] = useState(false)
   const [tabHidden, setTabHidden] = useState(false)
   const [reduceMotion, setReduceMotion] = useState(false)
-  const [isMuted, setIsMuted] = useState(true)
   const [modalSlide, setModalSlide] = useState<Slide | null>(null)
 
   const startRef = useRef<{ x: number; y: number } | null>(null)
@@ -163,6 +166,9 @@ export function HeroCarousel() {
   const isUnlimited = slideMs <= 0
   const transMode = settings?.transition_type || 'fade'
   const isMotionEnabled = settings?.text_motion ?? true
+
+  // যদি বর্তমান স্লাইডটি একটি ভিডিও হয়, তবে দর্শক যাতে আরাম করে ভিডিওটি দেখতে পারেন সেজন্য অটোপ্লে স্বয়ংক্রিয়ভাবে থেমে থাকবে
+  const currentSlideIsVideo = slides[index]?.mediaType === 'video'
 
   useEffect(() => {
     let on = true
@@ -196,7 +202,8 @@ export function HeroCarousel() {
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [])
 
-  const canAutoplay = total > 1 && !reduceMotion && !modalSlide && !isUnlimited
+  // ভিডিও স্লাইডে বা আনলিমিটেড মোডে অটোপ্লে চলবে না
+  const canAutoplay = total > 1 && !reduceMotion && !modalSlide && !isUnlimited && !currentSlideIsVideo
   const running = canAutoplay && !userPaused && !hoverPaused && !focusPaused && !dragging && !tabHidden
 
   const next = useCallback(() => setIndex((i) => (i + 1) % total), [total])
@@ -219,8 +226,9 @@ export function HeroCarousel() {
     }
   }
 
+  // ভিডিওর ওপর মাউস বা আঙুল দিয়ে টাইমলাইন টানার সময় স্লাইডার যেন না নড়ে
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
-    if ((e.target as HTMLElement).closest('button, a')) return
+    if ((e.target as HTMLElement).closest('iframe, video, button, a, input')) return
     startRef.current = { x: e.clientX, y: e.clientY }
     setDragging(true)
   }
@@ -293,28 +301,6 @@ export function HeroCarousel() {
     return isActive ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
   }
 
-  // কার্ডের সাইজ অনুযায়ী ক্লাস নির্ধারণ
-  const getCardWidthClass = (w: string) => {
-    if (w === 'sm') return 'max-w-xs sm:max-w-sm'
-    if (w === 'lg') return 'max-w-xl sm:max-w-3xl'
-    if (w === 'full') return 'max-w-full'
-    return 'max-w-md sm:max-w-xl' // md
-  }
-
-  const getCardPaddingClass = (p: string) => {
-    if (p === 'sm') return 'p-3.5 sm:p-4'
-    if (p === 'lg') return 'p-6 sm:p-9'
-    return 'p-5 sm:p-6' // md
-  }
-
-  const getCardRadiusClass = (r: string) => {
-    if (r === 'none') return 'rounded-none'
-    if (r === 'md') return 'rounded-xl'
-    if (r === '2xl') return 'rounded-3xl'
-    if (r === 'full') return 'rounded-[36px]'
-    return 'rounded-2xl' // xl
-  }
-
   return (
     <section id="home" aria-roledescription="carousel" aria-label="Featured stories" className="bg-navy relative">
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
@@ -354,7 +340,7 @@ export function HeroCarousel() {
 
         {slides.map((slide, i) => {
           const isActive = i === index
-          const ytUrl = slide.mediaType === 'video' ? getYoutubeEmbed(slide.videoUrl, isMuted) : null
+          const ytUrl = slide.mediaType === 'video' ? getYoutubeInteractiveEmbed(slide.videoUrl) : null
           const hasAnyText = Boolean(slide.title || slide.summary || slide.category)
 
           return (
@@ -366,66 +352,61 @@ export function HeroCarousel() {
               aria-hidden={!isActive}
               className={cn('absolute inset-0 transition-all duration-700 ease-in-out', getTransitionClass(isActive))}
             >
-              {/* ব্যাকগ্রাউন্ড মিডিয়া: অন্য স্লাইডে গেলে ভিডিও বন্ধ হয়ে যাবে, সাউন্ড পুরোপুরি থেমে যাবে */}
+              {/* ব্যাকগ্রাউন্ড মিডিয়া: প্রথম আলোর মতো ইন্টারেক্টিভ প্লেয়ার এবং অটো-ফিট ছবি */}
               {slide.mediaType === 'video' ? (
                 isActive ? (
                   ytUrl ? (
-                    <iframe
-                      src={ytUrl}
-                      className="absolute inset-0 h-full w-full pointer-events-none object-cover scale-125"
-                      allow="autoplay; encrypted-media"
-                      title="Video"
-                    />
+                    <div className="relative w-full h-full flex items-center justify-center bg-black">
+                      <iframe
+                        src={ytUrl}
+                        className="w-full h-full aspect-video pointer-events-auto border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        title="Video Player"
+                      />
+                    </div>
                   ) : slide.videoUrl ? (
-                    <video
-                      src={slide.videoUrl}
-                      autoPlay
-                      muted={isMuted}
-                      loop
-                      playsInline
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
+                    <div className="relative w-full h-full flex items-center justify-center bg-black">
+                      <video
+                        src={slide.videoUrl}
+                        controls
+                        playsInline
+                        className="w-full h-full max-h-[620px] object-contain pointer-events-auto"
+                      />
+                    </div>
                   ) : (
                     <div className="absolute inset-0 bg-slate-900" />
                   )
                 ) : (
-                  <div className="absolute inset-0 bg-black/90" />
+                  // অন্য স্লাইডে গেলে ভিডিও তৎক্ষণাৎ আনমাউন্ট হয়ে যাবে — সাউন্ড শতভাগ বন্ধ
+                  <div className="absolute inset-0 bg-black" />
                 )
               ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={slide.image}
-                  alt={slide.alt}
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                  draggable={false}
-                  style={{ objectPosition: slide.pos }}
-                  className={cn(
-                    'absolute inset-0 h-full w-full object-cover transition-transform duration-[6000ms] ease-out',
-                    isActive && !reduceMotion ? 'scale-105' : 'scale-100',
-                  )}
-                />
+                // ছবি: অটো-ফিট মোডে ছবি কখনো কাটবে না
+                <div className="relative w-full h-full flex items-center justify-center bg-black/90 overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={slide.image}
+                    alt={slide.alt}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    draggable={false}
+                    style={{ objectPosition: slide.pos }}
+                    className={cn(
+                      'w-full h-full transition-transform duration-[6000ms] ease-out',
+                      slide.fitMode === 'cover' ? 'object-cover' : 'object-contain',
+                      isActive && !reduceMotion ? 'scale-105' : 'scale-100',
+                    )}
+                  />
+                </div>
               )}
 
-              {/* সাউন্ড বাটন */}
-              {slide.mediaType === 'video' && isActive && (
-                <button
-                  type="button"
-                  onClick={() => setIsMuted((m) => !m)}
-                  className="absolute top-4 right-4 z-30 flex items-center gap-1.5 rounded-full bg-black/70 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur border border-white/20 hover:bg-white hover:text-black transition-all shadow-lg"
-                  aria-label={isMuted ? 'শব্দ চালু করুন' : 'শব্দ বন্ধ করুন'}
-                >
-                  {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-                  <span>{isMuted ? 'সাউন্ড চালু করুন' : 'সাউন্ড বন্ধ করুন'}</span>
-                </button>
-              )}
-
-              {/* কাস্টমাইজড গ্লাস কার্ড ও টেক্সট */}
+              {/* কাস্টমাইজড গ্লাস কার্ড ও ০-১০০% স্লাইডার স্টাইলিং */}
               {hasAnyText && (
                 <div
                   className={cn(
-                    'absolute inset-0 pointer-events-none p-6 pb-20 sm:p-12 sm:pb-24 z-10 flex',
+                    'absolute inset-0 pointer-events-none p-4 pb-20 sm:p-10 sm:pb-24 z-10 flex',
                     slide.contentPosV === 'top'
-                      ? 'items-start pt-12 sm:pt-16'
+                      ? 'items-start pt-10 sm:pt-14'
                       : slide.contentPosV === 'center'
                         ? 'items-center'
                         : 'items-end',
@@ -438,15 +419,8 @@ export function HeroCarousel() {
                 >
                   <div
                     className={cn(
-                      'pointer-events-auto w-full transition-all duration-300',
-                      getCardWidthClass(slide.cardWidth),
-                      slide.showCardBg
-                        ? cn(
-                            getCardPaddingClass(slide.cardPadding),
-                            getCardRadiusClass(slide.cardRadius),
-                            'backdrop-blur-md border border-white/20 shadow-2xl',
-                          )
-                        : '',
+                      'pointer-events-auto transition-all duration-300',
+                      slide.showCardBg ? 'backdrop-blur-md border border-white/20 shadow-2xl' : '',
                       slide.textAlign === 'center'
                         ? 'text-center'
                         : slide.textAlign === 'right'
@@ -454,6 +428,13 @@ export function HeroCarousel() {
                           : 'text-left',
                     )}
                     style={{
+                      width: `${slide.cardWidthPct ?? 90}%`,
+                      maxWidth: '100%',
+                      padding: slide.showCardBg ? `${slide.cardPaddingVal ?? 20}px` : undefined,
+                      // ০% এ চারকোনা, ১০০% এ ক্যাপসুল গোল
+                      borderRadius: slide.showCardBg
+                        ? `${Math.round(((slide.cardRadiusPct ?? 20) / 100) * 40)}px`
+                        : undefined,
                       backgroundColor: slide.showCardBg
                         ? hexToRgba(slide.cardBgColor, slide.cardOpacity)
                         : 'transparent',
@@ -467,7 +448,7 @@ export function HeroCarousel() {
                     {(slide.category || slide.date) && (
                       <div
                         className={cn(
-                          'flex flex-wrap items-center gap-3',
+                          'flex flex-wrap items-center gap-2 sm:gap-3',
                           slide.textAlign === 'center'
                             ? 'justify-center'
                             : slide.textAlign === 'right'
@@ -490,23 +471,33 @@ export function HeroCarousel() {
                       </div>
                     )}
 
-                    {/* শিরোনাম */}
+                    {/* শিরোনাম (ঐচ্ছিক ব্যাকগ্রাউন্ড হাইলাইটসহ) */}
                     {slide.title && (
                       <h2
-                        className="mt-3 text-balance text-xl sm:text-3xl lg:text-4xl leading-snug"
+                        className="mt-3 text-balance text-lg sm:text-2xl lg:text-3xl leading-snug"
                         style={{
                           color: slide.titleColor || '#FFFFFF',
                           fontFamily: slide.fontFamily || undefined,
                           fontWeight: slide.fontWeight || '700',
                         }}
                       >
-                        {slide.title}
+                        <span
+                          style={{
+                            backgroundColor: slide.titleBgColor || undefined,
+                            padding: slide.titleBgColor ? '2px 8px' : undefined,
+                            borderRadius: slide.titleBgColor ? '6px' : undefined,
+                            boxDecorationBreak: 'clone',
+                            WebkitBoxDecorationBreak: 'clone',
+                          }}
+                        >
+                          {slide.title}
+                        </span>
                       </h2>
                     )}
 
                     {/* বিবরণ */}
                     {slide.summary && (
-                      <p className="mt-2.5 line-clamp-3 text-pretty text-sm sm:text-base leading-relaxed text-white/90">
+                      <p className="mt-2.5 line-clamp-3 text-pretty text-xs sm:text-sm leading-relaxed text-white/90">
                         {slide.summary}
                       </p>
                     )}
@@ -515,7 +506,7 @@ export function HeroCarousel() {
                     {(slide.link || slide.summary) && (
                       <div
                         className={cn(
-                          'mt-5',
+                          'mt-4',
                           slide.textAlign === 'center'
                             ? 'flex justify-center'
                             : slide.textAlign === 'right'
@@ -528,20 +519,20 @@ export function HeroCarousel() {
                             href={slide.link}
                             {...(isExternal(slide.link) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                             tabIndex={isActive ? 0 : -1}
-                            className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-xs sm:text-sm font-semibold text-white transition-all hover:gap-3 hover:bg-white hover:text-brand shadow-lg"
+                            className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs sm:text-sm font-semibold text-white transition-all hover:gap-3 hover:bg-white hover:text-brand shadow-lg"
                           >
                             {slide.buttonText}
-                            {isExternal(slide.link) ? <ExternalLink className="size-4" /> : <ArrowRight className="size-4" />}
+                            {isExternal(slide.link) ? <ExternalLink className="size-3.5" /> : <ArrowRight className="size-3.5" />}
                           </a>
                         ) : (
                           <button
                             type="button"
                             onClick={() => setModalSlide(slide)}
                             tabIndex={isActive ? 0 : -1}
-                            className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-xs sm:text-sm font-semibold text-white transition-all hover:gap-3 hover:bg-white hover:text-brand shadow-lg"
+                            className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs sm:text-sm font-semibold text-white transition-all hover:gap-3 hover:bg-white hover:text-brand shadow-lg"
                           >
                             {slide.buttonText}
-                            <ArrowRight className="size-4" />
+                            <ArrowRight className="size-3.5" />
                           </button>
                         )}
                       </div>
@@ -557,7 +548,7 @@ export function HeroCarousel() {
         {total > 1 && (
           <>
             <div className="absolute bottom-6 right-6 flex items-center gap-2 sm:bottom-8 sm:right-10 z-20">
-              {!reduceMotion && !isUnlimited && (
+              {!reduceMotion && !isUnlimited && !currentSlideIsVideo && (
                 <button
                   type="button"
                   onClick={() => setUserPaused((p) => !p)}
@@ -613,7 +604,7 @@ export function HeroCarousel() {
           </>
         )}
 
-        {/* প্রোগ্রেস বার */}
+        {/* প্রোগ্রেস বার (ভিডিও চলাকালে বা আনলিমিটেড মোডে স্বয়ংক্রিয়ভাবে বন্ধ থাকবে) */}
         {canAutoplay && (
           <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 z-20" aria-hidden="true">
             <div
@@ -646,7 +637,7 @@ export function HeroCarousel() {
               <img
                 src={modalSlide.image}
                 alt=""
-                className="h-64 w-full rounded-xl object-cover"
+                className="h-64 w-full rounded-xl object-contain bg-black"
                 style={{ objectPosition: modalSlide.pos }}
               />
             )}
