@@ -1,6 +1,6 @@
 import { SB_URL, SB_KEY } from "./sb"
 
-// নতুন প্রস্তাবিত ব্যাজসহ পূর্ণ তালিকা
+// ব্যাজের পূর্ণ তালিকা
 export const BADGES = [
   "ব্রেকিং",
   "এইমাত্র পাওয়া",
@@ -12,6 +12,30 @@ export const BADGES = [
   "কর্মশালা",
   "গবেষণা",
   "সংস্কৃতি",
+]
+
+// ১০টি জনপ্রিয় বাংলা ও ইংরেজি ফন্ট
+export const FONTS = [
+  { label: "হিন্দ শিলিগুড়ি (Hind Siliguri - বাংলা)", value: "'Hind Siliguri', sans-serif" },
+  { label: "কালপুরুষ (Kalpurush - বাংলা)", value: "'Kalpurush', sans-serif" },
+  { label: "সোলাইমান লিপি (SolaimanLipi - বাংলা)", value: "'SolaimanLipi', sans-serif" },
+  { label: "নোটো সান্স বাংলা (Noto Sans Bengali)", value: "'Noto Sans Bengali', sans-serif" },
+  { label: "বালু দ্য ২ (Baloo Da 2 - বাংলা)", value: "'Baloo Da 2', cursive" },
+  { label: "তিরো বাংলা (Tiro Bangla - বাংলা)", value: "'Tiro Bangla', serif" },
+  { label: "ইন্টার (Inter - ইংরেজি)", value: "'Inter', sans-serif" },
+  { label: "রোবোটো (Roboto - ইংরেজি)", value: "'Roboto', sans-serif" },
+  { label: "প্লেফেয়ার ডিসপ্লে (Playfair Display - ইংরেজি)", value: "'Playfair Display', serif" },
+  { label: "মনটসেরাট (Montserrat - ইংরেজি)", value: "'Montserrat', sans-serif" },
+]
+
+// ফন্টের থিকনেস (বোল্ডনেস)
+export const FONT_WEIGHTS = [
+  { label: "হালকা (Light 300)", value: "300" },
+  { label: "স্বাভাবিক (Regular 400)", value: "400" },
+  { label: "মাঝারি (Medium 500)", value: "500" },
+  { label: "সেমি-বোল্ড (Semi-Bold 600)", value: "600" },
+  { label: "গাঢ়/বোল্ড (Bold 700)", value: "700" },
+  { label: "অতিরিক্ত গাঢ় (Extra Bold 800)", value: "800" },
 ]
 
 export const MAX_LIVE = 5
@@ -28,6 +52,9 @@ export type HeroSlide = {
   button_text?: string | null
   title_color?: string | null
   badge_color?: string | null
+  font_family?: string | null
+  font_weight?: string | null
+  text_align?: "left" | "center" | "right" | null
   link_url: string | null
   sort_order: number
   is_active: boolean
@@ -78,6 +105,20 @@ export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   }
 }
 
+// সাইটের পোস্টগুলো অ্যাডমিনের ড্রপডাউনে লোড করার ফাংশন
+export async function getRecentPosts(): Promise<Array<{ id: string; title: string; image_url?: string; summary?: string }>> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/posts?select=id,title,image_url,summary&order=created_at.desc&limit=30`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return []
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
 // নতুন স্লাইড তৈরি
 export async function createHeroSlide(token: string, data: HeroInput) {
   await ok(
@@ -89,7 +130,7 @@ export async function createHeroSlide(token: string, data: HeroInput) {
   )
 }
 
-// স্লাইড আপডেট করা
+// স্লাইড আপডেট
 export async function updateHeroSlide(token: string, id: string, data: Partial<HeroInput>) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/hero_slides?id=eq.${encodeURIComponent(id)}`, {
@@ -100,7 +141,7 @@ export async function updateHeroSlide(token: string, id: string, data: Partial<H
   )
 }
 
-// স্লাইড ডিলিট করা
+// স্লাইড ডিলিট
 export async function deleteHeroSlide(token: string, id: string) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/hero_slides?id=eq.${encodeURIComponent(id)}`, {
@@ -110,7 +151,7 @@ export async function deleteHeroSlide(token: string, id: string) {
   )
 }
 
-// স্লাইডারের সাধারণ সেটিংস (গতি, ট্রানজিশন, মোশন ও ব্রেকিং)
+// হিরো সেটিংস
 export async function getHeroSettings(): Promise<HeroSettings | null> {
   try {
     const res = await fetch(`${SB_URL}/rest/v1/hero_settings?select=*&id=eq.1`, {
