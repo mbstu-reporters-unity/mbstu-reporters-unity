@@ -853,3 +853,39 @@ export async function saveLayout(token: string, type: ParentType, id: string, la
     })
   )
 }
+
+/* স্টুডেন্ট কর্নারের লেখা সেভ করে id ফেরত দেয় (ছবি জোড়ার জন্য) */
+export async function saveStudentItemReturningId(
+  token: string,
+  id: string | null,
+  data: Partial<StudentInput>
+): Promise<string | null> {
+  if (data.featured) {
+    await ok(
+      await fetch(`${SB_URL}/rest/v1/student_items?featured=eq.true`, {
+        method: "PATCH",
+        headers: { ...hdr(token, true), Prefer: "return=minimal" },
+        body: JSON.stringify({ featured: false }),
+      })
+    )
+  }
+  if (id) {
+    await ok(
+      await fetch(`${SB_URL}/rest/v1/student_items?id=eq.${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: { ...hdr(token, true), Prefer: "return=minimal" },
+        body: JSON.stringify(data),
+      })
+    )
+    return id
+  }
+  const res = await ok(
+    await fetch(`${SB_URL}/rest/v1/student_items?select=id`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "return=representation" },
+      body: JSON.stringify(data),
+    })
+  )
+  const rows: { id: string }[] = await res.json()
+  return rows[0]?.id ?? null
+}
