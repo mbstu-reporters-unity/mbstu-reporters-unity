@@ -104,3 +104,211 @@
     animation: none;
   }
 }
+
+/* ==================== থিম / চোখের আরামের মোড ==================== */
+/* html-এ data-theme না থাকলে বা light হলে আগের ডিজাইনই থাকবে */
+body { transition: background-color .25s ease, color .25s ease; }
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0c1311;
+  --foreground: #e7eeeb;
+  --navy: #e7eeeb;
+  --card: #131d1a;
+  --card-foreground: #e7eeeb;
+  --popover: #131d1a;
+  --popover-foreground: #e7eeeb;
+  --secondary: #17231f;
+  --secondary-foreground: #e7eeeb;
+  --muted: #17231f;
+  --muted-foreground: #9db0a9;
+  --accent: #163128;
+  --accent-foreground: #8fe0b5;
+  --border: #26362f;
+  --input: #2d3f38;
+  --ring: #2a9d62;
+  --brand: #2a9d62;
+  --primary: #2a9d62;
+  --brand-dark: #1f7d4d;
+  --brand-soft: #17332a;
+  --crimson: #f0566f;
+  --gold: #e0b030;
+  --chrome: #060b09;
+  --g50: #131d1a;
+  --g100: #1a2823;
+  --g400: #7d908a;
+  --g500: #9db0a9;
+  --g600: #b3c3bd;
+  --g700: #c8d5d0;
+  --green100: #17332a;
+  --greentext: #6fd6a0;
+}
+
+html[data-theme="sepia"] {
+  color-scheme: light;
+  --background: #f3ead3;
+  --foreground: #3e3122;
+  --navy: #3e3122;
+  --card: #fbf4e1;
+  --card-foreground: #3e3122;
+  --popover: #fbf4e1;
+  --popover-foreground: #3e3122;
+  --secondary: #eadfc2;
+  --secondary-foreground: #3e3122;
+  --muted: #eadfc2;
+  --muted-foreground: #75654c;
+  --accent: #e4dfbd;
+  --accent-foreground: #2c5a34;
+  --border: #d9ccaa;
+  --input: #d2c4a0;
+  --ring: #3d6e3a;
+  --brand: #3d6e3a;
+  --primary: #3d6e3a;
+  --brand-dark: #2f5a2d;
+  --brand-soft: #e3e2bf;
+  --crimson: #a63a2a;
+  --gold: #b8860b;
+  --chrome: #3a2e1f;
+  --g50: #f7efdb;
+  --g100: #ece1c5;
+  --g400: #a39378;
+  --g500: #85755b;
+  --g600: #6c5d46;
+  --g700: #54463a;
+  --green100: #e3e2bf;
+  --greentext: #2f5a2d;
+}
+
+html[data-theme="mint"] {
+  color-scheme: light;
+  --background: #d5ead8;
+  --foreground: #17331f;
+  --navy: #17331f;
+  --card: #e6f4e8;
+  --card-foreground: #17331f;
+  --popover: #e6f4e8;
+  --popover-foreground: #17331f;
+  --secondary: #c8e0cc;
+  --secondary-foreground: #17331f;
+  --muted: #c8e0cc;
+  --muted-foreground: #456350;
+  --accent: #bfdcc5;
+  --accent-foreground: #0f4a26;
+  --border: #aacdb1;
+  --input: #a0c5a8;
+  --ring: #18683a;
+  --brand: #18683a;
+  --primary: #18683a;
+  --brand-dark: #115029;
+  --brand-soft: #bfdcc5;
+  --crimson: #b3261e;
+  --gold: #9a7b0a;
+  --chrome: #143b27;
+  --g50: #e0f0e3;
+  --g100: #cfe5d3;
+  --g400: #7ea089;
+  --g500: #5b7d67;
+  --g600: #476552;
+  --g700: #345041;
+  --green100: #bfdcc5;
+  --greentext: #0f4a26;
+}
+
+html[data-theme="night"] {
+  color-scheme: dark;
+  --background: #15100c;
+  --foreground: #e9d8c0;
+  --navy: #e9d8c0;
+  --card: #1e1712;
+  --card-foreground: #e9d8c0;
+  --popover: #1e1712;
+  --popover-foreground: #e9d8c0;
+  --secondary: #251d16;
+  --secondary-foreground: #e9d8c0;
+  --muted: #251d16;
+  --muted-foreground: #ad9c83;
+  --accent: #2c2218;
+  --accent-foreground: #f0c27a;
+  --border: #382c20;
+  --input: #43362a;
+  --ring: #b7791f;
+  --brand: #b7791f;
+  --primary: #b7791f;
+  --brand-dark: #96610f;
+  --brand-soft: #2e2314;
+  --crimson: #e0705a;
+  --gold: #e3b04b;
+  --chrome: #0b0805;
+  --g50: #1e1712;
+  --g100: #2a2018;
+  --g400: #8a7a64;
+  --g500: #ad9c83;
+  --g600: #c1b19a;
+  --g700: #d4c5ae;
+  --green100: #2e2314;
+  --greentext: #f0c27a;
+}
+
+html[data-theme="contrast"] {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #000000;
+  --navy: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --secondary: #f2f2f2;
+  --secondary-foreground: #000000;
+  --muted: #f2f2f2;
+  --muted-foreground: #1f1f1f;
+  --accent: #e6f2ea;
+  --accent-foreground: #00331a;
+  --border: #000000;
+  --input: #000000;
+  --ring: #004d25;
+  --brand: #004d25;
+  --primary: #004d25;
+  --brand-dark: #00331a;
+  --brand-soft: #e6f2ea;
+  --crimson: #a00000;
+  --gold: #7a5a00;
+  --chrome: #000000;
+  --g50: #f2f2f2;
+  --g100: #e6e6e6;
+  --g400: #333333;
+  --g500: #1f1f1f;
+  --g600: #111111;
+  --g700: #000000;
+  --green100: #e6f2ea;
+  --greentext: #00331a;
+}
+
+/* হার্ড-কোড করা রংগুলো থিম অনুযায়ী বদলানোর নিয়ম */
+html[data-theme]:not([data-theme="light"]) .bg-white { background-color: var(--card); }
+html[data-theme]:not([data-theme="light"]) .bg-white\/75 { background-color: color-mix(in srgb, var(--card) 75%, transparent); }
+html[data-theme]:not([data-theme="light"]) .bg-white\/65 { background-color: color-mix(in srgb, var(--card) 65%, transparent); }
+html[data-theme]:not([data-theme="light"]) .bg-gray-50 { background-color: var(--g50); }
+html[data-theme]:not([data-theme="light"]) .bg-gray-100 { background-color: var(--g100); }
+html[data-theme]:not([data-theme="light"]) .bg-green-100 { background-color: var(--green100); }
+html[data-theme]:not([data-theme="light"]) .bg-navy { background-color: var(--chrome); }
+html[data-theme]:not([data-theme="light"]) .text-gray-400 { color: var(--g400); }
+html[data-theme]:not([data-theme="light"]) .text-gray-500 { color: var(--g500); }
+html[data-theme]:not([data-theme="light"]) .text-gray-600 { color: var(--g600); }
+html[data-theme]:not([data-theme="light"]) .text-gray-700 { color: var(--g700); }
+html[data-theme]:not([data-theme="light"]) .text-green-700 { color: var(--greentext); }
+html[data-theme]:not([data-theme="light"]) .text-green-800 { color: var(--greentext); }
+html[data-theme]:not([data-theme="light"]) .text-slate-900 { color: var(--foreground); }
+html[data-theme]:not([data-theme="light"]) .text-emerald-700 { color: var(--brand); }
+html[data-theme]:not([data-theme="light"]) .border-gray-300 { border-color: var(--input); }
+
+/* অন্ধকার থিমে ছবির ঝলক কমানো */
+html[data-theme="dark"] img { filter: brightness(0.9); }
+html[data-theme="night"] img { filter: brightness(0.88) sepia(0.12); }
+
+/* কম নীল আলোর রাতের মোড */
+html[data-theme="night"] body { letter-spacing: 0.005em; }
+
+/* হাই কনট্রাস্ট: স্পষ্ট ফোকাস ও লিংক */
+html[data-theme="contrast"] :focus-visible { outline: 3px solid #000; outline-offset: 2px; }
+html[data-theme="contrast"] main a { text-decoration: underline; }
