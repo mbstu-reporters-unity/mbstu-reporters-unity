@@ -6,8 +6,9 @@ import {
   downloadUrl, fmtDateTime, timeAgo, isImageType,
 } from "../../lib/notices"
 import type { Notice, NoticeComment } from "../../lib/notices"
-import { getImagesForMany } from "../../lib/sb"
-import ImageGallery from "../../components/portal/image-gallery"
+import { getImagesMetaForMany, getLayoutsForMany } from "../../lib/sb"
+import RichGallery from "../../components/portal/rich-gallery"
+import type { GalleryItem } from "../../components/portal/rich-gallery"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const safeUrl = (u: string | null) => !!u && /^https?:\/\//i.test(u)
@@ -57,7 +58,14 @@ function Comments({ id }: { id: string }) {
   )
 }
 
-function NoticeCard({ n, highlight, images }: { n: Notice; highlight: boolean; images: string[] }) {
+function NoticeCard({
+  n, highlight, items, layout,
+}: {
+  n: Notice
+  highlight: boolean
+  items: GalleryItem[]
+  layout: string
+}) {
   const [open, setOpen] = useState(false)
   const [more, setMore] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -114,7 +122,7 @@ function NoticeCard({ n, highlight, images }: { n: Notice; highlight: boolean; i
         </div>
       )}
 
-      <ImageGallery urls={images} />
+      <RichGallery items={items} layout={layout} />
 
       {n.file_url && isImageType(n.file_type) && (
         <a href={n.file_url} target="_blank" rel="noopener noreferrer">
@@ -168,7 +176,8 @@ function NoticeCard({ n, highlight, images }: { n: Notice; highlight: boolean; i
 
 export default function NoticesPage() {
   const [list, setList] = useState<Notice[]>([])
-  const [imgs, setImgs] = useState<Record<string, string[]>>({})
+  const [imgs, setImgs] = useState<Record<string, GalleryItem[]>>({})
+  const [layouts, setLayouts] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [branch, setBranch] = useState("all")
   const [q, setQ] = useState("")
@@ -180,10 +189,17 @@ export default function NoticesPage() {
     getNotices().then(async (r) => {
       setList(r)
       setLoading(false)
-      const map = await getImagesForMany("notice", r.map((x) => x.id))
-      const out: Record<string, string[]> = {}
-      Object.keys(map).forEach((k) => { out[k] = map[k].map((i) => i.url) })
+      const ids = r.map((x) => x.id)
+      const [map, lay] = await Promise.all([
+        getImagesMetaForMany("notice", ids),
+        getLayoutsForMany("notice", ids),
+      ])
+      const out: Record<string, GalleryItem[]> = {}
+      Object.keys(map).forEach((k) => {
+        out[k] = map[k].map((i) => ({ url: i.url, caption: i.caption, credit: i.credit }))
+      })
       setImgs(out)
+      setLayouts(lay)
     })
   }, [])
 
@@ -224,7 +240,15 @@ export default function NoticesPage() {
           <p className="text-center text-sm text-gray-500">কোনো নোটিশ পাওয়া যায়নি।</p>
         )}
 
-        {shown.map((n) => <NoticeCard key={n.id} n={n} highlight={n.id === hl} images={imgs[n.id] || []} />)}
+        {shown.map((n) => (
+          <NoticeCard
+            key={n.id}
+            n={n}
+            highlight={n.id === hl}
+            items={imgs[n.id] || []}
+            layout={layouts[n.id] || "grid"}
+          />
+        ))}
 
         <div className="flex justify-center gap-4 text-sm">
           <a href="/" className="underline">সাইটে ফিরুন</a>
