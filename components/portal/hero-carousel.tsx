@@ -40,6 +40,25 @@ type Slide = {
   contentPosV: 'top' | 'center' | 'bottom'
   contentPosH: 'left' | 'center' | 'right'
   showCardBg: boolean
+  cardWidth: 'sm' | 'md' | 'lg' | 'full'
+  cardPadding: 'sm' | 'md' | 'lg'
+  cardRadius: 'none' | 'md' | 'xl' | '2xl' | 'full'
+  cardBgColor: string
+  cardOpacity: number
+}
+
+// হেক্স কালার ও অপাসিটি থেকে আরজিবিএ (RGBA) বানানোর ফাংশন
+function hexToRgba(hex: string | null | undefined, opacity: number | null | undefined) {
+  const alpha = (opacity ?? 60) / 100
+  if (!hex || !hex.startsWith('#')) return `rgba(0, 0, 0, ${alpha})`
+  let c = hex.substring(1)
+  if (c.length === 3) c = c.split('').map((x) => x + x).join('')
+  const num = parseInt(c, 16)
+  if (isNaN(num)) return `rgba(0, 0, 0, ${alpha})`
+  const r = (num >> 16) & 255
+  const g = (num >> 8) & 255
+  const b = num & 255
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 // নমুনা স্লাইড
@@ -64,6 +83,11 @@ const fallback: Slide[] = heroSlides.map((s) => ({
   contentPosV: 'bottom',
   contentPosH: 'left',
   showCardBg: true,
+  cardWidth: 'md',
+  cardPadding: 'md',
+  cardRadius: 'xl',
+  cardBgColor: '#000000',
+  cardOpacity: 60,
 }))
 
 function toSlide(s: HeroSlide): Slide {
@@ -95,6 +119,11 @@ function toSlide(s: HeroSlide): Slide {
     contentPosV: s.content_pos_v || 'bottom',
     contentPosH: s.content_pos_h || 'left',
     showCardBg: s.show_card_bg ?? true,
+    cardWidth: s.card_width || 'md',
+    cardPadding: s.card_padding || 'md',
+    cardRadius: s.card_radius || 'xl',
+    cardBgColor: s.card_bg_color || '#000000',
+    cardOpacity: s.card_opacity ?? 60,
   }
 }
 
@@ -102,7 +131,6 @@ const isExternal = (u: string) => /^https?:\/\//i.test(u)
 const bn = (n: number) => n.toLocaleString('bn-BD')
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold'
 
-// ইউটিউব লিঙ্ক কনভার্ট করা (সাউন্ড কন্ট্রোলসহ)
 function getYoutubeEmbed(url: string | null, isMuted: boolean) {
   if (!url) return null
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
@@ -125,18 +153,14 @@ export function HeroCarousel() {
   const [userPaused, setUserPaused] = useState(false)
   const [tabHidden, setTabHidden] = useState(false)
   const [reduceMotion, setReduceMotion] = useState(false)
-
-  // শব্দ চালু/বন্ধ স্টেট (ডিফল্ট সাউন্ড অফ থাকে যাতে ব্রাউজার ব্লক না করে, বোতাম চাপলেই সাউন্ড চালু)
   const [isMuted, setIsMuted] = useState(true)
-
-  // লিংক না থাকলে পপ-আপ স্টেট
   const [modalSlide, setModalSlide] = useState<Slide | null>(null)
 
   const startRef = useRef<{ x: number; y: number } | null>(null)
   const total = slides.length
 
   const slideMs = settings?.slide_speed ?? 4500
-  const isUnlimited = slideMs <= 0 // ০ বা নেগেটিভ হলে আনলিমিটেড
+  const isUnlimited = slideMs <= 0
   const transMode = settings?.transition_type || 'fade'
   const isMotionEnabled = settings?.text_motion ?? true
 
@@ -172,7 +196,6 @@ export function HeroCarousel() {
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [])
 
-  // আনলিমিটেড হলে অটোপ্লে হবে না
   const canAutoplay = total > 1 && !reduceMotion && !modalSlide && !isUnlimited
   const running = canAutoplay && !userPaused && !hoverPaused && !focusPaused && !dragging && !tabHidden
 
@@ -270,9 +293,30 @@ export function HeroCarousel() {
     return isActive ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
   }
 
+  // কার্ডের সাইজ অনুযায়ী ক্লাস নির্ধারণ
+  const getCardWidthClass = (w: string) => {
+    if (w === 'sm') return 'max-w-xs sm:max-w-sm'
+    if (w === 'lg') return 'max-w-xl sm:max-w-3xl'
+    if (w === 'full') return 'max-w-full'
+    return 'max-w-md sm:max-w-xl' // md
+  }
+
+  const getCardPaddingClass = (p: string) => {
+    if (p === 'sm') return 'p-3.5 sm:p-4'
+    if (p === 'lg') return 'p-6 sm:p-9'
+    return 'p-5 sm:p-6' // md
+  }
+
+  const getCardRadiusClass = (r: string) => {
+    if (r === 'none') return 'rounded-none'
+    if (r === 'md') return 'rounded-xl'
+    if (r === '2xl') return 'rounded-3xl'
+    if (r === 'full') return 'rounded-[36px]'
+    return 'rounded-2xl' // xl
+  }
+
   return (
     <section id="home" aria-roledescription="carousel" aria-label="Featured stories" className="bg-navy relative">
-      {/* গুগল ফন্ট লিংক */}
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link
         rel="stylesheet"
@@ -322,26 +366,30 @@ export function HeroCarousel() {
               aria-hidden={!isActive}
               className={cn('absolute inset-0 transition-all duration-700 ease-in-out', getTransitionClass(isActive))}
             >
-              {/* ব্যাকগ্রাউন্ড মিডিয়া */}
+              {/* ব্যাকগ্রাউন্ড মিডিয়া: অন্য স্লাইডে গেলে ভিডিও বন্ধ হয়ে যাবে, সাউন্ড পুরোপুরি থেমে যাবে */}
               {slide.mediaType === 'video' ? (
-                ytUrl ? (
-                  <iframe
-                    src={ytUrl}
-                    className="absolute inset-0 h-full w-full pointer-events-none object-cover scale-125"
-                    allow="autoplay; encrypted-media"
-                    title="Video"
-                  />
-                ) : slide.videoUrl ? (
-                  <video
-                    src={slide.videoUrl}
-                    autoPlay
-                    muted={isMuted}
-                    loop
-                    playsInline
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
+                isActive ? (
+                  ytUrl ? (
+                    <iframe
+                      src={ytUrl}
+                      className="absolute inset-0 h-full w-full pointer-events-none object-cover scale-125"
+                      allow="autoplay; encrypted-media"
+                      title="Video"
+                    />
+                  ) : slide.videoUrl ? (
+                    <video
+                      src={slide.videoUrl}
+                      autoPlay
+                      muted={isMuted}
+                      loop
+                      playsInline
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-slate-900" />
+                  )
                 ) : (
-                  <div className="absolute inset-0 bg-slate-900" />
+                  <div className="absolute inset-0 bg-black/90" />
                 )
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -358,20 +406,20 @@ export function HeroCarousel() {
                 />
               )}
 
-              {/* ভিডিওতে শব্দ চালু/বন্ধ বোতাম */}
+              {/* সাউন্ড বাটন */}
               {slide.mediaType === 'video' && isActive && (
                 <button
                   type="button"
                   onClick={() => setIsMuted((m) => !m)}
-                  className="absolute top-4 right-4 z-30 flex items-center gap-1.5 rounded-full bg-black/60 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur border border-white/20 hover:bg-white hover:text-black transition-all shadow-lg"
+                  className="absolute top-4 right-4 z-30 flex items-center gap-1.5 rounded-full bg-black/70 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur border border-white/20 hover:bg-white hover:text-black transition-all shadow-lg"
                   aria-label={isMuted ? 'শব্দ চালু করুন' : 'শব্দ বন্ধ করুন'}
                 >
                   {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-                  <span>{isMuted ? 'সাউন্ড বন্ধ' : 'সাউন্ড চালু'}</span>
+                  <span>{isMuted ? 'সাউন্ড চালু করুন' : 'সাউন্ড বন্ধ করুন'}</span>
                 </button>
               )}
 
-              {/* কন্টেন্ট বক্স (কাস্টম পজিশন: উপরে/মাঝে/নিচে এবং বামে/মাঝে/ডানে) */}
+              {/* কাস্টমাইজড গ্লাস কার্ড ও টেক্সট */}
               {hasAnyText && (
                 <div
                   className={cn(
@@ -390,9 +438,14 @@ export function HeroCarousel() {
                 >
                   <div
                     className={cn(
-                      'pointer-events-auto max-w-2xl w-full',
+                      'pointer-events-auto w-full transition-all duration-300',
+                      getCardWidthClass(slide.cardWidth),
                       slide.showCardBg
-                        ? 'bg-black/60 backdrop-blur-md p-5 sm:p-7 rounded-2xl border border-white/15 shadow-2xl'
+                        ? cn(
+                            getCardPaddingClass(slide.cardPadding),
+                            getCardRadiusClass(slide.cardRadius),
+                            'backdrop-blur-md border border-white/20 shadow-2xl',
+                          )
                         : '',
                       slide.textAlign === 'center'
                         ? 'text-center'
@@ -400,11 +453,15 @@ export function HeroCarousel() {
                           ? 'text-right'
                           : 'text-left',
                     )}
-                    style={
-                      isActive && isMotionEnabled && !reduceMotion
-                        ? { animation: 'textEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards' }
-                        : {}
-                    }
+                    style={{
+                      backgroundColor: slide.showCardBg
+                        ? hexToRgba(slide.cardBgColor, slide.cardOpacity)
+                        : 'transparent',
+                      animation:
+                        isActive && isMotionEnabled && !reduceMotion
+                          ? 'textEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+                          : undefined,
+                    }}
                   >
                     {/* ব্যাজ ও তারিখ */}
                     {(slide.category || slide.date) && (
@@ -433,7 +490,7 @@ export function HeroCarousel() {
                       </div>
                     )}
 
-                    {/* শিরোনাম (ঐচ্ছিক) */}
+                    {/* শিরোনাম */}
                     {slide.title && (
                       <h2
                         className="mt-3 text-balance text-xl sm:text-3xl lg:text-4xl leading-snug"
@@ -447,14 +504,14 @@ export function HeroCarousel() {
                       </h2>
                     )}
 
-                    {/* সংক্ষিপ্ত বিবরণ (ঐচ্ছিক) */}
+                    {/* বিবরণ */}
                     {slide.summary && (
                       <p className="mt-2.5 line-clamp-3 text-pretty text-sm sm:text-base leading-relaxed text-white/90">
                         {slide.summary}
                       </p>
                     )}
 
-                    {/* বাটন (ঐচ্ছিক) */}
+                    {/* বাটন */}
                     {(slide.link || slide.summary) && (
                       <div
                         className={cn(
@@ -556,7 +613,7 @@ export function HeroCarousel() {
           </>
         )}
 
-        {/* প্রোগ্রেস বার (আনলিমিটেড মোডে বন্ধ থাকবে) */}
+        {/* প্রোগ্রেস বার */}
         {canAutoplay && (
           <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 z-20" aria-hidden="true">
             <div
@@ -572,7 +629,7 @@ export function HeroCarousel() {
         )}
       </div>
 
-      {/* লিংক না থাকলে বিস্তারিত দেখানোর পপ-আপ (Modal) */}
+      {/* পপ-আপ মোডাল */}
       {modalSlide && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
           <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl space-y-4">
