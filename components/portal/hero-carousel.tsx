@@ -60,7 +60,6 @@ function hexToRgba(hex: string | null | undefined, opacity: number | null | unde
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-// নমুনা স্লাইড
 const fallback: Slide[] = heroSlides.map((s) => ({
   key: s.image,
   image: s.image,
@@ -134,7 +133,6 @@ const isExternal = (u: string) => /^https?:\/\//i.test(u)
 const bn = (n: number) => n.toLocaleString('bn-BD')
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold'
 
-// ইউটিউব আসল প্লেয়ার লিঙ্ক (টাইমলাইন, সাউন্ড ও ফুলস্ক্রিন কন্ট্রোলসহ)
 function getYoutubeInteractiveEmbed(url: string | null) {
   if (!url) return null
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
@@ -167,7 +165,6 @@ export function HeroCarousel() {
   const transMode = settings?.transition_type || 'fade'
   const isMotionEnabled = settings?.text_motion ?? true
 
-  // যদি বর্তমান স্লাইডটি একটি ভিডিও হয়, তবে দর্শক যাতে আরাম করে ভিডিওটি দেখতে পারেন সেজন্য অটোপ্লে স্বয়ংক্রিয়ভাবে থেমে থাকবে
   const currentSlideIsVideo = slides[index]?.mediaType === 'video'
 
   useEffect(() => {
@@ -202,7 +199,6 @@ export function HeroCarousel() {
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [])
 
-  // ভিডিও স্লাইডে বা আনলিমিটেড মোডে অটোপ্লে চলবে না
   const canAutoplay = total > 1 && !reduceMotion && !modalSlide && !isUnlimited && !currentSlideIsVideo
   const running = canAutoplay && !userPaused && !hoverPaused && !focusPaused && !dragging && !tabHidden
 
@@ -226,7 +222,6 @@ export function HeroCarousel() {
     }
   }
 
-  // ভিডিওর ওপর মাউস বা আঙুল দিয়ে টাইমলাইন টানার সময় স্লাইডার যেন না নড়ে
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
     if ((e.target as HTMLElement).closest('iframe, video, button, a, input')) return
     startRef.current = { x: e.clientX, y: e.clientY }
@@ -253,34 +248,115 @@ export function HeroCarousel() {
     )
   }
 
-  // জরুরি ব্রেকিং মোড
+  // ========================================================
+  // ডাইনামিক জরুরি ব্রেকিং মোড স্ক্রিন
+  // ========================================================
   if (settings?.breaking_on) {
     const bLink = settings.breaking_link
+    const bBtn = settings.breaking_btn_text || 'বিস্তারিত'
+    const bPulseDuration =
+      settings.breaking_pulse_speed === 'slow'
+        ? '2.2s'
+        : settings.breaking_pulse_speed === 'fast'
+          ? '0.7s'
+          : '1.2s'
+
+    const bYt = settings.breaking_media_type === 'video' ? getYoutubeInteractiveEmbed(settings.breaking_media_url || null) : null
+
+    // ব্রেকিং ব্যাকগ্রাউন্ড স্টাইল (ছবি/ভিডিও না থাকলে কাস্টম RGB গ্রেডিয়েন্ট)
+    const breakingBgStyle =
+      settings.breaking_media_type === 'none' || !settings.breaking_media_type
+        ? {
+            background: `linear-gradient(135deg, ${settings.breaking_bg_color || '#881337'}, ${settings.breaking_bg_gradient || '#0f172a'})`,
+          }
+        : undefined
+
     return (
-      <section id="home" className="bg-navy">
-        <div className="relative flex h-[480px] items-center overflow-hidden bg-gradient-to-br from-crimson via-navy to-navy sm:h-[540px] lg:h-[620px]">
-          <div className="mx-auto w-full max-w-5xl px-6 sm:px-12">
-            <span className="inline-flex items-center gap-2 rounded bg-white px-3 py-1 text-sm font-bold tracking-wider text-crimson">
-              <span className="size-2.5 animate-pulse rounded-full bg-crimson" aria-hidden="true" />
-              ব্রেকিং নিউজ / BREAKING
-            </span>
-            <h2 className="mt-5 text-balance font-serif text-3xl font-bold leading-snug text-white sm:text-5xl lg:text-6xl">
-              {settings.breaking_title}
-            </h2>
+      <section id="home" className="bg-navy relative overflow-hidden">
+        <style>{`
+          @keyframes shapePulse {
+            0%, 100% { transform: scale(0.85); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.9)); }
+          }
+        `}</style>
+
+        <div
+          style={breakingBgStyle}
+          className="relative flex h-[480px] sm:h-[540px] lg:h-[620px] items-center overflow-hidden bg-slate-950"
+        >
+          {/* ব্রেকিং মিডিয়া ব্যাকগ্রাউন্ড */}
+          {settings.breaking_media_type === 'image' && settings.breaking_media_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={settings.breaking_media_url}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )}
+
+          {settings.breaking_media_type === 'video' && bYt && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black">
+              <iframe
+                src={bYt}
+                className="w-full h-full aspect-video border-0 pointer-events-auto"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Breaking Video"
+              />
+            </div>
+          )}
+
+          {/* ওভারলে গ্রেডিয়েন্ট */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30 pointer-events-none" />
+
+          {/* ব্রেকিং কন্টেন্ট বক্স */}
+          <div className="relative z-10 mx-auto w-full max-w-5xl px-6 sm:px-12 pointer-events-auto">
+            {/* অ্যানিমেটেড শেপ ও ব্রেকিং ব্যাজ */}
+            <div className="inline-flex items-center gap-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 text-xs sm:text-sm font-bold tracking-wider text-white shadow-xl">
+              {/* অ্যানিমেটেড শেপ: বৃত্ত, চারকোনা, বা ডায়মন্ড */}
+              <span
+                style={{ animation: `shapePulse ${bPulseDuration} ease-in-out infinite` }}
+                className={cn(
+                  'shrink-0',
+                  settings.breaking_shape === 'square'
+                    ? 'size-3 bg-red-600 rounded-none'
+                    : settings.breaking_shape === 'diamond'
+                      ? 'size-3 bg-amber-400 rotate-45 rounded-sm'
+                      : settings.breaking_shape === 'badge'
+                        ? 'size-3.5 bg-red-500 rounded-full ring-4 ring-red-500/40'
+                        : 'size-3 rounded-full bg-red-600', // default circle
+                )}
+                aria-hidden="true"
+              />
+              <span>ব্রেকিং নিউজ / BREAKING NEWS</span>
+            </div>
+
+            {/* শিরোনাম */}
+            {settings.breaking_title && (
+              <h2 className="mt-5 text-balance font-serif text-2xl font-bold leading-snug text-white sm:text-4xl lg:text-5xl drop-shadow-md">
+                {settings.breaking_title}
+              </h2>
+            )}
+
+            {/* সংক্ষিপ্ত বিবরণ */}
             {settings.breaking_text && (
-              <p className="mt-4 max-w-3xl text-pretty text-base leading-relaxed text-white/90 sm:text-lg">
+              <p className="mt-3.5 max-w-3xl text-pretty text-sm sm:text-base leading-relaxed text-white/90 drop-shadow">
                 {settings.breaking_text}
               </p>
             )}
+
+            {/* বাটন */}
             {bLink && (
-              <a
-                href={bLink}
-                {...(isExternal(bLink) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                className="mt-7 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-crimson transition-all hover:bg-gold hover:text-navy"
-              >
-                বিস্তারিত / Read More
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </a>
+              <div className="mt-6">
+                <a
+                  href={bLink}
+                  {...(isExternal(bLink) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:gap-3 hover:bg-white hover:text-red-700 shadow-xl"
+                >
+                  {bBtn}
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </a>
+              </div>
             )}
           </div>
         </div>
@@ -288,6 +364,7 @@ export function HeroCarousel() {
     )
   }
 
+  // স্লাইডার ট্রানজিশন ক্লাস
   const getTransitionClass = (isActive: boolean) => {
     if (transMode === 'slide-left') {
       return isActive ? 'translate-x-0 opacity-100 z-10' : 'translate-x-full opacity-0 pointer-events-none z-0'
@@ -352,7 +429,7 @@ export function HeroCarousel() {
               aria-hidden={!isActive}
               className={cn('absolute inset-0 transition-all duration-700 ease-in-out', getTransitionClass(isActive))}
             >
-              {/* ব্যাকগ্রাউন্ড মিডিয়া: প্রথম আলোর মতো ইন্টারেক্টিভ প্লেয়ার এবং অটো-ফিট ছবি */}
+              {/* ব্যাকগ্রাউন্ড মিডিয়া */}
               {slide.mediaType === 'video' ? (
                 isActive ? (
                   ytUrl ? (
@@ -378,11 +455,9 @@ export function HeroCarousel() {
                     <div className="absolute inset-0 bg-slate-900" />
                   )
                 ) : (
-                  // অন্য স্লাইডে গেলে ভিডিও তৎক্ষণাৎ আনমাউন্ট হয়ে যাবে — সাউন্ড শতভাগ বন্ধ
                   <div className="absolute inset-0 bg-black" />
                 )
               ) : (
-                // ছবি: অটো-ফিট মোডে ছবি কখনো কাটবে না
                 <div className="relative w-full h-full flex items-center justify-center bg-black/90 overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -431,7 +506,6 @@ export function HeroCarousel() {
                       width: `${slide.cardWidthPct ?? 90}%`,
                       maxWidth: '100%',
                       padding: slide.showCardBg ? `${slide.cardPaddingVal ?? 20}px` : undefined,
-                      // ০% এ চারকোনা, ১০০% এ ক্যাপসুল গোল
                       borderRadius: slide.showCardBg
                         ? `${Math.round(((slide.cardRadiusPct ?? 20) / 100) * 40)}px`
                         : undefined,
@@ -604,7 +678,7 @@ export function HeroCarousel() {
           </>
         )}
 
-        {/* প্রোগ্রেস বার (ভিডিও চলাকালে বা আনলিমিটেড মোডে স্বয়ংক্রিয়ভাবে বন্ধ থাকবে) */}
+        {/* প্রোগ্রেস বার */}
         {canAutoplay && (
           <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 z-20" aria-hidden="true">
             <div
