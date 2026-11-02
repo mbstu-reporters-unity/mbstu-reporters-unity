@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { SB_URL, SB_KEY } from "../../lib/sb"
+import { DEFAULT_STYLE, getGlobalStyle } from "@/lib/photo-style"
+import type { PhotoStyle } from "@/lib/photo-style"
+import { PhotoFrame } from "@/components/portal/photo-frame"
 
 type Member = {
   id: string
@@ -11,17 +14,33 @@ type Member = {
   role: string
 }
 
-function Card({ m }: { m: Member }) {
+// তালিকার ছোট কার্ডে বড় ফ্রেম মানায় না, তাই এডমিনের স্টাইল ধরে রেখে শুধু মাপ ছোট করা হয়
+function compact(s: PhotoStyle): PhotoStyle {
+  const k = Math.min(1, 64 / s.size)
+  return {
+    ...s,
+    size: Math.round(s.size * k),
+    bandWidth: Math.max(2, Math.round(s.bandWidth * k)),
+    glowSize: Math.round(s.glowSize * k),
+    shadowSize: Math.round(s.shadowSize * k),
+    // তালিকায় স্ক্রলে সবগুলো একসাথে বড় হয়ে যাবে, তাই শুধু কার্সারে বড় হবে
+    scrollGrow: false,
+  }
+}
+
+function Card({ m, style }: { m: Member; style: PhotoStyle }) {
   return (
-    <div className="bg-white rounded-2xl shadow p-3 flex items-center gap-3">
-      {m.avatar_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={m.avatar_url} alt="" className="w-14 h-14 rounded-full object-cover" />
-      ) : (
-        <div className="w-14 h-14 rounded-full bg-green-100 text-green-800 flex items-center justify-center text-xl font-bold">
-          {(m.full_name || "?").charAt(0)}
-        </div>
-      )}
+    <div className="bg-white rounded-2xl shadow p-4 flex items-center gap-4">
+      <PhotoFrame
+        src={m.avatar_url}
+        alt={m.full_name}
+        style={style}
+        fallback={
+          <div className="flex h-full w-full items-center justify-center bg-green-100 text-xl font-bold text-green-800">
+            {(m.full_name || "?").charAt(0)}
+          </div>
+        }
+      />
       <div className="min-w-0">
         <p className="font-semibold truncate">{m.full_name}</p>
         <p className="text-sm text-gray-500 truncate">{m.newspaper_name || "—"}</p>
@@ -33,6 +52,7 @@ function Card({ m }: { m: Member }) {
 export default function CouncilPage() {
   const [list, setList] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
+  const [style, setStyle] = useState<PhotoStyle>(compact(DEFAULT_STYLE))
 
   useEffect(() => {
     async function load() {
@@ -46,6 +66,7 @@ export default function CouncilPage() {
       setLoading(false)
     }
     load()
+    getGlobalStyle().then((g) => setStyle(compact(g)))
   }, [])
 
   const admins = list.filter((m) => m.role === "admin")
@@ -59,16 +80,16 @@ export default function CouncilPage() {
         {loading && <p className="text-center text-sm text-gray-500">লোড হচ্ছে...</p>}
 
         {admins.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <h2 className="font-semibold text-green-800">অ্যাডমিন</h2>
-            {admins.map((m) => <Card key={m.id} m={m} />)}
+            {admins.map((m) => <Card key={m.id} m={m} style={style} />)}
           </div>
         )}
 
         {others.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <h2 className="font-semibold text-green-800">মডারেটর ({others.length})</h2>
-            {others.map((m) => <Card key={m.id} m={m} />)}
+            {others.map((m) => <Card key={m.id} m={m} style={style} />)}
           </div>
         )}
 
