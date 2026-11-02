@@ -7,6 +7,8 @@ import {
   FONTS,
   FONT_WEIGHTS,
   MAX_LIVE,
+  TRANSITIONS,
+  BREAKING_BADGES,
   getHeroSlides,
   createHeroSlide,
   updateHeroSlide,
@@ -19,7 +21,7 @@ import type { HeroSlide } from "../../lib/hero"
 
 const inp = "w-full border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm bg-slate-950 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
 const selectInp = "w-full border border-slate-700 rounded-xl px-3 py-2 text-sm bg-slate-950 text-white focus:outline-none focus:border-green-500"
-const btnSave = "w-full bg-green-700 hover:bg-green-600 text-white rounded-xl py-3 font-semibold text-sm transition-all disabled:opacity-50 shadow-lg"
+const btnSave = "w-full bg-green-700 hover:bg-green-600 text-white rounded-xl py-3 font-semibold text-sm transition-all disabled:opacity-50 shadow-lg cursor-pointer"
 const cardBox = "bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4"
 
 const POS = { top: "উপরে", center: "মাঝে", bottom: "নিচে" } as const
@@ -31,12 +33,12 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [msg, setMsg] = useState("")
   const [busy, setBusy] = useState(false)
 
-  // সার্বিক স্লাইডার গতি ও ট্রানজিশন সেটিংস
+  // সার্বিক স্লাইডার গতি ও ট্রানজিশন সেটিংস (২০টি ট্রানজিশন)
   const [slideSpeed, setSlideSpeed] = useState<number>(4500)
-  const [transType, setTransType] = useState<"fade" | "slide-left" | "slide-right" | "slide-up">("fade")
+  const [transType, setTransType] = useState<string>("fade")
   const [textMotion, setTextMotion] = useState<boolean>(true)
 
-  // ডাইনামিক ব্রেকিং মোড স্টেট
+  // ডাইনামিক ব্রেকিং মোড স্টেট (২১টি ব্যাজ ও ০-১০০% স্পিড)
   const [bOn, setBOn] = useState(false)
   const [bTitle, setBTitle] = useState("")
   const [bText, setBText] = useState("")
@@ -47,8 +49,8 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [bFile, setBFile] = useState<File | null>(null)
   const [bBgColor, setBBgColor] = useState("#881337")
   const [bBgGradient, setBBgGradient] = useState("#0f172a")
-  const [bShape, setBShape] = useState<"circle" | "square" | "diamond" | "badge">("circle")
-  const [bPulseSpeed, setBPulseSpeed] = useState<"slow" | "normal" | "fast">("normal")
+  const [bBadgeStyle, setBBadgeStyle] = useState("pulse-circle")
+  const [bPulseSpeedPct, setBPulseSpeedPct] = useState<number>(50)
 
   // একক স্লাইড ফর্ম স্টেট
   const [editId, setEditId] = useState<string | null>(null)
@@ -66,6 +68,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   // মিডিয়া, কালার ও ফন্ট স্টেট
   const [mediaType, setMediaType] = useState<"image" | "video">("image")
   const [videoUrl, setVideoUrl] = useState("")
+  const [extraMedia, setExtraMedia] = useState("")
   const [btnText, setBtnText] = useState("বিস্তারিত")
   const [titleColor, setTitleColor] = useState("#FFFFFF")
   const [titleBgColor, setTitleBgColor] = useState("")
@@ -82,6 +85,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [cardWidthPct, setCardWidthPct] = useState<number>(90)
   const [cardRadiusPct, setCardRadiusPct] = useState<number>(20)
   const [cardPaddingVal, setCardPaddingVal] = useState<number>(20)
+  const [cardBlur, setCardBlur] = useState<number>(12)
   const [cardBgColor, setCardBgColor] = useState("#000000")
   const [cardOpacity, setCardOpacity] = useState<number>(60)
 
@@ -103,8 +107,8 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         setBMediaUrl(s.breaking_media_url || "")
         setBBgColor(s.breaking_bg_color || "#881337")
         setBBgGradient(s.breaking_bg_gradient || "#0f172a")
-        setBShape(s.breaking_shape || "circle")
-        setBPulseSpeed(s.breaking_pulse_speed || "normal")
+        setBBadgeStyle(s.breaking_badge_style || "pulse-circle")
+        setBPulseSpeedPct(s.breaking_pulse_speed_pct ?? 50)
         setSlideSpeed(s.slide_speed ?? 4500)
         setTransType(s.transition_type || "fade")
         setTextMotion(s.text_motion ?? true)
@@ -130,7 +134,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         transition_type: transType,
         text_motion: textMotion,
       })
-      setMsg("✅ স্লাইডারের গতি ও ট্রানজিশন সেটিংস সফলভাবে সেভ হয়েছে")
+      setMsg("✅ স্লাইডারের ২০টি ট্রানজিশন ও গতি সেটিংস সফলভাবে সেভ হয়েছে")
     } catch (e) {
       setMsg("❌ " + (e instanceof Error ? e.message : "কিছু ভুল হয়েছে"))
     }
@@ -154,8 +158,8 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         breaking_media_url: mediaUrl.trim() || null,
         breaking_bg_color: bBgColor,
         breaking_bg_gradient: bBgGradient,
-        breaking_shape: bShape,
-        breaking_pulse_speed: bPulseSpeed,
+        breaking_badge_style: bBadgeStyle,
+        breaking_pulse_speed_pct: Number(bPulseSpeedPct),
       })
       setBOn(on)
       setMsg(on ? "🔴 ব্রেকিং মোড চালু হয়েছে" : "✅ ব্রেকিং মোড বন্ধ, স্বাভাবিক স্লাইডার ফিরেছে")
@@ -179,6 +183,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setFile(null)
     setMediaType("image")
     setVideoUrl("")
+    setExtraMedia("")
     setBtnText("বিস্তারিত")
     setTitleColor("#FFFFFF")
     setTitleBgColor("")
@@ -192,6 +197,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setCardWidthPct(90)
     setCardRadiusPct(20)
     setCardPaddingVal(20)
+    setCardBlur(12)
     setCardBgColor("#000000")
     setCardOpacity(60)
     setFitMode("contain")
@@ -211,6 +217,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setFile(null)
     setMediaType(s.media_type || "image")
     setVideoUrl(s.video_url || "")
+    setExtraMedia(s.extra_media || "")
     setBtnText(s.button_text || "বিস্তারিত")
     setTitleColor(s.title_color || "#FFFFFF")
     setTitleBgColor(s.title_bg_color || "")
@@ -224,6 +231,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setCardWidthPct(s.card_width_pct ?? 90)
     setCardRadiusPct(s.card_radius_pct ?? 20)
     setCardPaddingVal(s.card_padding_val ?? 20)
+    setCardBlur(s.card_blur ?? 12)
     setCardBgColor(s.card_bg_color || "#000000")
     setCardOpacity(s.card_opacity ?? 60)
     setFitMode(s.fit_mode || "contain")
@@ -231,7 +239,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   }
 
   async function save() {
-    if (!title.trim() && !file && !oldImage && !videoUrl.trim()) {
+    if (!title.trim() && !file && !oldImage && !videoUrl.trim() && !extraMedia.trim()) {
       setMsg("❌ অন্তত একটি ছবি, ভিডিও অথবা শিরোনাম দিন")
       return
     }
@@ -261,6 +269,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         expires_at: expires,
         media_type: mediaType,
         video_url: videoUrl.trim() || null,
+        extra_media: extraMedia.trim() || null,
         button_text: btnText.trim() || "বিস্তারিত",
         title_color: titleColor,
         title_bg_color: titleBgColor.trim() || null,
@@ -274,6 +283,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         card_width_pct: Number(cardWidthPct),
         card_radius_pct: Number(cardRadiusPct),
         card_padding_val: Number(cardPaddingVal),
+        card_blur: Number(cardBlur),
         card_bg_color: cardBgColor,
         card_opacity: Number(cardOpacity),
         fit_mode: fitMode,
@@ -284,7 +294,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         await createHeroSlide(token, { ...data, sort_order: first })
       }
       reset()
-      setMsg("✅ স্লাইড সেভ হয়েছে")
+      setMsg("✅ স্লাইড সফলভাবে সংরক্ষণ হয়েছে")
       await load()
     } catch (e) {
       setMsg("❌ " + (e instanceof Error ? e.message : "কিছু ভুল হয়েছে"))
@@ -323,12 +333,11 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     if (!s.is_active) return "লুকানো"
     if (s.expires_at && new Date(s.expires_at) <= new Date()) return "মেয়াদ শেষ"
     const idx = liveList.findIndex((x) => x.id === s.id)
-    return idx < MAX_LIVE ? `স্লাইডারে আছে (${idx + 1})` : "অপেক্ষায় (৫টির বেশি)"
+    return `স্লাইডারে আছে (${idx + 1})`
   }
 
   return (
     <div className="space-y-6 text-white max-w-4xl mx-auto pb-16">
-      {/* নোটিফিকেশন মেসেজ */}
       {msg && (
         <div className="p-3.5 bg-blue-950/80 border border-blue-500/40 text-blue-200 rounded-xl text-sm font-medium shadow-lg">
           {msg}
@@ -336,12 +345,12 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       )}
 
       {/* ========================================================
-          সেকশন ১: সার্বিক স্লাইডার গতি ও ট্রানজিশন নিয়ন্ত্রণ
+          সেকশন ১: ২০টি জনপ্রিয় ট্রানজিশন ও সার্বিক স্লাইডার গতি
       ======================================================== */}
       <div className={cardBox}>
         <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
           <span className="text-lg">⚙️</span>
-          <h2 className="font-semibold text-base text-gray-200">সার্বিক স্লাইডার গতি ও ট্রানজিশন নিয়ন্ত্রণ</h2>
+          <h2 className="font-semibold text-base text-gray-200">সার্বিক স্লাইডার গতি ও ২০টি ট্রানজিশন নিয়ন্ত্রণ</h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -358,12 +367,11 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           </div>
 
           <div>
-            <label className="text-xs text-gray-400 block mb-1.5">ট্রানজিশনের ধরন</label>
-            <select className={selectInp} value={transType} onChange={(e) => setTransType(e.target.value as any)}>
-              <option value="fade">ফেড (মসৃণভাবে মিলিয়ে আসা)</option>
-              <option value="slide-left">ডান থেকে বামে স্লাইড</option>
-              <option value="slide-right">বাম থেকে ডানে স্লাইড</option>
-              <option value="slide-up">নিচ থেকে উপরে স্লাইড</option>
+            <label className="text-xs text-gray-400 block mb-1.5">ট্রানজিশনের ধরন (২০টি জনপ্রিয় অপশন)</label>
+            <select className={selectInp} value={transType} onChange={(e) => setTransType(e.target.value)}>
+              {TRANSITIONS.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -379,7 +387,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       </div>
 
       {/* ========================================================
-          সেকশন ২: 🔴 জরুরি ব্রেকিং মোড (সম্পূর্ণ ডায়নামিক)
+          সেকশন ২: 🔴 জরুরি ব্রেকিং মোড (২১টি অ্যানিমেটেড ব্যাজ ও ০-১০০% স্পিড)
       ======================================================== */}
       <div className={`${cardBox} ${bOn ? "border-red-600/60 bg-red-950/20" : ""}`}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -394,13 +402,43 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           চালু করলে সম্পূর্ণ হোমপেজ স্লাইডারের জায়গায় এই ব্রেকিং স্ক্রিনটি দেখাবে।
         </p>
 
+        {/* ২১টি অ্যানিমেটেড ব্রেকিং ব্যাজ ও ০-১০০% স্পিড স্লাইডার */}
+        <div className="p-3.5 bg-slate-950/60 border border-slate-800 rounded-xl space-y-3">
+          <span className="text-xs font-bold text-red-400 uppercase tracking-wider block">২১টি অ্যানিমেটেড ব্যাজ ও স্পিড কন্ট্রোল</span>
+
+          <div>
+            <label className="text-xs text-gray-400 block mb-1">অ্যানিমেটেড ব্যাজ/প্রতীক নির্বাচন (২১টি)</label>
+            <select className={selectInp} value={bBadgeStyle} onChange={(e) => setBBadgeStyle(e.target.value)}>
+              {BREAKING_BADGES.map((b) => (
+                <option key={b.value} value={b.value}>{b.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* ০-১০০% শেপ স্পিড স্লাইডার */}
+          <div>
+            <div className="flex justify-between text-xs text-gray-400 mb-1">
+              <span>শেপ অ্যানিমেশনের গতি (০-১০০%):</span>
+              <span className="font-bold text-red-400">{bPulseSpeedPct}%</span>
+            </div>
+            <input
+              type="range"
+              min="5"
+              max="100"
+              value={bPulseSpeedPct}
+              onChange={(e) => setBPulseSpeedPct(Number(e.target.value))}
+              className="w-full accent-red-600 cursor-pointer"
+            />
+          </div>
+        </div>
+
         {/* ব্রেকিং মিডিয়া পছন্দ */}
         <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-2.5">
           <span className="text-xs font-semibold text-gray-300 block">মিডিয়া ব্যাকগ্রাউন্ড (ঐচ্ছিক):</span>
           <div className="flex gap-4 text-xs">
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input type="radio" name="bmedia" checked={bMediaType === "none"} onChange={() => setBMediaType("none")} />
-              সলিড/গ্রেডিয়েন্ট রঙ
+              RGB গ্রেডিয়েন্ট রঙ
             </label>
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input type="radio" name="bmedia" checked={bMediaType === "image"} onChange={() => setBMediaType("image")} />
@@ -424,18 +462,17 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             </div>
           )}
 
-          {/* ছবি না থাকলে কাস্টমাইজড RGB রঙ */}
           {bMediaType === "none" && (
             <div className="grid grid-cols-2 gap-3 pt-2">
               <label className="block text-xs">
-                <span className="text-gray-400 block mb-1">মূল রঙ (RGB Color 1)</span>
+                <span className="text-gray-400 block mb-1">মূল রঙ (RGB 1)</span>
                 <div className="flex items-center gap-2">
                   <input type="color" value={bBgColor} onChange={(e) => setBBgColor(e.target.value)} className="w-8 h-8 rounded border border-slate-700 cursor-pointer bg-transparent" />
                   <span className="text-xs font-mono">{bBgColor}</span>
                 </div>
               </label>
               <label className="block text-xs">
-                <span className="text-gray-400 block mb-1">গ্রেডিয়েন্ট রঙ (RGB Color 2)</span>
+                <span className="text-gray-400 block mb-1">গ্রেডিয়েন্ট রঙ (RGB 2)</span>
                 <div className="flex items-center gap-2">
                   <input type="color" value={bBgGradient} onChange={(e) => setBBgGradient(e.target.value)} className="w-8 h-8 rounded border border-slate-700 cursor-pointer bg-transparent" />
                   <span className="text-xs font-mono">{bBgGradient}</span>
@@ -443,27 +480,6 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
               </label>
             </div>
           )}
-        </div>
-
-        {/* অ্যানিমেটেড শেপ ও স্পিড কন্ট্রোল */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-950/60 border border-slate-800 rounded-xl">
-          <div>
-            <label className="text-xs text-gray-400 block mb-1.5">অ্যানিমেটেড শেপ (বড়-ছোট হবে)</label>
-            <select className={selectInp} value={bShape} onChange={(e) => setBShape(e.target.value as any)}>
-              <option value="circle">🔴 লাল বৃত্ত (Circle)</option>
-              <option value="square">🟥 চারকোনা (Square)</option>
-              <option value="diamond">🔶 ডায়মন্ড (Diamond)</option>
-              <option value="badge">🏷️ ব্রেকিং ব্যাজ (Badge)</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs text-gray-400 block mb-1.5">শেপের অ্যানিমেশন স্পিড</label>
-            <select className={selectInp} value={bPulseSpeed} onChange={(e) => setBPulseSpeed(e.target.value as any)}>
-              <option value="slow">ধীরগতি (শান্তিমতো বড়-ছোট হবে)</option>
-              <option value="normal">স্বাভাবিক (Normal Pulse)</option>
-              <option value="fast">দ্রুত গতি (জরুরি ফ্ল্যাশ)</option>
-            </select>
-          </div>
         </div>
 
         <input className={inp} placeholder="ব্রেকিং শিরোনাম (ঐচ্ছিক)" value={bTitle} onChange={(e) => setBTitle(e.target.value)} />
@@ -475,11 +491,11 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         </div>
 
         <div className="flex gap-3 pt-2">
-          <button onClick={() => saveBreaking(true)} disabled={busy} className="flex-1 bg-red-600 hover:bg-red-500 text-white rounded-xl py-3 font-semibold text-sm transition-all shadow-lg">
+          <button onClick={() => saveBreaking(true)} disabled={busy} className="flex-1 bg-red-600 hover:bg-red-500 text-white rounded-xl py-3 font-semibold text-sm transition-all shadow-lg cursor-pointer">
             {bOn ? "ব্রেকিং মোড আপডেট করুন" : "ব্রেকিং মোড চালু করুন"}
           </button>
           {bOn && (
-            <button onClick={() => saveBreaking(false)} disabled={busy} className="flex-1 border border-slate-700 hover:bg-slate-800 text-gray-300 rounded-xl py-3 font-semibold text-sm transition-all">
+            <button onClick={() => saveBreaking(false)} disabled={busy} className="flex-1 border border-slate-700 hover:bg-slate-800 text-gray-300 rounded-xl py-3 font-semibold text-sm transition-all cursor-pointer">
               বন্ধ করুন
             </button>
           )}
@@ -487,7 +503,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       </div>
 
       {/* ========================================================
-          সেকশন ৩: ➕ নতুন স্লাইড তৈরি / এডিট (ধাপ অনুযায়ী সুবিন্যস্ত)
+          সেকশন ৩: ➕ নতুন স্লাইড তৈরি / এডিট (একাধিক মিডিয়া সাপোর্টসহ)
       ======================================================== */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -500,7 +516,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           {editId && <button onClick={reset} className="text-xs text-red-400 hover:underline">বাতিল করুন</button>}
         </div>
 
-        {/* ধাপ ১: কনটেন্ট ও মিডিয়া */}
+        {/* ধাপ ১: কনটেন্ট ও একাধিক মিডিয়া */}
         <div className="space-y-3 p-3.5 bg-slate-950/60 border border-slate-800 rounded-xl">
           <span className="text-xs font-bold text-green-400 uppercase tracking-wider block">১. কনটেন্ট ও মিডিয়া নির্বাচন</span>
 
@@ -523,11 +539,10 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             </label>
             <label className="flex items-center gap-1.5 cursor-pointer font-medium">
               <input type="radio" name="mtype" checked={mediaType === "video"} onChange={() => setMediaType("video")} />
-              🎥 ভিডিও প্লেয়ার (প্রথম আলোর মতো টেনে দেখা যাবে)
+              🎥 ভিডিও প্লেয়ার (প্রথম আলোর মতো)
             </label>
           </div>
 
-          {/* অটো-ফিট মোড */}
           <div className="flex items-center justify-between p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-xs">
             <span className="text-gray-300">ছবি/ভিডিওর মাপ:</span>
             <div className="flex gap-4">
@@ -544,7 +559,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
 
           {mediaType === "video" ? (
             <div>
-              <span className="text-xs text-gray-400 block mb-1">ইউটিউব বা ভিডিও লিঙ্ক</span>
+              <span className="text-xs text-gray-400 block mb-1">মূল ইউটিউব বা ভিডিও লিঙ্ক</span>
               <input className={inp} placeholder="https://www.youtube.com/watch?v=..." value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
             </div>
           ) : (
@@ -560,6 +575,18 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
               )}
             </div>
           )}
+
+          {/* একাধিক মিডিয়া / নেস্টেড স্লাইড শো */}
+          <div>
+            <span className="text-xs text-gray-400 block mb-1">একাধিক ছবি/ভিডিও লিঙ্ক (ঐচ্ছিক - প্রতি লাইনে একটি করে লিঙ্ক দিন):</span>
+            <textarea
+              className={inp}
+              rows={2}
+              placeholder="https://...ছবি১.jpg&#10;https://...ছবি২.jpg&#10;https://youtube.com/..."
+              value={extraMedia}
+              onChange={(e) => setExtraMedia(e.target.value)}
+            />
+          </div>
         </div>
 
         {/* ধাপ ২: শিরোনাম ও বিবরণ */}
@@ -591,7 +618,6 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             </div>
           </div>
 
-          {/* শিরোনামের টেক্সট রঙ ও ব্যাকগ্রাউন্ড হাইলাইট */}
           <div className="grid grid-cols-2 gap-3 pt-1">
             <label className="block text-xs">
               <span className="text-gray-400 block mb-1">শিরোনাম লেখার রঙ</span>
@@ -647,17 +673,16 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           </div>
         </div>
 
-        {/* ধাপ ৪: গ্লাস কার্ড ও ০-১০০% স্লাইডার */}
+        {/* ধাপ ৪: গ্লাস কার্ড ও ০-১০০% অত্যাধুনিক কন্ট্রোল */}
         <div className="space-y-3 p-3.5 bg-slate-950/60 border border-slate-800 rounded-xl">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-green-400 uppercase tracking-wider">৪. গ্লাস কার্ড ও ০-১০০% স্লাইডার কন্ট্রোল</span>
+            <span className="text-xs font-bold text-green-400 uppercase tracking-wider">৪. গ্লাস কার্ডের আকার ও অবস্থান নিয়ন্ত্রণ</span>
             <label className="flex items-center gap-1.5 text-xs text-gray-300 cursor-pointer">
               <input type="checkbox" checked={showCardBg} onChange={(e) => setShowCardBg(e.target.checked)} className="rounded accent-green-600" />
               কার্ড চালু রাখুন
             </label>
           </div>
 
-          {/* অবস্থান */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <span className="text-xs text-gray-400 block mb-1">উপরে-নিচে অবস্থান</span>
@@ -682,7 +707,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
               {/* প্রস্থ */}
               <div>
                 <div className="flex justify-between text-xs text-gray-400 mb-1">
-                  <span>কার্ডের প্রস্থ (Width):</span>
+                  <span>কার্ডের প্রস্থ (Width ১০-১০০%):</span>
                   <span className="font-bold text-green-400">{cardWidthPct}%</span>
                 </div>
                 <input type="range" min="10" max="100" value={cardWidthPct} onChange={(e) => setCardWidthPct(Number(e.target.value))} className="w-full accent-green-600 cursor-pointer" />
@@ -700,10 +725,19 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
               {/* প্যাডিং */}
               <div>
                 <div className="flex justify-between text-xs text-gray-400 mb-1">
-                  <span>কার্ডের প্যাডিং/দৈর্ঘ্য:</span>
+                  <span>কার্ডের ভেতরের ফাঁকা জায়গা (Padding):</span>
                   <span className="font-bold text-green-400">{cardPaddingVal}px</span>
                 </div>
-                <input type="range" min="8" max="50" value={cardPaddingVal} onChange={(e) => setCardPaddingVal(Number(e.target.value))} className="w-full accent-green-600 cursor-pointer" />
+                <input type="range" min="8" max="60" value={cardPaddingVal} onChange={(e) => setCardPaddingVal(Number(e.target.value))} className="w-full accent-green-600 cursor-pointer" />
+              </div>
+
+              {/* ব্লার */}
+              <div>
+                <div className="flex justify-between text-xs text-gray-400 mb-1">
+                  <span>ব্যাকগ্রাউন্ড ব্লার (Glass Blur):</span>
+                  <span className="font-bold text-green-400">{cardBlur}px</span>
+                </div>
+                <input type="range" min="0" max="30" value={cardBlur} onChange={(e) => setCardBlur(Number(e.target.value))} className="w-full accent-green-600 cursor-pointer" />
               </div>
 
               {/* অপাসিটি */}
@@ -715,7 +749,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
                 <input type="range" min="0" max="100" value={cardOpacity} onChange={(e) => setCardOpacity(Number(e.target.value))} className="w-full accent-green-600 cursor-pointer" />
               </div>
 
-              {/* ব্যাকগ্রাউন্ড কালার */}
+              {/* কালার */}
               <div className="flex items-center justify-between pt-1">
                 <span className="text-xs text-gray-400">কার্ডের RGB রঙ:</span>
                 <div className="flex items-center gap-2">
@@ -751,12 +785,12 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       </div>
 
       {/* ========================================================
-          সেকশন ৪: 📋 সব স্লাইডের তালিকা
+          সেকশন ৪: 📋 সব স্লাইডের তালিকা (আনলিমিটেড)
       ======================================================== */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h2 className="font-semibold text-base text-gray-200">সব স্লাইড ({list.length})</h2>
-          <span className="text-xs text-gray-500">সর্বোচ্চ {MAX_LIVE}টি স্লাইড হোমপেজে ঘুরবে</span>
+          <span className="text-xs text-gray-400 font-medium">লাইভ স্লাইড সংখ্যা: আনলিমিটেড</span>
         </div>
 
         <div className="space-y-2.5">
@@ -782,13 +816,13 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
               </div>
 
               <div className="flex items-center gap-2 self-end sm:self-center text-xs">
-                <button onClick={() => move(i, -1)} disabled={i === 0} className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 disabled:opacity-30">⬆</button>
-                <button onClick={() => move(i, 1)} disabled={i === list.length - 1} className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 disabled:opacity-30">⬇</button>
-                <button onClick={() => startEdit(s)} className="px-3 py-1.5 bg-green-950 border border-green-800/60 text-green-300 rounded-lg hover:bg-green-900">এডিট</button>
-                <button onClick={() => run(() => updateHeroSlide(token, s.id, { is_active: !s.is_active }))} className="px-3 py-1.5 bg-slate-900 border border-slate-800 text-gray-300 rounded-lg hover:bg-slate-800">
+                <button onClick={() => move(i, -1)} disabled={i === 0} className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 disabled:opacity-30 cursor-pointer">⬆</button>
+                <button onClick={() => move(i, 1)} disabled={i === list.length - 1} className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 disabled:opacity-30 cursor-pointer">⬇</button>
+                <button onClick={() => startEdit(s)} className="px-3 py-1.5 bg-green-950 border border-green-800/60 text-green-300 rounded-lg hover:bg-green-900 cursor-pointer">এডিট</button>
+                <button onClick={() => run(() => updateHeroSlide(token, s.id, { is_active: !s.is_active }))} className="px-3 py-1.5 bg-slate-900 border border-slate-800 text-gray-300 rounded-lg hover:bg-slate-800 cursor-pointer">
                   {s.is_active ? "লুকান" : "দেখান"}
                 </button>
-                <button onClick={() => run(() => deleteHeroSlide(token, s.id), "স্লাইডটি মুছে ফেলবেন?")} className="px-3 py-1.5 bg-red-950 border border-red-800/60 text-red-300 rounded-lg hover:bg-red-900">মুছুন</button>
+                <button onClick={() => run(() => deleteHeroSlide(token, s.id), "স্লাইডটি মুছে ফেলবেন?")} className="px-3 py-1.5 bg-red-950 border border-red-800/60 text-red-300 rounded-lg hover:bg-red-900 cursor-pointer">মুছুন</button>
               </div>
             </div>
           ))}
