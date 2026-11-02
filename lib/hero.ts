@@ -28,7 +28,7 @@ export const FONTS = [
   { label: "মনটসেরাট (Montserrat - ইংরেজি)", value: "'Montserrat', sans-serif" },
 ]
 
-// ফন্টের থিকনেস (বোল্ডনেস)
+// ফন্টের থিকনেস
 export const FONT_WEIGHTS = [
   { label: "হালকা (Light 300)", value: "300" },
   { label: "স্বাভাবিক (Regular 400)", value: "400" },
@@ -43,7 +43,7 @@ export const MAX_LIVE = 5
 export type HeroSlide = {
   id: string
   category: string | null
-  title: string
+  title: string | null
   summary: string | null
   image_url: string | null
   image_pos: "top" | "center" | "bottom"
@@ -55,6 +55,9 @@ export type HeroSlide = {
   font_family?: string | null
   font_weight?: string | null
   text_align?: "left" | "center" | "right" | null
+  content_pos_v?: "top" | "center" | "bottom" | null
+  content_pos_h?: "left" | "center" | "right" | null
+  show_card_bg?: boolean | null
   link_url: string | null
   sort_order: number
   is_active: boolean
@@ -70,7 +73,7 @@ export type HeroSettings = {
   breaking_title: string | null
   breaking_text: string | null
   breaking_link: string | null
-  slide_speed?: number | null
+  slide_speed?: number | null // 0 বা নেগেটিভ হলে আনলিমিটেড (অটোপ্লে বন্ধ)
   transition_type?: "fade" | "slide-left" | "slide-right" | "slide-up" | null
   text_motion?: boolean | null
 }
@@ -105,7 +108,7 @@ export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   }
 }
 
-// সাইটের পোস্টগুলো অ্যাডমিনের ড্রপডাউনে লোড করার ফাংশন
+// সাইটের পোস্টগুলো ড্রপডাউনে লোড করা
 export async function getRecentPosts(): Promise<Array<{ id: string; title: string; image_url?: string; summary?: string }>> {
   try {
     const res = await fetch(
