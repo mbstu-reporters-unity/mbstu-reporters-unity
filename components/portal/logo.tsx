@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { Tx } from '@/lib/i18n'
 
 export function Logo({ inverted = false }: { inverted?: boolean }) {
   return (
@@ -9,11 +10,11 @@ export function Logo({ inverted = false }: { inverted?: boolean }) {
         className="size-10 rounded-full object-contain shadow-sm"
       />
       <span className="flex flex-col leading-tight">
-        <span className={cn('text-sm font-bold', inverted ? 'text-white' : 'text-slate-900')}>
+        <span className={cn('text-sm font-bold', inverted ? 'text-white' : 'text-foreground')}>
           {"MBSTU Reporters' Unity"}
         </span>
-        <span className={cn('text-xs font-medium', inverted ? 'text-slate-300' : 'text-emerald-700')}>
-          মাভাবিপ্রবি রিপোর্টার্স ইউনিটি
+        <span className={cn('text-xs font-medium', inverted ? 'text-slate-300' : 'text-brand')}>
+          <Tx bn="মাভাবিপ্রবি রিপোর্টার্স ইউনিটি" en="MBSTURU" />
         </span>
       </span>
     </a>
