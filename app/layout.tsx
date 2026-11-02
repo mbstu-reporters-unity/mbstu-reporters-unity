@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Hind_Siliguri, Noto_Serif_Bengali } from 'next/font/google'
 import './globals.css'
+import { LangProvider } from '@/lib/i18n'
 
 const hind = Hind_Siliguri({
   subsets: ['bengali', 'latin'],
@@ -83,13 +84,19 @@ const organizationJsonLd = {
   },
 }
 
+// পেজ আঁকার আগেই সেভ করা থিম ও ভাষা বসায়, তাই ঝলক (ফ্ল্যাশ) হয় না
+const themeScript = `(function(){try{var ok=['light','dark','sepia','mint','night','contrast'];var t=localStorage.getItem('mbstu_theme');if(ok.indexOf(t)<0){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('mbstu_lang');if(l==='en'||l==='bn'){document.documentElement.lang=l}}catch(e){}})();`
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
   return (
-    <html lang="bn" className={`${hind.variable} ${notoSerif.variable}`}>
+    <html lang="bn" suppressHydrationWarning className={`${hind.variable} ${notoSerif.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="antialiased">
         <script
           type="application/ld+json"
@@ -99,7 +106,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
-        {children}
+        <LangProvider>{children}</LangProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
