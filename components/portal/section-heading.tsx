@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { Tr } from '@/lib/i18n'
 
 export function SectionHeading({
   eyebrow,
@@ -18,13 +19,15 @@ export function SectionHeading({
       <div>
         <p className={cn('flex items-center gap-2 text-sm font-semibold uppercase tracking-widest', inverted ? 'text-gold' : 'text-brand')}>
           <span className="h-0.5 w-8 bg-current" aria-hidden="true" />
-          {eyebrow}
+          <Tr text={eyebrow} eyebrow />
         </p>
         <h2 className={cn('mt-2 text-balance font-serif text-3xl font-bold sm:text-4xl', inverted ? 'text-white' : 'text-navy')}>
-          {title}
+          <Tr text={title} />
         </h2>
         {subtitle && (
-          <p className={cn('mt-2 max-w-2xl text-pretty', inverted ? 'text-white/70' : 'text-muted-foreground')}>{subtitle}</p>
+          <p className={cn('mt-2 max-w-2xl text-pretty', inverted ? 'text-white/70' : 'text-muted-foreground')}>
+            <Tr text={subtitle} />
+          </p>
         )}
       </div>
       {action}
