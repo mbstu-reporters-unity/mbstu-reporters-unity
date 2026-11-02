@@ -1,8 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getStudentItems, saveStudentItem, deleteStudentItem, uploadImage } from "../../lib/sb"
+import {
+  getStudentItems, saveStudentItem, deleteStudentItem,
+  saveStudentItemReturningId, removeAllImages,
+} from "../../lib/sb"
 import type { StudentItem } from "../../lib/sb"
+import ImageSection, { useImageSection } from "../../components/portal/image-section"
 
 const KINDS = ["Opinion", "Creative Writing", "Achievement", "Research Highlight"]
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
@@ -27,9 +31,10 @@ export default function StudentManager({
   const [featured, setFeatured] = useState(false)
   const [order, setOrder] = useState("0")
   const [oldImage, setOldImage] = useState<string | null>(null)
-  const [file, setFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState("")
+
+  const imgs = useImageSection("student")
 
   async function load() {
     setItems(await getStudentItems(true))
@@ -41,15 +46,18 @@ export default function StudentManager({
   function reset() {
     setEditId(null); setKind(KINDS[0]); setTitle(""); setExcerpt(""); setAuthor("")
     setDept(""); setBatch(""); setLink(""); setFeatured(false); setOrder("0")
-    setOldImage(null); setFile(null)
+    setOldImage(null)
+    imgs.reset()
   }
 
-  function edit(it: StudentItem) {
+  async function edit(it: StudentItem) {
     setEditId(it.id); setKind(it.kind); setTitle(it.title); setExcerpt(it.excerpt || "")
     setAuthor(it.author || ""); setDept(it.dept || ""); setBatch(it.batch || "")
     setLink(it.link_url || ""); setFeatured(it.featured); setOrder(String(it.sort_order))
-    setOldImage(it.image_url); setFile(null)
+    setOldImage(it.image_url)
     window.scrollTo({ top: 0, behavior: "smooth" })
+    const rows = await imgs.load(it.id)
+    if (it.image_url && rows.some((r) => r.url === it.image_url)) setOldImage(null)
   }
 
   async function submit() {
@@ -60,22 +68,35 @@ export default function StudentManager({
     setBusy(true)
     setMsg("")
     try {
-      let img = oldImage
-      if (file) img = await uploadImage(token, await shrink(file))
-      await saveStudentItem(token, editId, {
+      const up = await imgs.uploadNew(token, shrink, (i, n) => setMsg(`ছবি আপলোড হচ্ছে (${i}/${n})...`))
+      const cover = oldImage || imgs.visible[0]?.url || up[0]?.url || null
+
+      const itemId = await saveStudentItemReturningId(token, editId, {
         kind,
         title: title.trim(),
         excerpt: excerpt.trim() || null,
         author: author.trim() || null,
         dept: dept.trim() || null,
         batch: batch.trim() || null,
-        image_url: img,
+        image_url: cover,
         link_url: link.trim() || null,
         featured,
         sort_order: Number(order) || 0,
       })
+
+      let warn = ""
+      if (itemId) {
+        try {
+          await imgs.commit(token, itemId, up, oldImage)
+        } catch (e) {
+          warn = " (লেখা সেভ হয়েছে, কিন্তু ছবির তালিকা জোড়া যায়নি: " + (e instanceof Error ? e.message : "ত্রুটি") + ")"
+        }
+      } else if (up.length > 0) {
+        warn = " (লেখা সেভ হয়েছে, কিন্তু ছবি জোড়া যায়নি)"
+      }
+
       reset()
-      setMsg("✅ সেভ হয়েছে")
+      setMsg("✅ সেভ হয়েছে" + warn)
       await load()
     } catch (e) {
       setMsg("❌ " + (e instanceof Error ? e.message : "ব্যর্থ হয়েছে"))
@@ -106,14 +127,23 @@ export default function StudentManager({
         <input className={inp} placeholder="বিভাগ (যেমন: Pharmacy)" value={dept} onChange={(e) => setDept(e.target.value)} />
         <input className={inp} placeholder="ব্যাচ (যেমন: 18th Batch)" value={batch} onChange={(e) => setBatch(e.target.value)} />
         <input className={inp} placeholder="লিংক (ঐচ্ছিক): /post/... অথবা https://..." value={link} onChange={(e) => setLink(e.target.value)} />
-        <label className="block">
-          <span className="text-sm text-gray-600">ছবি (শুধু বড় কার্ডের জন্য, ঐচ্ছিক)</span>
-          <input className="block mt-1 text-sm" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-        </label>
-        {(file || oldImage) && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={file ? URL.createObjectURL(file) : oldImage || ""} alt="" className="w-full max-h-48 object-cover rounded-xl" />
+
+        {oldImage && (
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={oldImage} alt="" className="w-full max-h-48 object-cover rounded-xl" />
+            <button
+              type="button"
+              onClick={() => setOldImage(null)}
+              className="absolute top-2 right-2 bg-red-600 text-white rounded-full px-3 py-1 text-xs"
+            >
+              ✕ ছবি সরান
+            </button>
+          </div>
         )}
+
+        <ImageSection s={imgs} />
+
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
           বড় কার্ডে দেখান (একটি মাত্র বড় কার্ড থাকে)
@@ -137,7 +167,17 @@ export default function StudentManager({
               <button onClick={() => run(() => saveStudentItem(token, it.id, { hidden: !it.hidden }))} className="text-amber-600">
                 {it.hidden ? "দেখান" : "হাইড"}
               </button>
-              <button onClick={() => run(() => deleteStudentItem(token, it.id), "সত্যিই মুছবেন?")} className="text-red-600">ডিলিট</button>
+              <button
+                onClick={() =>
+                  run(async () => {
+                    try { await removeAllImages(token, "student", it.id) } catch {}
+                    await deleteStudentItem(token, it.id)
+                  }, "সত্যিই মুছবেন?")
+                }
+                className="text-red-600"
+              >
+                ডিলিট
+              </button>
             </div>
           </div>
         ))}
