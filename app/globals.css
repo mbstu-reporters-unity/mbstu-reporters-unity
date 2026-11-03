@@ -527,3 +527,216 @@ html[data-theme="contrast"] main a { text-decoration: underline; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
+/* ============================================================
+   MBSTU Reporters' Unity - Hero Slider & Typography Effects
+   ============================================================ */
+
+/* গুগল ফন্টস লোড (বাংলা ও ইংরেজি) */
+@import url('https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@400;600;700;800&family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Noto+Sans+Bengali:wght@300;400;600;700&family=Playfair+Display:wght@600;700;800&family=Roboto:wght@400;500;700&family=Tiro+Bangla&display=swap');
+
+/* ১. স্লাইড প্রোগ্রেস বার টাইমার */
+@keyframes heroProgressTimer {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+/* ২. ৩০টি শিরোনাম ও টেক্সট অ্যানিমেশনের কি-ফ্রেম */
+
+/* ১. Fade Up Smooth */
+@keyframes anim_fade-up {
+  0% { opacity: 0; transform: translateY(22px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ২. Typewriter */
+@keyframes anim_typewriter {
+  0% { width: 0; opacity: 0; white-space: nowrap; overflow: hidden; }
+  1% { opacity: 1; }
+  100% { width: 100%; opacity: 1; }
+}
+
+/* ৩. Zoom Pop */
+@keyframes anim_zoom-pop {
+  0% { transform: scale(0.65); opacity: 0; }
+  75% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ৪. Neon Pulse */
+@keyframes anim_neon-pulse {
+  0%, 100% { text-shadow: 0 0 4px #fff, 0 0 12px #38bdf8, 0 0 24px #0284c7; }
+  50% { text-shadow: 0 0 2px #fff, 0 0 5px #38bdf8; }
+}
+
+/* ৫. Text Bounce */
+@keyframes anim_bounce-in {
+  0% { transform: translateY(-40px); opacity: 0; }
+  60% { transform: translateY(10px); opacity: 1; }
+  80% { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
+}
+
+/* ৬. 3D Flip X */
+@keyframes anim_flip-x {
+  0% { transform: perspective(400px) rotateX(90deg); opacity: 0; }
+  100% { transform: perspective(400px) rotateX(0deg); opacity: 1; }
+}
+
+/* ৭. 3D Flip Y */
+@keyframes anim_flip-y {
+  0% { transform: perspective(400px) rotateY(90deg); opacity: 0; }
+  100% { transform: perspective(400px) rotateY(0deg); opacity: 1; }
+}
+
+/* ৮. Cyber Glitch */
+@keyframes anim_cyber-glitch {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-3px, 2px); filter: hue-rotate(90deg); }
+  40% { transform: translate(3px, -2px); filter: hue-rotate(180deg); }
+  60% { transform: translate(-2px, -2px); }
+  80% { transform: translate(2px, 2px); }
+}
+
+/* ৯. Smoke Fade */
+@keyframes anim_smoke-fade {
+  0% { filter: blur(12px); opacity: 0; transform: scale(1.04); }
+  100% { filter: blur(0); opacity: 1; transform: scale(1); }
+}
+
+/* ১০. Letter Wave */
+@keyframes anim_letter-wave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+/* ১১. Slide Left */
+@keyframes anim_slide-left {
+  0% { transform: translateX(70px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+/* ১২. Slide Right */
+@keyframes anim_slide-right {
+  0% { transform: translateX(-70px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+/* ১৩. Rotate Drop */
+@keyframes anim_rotate-drop {
+  0% { transform: rotate(-10deg) translateY(-30px); opacity: 0; }
+  100% { transform: rotate(0deg) translateY(0); opacity: 1; }
+}
+
+/* ১৪. Flash Blink */
+@keyframes anim_flash-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+/* ১৫. Shake Alert */
+@keyframes anim_shake-alert {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+/* ১৬. Rainbow Shift */
+@keyframes anim_rainbow-shift {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+/* ১৭. Tracking Expand */
+@keyframes anim_tracking-expand {
+  0% { letter-spacing: -3px; opacity: 0; }
+  100% { letter-spacing: normal; opacity: 1; }
+}
+
+/* ১৮. Shadow Burst */
+@keyframes anim_shadow-burst {
+  0% { text-shadow: 0 0 0 rgba(255,255,255,0); opacity: 0; }
+  50% { text-shadow: 0 0 20px rgba(255,255,255,0.85); }
+  100% { text-shadow: 0 2px 6px rgba(0,0,0,0.8); opacity: 1; }
+}
+
+/* ১৯. Golden Shimmer */
+@keyframes anim_golden-shimmer {
+  0%, 100% { filter: drop-shadow(0 0 2px #eab308); }
+  50% { filter: drop-shadow(0 0 14px #facc15) brightness(1.2); }
+}
+
+/* ২০. Twist 3D */
+@keyframes anim_twist-3d {
+  0% { transform: rotate(-10deg) scale(0.85); opacity: 0; }
+  100% { transform: rotate(0deg) scale(1); opacity: 1; }
+}
+
+/* ২১. Smooth Float */
+@keyframes anim_smooth-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* ২২. Swing In */
+@keyframes anim_swing-in {
+  0% { transform: rotateZ(-12deg); transform-origin: top left; opacity: 0; }
+  100% { transform: rotateZ(0deg); opacity: 1; }
+}
+
+/* ২৩. Ken Burns Pan */
+@keyframes anim_ken-burns {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06) translate(4px, -4px); }
+  100% { transform: scale(1); }
+}
+
+/* ২৪. Spotlight */
+@keyframes anim_spotlight {
+  0% { filter: brightness(0.25) contrast(1.4); opacity: 0; }
+  100% { filter: brightness(1) contrast(1); opacity: 1; }
+}
+
+/* ২৫. Rubber Band */
+@keyframes anim_rubber-band {
+  0% { transform: scale3d(1, 1, 1); }
+  30% { transform: scale3d(1.2, 0.8, 1); }
+  40% { transform: scale3d(0.8, 1.2, 1); }
+  50% { transform: scale3d(1.1, 0.9, 1); }
+  100% { transform: scale3d(1, 1, 1); }
+}
+
+/* ২৬. Heartbeat */
+@keyframes anim_heartbeat {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.07); }
+  50% { transform: scale(0.97); }
+  75% { transform: scale(1.04); }
+}
+
+/* ২৭. Jello Wobble */
+@keyframes anim_jello {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  30% { transform: skewX(-5deg) skewY(-5deg); }
+  50% { transform: skewX(3deg) skewY(3deg); }
+  70% { transform: skewX(-2deg) skewY(-2deg); }
+}
+
+/* ২৮. Pulse Expand */
+@keyframes anim_pulse-expand {
+  0% { transform: scale(0.94); opacity: 0.85; }
+  50% { transform: scale(1.03); opacity: 1; }
+  100% { transform: scale(0.94); opacity: 0.85; }
+}
+
+/* ২৯. Perspective Tilt */
+@keyframes anim_tilt-in {
+  0% { transform: perspective(350px) rotateY(18deg) translateY(12px); opacity: 0; }
+  100% { transform: perspective(350px) rotateY(0deg) translateY(0); opacity: 1; }
+}
+
+/* ৩০. Gradient Flow */
+@keyframes anim_gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
