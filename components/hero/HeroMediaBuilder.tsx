@@ -28,7 +28,7 @@ export function HeroMediaBuilder({
   busy,
 }: HeroMediaBuilderProps) {
 
-  // নতুন মিডিয়া আইটেম যোগ করা
+  // নতুন মিডিয়া সাব-স্লাইড যোগ করা
   const addMedia = (type: SubMediaType) => {
     const newItem: SubMediaItem = {
       id: Math.random().toString(36).substring(2, 9),
@@ -44,32 +44,32 @@ export function HeroMediaBuilder({
     setMediaItems([...mediaItems, newItem])
   }
 
-  // মিডিয়া আইটেম মুছে ফেলা
+  // মিডিয়া সাব-স্লাইড মুছে ফেলা
   const removeMedia = (idx: number) => {
     if (mediaItems.length <= 1) return
     setMediaItems(mediaItems.filter((_, i) => i !== idx))
   }
 
-  // কোনো ফিল্ড আপডেট করা
+  // যেকোনো ফিল্ড আপডেট করা
   const updateItem = (idx: number, field: keyof SubMediaItem, val: string) => {
     const updated = [...mediaItems]
     updated[idx] = { ...updated[idx], [field]: val }
     setMediaItems(updated)
   }
 
-  // স্পিড পারসেন্টেজ (০ - ১০০%) পরিবর্তন হলে সময় (১০০০ms - ১৫০০০ms) হিসাব
+  // ০ থেকে ১০০% স্লাইডার দিয়ে সময়কাল নির্ধারণ
   const handleSpeedChange = (pct: number) => {
     setSlideSpeedPct(pct)
-    // ০% = ১ সেকেন্ড (দ্রুততম), ১০০% = ১৫ সেকেন্ড (ধীরতম)
+    // ০% = ১ সেকেন্ড (খুব দ্রুত), ৫০% = ৮ সেকেন্ড, ১০০% = ১৫ সেকেন্ড
     const calculatedMs = Math.round(1000 + (pct / 100) * 14000)
     setSlideDuration(calculatedMs)
   }
 
   return (
     <div className="space-y-4">
-      {/* মিডিয়া টাইপ বাটন বার */}
+      {/* ৪টি মিডিয়া টাইপ বাছাই করার বোতাম */}
       <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-2xl flex flex-wrap gap-2 items-center justify-between">
-        <span className="text-xs font-semibold text-gray-300">স্লাইডের জন্য মিডিয়া যোগ করুন:</span>
+        <span className="text-xs font-semibold text-gray-300">নতুন স্লাইড মিডিয়া যোগ করুন:</span>
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button"
@@ -106,7 +106,7 @@ export function HeroMediaBuilder({
         </div>
       </div>
 
-      {/* মিডিয়া কার্ড তালিকা */}
+      {/* তৈরি হওয়া সাব-স্লাইডগুলোর তালিকা */}
       <div className="space-y-3">
         {mediaItems.map((item, idx) => (
           <div
@@ -199,7 +199,7 @@ export function HeroMediaBuilder({
             {/* ধরন ৩: ভিডিও */}
             {item.type === 'video' && (
               <div className="space-y-2 pt-1">
-                <span className="text-[11px] text-gray-400 block">ভিডিও আপলোড অথবা সোশ্যাল ভিডিওর লিংক (ইউটিউব/ফেসবুক/সরাসরি MP4):</span>
+                <span className="text-[11px] text-gray-400 block">ভিডিও ফাইল আপলোড অথবা ইউটিউব/ফেসবুক ভিডিও লিংক:</span>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <label className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-gray-300 hover:bg-slate-800 cursor-pointer shrink-0">
                     <Upload className="size-3.5 text-red-400" />
@@ -225,7 +225,7 @@ export function HeroMediaBuilder({
             {/* ধরন ৪: হাইপারলিংক প্রিভিউ */}
             {item.type === 'link_preview' && (
               <div className="space-y-2.5 pt-1">
-                <span className="text-[11px] text-gray-400 block">হাইপারলিংক বা সোশ্যাল পোস্টের বিবরণ (হোম পেজে প্রিভিউ হবে):</span>
+                <span className="text-[11px] text-gray-400 block">সোশ্যাল বা ওয়েবসাইট লিংক (হোম পেজে প্রিভিউ কার্ড হবে):</span>
                 <input
                   className={inpStyle}
                   placeholder="টার্গেট ওয়েবসাইট বা ফেসবুক/এক্স পোস্ট লিংক (https://...)"
@@ -249,7 +249,7 @@ export function HeroMediaBuilder({
               </div>
             )}
 
-            {/* প্রতিটি স্লাইডের নিজস্ব ঐচ্ছিক বহিঃস্থ লিঙ্ক */}
+            {/* প্রতিটি স্লাইডের নিজস্ব ঐচ্ছিক বহিঃস্থ লিংক */}
             <div className="pt-2 border-t border-slate-850">
               <span className="text-[11px] text-gray-400 block mb-1">
                 🔗 এই স্লাইডে দর্শক ক্লিক করলে কোথায় যাবে? (ঐচ্ছিক সোশ্যাল বা ওয়েব লিংক):
