@@ -4,66 +4,18 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, PointerEvent } from 'react'
 import {
   ArrowRight,
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
   Pause,
   Play,
-  X,
   ExternalLink,
+  Layers,
 } from 'lucide-react'
 import { getHeroSlides, getHeroSettings } from '@/lib/hero'
-import type { HeroSlide, HeroSettings } from '@/lib/hero'
-import { cn } from '@/lib/utils'
+import type { HeroSlide, HeroSettings, SubMediaItem } from '@/lib/hero'
 
-type Slide = {
-  key: string
-  image: string
-  pos: string
-  category: string | null
-  date: string
-  title: string | null
-  summary: string | null
-  link: string | null
-  alt: string
-  mediaType: 'image' | 'video'
-  videoUrl: string | null
-  extraMedia: string | null
-  mediaUrls: string | null
-  buttonText: string
-
-  titleFont: string | null
-  titleSize: string
-  titleStyle: string
-  titleColor: string | null
-  titleBgColor: string | null
-
-  summaryFont: string | null
-  summarySize: string
-  summaryStyle: string
-  summaryColor: string | null
-
-  badgeFont: string | null
-  badgeSize: string
-  badgeTextColor: string | null
-  badgeColor: string | null
-
-  btnFont: string | null
-  btnSize: string
-  btnColor: string | null
-  btnBgColor: string | null
-
-  textAlign: 'left' | 'center' | 'right'
-  contentPosV: 'top' | 'center' | 'bottom'
-  contentPosH: 'left' | 'center' | 'right'
-  showCardBg: boolean
-  cardWidthPct: number
-  cardRadiusPct: number
-  cardPaddingVal: number
-  cardBlur: number
-  cardBgColor: string
-  cardOpacity: number
-  fitMode: 'contain' | 'cover'
+function cn(...classes: (string | boolean | undefined | null)[]) {
+  return classes.filter(Boolean).join(' ')
 }
 
 function hexToRgba(hex: any, opacity: any) {
@@ -80,886 +32,404 @@ function hexToRgba(hex: any, opacity: any) {
   }
 }
 
-const getSizeClass = (s?: string | null) => {
-  switch (s) {
-    case 'sm': return 'text-xs sm:text-sm'
-    case 'base': return 'text-sm sm:text-base'
-    case 'lg': return 'text-base sm:text-lg'
-    case 'xl': return 'text-lg sm:text-xl'
-    case '2xl': return 'text-xl sm:text-3xl'
-    case '3xl': return 'text-2xl sm:text-4xl lg:text-5xl'
-    case '4xl': return 'text-3xl sm:text-5xl lg:text-6xl'
-    default: return 'text-xl sm:text-3xl'
-  }
-}
-
-const getStyleClass = (st?: string | null) => {
-  switch (st) {
-    case 'italic': return 'italic font-normal'
-    case 'bold-italic': return 'italic font-bold'
-    case 'normal': return 'font-normal not-italic'
-    case 'bold':
-    default: return 'font-bold not-italic'
-  }
-}
-
-function safeDate(d: any) {
-  if (!d) return ''
-  try {
-    const dt = new Date(d)
-    return isNaN(dt.getTime())
-      ? ''
-      : dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Dhaka' })
-  } catch {
-    return ''
-  }
-}
-
-function toSlide(s: HeroSlide): Slide {
-  const finalLink = s.link_url?.trim() || (s.media_type === 'video' && s.video_url ? s.video_url.trim() : null)
-
-  return {
-    key: String(s.id || Math.random()),
-    image: s.image_url || '/images/hero-1.png',
-    pos: s.image_pos || 'center',
-    category: s.category?.trim() || null,
-    date: safeDate(s.created_at),
-    title: s.title?.trim() || null,
-    summary: s.summary?.trim() || null,
-    link: finalLink,
-    alt: s.title || 'Hero Banner',
-    mediaType: s.media_type || 'image',
-    videoUrl: s.video_url || null,
-    extraMedia: typeof s.extra_media === 'string' ? s.extra_media : null,
-    mediaUrls: typeof s.media_urls === 'string' ? s.media_urls : null,
-    buttonText: s.button_text?.trim() || 'বিস্তারিত',
-
-    titleFont: s.title_font || "'Hind Siliguri', sans-serif",
-    titleSize: s.title_size || '2xl',
-    titleStyle: s.title_style || 'bold',
-    titleColor: s.title_color || '#FFFFFF',
-    titleBgColor: s.title_bg_color || null,
-
-    summaryFont: s.summary_font || "'Hind Siliguri', sans-serif",
-    summarySize: s.summary_size || 'base',
-    summaryStyle: s.summary_style || 'normal',
-    summaryColor: s.summary_color || '#e2e8f0',
-
-    badgeFont: s.badge_font || "'Hind Siliguri', sans-serif",
-    badgeSize: s.badge_size || 'xs',
-    badgeTextColor: s.badge_text_color || '#0f172a',
-    badgeColor: s.badge_color || '#EAB308',
-
-    btnFont: s.btn_font || "'Hind Siliguri', sans-serif",
-    btnSize: s.btn_size || 'sm',
-    btnColor: s.btn_color || '#ffffff',
-    btnBgColor: s.btn_bg_color || '#15803d',
-
-    textAlign: s.text_align || 'left',
-    contentPosV: s.content_pos_v || 'bottom',
-    contentPosH: s.content_pos_h || 'left',
-    showCardBg: s.show_card_bg ?? true,
-    cardWidthPct: Number(s.card_width_pct) || 90,
-    cardRadiusPct: Number(s.card_radius_pct) || 20,
-    cardPaddingVal: Number(s.card_padding_val) || 20,
-    cardBlur: Number(s.card_blur) || 12,
-    cardBgColor: s.card_bg_color || '#000000',
-    cardOpacity: Number(s.card_opacity) || 60,
-    fitMode: s.fit_mode || 'contain',
-  }
-}
-
-const isExternal = (u: string) => /^https?:\/\//i.test(u)
-const bn = (n: number) => n.toLocaleString('bn-BD')
-const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold'
-
-function getYoutubeInteractiveEmbed(url: any) {
+// সামাজিক যোগাযোগ মাধ্যম ও ইউটিউব এম্বেড জেনারেটর
+function getVideoEmbed(url: string | null | undefined) {
   if (!url || typeof url !== 'string') return null
   try {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
-    const match = url.match(regExp)
-    if (match && match[2] && match[2].length === 11) {
-      return `https://www.youtube.com/embed/${match[2]}?enablejsapi=1&controls=1&rel=0&modestbranding=1&playsinline=1`
+    // YouTube
+    const ytMatch = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)
+    if (ytMatch && ytMatch[2]?.length === 11) {
+      return {
+        type: 'youtube',
+        src: `https://www.youtube.com/embed/${ytMatch[2]}?enablejsapi=1&rel=0&modestbranding=1&controls=1`,
+      }
+    }
+    // Facebook Video
+    if (url.includes('facebook.com') || url.includes('fb.watch')) {
+      return {
+        type: 'facebook',
+        src: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`,
+      }
     }
   } catch {}
   return null
 }
 
-const AUTO_EFFECT_LIST = [
-  'typewriter', 'zoom-pop', 'neon-pulse', 'bounce-in', 'flip-3d',
-  'cyber-glitch', 'smoke-fade', 'letter-wave', 'slide-left',
-  'slide-right', 'slide-up-drop', 'shake-alert', 'tracking-expand',
-  'golden-shimmer', 'twist-3d', 'smooth-float',
-]
+const bn = (n: number) => n.toLocaleString('bn-BD')
 
 export function HeroCarousel() {
-  const [slides, setSlides] = useState<Slide[]>([])
+  const [posts, setPosts] = useState<HeroSlide[]>([])
   const [settings, setSettings] = useState<HeroSettings | null>(null)
-  const [loaded, setLoaded] = useState(false)
-  const [index, setIndex] = useState(0)
-  const [subMediaIdx, setSubMediaIdx] = useState(0)
-
-  const [hoverPaused, setHoverPaused] = useState(false)
-  const [focusPaused, setFocusPaused] = useState(false)
-  const [dragging, setDragging] = useState(false)
+  const [postIdx, setPostIdx] = useState(0)
+  const [subIdx, setSubIdx] = useState(0)
   const [userPaused, setUserPaused] = useState(false)
-  const [tabHidden, setTabHidden] = useState(false)
-  const [reduceMotion, setReduceMotion] = useState(false)
-  const [modalSlide, setModalSlide] = useState<Slide | null>(null)
-
-  const [autoEffectIdx, setAutoEffectIdx] = useState(0)
-  const [breakingMediaIdx, setBreakingMediaIdx] = useState(0)
+  const [dragging, setDragging] = useState(false)
 
   const startRef = useRef<{ x: number; y: number } | null>(null)
-  const total = slides.length
-
-  const slideMs = Number(settings?.slide_speed) || 4500
-  const isUnlimited = slideMs <= 0
-  const transMode = settings?.transition_type || 'fade'
-  const isMotionEnabled = settings?.text_motion ?? true
 
   useEffect(() => {
-    let on = true
-    Promise.all([getHeroSlides(), getHeroSettings()])
-      .then(([rows, s]) => {
-        if (!on) return
-        const safeRows = Array.isArray(rows) ? rows : []
-        const activeRows = safeRows.filter(
-          (r) => r.is_active && (!r.expires_at || new Date(r.expires_at) > new Date())
-        )
-        setSlides(activeRows.map(toSlide))
-        setIndex(0)
-        setSettings(s)
-        setLoaded(true)
-      })
-      .catch(() => {
-        if (on) setLoaded(true)
-      })
-
-    return () => {
-      on = false
-    }
-  }, [])
-
-  const currentSlide = slides[index] || null
-  const currentMediaList: Array<{ type: 'image' | 'video'; url: string }> = []
-  if (currentSlide) {
-    if (currentSlide.mediaType === 'video' && currentSlide.videoUrl) {
-      currentMediaList.push({ type: 'video', url: currentSlide.videoUrl })
-    } else if (currentSlide.image) {
-      currentMediaList.push({ type: 'image', url: currentSlide.image })
-    }
-
-    if (currentSlide.mediaUrls && typeof currentSlide.mediaUrls === 'string') {
-      try {
-        currentSlide.mediaUrls
-          .split(/[\n,]+/)
-          .map((u) => u.trim())
-          .filter(Boolean)
-          .forEach((u) => {
-            if (!currentMediaList.some((m) => m.url === u)) {
-              currentMediaList.push({
-                type: /youtube\.com|youtu\.be|\.mp4$/i.test(u) ? 'video' : 'image',
-                url: u,
-              })
-            }
-          })
-      } catch {}
-    }
-  }
-
-  const currentMedia = currentMediaList[subMediaIdx] || currentMediaList[0] || null
-  const currentIsVideo = currentMedia?.type === 'video'
-
-  const go = useCallback(
-    (nextIdx: number) => {
-      if (total === 0) return
-      setIndex((nextIdx + total) % total)
-      setSubMediaIdx(0)
-    },
-    [total]
-  )
-
-  const handleNextStep = useCallback(() => {
-    if (currentMediaList.length > 1 && subMediaIdx < currentMediaList.length - 1) {
-      setSubMediaIdx((prev) => prev + 1)
-    } else {
-      setSubMediaIdx(0)
-      if (total > 0) setIndex((i) => (i + 1) % total)
-    }
-  }, [currentMediaList.length, subMediaIdx, total])
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const update = () => setReduceMotion(mq.matches)
-    update()
-    mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
-  }, [])
-
-  useEffect(() => {
-    const onVis = () => setTabHidden(document.hidden)
-    onVis()
-    document.addEventListener('visibilitychange', onVis)
-    return () => document.removeEventListener('visibilitychange', onVis)
-  }, [])
-
-  useEffect(() => {
-    if (settings?.breaking_text_effect === 'auto') {
-      const timer = setInterval(() => {
-        setAutoEffectIdx((prev) => (prev + 1) % AUTO_EFFECT_LIST.length)
-      }, 4500)
-      return () => clearInterval(timer)
-    }
-  }, [settings?.breaking_text_effect])
-
-  const breakingMediaList: Array<{ type: 'image' | 'video'; url: string }> = []
-  if (settings?.breaking_media_url) {
-    breakingMediaList.push({
-      type: settings.breaking_media_type === 'video' ? 'video' : 'image',
-      url: settings.breaking_media_url,
+    Promise.all([getHeroSlides(), getHeroSettings()]).then(([data, s]) => {
+      const active = data.filter((d) => d.is_active && (!d.expires_at || new Date(d.expires_at) > new Date()))
+      setPosts(active)
+      setSettings(s)
     })
-  }
-  if (settings?.breaking_extra_media && typeof settings.breaking_extra_media === 'string') {
-    try {
-      const extras = settings.breaking_extra_media.split(/[\n,]+/).map((u) => u.trim()).filter(Boolean)
-      extras.forEach((u) => {
-        breakingMediaList.push({
-          type: /youtube\.com|youtu\.be|\.mp4$/i.test(u) ? 'video' : 'image',
-          url: u,
-        })
-      })
-    } catch {}
-  }
+  }, [])
 
-  useEffect(() => {
-    if (breakingMediaList.length > 1) {
-      const timer = setInterval(() => {
-        setBreakingMediaIdx((prev) => (prev + 1) % breakingMediaList.length)
-      }, 5500)
-      return () => clearInterval(timer)
+  const currentPost = posts[postIdx] || null
+  const mediaItems: SubMediaItem[] = (currentPost?.media_items && currentPost.media_items.length > 0)
+    ? currentPost.media_items
+    : [{ id: '1', type: 'color', color: '#0f172a' }]
+
+  const curSubMedia = mediaItems[subIdx] || mediaItems[0]
+  const isVideo = curSubMedia.type === 'video'
+  const postDuration = currentPost?.slide_duration || settings?.slide_speed || 5000
+  const isAutoplayDisabled = postDuration <= 0
+
+  // সাব-স্লাইড পরিবর্তন ও পোস্ট শেষ হলে পরবর্তী পোস্টে যাওয়া
+  const nextStep = useCallback(() => {
+    if (mediaItems.length > 1 && subIdx < mediaItems.length - 1) {
+      setSubIdx((prev) => prev + 1)
+    } else {
+      setSubIdx(0)
+      if (posts.length > 0) {
+        setPostIdx((prev) => (prev + 1) % posts.length)
+      }
     }
-  }, [breakingMediaList.length])
+  }, [mediaItems.length, subIdx, posts.length])
 
-  const canAutoplay = total > 1 && !reduceMotion && !modalSlide && !isUnlimited && !currentIsVideo
-  const running = canAutoplay && !userPaused && !hoverPaused && !focusPaused && !dragging && !tabHidden
-
-  function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-    if (modalSlide) {
-      if (e.key === 'Escape') setModalSlide(null)
-      return
+  // আগের সাব-স্লাইড
+  const prevStep = useCallback(() => {
+    if (subIdx > 0) {
+      setSubIdx((prev) => prev - 1)
+    } else if (posts.length > 1) {
+      const prevP = (postIdx - 1 + posts.length) % posts.length
+      setPostIdx(prevP)
+      const prevMedia = posts[prevP]?.media_items || []
+      setSubIdx(Math.max(0, prevMedia.length - 1))
     }
-    if (total < 2) return
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault()
-      go(index - 1)
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault()
-      go(index + 1)
-    } else if (e.key === ' ' && e.target === e.currentTarget) {
-      e.preventDefault()
-      setUserPaused((p) => !p)
-    }
-  }
+  }, [subIdx, posts, postIdx])
 
-  function onPointerDown(e: PointerEvent<HTMLDivElement>) {
-    if ((e.target as HTMLElement).closest('iframe, video, button, a, input, textarea')) return
+  // সোয়াইপ পুশ (Swipe / Drag) নেভিগেশন (পোস্ট পরিবর্তন)
+  function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
+    if ((e.target as HTMLElement).closest('iframe, video, button, a, input')) return
     startRef.current = { x: e.clientX, y: e.clientY }
     setDragging(true)
   }
 
-  function endDrag(e: PointerEvent<HTMLDivElement>) {
+  function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
     const st = startRef.current
     startRef.current = null
     setDragging(false)
-    if (!st || total < 2) return
+    if (!st || posts.length < 2) return
     const dx = e.clientX - st.x
     const dy = e.clientY - st.y
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      go(index + (dx < 0 ? 1 : -1))
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) {
+        // সোয়াইপ বামে -> পরবর্তী পোস্ট
+        setPostIdx((p) => (p + 1) % posts.length)
+        setSubIdx(0)
+      } else {
+        // সোয়াইপ ডানে -> আগের পোস্ট
+        setPostIdx((p) => (p - 1 + posts.length) % posts.length)
+        setSubIdx(0)
+      }
     }
   }
 
-  const getTransitionClass = (isActive: boolean) => {
-    switch (transMode) {
-      case 'slide-left': return isActive ? 'translate-x-0 opacity-100 z-10' : 'translate-x-full opacity-0 pointer-events-none z-0'
-      case 'slide-right': return isActive ? 'translate-x-0 opacity-100 z-10' : '-translate-x-full opacity-0 pointer-events-none z-0'
-      case 'slide-up': return isActive ? 'translate-y-0 opacity-100 z-10' : 'translate-y-full opacity-0 pointer-events-none z-0'
-      case 'slide-down': return isActive ? 'translate-y-0 opacity-100 z-10' : '-translate-y-full opacity-0 pointer-events-none z-0'
-      case 'zoom-in': return isActive ? 'scale-100 opacity-100 z-10' : 'scale-50 opacity-0 pointer-events-none z-0'
-      case 'zoom-out': return isActive ? 'scale-100 opacity-100 z-10' : 'scale-150 opacity-0 pointer-events-none z-0'
-      case 'flip-h': return isActive ? '[transform:rotateY(0deg)] opacity-100 z-10' : '[transform:rotateY(90deg)] opacity-0 pointer-events-none z-0'
-      case 'flip-v': return isActive ? '[transform:rotateX(0deg)] opacity-100 z-10' : '[transform:rotateX(90deg)] opacity-0 pointer-events-none z-0'
-      case 'rotate-in': return isActive ? 'rotate-0 opacity-100 scale-100 z-10' : '-rotate-45 opacity-0 scale-75 pointer-events-none z-0'
-      case 'cube-3d': return isActive ? 'translate-x-0 [transform:rotateY(0deg)] opacity-100 z-10' : 'translate-x-full [transform:rotateY(45deg)] opacity-0 pointer-events-none z-0'
-      case 'blur-fade': return isActive ? 'blur-0 opacity-100 z-10' : 'blur-xl opacity-0 pointer-events-none z-0'
-      case 'bounce-in': return isActive ? 'scale-100 opacity-100 z-10' : 'scale-90 -translate-y-6 opacity-0 pointer-events-none z-0'
-      case 'slide-zoom': return isActive ? 'translate-x-0 scale-100 opacity-100 z-10' : 'translate-x-12 scale-90 opacity-0 pointer-events-none z-0'
-      case 'scale-fade': return isActive ? 'scale-100 opacity-100 z-10' : 'scale-105 opacity-0 pointer-events-none z-0'
-      case 'parallax-left': return isActive ? 'translate-x-0 opacity-100 z-10' : '-translate-x-1/2 opacity-0 pointer-events-none z-0'
-      case 'parallax-right': return isActive ? 'translate-x-0 opacity-100 z-10' : 'translate-x-1/2 opacity-0 pointer-events-none z-0'
-      case 'swing-in': return isActive ? '[transform:rotateZ(0deg)] opacity-100 z-10' : '[transform:rotateZ(-12deg)] opacity-0 pointer-events-none z-0'
-      case 'twist-in': return isActive ? '[transform:rotate(0deg)_scale(1)] opacity-100 z-10' : '[transform:rotate(15deg)_scale(0.85)] opacity-0 pointer-events-none z-0'
-      case 'ken-burns': return isActive ? 'scale-100 opacity-100 z-10' : 'scale-110 opacity-0 pointer-events-none z-0'
-      case 'fade':
-      default: return isActive ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
-    }
-  }
-
-  if (!loaded) {
-    return (
-      <section id="home" className="bg-navy">
-        <div className="h-[480px] sm:h-[540px] lg:h-[620px]" />
-      </section>
-    )
-  }
+  const animSec = Math.max(0.4, 3.2 - ((currentPost?.text_effect_speed || 50) / 100) * 2.8).toFixed(2)
 
   return (
-    <div id="home" className="flex flex-col bg-navy relative min-h-[50px]">
+    <div id="home" className="w-full flex flex-col bg-slate-950 text-white relative">
+      {/* ৩০টি টেক্সট অ্যানিমেশনের কিফ্রেম স্টাইল */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@400;600;700;800&family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Noto+Sans+Bengali:wght@300;400;600;700&family=Playfair+Display:wght@600;700;800&family=Roboto:wght@400;500;700&family=Tiro+Bangla&display=swap');
-
-        @keyframes heroProgress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-        @keyframes textEntrance { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes shapePulseDynamic { 0%, 100% { transform: scale(0.85); opacity: 0.8; } 50% { transform: scale(1.3); opacity: 1; filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.95)); } }
-        @keyframes radarWave { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
-        @keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes typewriterText { from { width: 0; opacity: 0; } to { width: 100%; opacity: 1; } }
-        @keyframes zoomPopText { 0% { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes neonGlowText { 0%, 100% { text-shadow: 0 0 5px #fff, 0 0 15px #f43f5e, 0 0 30px #f43f5e; } 50% { text-shadow: 0 0 2px #fff, 0 0 8px #f43f5e; } }
-        @keyframes bounceInText { 0% { transform: translateY(-40px); opacity: 0; } 60% { transform: translateY(10px); opacity: 1; } 80% { transform: translateY(-5px); } 100% { transform: translateY(0); } }
-        @keyframes flip3DText { 0% { transform: perspective(400px) rotateX(90deg); opacity: 0; } 100% { transform: perspective(400px) rotateX(0deg); opacity: 1; } }
-        @keyframes cyberGlitchText { 0%, 100% { transform: translate(0); } 20% { transform: translate(-3px, 2px); } 40% { transform: translate(3px, -2px); } 60% { transform: translate(-2px, -2px); } 80% { transform: translate(2px, 2px); } }
-        @keyframes smokeFadeText { 0% { filter: blur(14px); opacity: 0; transform: scale(1.06); } 100% { filter: blur(0); opacity: 1; transform: scale(1); } }
-        @keyframes letterWaveText { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        @keyframes slideLeftText { 0% { transform: translateX(80px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-        @keyframes slideRightText { 0% { transform: translateX(-80px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-        @keyframes slideUpDropText { 0% { transform: translateY(50px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-        @keyframes rotateDropText { 0% { transform: rotate(-15deg) translateY(-30px); opacity: 0; } 100% { transform: rotate(0) translateY(0); opacity: 1; } }
-        @keyframes flashBlinkText { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
-        @keyframes shakeAlertText { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
-        @keyframes rainbowShiftText { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
-        @keyframes trackingExpandText { 0% { letter-spacing: -4px; opacity: 0; } 100% { letter-spacing: normal; opacity: 1; } }
-        @keyframes shadowBurstText { 0% { text-shadow: 0 0 0 rgba(255,255,255,0); opacity: 0; } 50% { text-shadow: 0 0 25px rgba(255,255,255,0.9); } 100% { text-shadow: 0 2px 8px rgba(0,0,0,0.8); opacity: 1; } }
-        @keyframes goldenShimmerText { 0% { filter: drop-shadow(0 0 2px #eab308); } 50% { filter: drop-shadow(0 0 15px #facc15) brightness(1.2); } 100% { filter: drop-shadow(0 0 2px #eab308); } }
-        @keyframes twist3DText { 0% { transform: rotate(-10deg) scale(0.85); opacity: 0; } 100% { transform: rotate(0) scale(1); opacity: 1; } }
-        @keyframes smoothFloatText { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes heroProgress { from { width: 0%; } to { width: 100%; } }
+        @keyframes anim_fade-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes anim_zoom-pop { 0% { transform: scale(0.65); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes anim_neon-pulse { 0%, 100% { text-shadow: 0 0 4px #fff, 0 0 15px #38bdf8; } 50% { text-shadow: 0 0 2px #fff; } }
+        @keyframes anim_bounce-in { 0% { transform: translateY(-40px); opacity: 0; } 60% { transform: translateY(8px); } 100% { transform: translateY(0); opacity: 1; } }
+        @keyframes anim_flip-x { 0% { transform: perspective(400px) rotateX(90deg); opacity: 0; } 100% { transform: perspective(400px) rotateX(0deg); opacity: 1; } }
+        @keyframes anim_flip-y { 0% { transform: perspective(400px) rotateY(90deg); opacity: 0; } 100% { transform: perspective(400px) rotateY(0deg); opacity: 1; } }
+        @keyframes anim_cyber-glitch { 0%, 100% { transform: translate(0); } 20% { transform: translate(-3px, 2px); } 40% { transform: translate(3px, -2px); } }
+        @keyframes anim_smoke-fade { 0% { filter: blur(12px); opacity: 0; } 100% { filter: blur(0); opacity: 1; } }
+        @keyframes anim_letter-wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes anim_slide-left { 0% { transform: translateX(60px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+        @keyframes anim_slide-right { 0% { transform: translateX(-60px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+        @keyframes anim_rotate-drop { 0% { transform: rotate(-10deg) translateY(-25px); opacity: 0; } 100% { transform: rotate(0) translateY(0); opacity: 1; } }
+        @keyframes anim_flash-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+        @keyframes anim_shake-alert { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        @keyframes anim_rainbow-shift { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+        @keyframes anim_tracking-expand { 0% { letter-spacing: -3px; opacity: 0; } 100% { letter-spacing: normal; opacity: 1; } }
+        @keyframes anim_golden-shimmer { 0%, 100% { filter: drop-shadow(0 0 2px #eab308); } 50% { filter: drop-shadow(0 0 14px #facc15) brightness(1.2); } }
+        @keyframes anim_twist-3d { 0% { transform: rotate(-10deg) scale(0.85); opacity: 0; } 100% { transform: rotate(0) scale(1); opacity: 1; } }
+        @keyframes anim_smooth-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes anim_swing-in { 0% { transform: rotateZ(-12deg); opacity: 0; } 100% { transform: rotateZ(0deg); opacity: 1; } }
+        @keyframes anim_spotlight { 0% { filter: brightness(0.2); } 100% { filter: brightness(1); } }
+        @keyframes anim_rubber-band { 0% { transform: scale(1); } 30% { transform: scaleX(1.25) scaleY(0.75); } 100% { transform: scale(1); } }
+        @keyframes anim_heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+        @keyframes anim_jello { 0%, 100% { transform: skewX(0deg) skewY(0deg); } 50% { transform: skewX(-4deg) skewY(-4deg); } }
+        @keyframes anim_pulse-expand { 0% { transform: scale(0.9); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
+        @keyframes anim_tilt-in { 0% { transform: perspective(300px) rotateY(15deg); opacity: 0; } 100% { transform: perspective(300px) rotateY(0); opacity: 1; } }
+        @keyframes anim_gradient-flow { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
       `}</style>
 
-      {/* ১. জরুরি ব্রেকিং মোড */}
+      {/* ১. ব্রেকিং মোড (অন থাকলে উপরে থাকবে, অফ থাকলে স্বয়ংক্রিয়ভাবে অদৃশ্য হবে এবং স্লাইডার উপরে উঠবে) */}
       {settings?.breaking_on && (
-        <section className="relative overflow-hidden border-b border-red-900/60 shadow-2xl">
-          {(() => {
-            const bLink = settings.breaking_link
-            const bBtn = settings.breaking_btn_text || 'বিস্তারিত'
-            const shapeSpeedPct = Number(settings.breaking_pulse_speed_pct) || 50
-            const shapePulseSec = Math.max(0.4, 3.5 - (shapeSpeedPct / 100) * 3.1).toFixed(2)
-            const textSpeedPct = Number(settings.breaking_text_speed_pct) || 50
-            const textAnimSec = Math.max(0.4, 3.5 - (textSpeedPct / 100) * 3.0).toFixed(2)
-
-            const activeTextEffect =
-              settings.breaking_text_effect === 'auto' || !settings.breaking_text_effect
-                ? AUTO_EFFECT_LIST[autoEffectIdx]
-                : settings.breaking_text_effect
-
-            const breakingBgStyle =
-              breakingMediaList.length === 0
-                ? {
-                    background: `linear-gradient(135deg, ${settings?.breaking_bg_color || '#881337'}, ${settings?.breaking_bg_gradient || '#0f172a'})`,
-                  }
-                : undefined
-
-            const badgeStyle = settings.breaking_badge_style || 'pulse-circle'
-            const curMedia = breakingMediaList[breakingMediaIdx] || null
-            const bYt = curMedia?.type === 'video' ? getYoutubeInteractiveEmbed(curMedia.url) : null
-
-            return (
-              <div
-                style={breakingBgStyle}
-                className="relative flex min-h-[300px] sm:min-h-[380px] lg:min-h-[440px] items-center overflow-hidden bg-slate-950 py-10"
-              >
-                {curMedia && (
-                  <div className="absolute inset-0">
-                    {curMedia.type === 'video' ? (
-                      bYt ? (
-                        <iframe
-                          src={bYt}
-                          className="w-full h-full aspect-video border-0 pointer-events-auto"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          title="Breaking Video"
-                        />
-                      ) : (
-                        <video src={curMedia.url} autoPlay muted loop playsInline className="w-full h-full object-cover" />
-                      )
-                    ) : (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={curMedia.url} alt="" className="w-full h-full object-cover transition-opacity duration-1000" />
-                    )}
-                  </div>
-                )}
-
-                {breakingMediaList.length > 1 && (
-                  <div className="absolute top-4 right-4 z-20 flex gap-2">
-                    <button
-                      onClick={() => setBreakingMediaIdx((p) => (p - 1 + breakingMediaList.length) % breakingMediaList.length)}
-                      className="p-2 rounded-full bg-black/60 text-white backdrop-blur hover:bg-white hover:text-black transition-all cursor-pointer"
-                      aria-label="আগের মিডিয়া"
-                    >
-                      <ChevronLeft className="size-4" />
-                    </button>
-                    <button
-                      onClick={() => setBreakingMediaIdx((p) => (p + 1) % breakingMediaList.length)}
-                      className="p-2 rounded-full bg-black/60 text-white backdrop-blur hover:bg-white hover:text-black transition-all cursor-pointer"
-                      aria-label="পরের মিডিয়া"
-                    >
-                      <ChevronRight className="size-4" />
-                    </button>
-                  </div>
-                )}
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/35 pointer-events-none" />
-
-                <div className="relative z-10 mx-auto w-full max-w-5xl px-6 sm:px-12 pointer-events-auto">
-                  <div className="inline-flex items-center gap-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 text-xs sm:text-sm font-bold tracking-wider text-white shadow-2xl">
-                    <span
-                      style={{ animation: `shapePulseDynamic ${shapePulseSec}s ease-in-out infinite` }}
-                      className="size-3 rounded-full bg-red-600 shrink-0 shadow-[0_0_8px_#ef4444]"
-                    />
-                    <span>ব্রেকিং নিউজ / BREAKING NEWS</span>
-                  </div>
-
-                  {settings.breaking_title && (
-                    <h2
-                      key={activeTextEffect + settings.breaking_title}
-                      className={cn('mt-4 text-balance font-serif font-bold leading-snug drop-shadow-md', getSizeClass(settings.breaking_title_size))}
-                      style={{ color: settings.breaking_title_color || '#ffffff' }}
-                    >
-                      {settings.breaking_title}
-                    </h2>
-                  )}
-
-                  {settings.breaking_text && (
-                    <p
-                      className={cn('mt-3 max-w-3xl text-pretty leading-relaxed drop-shadow', getSizeClass(settings.breaking_text_size))}
-                      style={{ color: settings.breaking_text_color || '#f1f5f9' }}
-                    >
-                      {settings.breaking_text}
-                    </p>
-                  )}
-
-                  {bLink && (
-                    <div className="mt-5">
-                      <a
-                        href={bLink}
-                        {...(isExternal(bLink) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                        className="inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:gap-3 hover:bg-white hover:text-red-700 shadow-xl"
-                      >
-                        {bBtn}
-                        <ArrowRight className="size-4" aria-hidden="true" />
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })()}
-        </section>
-      )}
-
-      {/* ২. মূল হিরো স্লাইডার */}
-      {slides.length > 0 && (
-        <section aria-roledescription="carousel" aria-label="Featured stories" className="relative">
-          <div
-            tabIndex={0}
-            onKeyDown={onKeyDown}
-            onPointerEnter={(e) => e.pointerType === 'mouse' && setHoverPaused(true)}
-            onPointerLeave={() => {
-              setHoverPaused(false)
-              startRef.current = null
-              setDragging(false)
-            }}
-            onPointerDown={onPointerDown}
-            onPointerUp={endDrag}
-            onPointerCancel={() => {
-              startRef.current = null
-              setDragging(false)
-            }}
-            onFocus={(e) => setFocusPaused(e.target.matches(':focus-visible'))}
-            onBlur={() => setFocusPaused(false)}
-            style={{ touchAction: 'pan-y' }}
-            className={cn('relative h-[480px] select-none overflow-hidden sm:h-[540px] lg:h-[620px]', focusRing)}
-          >
-            <div className="sr-only" aria-live={running ? 'off' : 'polite'} aria-atomic="true">
-              {`${bn(total)} টির মধ্যে ${bn(index + 1)} নম্বর স্লাইড`}
+        <div
+          className="relative w-full py-6 px-4 sm:px-8 border-b border-red-900/60 transition-all duration-300"
+          style={{
+            background: `linear-gradient(135deg, ${settings.breaking_bg_color || '#881337'}, ${settings.breaking_bg_gradient || '#0f172a'})`,
+          }}
+        >
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-600 text-xs font-bold tracking-wide">
+                <span className="size-2 rounded-full bg-white animate-ping" />
+                ব্রেকিং নিউজ
+              </span>
+              {settings.breaking_title && <h2 className="text-lg sm:text-xl font-bold text-white">{settings.breaking_title}</h2>}
+              {settings.breaking_text && <p className="text-xs sm:text-sm text-slate-200">{settings.breaking_text}</p>}
             </div>
-
-            {slides.map((slide, i) => {
-              const isActive = i === index
-              const ytUrl = currentMedia?.type === 'video' ? getYoutubeInteractiveEmbed(currentMedia.url) : null
-              const hasAnyText = Boolean(slide.title || slide.summary || slide.category)
-
-              return (
-                <div
-                  key={slide.key}
-                  role="group"
-                  aria-roledescription="slide"
-                  aria-label={`${i + 1} of ${total}`}
-                  aria-hidden={!isActive}
-                  className={cn('absolute inset-0 transition-all duration-700 ease-in-out', getTransitionClass(isActive))}
-                >
-                  {/* মিডিয়া */}
-                  {currentMedia?.type === 'video' ? (
-                    isActive ? (
-                      ytUrl ? (
-                        <div className="relative w-full h-full flex items-center justify-center bg-black">
-                          <iframe
-                            src={ytUrl}
-                            className="w-full h-full aspect-video pointer-events-auto border-0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowFullScreen
-                            title="Video Player"
-                          />
-                        </div>
-                      ) : (
-                        <div className="relative w-full h-full flex items-center justify-center bg-black">
-                          <video
-                            src={currentMedia.url}
-                            controls
-                            playsInline
-                            className="w-full h-full max-h-[620px] object-contain pointer-events-auto"
-                          />
-                        </div>
-                      )
-                    ) : (
-                      <div className="absolute inset-0 bg-black" />
-                    )
-                  ) : (
-                    <div className="relative w-full h-full flex items-center justify-center bg-black/90 overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={isActive ? currentMedia?.url || slide.image : slide.image}
-                        alt={slide.alt}
-                        loading={i === 0 ? 'eager' : 'lazy'}
-                        draggable={false}
-                        style={{ objectPosition: slide.pos }}
-                        className={cn(
-                          'w-full h-full transition-transform duration-[6000ms] ease-out',
-                          slide.fitMode === 'cover' ? 'object-cover' : 'object-contain',
-                          isActive && !reduceMotion ? 'scale-105' : 'scale-100',
-                        )}
-                      />
-                    </div>
-                  )}
-
-                  {/* নেস্টেড সাব-ইন্ডিকেটর */}
-                  {isActive && currentMediaList.length > 1 && (
-                    <div className="absolute top-4 left-6 z-20 flex items-center gap-1.5 bg-black/50 backdrop-blur px-3 py-1 rounded-full">
-                      <span className="text-[11px] text-white/90">
-                        ছবি {bn(subMediaIdx + 1)} / {bn(currentMediaList.length)}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* টেক্সট ও কার্ড */}
-                  {hasAnyText && (
-                    <div
-                      className={cn(
-                        'absolute inset-0 pointer-events-none p-4 pb-20 sm:p-10 sm:pb-24 z-10 flex',
-                        slide.contentPosV === 'top'
-                          ? 'items-start pt-10 sm:pt-14'
-                          : slide.contentPosV === 'center'
-                            ? 'items-center'
-                            : 'items-end',
-                        slide.contentPosH === 'right'
-                          ? 'justify-end'
-                          : slide.contentPosH === 'center'
-                            ? 'justify-center'
-                            : 'justify-start',
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          'pointer-events-auto transition-all duration-300',
-                          slide.showCardBg ? 'border border-white/20 shadow-2xl' : '',
-                          slide.textAlign === 'center'
-                            ? 'text-center'
-                            : slide.textAlign === 'right'
-                              ? 'text-right'
-                              : 'text-left',
-                        )}
-                        style={{
-                          width: `${slide.cardWidthPct ?? 90}%`,
-                          maxWidth: '100%',
-                          padding: slide.showCardBg ? `${slide.cardPaddingVal ?? 20}px` : undefined,
-                          borderRadius: slide.showCardBg
-                            ? `${Math.round(((slide.cardRadiusPct ?? 20) / 100) * 45)}px`
-                            : undefined,
-                          backgroundColor: slide.showCardBg
-                            ? hexToRgba(slide.cardBgColor, slide.cardOpacity)
-                            : 'transparent',
-                          backdropFilter: slide.showCardBg ? `blur(${slide.cardBlur ?? 12}px)` : undefined,
-                          WebkitBackdropFilter: slide.showCardBg ? `blur(${slide.cardBlur ?? 12}px)` : undefined,
-                          animation:
-                            isActive && isMotionEnabled && !reduceMotion
-                              ? 'textEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards'
-                              : undefined,
-                        }}
-                      >
-                        {/* ব্যাজ */}
-                        {(slide.category || slide.date) && (
-                          <div
-                            className={cn(
-                              'flex flex-wrap items-center gap-2 sm:gap-3',
-                              slide.textAlign === 'center'
-                                ? 'justify-center'
-                                : slide.textAlign === 'right'
-                                  ? 'justify-end'
-                                  : 'justify-start',
-                            )}
-                          >
-                            {slide.category && (
-                              <span
-                                className="rounded px-2.5 py-1 tracking-wider inline-block font-semibold"
-                                style={{
-                                  backgroundColor: slide.badgeColor || '#EAB308',
-                                  color: slide.badgeTextColor || '#0f172a',
-                                  fontFamily: slide.badgeFont || undefined,
-                                  fontSize: slide.badgeSize === 'xs' ? '12px' : slide.badgeSize === 'sm' ? '14px' : '15px',
-                                }}
-                              >
-                                {slide.category}
-                              </span>
-                            )}
-                            <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-white/90">
-                              <CalendarDays className="size-4" aria-hidden="true" />
-                              {slide.date}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* শিরোনাম */}
-                        {slide.title && (
-                          <h2
-                            className={cn('mt-3 text-balance leading-snug', getSizeClass(slide.titleSize), getStyleClass(slide.titleStyle))}
-                            style={{
-                              color: slide.titleColor || '#FFFFFF',
-                              fontFamily: slide.titleFont || undefined,
-                            }}
-                          >
-                            <span
-                              style={{
-                                backgroundColor: slide.titleBgColor || undefined,
-                                padding: slide.titleBgColor ? '2px 8px' : undefined,
-                                borderRadius: slide.titleBgColor ? '6px' : undefined,
-                                boxDecorationBreak: 'clone',
-                                WebkitBoxDecorationBreak: 'clone',
-                              }}
-                            >
-                              {slide.title}
-                            </span>
-                          </h2>
-                        )}
-
-                        {/* বিবরণ */}
-                        {slide.summary && (
-                          <p
-                            className={cn('mt-2.5 line-clamp-3 text-pretty leading-relaxed', getSizeClass(slide.summarySize), getStyleClass(slide.summaryStyle))}
-                            style={{
-                              color: slide.summaryColor || '#e2e8f0',
-                              fontFamily: slide.summaryFont || undefined,
-                            }}
-                          >
-                            {slide.summary}
-                          </p>
-                        )}
-
-                        {/* বাটন */}
-                        {(slide.link || slide.summary) && (
-                          <div
-                            className={cn(
-                              'mt-4',
-                              slide.textAlign === 'center'
-                                ? 'flex justify-center'
-                                : slide.textAlign === 'right'
-                                  ? 'flex justify-end'
-                                  : 'flex justify-start',
-                            )}
-                          >
-                            {slide.link && slide.link !== '#' && slide.link !== '#general-news' ? (
-                              <a
-                                href={slide.link}
-                                {...(isExternal(slide.link) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                                tabIndex={isActive ? 0 : -1}
-                                className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-semibold transition-all hover:gap-3 shadow-lg"
-                                style={{
-                                  backgroundColor: slide.btnBgColor || '#15803d',
-                                  color: slide.btnColor || '#ffffff',
-                                  fontFamily: slide.btnFont || undefined,
-                                  fontSize: slide.btnSize === 'sm' ? '13px' : slide.btnSize === 'base' ? '15px' : '16px',
-                                }}
-                              >
-                                {slide.buttonText}
-                                {isExternal(slide.link) ? <ExternalLink className="size-3.5" /> : <ArrowRight className="size-3.5" />}
-                              </a>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => setModalSlide(slide)}
-                                tabIndex={isActive ? 0 : -1}
-                                className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-semibold transition-all hover:gap-3 shadow-lg cursor-pointer"
-                                style={{
-                                  backgroundColor: slide.btnBgColor || '#15803d',
-                                  color: slide.btnColor || '#ffffff',
-                                  fontFamily: slide.btnFont || undefined,
-                                  fontSize: slide.btnSize === 'sm' ? '13px' : slide.btnSize === 'base' ? '15px' : '16px',
-                                }}
-                              >
-                                {slide.buttonText}
-                                <ArrowRight className="size-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-
-            {/* নেভিগেশন কন্ট্রোল */}
-            {total > 1 && (
-              <>
-                <div className="absolute bottom-6 right-6 flex items-center gap-2 sm:bottom-8 sm:right-10 z-20">
-                  {!reduceMotion && !isUnlimited && !currentIsVideo && (
-                    <button
-                      type="button"
-                      onClick={() => setUserPaused((p) => !p)}
-                      aria-label={userPaused ? 'অটোপ্লে চালু করুন' : 'অটোপ্লে বন্ধ করুন'}
-                      className={cn(
-                        'flex size-9 sm:size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand cursor-pointer',
-                        focusRing,
-                      )}
-                    >
-                      {userPaused ? <Play className="size-4" /> : <Pause className="size-4" />}
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => go(index - 1)}
-                    aria-label="আগের স্লাইড"
-                    className={cn(
-                      'flex size-9 sm:size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand cursor-pointer',
-                      focusRing,
-                    )}
-                  >
-                    <ChevronLeft className="size-5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => go(index + 1)}
-                    aria-label="পরের স্লাইড"
-                    className={cn(
-                      'flex size-9 sm:size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand cursor-pointer',
-                      focusRing,
-                    )}
-                  >
-                    <ChevronRight className="size-5" />
-                  </button>
-                </div>
-
-                <div className="absolute bottom-7 left-6 flex items-center gap-2 sm:left-12 z-20">
-                  {slides.map((slide, i) => (
-                    <button
-                      key={slide.key}
-                      type="button"
-                      onClick={() => go(i)}
-                      aria-label={`${bn(i + 1)} নম্বর স্লাইডে যান`}
-                      aria-current={i === index}
-                      className={cn(
-                        'h-2 rounded-full transition-all cursor-pointer',
-                        focusRing,
-                        i === index ? 'w-8 bg-gold' : 'w-2 bg-white/60 hover:bg-white',
-                      )}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* প্রোগ্রেস বার */}
-            {canAutoplay && (
-              <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 z-20" aria-hidden="true">
-                <div
-                  key={`${index}-${subMediaIdx}`}
-                  onAnimationEnd={handleNextStep}
-                  className="h-full origin-left bg-gold"
-                  style={{
-                    animation: `heroProgress ${slideMs}ms linear forwards`,
-                    animationPlayState: running ? 'running' : 'paused',
-                  }}
-                />
-              </div>
+            {settings.breaking_link && (
+              <a
+                href={settings.breaking_link}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-white text-red-700 hover:bg-red-600 hover:text-white px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shrink-0"
+              >
+                {settings.breaking_btn_text || 'বিস্তারিত'} <ArrowRight className="size-3.5" />
+              </a>
             )}
           </div>
-        </section>
+        </div>
       )}
 
-      {/* পপ-আপ মোডাল */}
-      {modalSlide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-          <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl space-y-4">
-            <button
-              onClick={() => setModalSlide(null)}
-              className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-black cursor-pointer"
-              aria-label="বন্ধ করুন"
-            >
-              <X className="size-5" />
-            </button>
-
-            {modalSlide.mediaType === 'image' && modalSlide.image && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={modalSlide.image}
-                alt=""
-                className="h-64 w-full rounded-xl object-contain bg-black"
-                style={{ objectPosition: modalSlide.pos }}
+      {/* ২. মূল হিরো স্লাইডার সেকশন */}
+      {posts.length > 0 && currentPost && (
+        <div
+          tabIndex={0}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          style={{ touchAction: 'pan-y' }}
+          className="relative h-[480px] sm:h-[540px] lg:h-[600px] w-full overflow-hidden select-none bg-black"
+        >
+          {/* স্লাইড ব্যাকগ্রাউন্ড (কালার / ছবি / ভিডিও) */}
+          <div className="absolute inset-0">
+            {curSubMedia.type === 'color' && (
+              <div
+                className="w-full h-full transition-colors duration-700"
+                style={{
+                  background: curSubMedia.gradient || curSubMedia.color || '#0f172a',
+                }}
               />
             )}
 
-            <div className="flex items-center gap-2">
-              {modalSlide.category && (
-                <span
-                  className="rounded px-2.5 py-1 text-xs font-bold text-navy"
-                  style={{ backgroundColor: modalSlide.badgeColor || '#EAB308' }}
-                >
-                  {modalSlide.category}
-                </span>
-              )}
-              <span className="text-xs text-gray-500">{modalSlide.date}</span>
-            </div>
-
-            {modalSlide.title && (
-              <h3
-                className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug"
-                style={{ fontFamily: modalSlide.titleFont || undefined }}
-              >
-                {modalSlide.title}
-              </h3>
+            {curSubMedia.type === 'image' && (
+              <div className="relative w-full h-full flex items-center justify-center bg-black/80">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={curSubMedia.url || '/images/hero-1.png'}
+                  alt=""
+                  className={cn(
+                    'w-full h-full transition-all duration-700',
+                    currentPost.fit_mode === 'cover' ? 'object-cover' : 'object-contain'
+                  )}
+                />
+              </div>
             )}
 
-            <p className="text-gray-700 leading-relaxed text-sm sm:text-base whitespace-pre-line">
-              {modalSlide.summary || 'কোনো অতিরিক্ত বিবরণ দেওয়া হয়নি।'}
-            </p>
+            {curSubMedia.type === 'video' && (
+              <div className="relative w-full h-full flex items-center justify-center bg-black">
+                {(() => {
+                  const embed = getVideoEmbed(curSubMedia.url)
+                  if (embed) {
+                    return (
+                      <iframe
+                        src={embed.src}
+                        className="w-full h-full max-h-[600px] aspect-video border-0 pointer-events-auto"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        title="Embedded Video"
+                      />
+                    )
+                  }
+                  return (
+                    <video
+                      src={curSubMedia.url}
+                      controls
+                      playsInline
+                      className="w-full h-full max-h-[600px] object-contain pointer-events-auto"
+                    />
+                  )
+                })()}
+              </div>
+            )}
 
-            <button
-              onClick={() => setModalSlide(null)}
-              className="w-full bg-slate-900 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-slate-800 cursor-pointer"
+            {/* ঐচ্ছিক লিঙ্ক ক্লিক গার্ড (যদি কোনো নির্দিষ্ট মিডিয়ার নিজস্ব লিঙ্ক থাকে) */}
+            {curSubMedia.link && !isVideo && (
+              <a
+                href={curSubMedia.link}
+                target="_blank"
+                rel="noreferrer"
+                className="absolute inset-0 z-0 cursor-pointer"
+                aria-label="মিডিয়া লিঙ্ক দেখুন"
+              />
+            )}
+          </div>
+
+          {/* টেক্সট ও কাস্টমাইজড কার্ড ওভারলে */}
+          <div
+            className={cn(
+              'absolute inset-0 p-4 sm:p-10 pointer-events-none flex z-10',
+              currentPost.content_pos_v === 'top' ? 'items-start' : currentPost.content_pos_v === 'center' ? 'items-center' : 'items-end pb-16 sm:pb-20',
+              currentPost.content_pos_h === 'right' ? 'justify-end' : currentPost.content_pos_h === 'center' ? 'justify-center' : 'justify-start'
+            )}
+          >
+            <div
+              className={cn(
+                'pointer-events-auto max-w-full transition-all duration-300',
+                currentPost.show_card_bg ? 'border border-white/20 shadow-2xl' : '',
+                currentPost.text_align === 'center' ? 'text-center' : currentPost.text_align === 'right' ? 'text-right' : 'text-left'
+              )}
+              style={{
+                width: `${currentPost.card_width_pct || 90}%`,
+                padding: currentPost.show_card_bg ? `${currentPost.card_padding_val || 20}px` : undefined,
+                borderRadius: currentPost.show_card_bg ? `${Math.round(((currentPost.card_radius_pct || 20) / 100) * 40)}px` : undefined,
+                backgroundColor: currentPost.show_card_bg ? hexToRgba(currentPost.card_bg_color || '#000000', currentPost.card_opacity || 60) : 'transparent',
+                backdropFilter: currentPost.show_card_bg ? `blur(${currentPost.card_blur || 12}px)` : undefined,
+              }}
             >
-              ঠিক আছে
+              {currentPost.category && (
+                <span
+                  className="inline-block px-2.5 py-1 rounded text-xs font-semibold mb-2"
+                  style={{
+                    backgroundColor: currentPost.badge_color || '#EAB308',
+                    color: currentPost.badge_text_color || '#0f172a',
+                  }}
+                >
+                  {currentPost.category}
+                </span>
+              )}
+
+              {currentPost.title && (
+                <h2
+                  key={currentPost.id + subIdx + currentPost.title}
+                  className={cn(
+                    'font-bold leading-snug drop-shadow-md',
+                    currentPost.title_size === '3xl' ? 'text-2xl sm:text-4xl' : currentPost.title_size === '2xl' ? 'text-xl sm:text-3xl' : 'text-lg sm:text-xl'
+                  )}
+                  style={{
+                    color: currentPost.title_color || '#ffffff',
+                    fontFamily: currentPost.title_font || undefined,
+                    animation: `anim_${currentPost.text_effect || 'fade-up'} ${animSec}s ease-in-out forwards`,
+                  }}
+                >
+                  <span
+                    style={{
+                      backgroundColor: currentPost.title_bg_color || undefined,
+                      padding: currentPost.title_bg_color ? '2px 8px' : undefined,
+                      borderRadius: '4px',
+                    }}
+                  >
+                    {currentPost.title}
+                  </span>
+                </h2>
+              )}
+
+              {currentPost.summary && (
+                <p
+                  className="mt-2 text-xs sm:text-sm line-clamp-2 drop-shadow"
+                  style={{
+                    color: currentPost.summary_color || '#e2e8f0',
+                    fontFamily: currentPost.summary_font || undefined,
+                  }}
+                >
+                  {currentPost.summary}
+                </p>
+              )}
+
+              {currentPost.link_url && (
+                <div className="mt-3.5">
+                  <a
+                    href={currentPost.link_url}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold shadow-lg hover:opacity-90 transition-all"
+                    style={{
+                      backgroundColor: currentPost.btn_bg_color || '#15803d',
+                      color: currentPost.btn_color || '#ffffff',
+                    }}
+                  >
+                    {currentPost.button_text || 'বিস্তারিত'} <ExternalLink className="size-3.5" />
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* কন্ট্রোল বার: সাব-স্লাইড ইন্ডিকেটর ও পোস্ট নেভিগেশন */}
+          <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
+            <Layers className="size-3.5 text-gold" />
+            <span className="text-xs text-white font-medium">
+              পোস্ট {bn(postIdx + 1)}/{bn(posts.length)} · স্লাইড {bn(subIdx + 1)}/{bn(mediaItems.length)}
+            </span>
+          </div>
+
+          {/* নেভিগেশন বোতাম (স্লাইড ও পোস্ট নেভিগেট) */}
+          <div className="absolute bottom-5 right-6 z-20 flex items-center gap-2">
+            {!isAutoplayDisabled && !isVideo && (
+              <button
+                onClick={() => setUserPaused((p) => !p)}
+                className="size-9 rounded-full bg-black/50 text-white backdrop-blur border border-white/20 flex items-center justify-center hover:bg-white hover:text-black cursor-pointer"
+                aria-label="Pause or Play"
+              >
+                {userPaused ? <Play className="size-4" /> : <Pause className="size-4" />}
+              </button>
+            )}
+            <button
+              onClick={prevStep}
+              className="size-9 rounded-full bg-black/50 text-white backdrop-blur border border-white/20 flex items-center justify-center hover:bg-white hover:text-black cursor-pointer"
+              aria-label="আগের স্লাইড"
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+            <button
+              onClick={nextStep}
+              className="size-9 rounded-full bg-black/50 text-white backdrop-blur border border-white/20 flex items-center justify-center hover:bg-white hover:text-black cursor-pointer"
+              aria-label="পরের স্লাইড"
+            >
+              <ChevronRight className="size-5" />
             </button>
           </div>
+
+          {/* পোস্ট বুলেটিং ইন্ডিকেটর */}
+          <div className="absolute bottom-6 left-6 z-20 flex gap-1.5">
+            {posts.map((_, pI) => (
+              <button
+                key={pI}
+                onClick={() => {
+                  setPostIdx(pI)
+                  setSubIdx(0)
+                }}
+                className={cn(
+                  'h-1.5 rounded-full transition-all cursor-pointer',
+                  pI === postIdx ? 'w-6 bg-gold' : 'w-2 bg-white/40'
+                )}
+                aria-label={`পোস্ট ${pI + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* প্রোগ্রেস বার (সাব-স্লাইডের সময় নিয়ন্ত্রণ) */}
+          {!userPaused && !isVideo && !isAutoplayDisabled && (
+            <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 z-30">
+              <div
+                key={`${postIdx}-${subIdx}`}
+                onAnimationEnd={nextStep}
+                className="h-full bg-gold origin-left"
+                style={{
+                  animation: `heroProgress ${postDuration}ms linear forwards`,
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -967,4 +437,3 @@ export function HeroCarousel() {
 }
 
 export default HeroCarousel
-export { HeroCarousel }
