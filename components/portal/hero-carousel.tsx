@@ -380,7 +380,6 @@ export function HeroCarousel() {
     }
   }
 
-  // ট্রানজিশন ক্লাস
   const getTransitionClass = (isActive: boolean) => {
     switch (transMode) {
       case 'slide-left': return isActive ? 'translate-x-0 opacity-100 z-10' : 'translate-x-full opacity-0 pointer-events-none z-0'
@@ -407,7 +406,6 @@ export function HeroCarousel() {
     }
   }
 
-  // লোডিং হওয়ার আগ পর্যন্ত বা কোনো কনটেন্ট না থাকলে সুরক্ষিত কন্টেইনার
   if (!loaded) {
     return (
       <section id="home" className="bg-navy">
@@ -418,7 +416,6 @@ export function HeroCarousel() {
 
   return (
     <div id="home" className="flex flex-col bg-navy relative min-h-[50px]">
-      {/* সুরক্ষিত সিএসএস ফন্ট ও অ্যানিমেশন (হাইড্রেশন ক্র্যাশ মুক্ত) */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@400;600;700;800&family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Noto+Sans+Bengali:wght@300;400;600;700&family=Playfair+Display:wght@600;700;800&family=Roboto:wght@400;500;700&family=Tiro+Bangla&display=swap');
 
@@ -611,7 +608,7 @@ export function HeroCarousel() {
                   aria-hidden={!isActive}
                   className={cn('absolute inset-0 transition-all duration-700 ease-in-out', getTransitionClass(isActive))}
                 >
-                  {/* মিডিয়া রেন্ডারার */}
+                  {/* মিডিয়া */}
                   {currentMedia?.type === 'video' ? (
                     isActive ? (
                       ytUrl ? (
@@ -664,7 +661,7 @@ export function HeroCarousel() {
                     </div>
                   )}
 
-                  {/* টেক্সট ও গ্লাস কার্ড */}
+                  {/* টেক্সট ও কার্ড */}
                   {hasAnyText && (
                     <div
                       className={cn(
@@ -831,7 +828,7 @@ export function HeroCarousel() {
               )
             })}
 
-            {/* নেভিগেশন কন্ট্রোল */}
+            {/* নেভিগেশন তীর */}
             {total > 1 && (
               <>
                 <div className="absolute bottom-6 right-6 flex items-center gap-2 sm:bottom-8 sm:right-10 z-20">
@@ -968,3 +965,6 @@ export function HeroCarousel() {
     </div>
   )
 }
+
+// ডিফল্ট এক্সপোর্ট নিশ্চিত করা (যাতে নেক্সট জেএস কোনোভাবেই ক্র্যাশ না করে)
+export default HeroCarousel
