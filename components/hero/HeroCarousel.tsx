@@ -15,7 +15,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 
-// সেফ কালার ও অপাসিটি কনভার্টার
+// কালার ও অপাসিটি কনভার্টার (ক্র্যাশ-প্রুফ)
 function hexToRgba(hex: any, opacity: any) {
   const alpha = (Number(opacity) || 60) / 100
   if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return `rgba(0, 0, 0, ${alpha})`
@@ -37,11 +37,11 @@ export function HeroCarousel() {
   const [settings, setSettings] = useState<HeroSettings | null>(null)
   const [loaded, setLoaded] = useState(false)
 
-  // ডাটাবেজ থেকে ডাটা লোড
+  // ডেটাবেজ থেকে ডাটা লোড করা
   useEffect(() => {
     Promise.all([getHeroSlides(), getHeroSettings()])
       .then(([slidesData, settingsData]) => {
-        // শুধুমাত্র অ্যাক্টিভ এবং মেয়াদ থাকা স্লাইডগুলো রাখা
+        // শুধুমাত্র অ্যাক্টিভ এবং মেয়াদ থাকা পোস্টগুলো ফিল্টার করা
         const activeSlides = (slidesData || []).filter(
           (s) => s.is_active && (!s.expires_at || new Date(s.expires_at) > new Date())
         )
@@ -54,7 +54,7 @@ export function HeroCarousel() {
       })
   }, [])
 
-  // সোয়াইপ ও স্লাইড লজিক হুক ব্যবহার
+  // সোয়াইপ ও স্লাইড লজিক হুক
   const {
     postIdx,
     subIdx,
@@ -71,11 +71,10 @@ export function HeroCarousel() {
     handleTouchEnd,
   } = useHeroSlider({ posts })
 
-  // ডাটা লোড হওয়ার আগে কোনো অপ্রয়োজনীয় সাদা ফাঁকা স্থান যেন না থাকে
+  // ডাটা লোড হওয়ার আগে কোনো ফাঁকা জায়গা তৈরি না হওয়া
   if (!loaded) return null
 
-  // যদি এডমিন কোনো হিরো স্লাইড পোস্ট না করে, তবে স্লাইডারটি একদম উধাও হয়ে যাবে
-  // এবং কোনো শূন্যস্থান তৈরি না করে পেজের নিচের পোস্টগুলো সাথে সাথে উপরে উঠে আসবে
+  // ১. কোনো স্লাইড পোস্ট না থাকলে এবং ব্রেকিং মোড বন্ধ থাকলে হোম পেজে কোনো ফাঁকা জায়গা থাকবে না
   if (totalPosts === 0 && !settings?.breaking_on) {
     return null
   }
@@ -86,10 +85,10 @@ export function HeroCarousel() {
 
   return (
     <div id="home" className="w-full flex flex-col bg-slate-950 text-white relative">
-      {/* ১. ব্রেকিং নিউজ সেকশন (যদি চালু থাকে উপরে থাকবে, বন্ধ থাকলে ০ হাইট) */}
+      {/* ১. ব্রেকিং ব্যানার (চালু থাকলে উপরে দেখাবে, বন্ধ থাকলে ০ হাইট) */}
       <HeroBreakingBanner settings={settings} />
 
-      {/* ২. মূল হিরো স্লাইডার (পোস্ট থাকলে কেবল তখনই দৃশ্যমান হবে) */}
+      {/* ২. মূল হিরো স্লাইডার (পোস্ট থাকলে কেবল তখনই তৈরি হবে) */}
       {totalPosts > 0 && currentPost && (
         <section
           aria-label="Hero Slider"
@@ -100,7 +99,7 @@ export function HeroCarousel() {
           style={{ touchAction: 'pan-y' }}
           className="relative h-[480px] sm:h-[540px] lg:h-[620px] w-full overflow-hidden select-none bg-black"
         >
-          {/* স্লাইড মিডিয়া (কালার / ছবি / ভিডিও / লিংক) */}
+          {/* স্লাইড মিডিয়া রেন্ডারার */}
           <div className="absolute inset-0">
             <HeroMediaRenderer
               item={curSubMedia}
@@ -162,7 +161,7 @@ export function HeroCarousel() {
                   </span>
                 )}
 
-                {/* শিরোনাম (৩০টি অ্যানিমেশনের সাথে) */}
+                {/* শিরোনাম (৩০টি অ্যানিমেশন ইফেক্ট সহ) */}
                 {currentPost.title && (
                   <h2
                     key={currentPost.id + subIdx + currentPost.title}
@@ -234,7 +233,7 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* উপরের ইনফো ইন্ডিকেটর (পোস্ট নম্বর ও সাব-স্লাইড সংখ্যা) */}
+          {/* ইনফো ব্যাজ: পোস্ট ও সাব-স্লাইড সংখ্যা */}
           <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 shadow">
             <Layers className="size-3.5 text-yellow-400" />
             <span className="text-xs text-white font-medium">
@@ -242,7 +241,7 @@ export function HeroCarousel() {
             </span>
           </div>
 
-          {/* নেভিগেশন বাটন কন্ট্রোল (ডানদিকের নিচে) */}
+          {/* বাটন নেভিগেশন (ডানদিকের নিচে) */}
           <div className="absolute bottom-5 right-6 z-20 flex items-center gap-2">
             {!isVideo && (
               <button
@@ -272,7 +271,7 @@ export function HeroCarousel() {
             </button>
           </div>
 
-          {/* বামদিকের পোস্ট ইন্ডিকেটর ডটস */}
+          {/* পোস্ট বুলেটিং ডটস (বামদিকের নিচে) */}
           <div className="absolute bottom-6 left-6 z-20 flex items-center gap-1.5">
             {posts.map((_, pI) => (
               <button
@@ -287,7 +286,7 @@ export function HeroCarousel() {
             ))}
           </div>
 
-          {/* নিচে প্রোগ্রেস বার (সাব-স্লাইড কতক্ষণ থাকবে তা দেখায়) */}
+          {/* প্রোগ্রেস বার (সাব-স্লাইডের সময় নিয়ন্ত্রণ) */}
           {!isPaused && !isVideo && (
             <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 z-30 pointer-events-none">
               <div
