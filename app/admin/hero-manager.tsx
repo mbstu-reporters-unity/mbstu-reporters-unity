@@ -18,7 +18,7 @@ import {
 import type { HeroSlide, SubMediaItem } from "@/lib/hero"
 import { HeroMediaBuilder } from "@/components/hero/HeroMediaBuilder"
 
-// সেফ ইউটিলিটি ফাংশন
+// ক্র্যাশ রোধে সেফ ইউটিলিটি ফাংশন
 function cn(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ")
 }
@@ -62,7 +62,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   // পোস্টের মূল তথ্য (সব ঐচ্ছিক)
   const [title, setTitle] = useState("")
   const [summary, setSummary] = useState("")
-  const [category, setCategory] = useState("")
+  const [category, setCategory] = useState("ক্যাম্পাস বার্তা")
   const [btnText, setBtnText] = useState("বিস্তারিত")
   const [linkUrl, setLinkUrl] = useState("")
 
@@ -71,7 +71,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     { id: "1", type: "color", color: "#0f172a", gradient: "linear-gradient(135deg, #1e293b, #0f172a)" }
   ])
   const [slideDuration, setSlideDuration] = useState<number>(5000)
-  const [slideSpeedPct, setSlideSpeedPct] = useState<number>(30)
+  const [slideSpeedPct, setSlideSpeedPct] = useState<number>(40)
 
   // ৩০টি টেক্সট অ্যানিমেশন ও স্টাইল সেটিংস
   const [textEffect, setTextEffect] = useState("fade-up")
@@ -163,12 +163,12 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setEditId(null)
     setTitle("")
     setSummary("")
-    setCategory("")
+    setCategory("ক্যাম্পাস বার্তা")
     setBtnText("বিস্তারিত")
     setLinkUrl("")
     setMediaItems([{ id: "1", type: "color", color: "#0f172a", gradient: "linear-gradient(135deg, #1e293b, #0f172a)" }])
     setSlideDuration(5000)
-    setSlideSpeedPct(30)
+    setSlideSpeedPct(40)
     setTextEffect("fade-up")
     setActiveTab("media")
   }
@@ -178,14 +178,14 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setEditId(slide.id)
     setTitle(slide.title || "")
     setSummary(slide.summary || "")
-    setCategory(slide.category || "")
+    setCategory(slide.category || "ক্যাম্পাস বার্তা")
     setBtnText(slide.button_text || "বিস্তারিত")
     setLinkUrl(slide.link_url || "")
     if (slide.media_items && Array.isArray(slide.media_items) && slide.media_items.length > 0) {
       setMediaItems(slide.media_items)
     }
     setSlideDuration(slide.slide_duration || 5000)
-    setSlideSpeedPct(slide.slide_speed_pct || 30)
+    setSlideSpeedPct(slide.slide_speed_pct || 40)
     setTextEffect(slide.text_effect || "fade-up")
     setTextEffectSpeed(slide.text_effect_speed || 50)
     setTitleFont(slide.title_font || FONTS[0].value)
@@ -202,7 +202,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     window.scrollTo({ top: 300, behavior: "smooth" })
   }
 
-  // স্লাইড সংরক্ষণ (নতুন পোস্ট সবসময় উপরে যাবে)
+  // স্লাইড সংরক্ষণ (নতুন পোস্ট সবসময় উপরে অবস্থান করবে)
   async function handleSave() {
     setBusy(true)
     setMsg("")
@@ -249,7 +249,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       } else {
         // নতুন পোস্টের sort_order সর্বোচ্চ দেওয়া হবে যাতে তা সর্বদা সবার উপরে থাকে
         await createHeroSlide(token, { ...data, sort_order: Date.now() })
-        setMsg("✅ নতুন পোস্ট ও স্লাইড তৈরি হয়েছে এবং সবার উপরে যুক্ত হয়েছে")
+        setMsg("✅ নতুন পোস্ট ও স্লাইড তৈরি হয়েছে এবং সবার উপরে অবস্থান করছে")
       }
       resetForm()
       await loadData()
@@ -278,6 +278,9 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setBusy(false)
   }
 
+  // প্রিভিউ মিডিয়া বাছাই
+  const curPreviewMedia = mediaItems[0] || null
+
   return (
     <div className="space-y-6 text-white max-w-4xl mx-auto pb-20">
       {/* নোটিফিকেশন মেসেজ */}
@@ -303,7 +306,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           </button>
         </div>
         <p className="text-xs text-gray-400">
-          💡 এটি অন থাকলে হোমপেজের সবার শীর্ষে ব্যানার দেখাবে এবং তার ঠিক নিচেই হিরো স্লাইডার চলবে। অফ থাকলে ব্যানার শূন্যস্থান ছাড়াই উধাও হয়ে যাবে।
+          💡 এটি অন থাকলে হোমপেজের সবার শীর্ষে ব্যানার দেখাবে এবং তার ঠিক নিচেই হিরো স্লাইডার চলবে। অফ থাকলে ব্যানারটি ফাঁকা জায়গা না রেখে উধাও হয়ে যাবে।
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <input className={inp} placeholder="ব্রেকিং শিরোনাম" value={bTitle} onChange={(e) => setBTitle(e.target.value)} />
@@ -319,6 +322,102 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             {editId ? "স্লাইড পোস্ট এডিট করুন" : "নতুন হিরো পোস্ট ও মাল্টি-স্লাইড তৈরি"}
           </h2>
           {editId && <button onClick={resetForm} className="text-xs text-red-400 hover:underline cursor-pointer">বাতিল</button>}
+        </div>
+
+        {/* 👁️ লাইভ প্রিভিউ বক্স */}
+        <div className="space-y-1.5">
+          <span className="text-xs font-semibold text-gray-400 block">👁️ রিয়েল-টাইম লাইভ প্রিভিউ:</span>
+          <div className="relative h-56 sm:h-64 w-full rounded-2xl overflow-hidden border border-slate-700 bg-black shadow-inner flex items-center justify-center">
+            {curPreviewMedia?.type === 'color' && (
+              <div
+                className="absolute inset-0 w-full h-full"
+                style={{ background: curPreviewMedia.gradient || curPreviewMedia.color || '#0f172a' }}
+              />
+            )}
+            {curPreviewMedia?.type === 'image' && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={curPreviewMedia.url || '/images/hero-1.png'}
+                alt="Live Preview"
+                className="absolute inset-0 w-full h-full object-contain"
+              />
+            )}
+            {curPreviewMedia?.type === 'video' && (
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-900 text-xs text-gray-400">
+                🎥 ভিডিও প্লেয়ার প্রিভিউ সক্রিয় রয়েছে
+              </div>
+            )}
+            {curPreviewMedia?.type === 'link_preview' && (
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-900 text-xs text-green-400">
+                🔗 হাইপারলিংক প্রিভিউ সক্রিয় রয়েছে
+              </div>
+            )}
+
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+
+            {/* প্রিভিউ গ্লাস কার্ড */}
+            <div
+              className={cn(
+                "absolute inset-0 p-4 flex pointer-events-none",
+                contentPosV === "top" ? "items-start" : contentPosV === "center" ? "items-center" : "items-end",
+                contentPosH === "right" ? "justify-end" : contentPosH === "center" ? "justify-center" : "justify-start"
+              )}
+            >
+              <div
+                className={cn(
+                  "transition-all duration-200 max-w-full",
+                  showCardBg ? "border border-white/20 shadow-2xl" : "",
+                  textAlign === "center" ? "text-center" : textAlign === "right" ? "text-right" : "text-left"
+                )}
+                style={{
+                  width: `${cardWidthPct}%`,
+                  padding: showCardBg ? `${cardPaddingVal}px` : undefined,
+                  borderRadius: showCardBg ? `${Math.round(((Number(cardRadiusPct) || 20) / 100) * 45)}px` : undefined,
+                  backgroundColor: showCardBg ? hexToRgba(cardBgColor, cardOpacity) : "transparent",
+                  backdropFilter: showCardBg ? `blur(${cardBlur}px)` : undefined,
+                }}
+              >
+                {category && (
+                  <span
+                    className="inline-block px-2.5 py-0.5 rounded text-[11px] font-semibold mb-1"
+                    style={{ backgroundColor: badgeColor, color: badgeTextColor }}
+                  >
+                    {category}
+                  </span>
+                )}
+
+                {title ? (
+                  <h3
+                    className={cn("leading-snug block", titleStyle === "italic" ? "italic" : titleStyle === "bold-italic" ? "font-bold italic" : "font-bold")}
+                    style={{ color: titleColor, fontFamily: titleFont, fontSize: titleSize === "3xl" ? "19px" : titleSize === "2xl" ? "16px" : "14px" }}
+                  >
+                    <span style={{ backgroundColor: titleBgColor || undefined, padding: titleBgColor ? "2px 6px" : undefined, borderRadius: "4px" }}>
+                      {title}
+                    </span>
+                  </h3>
+                ) : (
+                  <p className="text-gray-500 text-xs italic">শিরোনাম লিখলে এখানে ফুটে উঠবে...</p>
+                )}
+
+                {summary && (
+                  <p className="text-xs line-clamp-2 mt-1" style={{ color: summaryColor, fontFamily: summaryFont }}>
+                    {summary}
+                  </p>
+                )}
+
+                {btnText && (
+                  <div className="mt-2">
+                    <span
+                      className="inline-block px-3 py-1 rounded-full text-xs font-semibold shadow"
+                      style={{ backgroundColor: btnBgColor, color: btnColor }}
+                    >
+                      {btnText} →
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ৪টি ট্যাব বার */}
@@ -468,7 +567,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
 
                   <div>
                     <div className="flex justify-between text-xs text-gray-400 mb-1">
-                      <span>রাউন্ডনেস (আকৃতি ০% = চারকোনা, ১০০% = সম্পূর্ণ গোল):</span>
+                      <span>রাউন্ডনেস (০% = চারকোনা, ১০০% = সম্পূর্ণ গোল):</span>
                       <span className="font-bold text-green-400">{cardRadiusPct}%</span>
                     </div>
                     <input type="range" min="0" max="100" value={cardRadiusPct} onChange={(e) => setCardRadiusPct(Number(e.target.value))} className="w-full accent-green-600 cursor-pointer" />
