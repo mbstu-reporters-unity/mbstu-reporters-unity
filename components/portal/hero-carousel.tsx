@@ -32,26 +32,22 @@ type Slide = {
   mediaUrls: string | null
   buttonText: string
 
-  // স্বাধীন শিরোনাম স্টাইল
   titleFont: string | null
   titleSize: string
   titleStyle: string
   titleColor: string | null
   titleBgColor: string | null
 
-  // স্বাধীন বিবরণ স্টাইল
   summaryFont: string | null
   summarySize: string
   summaryStyle: string
   summaryColor: string | null
 
-  // স্বাধীন ব্যাজ স্টাইল
   badgeFont: string | null
   badgeSize: string
   badgeTextColor: string | null
   badgeColor: string | null
 
-  // স্বাধীন বাটন স্টাইল
   btnFont: string | null
   btnSize: string
   btnColor: string | null
@@ -70,20 +66,22 @@ type Slide = {
   fitMode: 'contain' | 'cover'
 }
 
-function hexToRgba(hex: string | null | undefined, opacity: number | null | undefined) {
-  const alpha = (opacity ?? 60) / 100
-  if (!hex || !hex.startsWith('#')) return `rgba(0, 0, 0, ${alpha})`
-  let c = hex.substring(1)
-  if (c.length === 3) c = c.split('').map((x) => x + x).join('')
-  const num = parseInt(c, 16)
-  if (isNaN(num)) return `rgba(0, 0, 0, ${alpha})`
-  const r = (num >> 16) & 255
-  const g = (num >> 8) & 255
-  const b = num & 255
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+// ১০০% সুরক্ষিত আরজিবিএ কনভার্টার (কখনো ক্র্যাশ করবে না)
+function hexToRgba(hex: any, opacity: any) {
+  const alpha = (Number(opacity) || 60) / 100
+  if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return `rgba(0, 0, 0, ${alpha})`
+  try {
+    let c = hex.substring(1)
+    if (c.length === 3) c = c.split('').map((x) => x + x).join('')
+    const num = parseInt(c, 16)
+    if (isNaN(num)) return `rgba(0, 0, 0, ${alpha})`
+    return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`
+  } catch {
+    return `rgba(0, 0, 0, ${alpha})`
+  }
 }
 
-// সাইজ ও স্টাইলের জন্য টেলউইন্ড ক্লাস রূপান্তর
+// সুরক্ষিত সাইজ ক্লাস
 const getSizeClass = (s?: string | null) => {
   switch (s) {
     case 'sm': return 'text-xs sm:text-sm'
@@ -97,6 +95,7 @@ const getSizeClass = (s?: string | null) => {
   }
 }
 
+// সুরক্ষিত স্টাইল ক্লাস
 const getStyleClass = (st?: string | null) => {
   switch (st) {
     case 'italic': return 'italic font-normal'
@@ -107,28 +106,36 @@ const getStyleClass = (st?: string | null) => {
   }
 }
 
+// সুরক্ষিত ডেট ফরম্যাটার
+function safeDate(d: any) {
+  if (!d) return ''
+  try {
+    const dt = new Date(d)
+    return isNaN(dt.getTime())
+      ? ''
+      : dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Dhaka' })
+  } catch {
+    return ''
+  }
+}
+
 function toSlide(s: HeroSlide): Slide {
   const finalLink = s.link_url?.trim() || (s.media_type === 'video' && s.video_url ? s.video_url.trim() : null)
 
   return {
-    key: s.id,
+    key: String(s.id || Math.random()),
     image: s.image_url || '/images/hero-1.png',
-    pos: s.image_pos,
+    pos: s.image_pos || 'center',
     category: s.category?.trim() || null,
-    date: new Date(s.created_at).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      timeZone: 'Asia/Dhaka',
-    }),
+    date: safeDate(s.created_at),
     title: s.title?.trim() || null,
     summary: s.summary?.trim() || null,
     link: finalLink,
     alt: s.title || 'Hero Banner',
     mediaType: s.media_type || 'image',
     videoUrl: s.video_url || null,
-    extraMedia: s.extra_media || null,
-    mediaUrls: s.media_urls || null,
+    extraMedia: typeof s.extra_media === 'string' ? s.extra_media : null,
+    mediaUrls: typeof s.media_urls === 'string' ? s.media_urls : null,
     buttonText: s.button_text?.trim() || 'বিস্তারিত',
 
     titleFont: s.title_font || "'Hind Siliguri', sans-serif",
@@ -156,12 +163,12 @@ function toSlide(s: HeroSlide): Slide {
     contentPosV: s.content_pos_v || 'bottom',
     contentPosH: s.content_pos_h || 'left',
     showCardBg: s.show_card_bg ?? true,
-    cardWidthPct: s.card_width_pct ?? 90,
-    cardRadiusPct: s.card_radius_pct ?? 20,
-    cardPaddingVal: s.card_padding_val ?? 20,
-    cardBlur: s.card_blur ?? 12,
+    cardWidthPct: Number(s.card_width_pct) || 90,
+    cardRadiusPct: Number(s.card_radius_pct) || 20,
+    cardPaddingVal: Number(s.card_padding_val) || 20,
+    cardBlur: Number(s.card_blur) || 12,
     cardBgColor: s.card_bg_color || '#000000',
-    cardOpacity: s.card_opacity ?? 60,
+    cardOpacity: Number(s.card_opacity) || 60,
     fitMode: s.fit_mode || 'contain',
   }
 }
@@ -170,14 +177,16 @@ const isExternal = (u: string) => /^https?:\/\//i.test(u)
 const bn = (n: number) => n.toLocaleString('bn-BD')
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold'
 
-function getYoutubeInteractiveEmbed(url: string | null) {
-  if (!url) return null
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
-  const match = url.match(regExp)
-  if (match && match[2].length === 11) {
-    const id = match[2]
-    return `https://www.youtube.com/embed/${id}?enablejsapi=1&controls=1&rel=0&modestbranding=1&playsinline=1`
-  }
+// সুরক্ষিত ইউটিউব লিঙ্ক এক্সট্র্যাক্টর
+function getYoutubeInteractiveEmbed(url: any) {
+  if (!url || typeof url !== 'string') return null
+  try {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
+    const match = url.match(regExp)
+    if (match && match[2] && match[2].length === 11) {
+      return `https://www.youtube.com/embed/${match[2]}?enablejsapi=1&controls=1&rel=0&modestbranding=1&playsinline=1`
+    }
+  } catch {}
   return null
 }
 
@@ -193,8 +202,6 @@ export function HeroCarousel() {
   const [settings, setSettings] = useState<HeroSettings | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [index, setIndex] = useState(0)
-
-  // নেস্টেড একাধিক ছবি/ভিডিওর সাব-স্লাইড ইনডেক্স
   const [subMediaIdx, setSubMediaIdx] = useState(0)
 
   const [hoverPaused, setHoverPaused] = useState(false)
@@ -205,34 +212,41 @@ export function HeroCarousel() {
   const [reduceMotion, setReduceMotion] = useState(false)
   const [modalSlide, setModalSlide] = useState<Slide | null>(null)
 
-  // ব্রেকিং টেক্সট অ্যানিমেশন ও মিডিয়া স্লাইডার স্টেট
   const [autoEffectIdx, setAutoEffectIdx] = useState(0)
   const [breakingMediaIdx, setBreakingMediaIdx] = useState(0)
 
   const startRef = useRef<{ x: number; y: number } | null>(null)
   const total = slides.length
 
-  const slideMs = settings?.slide_speed ?? 4500
+  const slideMs = Number(settings?.slide_speed) || 4500
   const isUnlimited = slideMs <= 0
   const transMode = settings?.transition_type || 'fade'
   const isMotionEnabled = settings?.text_motion ?? true
 
   useEffect(() => {
     let on = true
-    Promise.all([getHeroSlides(), getHeroSettings()]).then(([rows, s]) => {
-      if (!on) return
-      const activeRows = rows.filter((r) => r.is_active && (!r.expires_at || new Date(r.expires_at) > new Date()))
-      setSlides(activeRows.map(toSlide))
-      setIndex(0)
-      setSettings(s)
-      setLoaded(true)
-    })
+    Promise.all([getHeroSlides(), getHeroSettings()])
+      .then(([rows, s]) => {
+        if (!on) return
+        const safeRows = Array.isArray(rows) ? rows : []
+        const activeRows = safeRows.filter(
+          (r) => r.is_active && (!r.expires_at || new Date(r.expires_at) > new Date())
+        )
+        setSlides(activeRows.map(toSlide))
+        setIndex(0)
+        setSettings(s)
+        setLoaded(true)
+      })
+      .catch(() => {
+        if (on) setLoaded(true)
+      })
+
     return () => {
       on = false
     }
   }, [])
 
-  // বর্তমান স্লাইডের সকল মিডিয়া লিস্ট (একক ছবি/ভিডিও + ডিভাইস থেকে আপলোড করা একাধিক ফাইল)
+  // মিডিয়া লিস্ট সুরক্ষিতভাবে তৈরি
   const currentSlide = slides[index] || null
   const currentMediaList: Array<{ type: 'image' | 'video'; url: string }> = []
   if (currentSlide) {
@@ -242,33 +256,42 @@ export function HeroCarousel() {
       currentMediaList.push({ type: 'image', url: currentSlide.image })
     }
 
-    if (currentSlide.mediaUrls) {
-      currentSlide.mediaUrls.split('\n').map((u) => u.trim()).filter(Boolean).forEach((u) => {
-        if (!currentMediaList.some((m) => m.url === u)) {
-          currentMediaList.push({
-            type: /youtube\.com|youtu\.be|\.mp4$/i.test(u) ? 'video' : 'image',
-            url: u,
+    if (currentSlide.mediaUrls && typeof currentSlide.mediaUrls === 'string') {
+      try {
+        currentSlide.mediaUrls
+          .split(/[\n,]+/)
+          .map((u) => u.trim())
+          .filter(Boolean)
+          .forEach((u) => {
+            if (!currentMediaList.some((m) => m.url === u)) {
+              currentMediaList.push({
+                type: /youtube\.com|youtu\.be|\.mp4$/i.test(u) ? 'video' : 'image',
+                url: u,
+              })
+            }
           })
-        }
-      })
+      } catch {}
     }
   }
 
   const currentMedia = currentMediaList[subMediaIdx] || currentMediaList[0] || null
   const currentIsVideo = currentMedia?.type === 'video'
 
-  const go = useCallback((nextIdx: number) => {
-    setIndex((nextIdx + total) % total)
-    setSubMediaIdx(0) // নতুন মূল স্লাইডে গেলে সাব-স্লাইড শুরুতে যাবে
-  }, [total])
+  const go = useCallback(
+    (nextIdx: number) => {
+      if (total === 0) return
+      setIndex((nextIdx + total) % total)
+      setSubMediaIdx(0)
+    },
+    [total]
+  )
 
-  // নেস্টেড স্লাইড প্লেব্যাক: সাব-স্লাইড শেষ হলে তবেই পরের মূল স্লাইডে যাবে
   const handleNextStep = useCallback(() => {
     if (currentMediaList.length > 1 && subMediaIdx < currentMediaList.length - 1) {
       setSubMediaIdx((prev) => prev + 1)
     } else {
       setSubMediaIdx(0)
-      setIndex((i) => (i + 1) % total)
+      if (total > 0) setIndex((i) => (i + 1) % total)
     }
   }, [currentMediaList.length, subMediaIdx, total])
 
@@ -287,7 +310,6 @@ export function HeroCarousel() {
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [])
 
-  // ব্রেকিং মোডে টেক্সট অ্যানিমেশন রোটেশন
   useEffect(() => {
     if (settings?.breaking_text_effect === 'auto') {
       const timer = setInterval(() => {
@@ -297,7 +319,6 @@ export function HeroCarousel() {
     }
   }, [settings?.breaking_text_effect])
 
-  // ব্রেকিং একাধিক মিডিয়া লিস্ট
   const breakingMediaList: Array<{ type: 'image' | 'video'; url: string }> = []
   if (settings?.breaking_media_url) {
     breakingMediaList.push({
@@ -305,14 +326,16 @@ export function HeroCarousel() {
       url: settings.breaking_media_url,
     })
   }
-  if (settings?.breaking_extra_media) {
-    const extras = settings.breaking_extra_media.split(/[\n,]+/).map((u) => u.trim()).filter(Boolean)
-    extras.forEach((u) => {
-      breakingMediaList.push({
-        type: /youtube\.com|youtu\.be|\.mp4$/i.test(u) ? 'video' : 'image',
-        url: u,
+  if (settings?.breaking_extra_media && typeof settings.breaking_extra_media === 'string') {
+    try {
+      const extras = settings.breaking_extra_media.split(/[\n,]+/).map((u) => u.trim()).filter(Boolean)
+      extras.forEach((u) => {
+        breakingMediaList.push({
+          type: /youtube\.com|youtu\.be|\.mp4$/i.test(u) ? 'video' : 'image',
+          url: u,
+        })
       })
-    })
+    } catch {}
   }
 
   useEffect(() => {
@@ -371,7 +394,7 @@ export function HeroCarousel() {
     )
   }
 
-  // ২০টি আন্তর্জাতিক ট্রানজিশন স্টাইল
+  // ২০টি ট্রানজিশন ক্লাস
   const getTransitionClass = (isActive: boolean) => {
     switch (transMode) {
       case 'slide-left': return isActive ? 'translate-x-0 opacity-100 z-10' : 'translate-x-full opacity-0 pointer-events-none z-0'
@@ -406,45 +429,17 @@ export function HeroCarousel() {
         href="https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@400;600;700;800&family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Noto+Sans+Bengali:wght@300;400;600;700&family=Playfair+Display:wght@600;700;800&family=Roboto:wght@400;500;700&family=Tiro+Bangla&display=swap"
       />
 
-      <style>{`
-        @keyframes heroProgress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-        @keyframes textEntrance { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes shapePulseDynamic { 0%, 100% { transform: scale(0.85); opacity: 0.8; } 50% { transform: scale(1.3); opacity: 1; filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.95)); } }
-        @keyframes radarWave { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
-        @keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes typewriterText { from { width: 0; opacity: 0; } to { width: 100%; opacity: 1; } }
-        @keyframes zoomPopText { 0% { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes neonGlowText { 0%, 100% { text-shadow: 0 0 5px #fff, 0 0 15px #f43f5e, 0 0 30px #f43f5e; } 50% { text-shadow: 0 0 2px #fff, 0 0 8px #f43f5e; } }
-        @keyframes bounceInText { 0% { transform: translateY(-40px); opacity: 0; } 60% { transform: translateY(10px); opacity: 1; } 80% { transform: translateY(-5px); } 100% { transform: translateY(0); } }
-        @keyframes flip3DText { 0% { transform: perspective(400px) rotateX(90deg); opacity: 0; } 100% { transform: perspective(400px) rotateX(0deg); opacity: 1; } }
-        @keyframes cyberGlitchText { 0%, 100% { transform: translate(0); } 20% { transform: translate(-3px, 2px); } 40% { transform: translate(3px, -2px); } 60% { transform: translate(-2px, -2px); } 80% { transform: translate(2px, 2px); } }
-        @keyframes smokeFadeText { 0% { filter: blur(14px); opacity: 0; transform: scale(1.06); } 100% { filter: blur(0); opacity: 1; transform: scale(1); } }
-        @keyframes letterWaveText { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        @keyframes slideLeftText { 0% { transform: translateX(80px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-        @keyframes slideRightText { 0% { transform: translateX(-80px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-        @keyframes slideUpDropText { 0% { transform: translateY(50px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-        @keyframes rotateDropText { 0% { transform: rotate(-15deg) translateY(-30px); opacity: 0; } 100% { transform: rotate(0) translateY(0); opacity: 1; } }
-        @keyframes flashBlinkText { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
-        @keyframes shakeAlertText { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
-        @keyframes rainbowShiftText { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
-        @keyframes trackingExpandText { 0% { letter-spacing: -4px; opacity: 0; } 100% { letter-spacing: normal; opacity: 1; } }
-        @keyframes shadowBurstText { 0% { text-shadow: 0 0 0 rgba(255,255,255,0); opacity: 0; } 50% { text-shadow: 0 0 25px rgba(255,255,255,0.9); } 100% { text-shadow: 0 2px 8px rgba(0,0,0,0.8); opacity: 1; } }
-        @keyframes goldenShimmerText { 0% { filter: drop-shadow(0 0 2px #eab308); } 50% { filter: drop-shadow(0 0 15px #facc15) brightness(1.2); } 100% { filter: drop-shadow(0 0 2px #eab308); } }
-        @keyframes twist3DText { 0% { transform: rotate(-10deg) scale(0.85); opacity: 0; } 100% { transform: rotate(0) scale(1); opacity: 1; } }
-        @keyframes smoothFloatText { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-      `}</style>
-
       {/* ========================================================
-          ১. জরুরি ব্রেকিং মোড স্ক্রিন (সবার উপরে স্বাধীনভাবে থাকবে)
+          ১. জরুরি ব্রেকিং মোড (সবার ওপরে স্বাধীনভাবে অবস্থান করবে)
       ======================================================== */}
       {settings?.breaking_on && (
         <section className="relative overflow-hidden border-b border-red-900/60 shadow-2xl">
           {(() => {
             const bLink = settings.breaking_link
             const bBtn = settings.breaking_btn_text || 'বিস্তারিত'
-            const shapeSpeedPct = settings.breaking_pulse_speed_pct ?? 50
+            const shapeSpeedPct = Number(settings.breaking_pulse_speed_pct) || 50
             const shapePulseSec = Math.max(0.4, 3.5 - (shapeSpeedPct / 100) * 3.1).toFixed(2)
-            const textSpeedPct = settings.breaking_text_speed_pct ?? 50
+            const textSpeedPct = Number(settings.breaking_text_speed_pct) || 50
             const textAnimSec = Math.max(0.4, 3.5 - (textSpeedPct / 100) * 3.0).toFixed(2)
 
             const activeTextEffect =
@@ -493,14 +488,14 @@ export function HeroCarousel() {
                   <div className="absolute top-4 right-4 z-20 flex gap-2">
                     <button
                       onClick={() => setBreakingMediaIdx((p) => (p - 1 + breakingMediaList.length) % breakingMediaList.length)}
-                      className="p-2 rounded-full bg-black/60 text-white backdrop-blur hover:bg-white hover:text-black transition-all"
+                      className="p-2 rounded-full bg-black/60 text-white backdrop-blur hover:bg-white hover:text-black transition-all cursor-pointer"
                       aria-label="আগের মিডিয়া"
                     >
                       <ChevronLeft className="size-4" />
                     </button>
                     <button
                       onClick={() => setBreakingMediaIdx((p) => (p + 1) % breakingMediaList.length)}
-                      className="p-2 rounded-full bg-black/60 text-white backdrop-blur hover:bg-white hover:text-black transition-all"
+                      className="p-2 rounded-full bg-black/60 text-white backdrop-blur hover:bg-white hover:text-black transition-all cursor-pointer"
                       aria-label="পরের মিডিয়া"
                     >
                       <ChevronRight className="size-4" />
@@ -512,56 +507,17 @@ export function HeroCarousel() {
 
                 <div className="relative z-10 mx-auto w-full max-w-5xl px-6 sm:px-12 pointer-events-auto">
                   <div className="inline-flex items-center gap-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 text-xs sm:text-sm font-bold tracking-wider text-white shadow-2xl">
-                    {badgeStyle === 'radar-wave' ? (
-                      <span className="relative flex size-3.5 items-center justify-center">
-                        <span
-                          style={{ animation: `radarWave ${shapePulseSec}s cubic-bezier(0, 0, 0.2, 1) infinite` }}
-                          className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"
-                        />
-                        <span className="relative inline-flex size-2 rounded-full bg-red-600" />
-                      </span>
-                    ) : badgeStyle === 'spinning-star' ? (
-                      <span style={{ animation: `spinSlow ${shapePulseSec}s linear infinite` }} className="text-amber-400 text-sm inline-block">⭐</span>
-                    ) : badgeStyle === 'fire-flame' ? (
-                      <span style={{ animation: `shapePulseDynamic ${shapePulseSec}s ease-in-out infinite` }} className="text-sm inline-block">🔥</span>
-                    ) : badgeStyle === 'flash-lightning' ? (
-                      <span style={{ animation: `shapePulseDynamic ${shapePulseSec}s ease-in-out infinite` }} className="text-amber-300 text-sm inline-block">⚡</span>
-                    ) : badgeStyle === 'diamond-pulse' ? (
-                      <span style={{ animation: `shapePulseDynamic ${shapePulseSec}s ease-in-out infinite` }} className="size-3 bg-amber-400 rotate-45 rounded-sm shrink-0" />
-                    ) : (
-                      <span style={{ animation: `shapePulseDynamic ${shapePulseSec}s ease-in-out infinite` }} className="size-3 rounded-full bg-red-600 shrink-0 shadow-[0_0_8px_#ef4444]" />
-                    )}
+                    <span
+                      style={{ animation: `shapePulseDynamic ${shapePulseSec}s ease-in-out infinite` }}
+                      className="size-3 rounded-full bg-red-600 shrink-0 shadow-[0_0_8px_#ef4444]"
+                    />
                     <span>ব্রেকিং নিউজ / BREAKING NEWS</span>
                   </div>
 
                   {settings.breaking_title && (
                     <h2
-                      key={activeTextEffect + settings.breaking_title}
                       className={cn('mt-4 text-balance font-serif font-bold leading-snug drop-shadow-md', getSizeClass(settings.breaking_title_size))}
-                      style={{
-                        color: settings.breaking_title_color || '#ffffff',
-                        animation:
-                          activeTextEffect === 'zoom-pop' ? `zoomPopText ${textAnimSec}s cubic-bezier(0.16, 1, 0.3, 1) forwards` :
-                          activeTextEffect === 'neon-pulse' ? `neonGlowText ${textAnimSec}s ease-in-out infinite` :
-                          activeTextEffect === 'bounce-in' ? `bounceInText ${textAnimSec}s cubic-bezier(0.36, 0, 0.66, -0.56) forwards` :
-                          activeTextEffect === 'flip-3d' ? `flip3DText ${textAnimSec}s ease-out forwards` :
-                          activeTextEffect === 'cyber-glitch' ? `cyberGlitchText ${textAnimSec}s steps(2, start) infinite` :
-                          activeTextEffect === 'smoke-fade' ? `smokeFadeText ${textAnimSec}s ease-out forwards` :
-                          activeTextEffect === 'letter-wave' ? `letterWaveText ${textAnimSec}s ease-in-out infinite` :
-                          activeTextEffect === 'slide-left' ? `slideLeftText ${textAnimSec}s ease-out forwards` :
-                          activeTextEffect === 'slide-right' ? `slideRightText ${textAnimSec}s ease-out forwards` :
-                          activeTextEffect === 'slide-up-drop' ? `slideUpDropText ${textAnimSec}s ease-out forwards` :
-                          activeTextEffect === 'rotate-drop' ? `rotateDropText ${textAnimSec}s ease-out forwards` :
-                          activeTextEffect === 'flash-blink' ? `flashBlinkText ${textAnimSec}s ease-in-out infinite` :
-                          activeTextEffect === 'shake-alert' ? `shakeAlertText ${textAnimSec}s ease-in-out infinite` :
-                          activeTextEffect === 'rainbow-shift' ? `rainbowShiftText ${textAnimSec}s linear infinite` :
-                          activeTextEffect === 'tracking-expand' ? `trackingExpandText ${textAnimSec}s ease-out forwards` :
-                          activeTextEffect === 'shadow-burst' ? `shadowBurstText ${textAnimSec}s ease-out forwards` :
-                          activeTextEffect === 'golden-shimmer' ? `goldenShimmerText ${textAnimSec}s ease-in-out infinite` :
-                          activeTextEffect === 'twist-3d' ? `twist3DText ${textAnimSec}s ease-out forwards` :
-                          activeTextEffect === 'smooth-float' ? `smoothFloatText ${textAnimSec}s ease-in-out infinite` :
-                          `typewriterText ${textAnimSec}s ease-out forwards`,
-                      }}
+                      style={{ color: settings.breaking_title_color || '#ffffff' }}
                     >
                       {settings.breaking_title}
                     </h2>
@@ -596,7 +552,7 @@ export function HeroCarousel() {
       )}
 
       {/* ========================================================
-          ২. মূল হিরো স্লাইডার (ব্রেকিং মোডের ঠিক নিচেই চলবে)
+          ২. মূল হিরো স্লাইডার (ব্রেকিং মোডের নিচেই স্বাচ্ছন্দ্যে চলবে)
       ======================================================== */}
       {slides.length > 0 && (
         <section aria-roledescription="carousel" aria-label="Featured stories" className="relative">
@@ -638,7 +594,7 @@ export function HeroCarousel() {
                   aria-hidden={!isActive}
                   className={cn('absolute inset-0 transition-all duration-700 ease-in-out', getTransitionClass(isActive))}
                 >
-                  {/* মিডিয়া রেন্ডারার */}
+                  {/* মিডিয়া প্লেয়ার */}
                   {currentMedia?.type === 'video' ? (
                     isActive ? (
                       ytUrl ? (
@@ -736,7 +692,7 @@ export function HeroCarousel() {
                               : undefined,
                         }}
                       >
-                        {/* ব্যাজ (স্বাধীন ফন্ট, সাইজ ও কালারসহ) */}
+                        {/* ব্যাজ */}
                         {(slide.category || slide.date) && (
                           <div
                             className={cn(
@@ -768,7 +724,7 @@ export function HeroCarousel() {
                           </div>
                         )}
 
-                        {/* শিরোনাম (স্বাধীন ফন্ট, সাইজ, স্টাইল, কালার ও ব্যাকগ্রাউন্ড হাইলাইটসহ) */}
+                        {/* শিরোনাম */}
                         {slide.title && (
                           <h2
                             className={cn('mt-3 text-balance leading-snug', getSizeClass(slide.titleSize), getStyleClass(slide.titleStyle))}
@@ -791,7 +747,7 @@ export function HeroCarousel() {
                           </h2>
                         )}
 
-                        {/* বিবরণ (স্বাধীন ফন্ট, সাইজ, স্টাইল ও কালারসহ) */}
+                        {/* বিবরণ */}
                         {slide.summary && (
                           <p
                             className={cn('mt-2.5 line-clamp-3 text-pretty leading-relaxed', getSizeClass(slide.summarySize), getStyleClass(slide.summaryStyle))}
@@ -804,7 +760,7 @@ export function HeroCarousel() {
                           </p>
                         )}
 
-                        {/* বাটন (স্বাধীন ফন্ট, সাইজ, টেক্সট কালার ও ব্যাকগ্রাউন্ড কালারসহ) */}
+                        {/* বাটন */}
                         {(slide.link || slide.summary) && (
                           <div
                             className={cn(
@@ -837,7 +793,7 @@ export function HeroCarousel() {
                                 type="button"
                                 onClick={() => setModalSlide(slide)}
                                 tabIndex={isActive ? 0 : -1}
-                                className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-semibold transition-all hover:gap-3 shadow-lg"
+                                className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-semibold transition-all hover:gap-3 shadow-lg cursor-pointer"
                                 style={{
                                   backgroundColor: slide.btnBgColor || '#15803d',
                                   color: slide.btnColor || '#ffffff',
@@ -868,7 +824,7 @@ export function HeroCarousel() {
                       onClick={() => setUserPaused((p) => !p)}
                       aria-label={userPaused ? 'অটোপ্লে চালু করুন' : 'অটোপ্লে বন্ধ করুন'}
                       className={cn(
-                        'flex size-9 sm:size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand',
+                        'flex size-9 sm:size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand cursor-pointer',
                         focusRing,
                       )}
                     >
@@ -880,7 +836,7 @@ export function HeroCarousel() {
                     onClick={() => go(index - 1)}
                     aria-label="আগের স্লাইড"
                     className={cn(
-                      'flex size-9 sm:size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand',
+                      'flex size-9 sm:size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand cursor-pointer',
                       focusRing,
                     )}
                   >
@@ -891,7 +847,7 @@ export function HeroCarousel() {
                     onClick={() => go(index + 1)}
                     aria-label="পরের স্লাইড"
                     className={cn(
-                      'flex size-9 sm:size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand',
+                      'flex size-9 sm:size-10 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur transition-colors hover:bg-white hover:text-brand cursor-pointer',
                       focusRing,
                     )}
                   >
@@ -908,7 +864,7 @@ export function HeroCarousel() {
                       aria-label={`${bn(i + 1)} নম্বর স্লাইডে যান`}
                       aria-current={i === index}
                       className={cn(
-                        'h-2 rounded-full transition-all',
+                        'h-2 rounded-full transition-all cursor-pointer',
                         focusRing,
                         i === index ? 'w-8 bg-gold' : 'w-2 bg-white/60 hover:bg-white',
                       )}
@@ -918,7 +874,7 @@ export function HeroCarousel() {
               </>
             )}
 
-            {/* প্রোগ্রেস বার (নেস্টেড সাব-স্লাইড ও মূল স্লাইড হ্যান্ডলার) */}
+            {/* প্রোগ্রেস বার */}
             {canAutoplay && (
               <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 z-20" aria-hidden="true">
                 <div
@@ -942,7 +898,7 @@ export function HeroCarousel() {
           <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl space-y-4">
             <button
               onClick={() => setModalSlide(null)}
-              className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-black"
+              className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-black cursor-pointer"
               aria-label="বন্ধ করুন"
             >
               <X className="size-5" />
@@ -985,7 +941,7 @@ export function HeroCarousel() {
 
             <button
               onClick={() => setModalSlide(null)}
-              className="w-full bg-slate-900 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-slate-800"
+              className="w-full bg-slate-900 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-slate-800 cursor-pointer"
             >
               ঠিক আছে
             </button>
