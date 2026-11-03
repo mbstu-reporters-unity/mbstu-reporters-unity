@@ -66,7 +66,6 @@ type Slide = {
   fitMode: 'contain' | 'cover'
 }
 
-// ১০০% সুরক্ষিত আরজিবিএ কনভার্টার (কখনো ক্র্যাশ করবে না)
 function hexToRgba(hex: any, opacity: any) {
   const alpha = (Number(opacity) || 60) / 100
   if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return `rgba(0, 0, 0, ${alpha})`
@@ -81,7 +80,6 @@ function hexToRgba(hex: any, opacity: any) {
   }
 }
 
-// সুরক্ষিত সাইজ ক্লাস
 const getSizeClass = (s?: string | null) => {
   switch (s) {
     case 'sm': return 'text-xs sm:text-sm'
@@ -95,7 +93,6 @@ const getSizeClass = (s?: string | null) => {
   }
 }
 
-// সুরক্ষিত স্টাইল ক্লাস
 const getStyleClass = (st?: string | null) => {
   switch (st) {
     case 'italic': return 'italic font-normal'
@@ -106,7 +103,6 @@ const getStyleClass = (st?: string | null) => {
   }
 }
 
-// সুরক্ষিত ডেট ফরম্যাটার
 function safeDate(d: any) {
   if (!d) return ''
   try {
@@ -177,7 +173,6 @@ const isExternal = (u: string) => /^https?:\/\//i.test(u)
 const bn = (n: number) => n.toLocaleString('bn-BD')
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold'
 
-// সুরক্ষিত ইউটিউব লিঙ্ক এক্সট্র্যাক্টর
 function getYoutubeInteractiveEmbed(url: any) {
   if (!url || typeof url !== 'string') return null
   try {
@@ -246,7 +241,6 @@ export function HeroCarousel() {
     }
   }, [])
 
-  // মিডিয়া লিস্ট সুরক্ষিতভাবে তৈরি
   const currentSlide = slides[index] || null
   const currentMediaList: Array<{ type: 'image' | 'video'; url: string }> = []
   if (currentSlide) {
@@ -386,15 +380,7 @@ export function HeroCarousel() {
     }
   }
 
-  if (!loaded) {
-    return (
-      <section id="home" className="bg-navy">
-        <div className="h-[480px] sm:h-[540px] lg:h-[620px]" />
-      </section>
-    )
-  }
-
-  // ২০টি ট্রানজিশন ক্লাস
+  // ট্রানজিশন ক্লাস
   const getTransitionClass = (isActive: boolean) => {
     switch (transMode) {
       case 'slide-left': return isActive ? 'translate-x-0 opacity-100 z-10' : 'translate-x-full opacity-0 pointer-events-none z-0'
@@ -421,17 +407,49 @@ export function HeroCarousel() {
     }
   }
 
-  return (
-    <div id="home" className="flex flex-col bg-navy relative">
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@400;600;700;800&family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Noto+Sans+Bengali:wght@300;400;600;700&family=Playfair+Display:wght@600;700;800&family=Roboto:wght@400;500;700&family=Tiro+Bangla&display=swap"
-      />
+  // লোডিং হওয়ার আগ পর্যন্ত বা কোনো কনটেন্ট না থাকলে সুরক্ষিত কন্টেইনার
+  if (!loaded) {
+    return (
+      <section id="home" className="bg-navy">
+        <div className="h-[480px] sm:h-[540px] lg:h-[620px]" />
+      </section>
+    )
+  }
 
-      {/* ========================================================
-          ১. জরুরি ব্রেকিং মোড (সবার ওপরে স্বাধীনভাবে অবস্থান করবে)
-      ======================================================== */}
+  return (
+    <div id="home" className="flex flex-col bg-navy relative min-h-[50px]">
+      {/* সুরক্ষিত সিএসএস ফন্ট ও অ্যানিমেশন (হাইড্রেশন ক্র্যাশ মুক্ত) */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@400;600;700;800&family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Noto+Sans+Bengali:wght@300;400;600;700&family=Playfair+Display:wght@600;700;800&family=Roboto:wght@400;500;700&family=Tiro+Bangla&display=swap');
+
+        @keyframes heroProgress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        @keyframes textEntrance { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shapePulseDynamic { 0%, 100% { transform: scale(0.85); opacity: 0.8; } 50% { transform: scale(1.3); opacity: 1; filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.95)); } }
+        @keyframes radarWave { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
+        @keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes typewriterText { from { width: 0; opacity: 0; } to { width: 100%; opacity: 1; } }
+        @keyframes zoomPopText { 0% { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes neonGlowText { 0%, 100% { text-shadow: 0 0 5px #fff, 0 0 15px #f43f5e, 0 0 30px #f43f5e; } 50% { text-shadow: 0 0 2px #fff, 0 0 8px #f43f5e; } }
+        @keyframes bounceInText { 0% { transform: translateY(-40px); opacity: 0; } 60% { transform: translateY(10px); opacity: 1; } 80% { transform: translateY(-5px); } 100% { transform: translateY(0); } }
+        @keyframes flip3DText { 0% { transform: perspective(400px) rotateX(90deg); opacity: 0; } 100% { transform: perspective(400px) rotateX(0deg); opacity: 1; } }
+        @keyframes cyberGlitchText { 0%, 100% { transform: translate(0); } 20% { transform: translate(-3px, 2px); } 40% { transform: translate(3px, -2px); } 60% { transform: translate(-2px, -2px); } 80% { transform: translate(2px, 2px); } }
+        @keyframes smokeFadeText { 0% { filter: blur(14px); opacity: 0; transform: scale(1.06); } 100% { filter: blur(0); opacity: 1; transform: scale(1); } }
+        @keyframes letterWaveText { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes slideLeftText { 0% { transform: translateX(80px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+        @keyframes slideRightText { 0% { transform: translateX(-80px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+        @keyframes slideUpDropText { 0% { transform: translateY(50px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+        @keyframes rotateDropText { 0% { transform: rotate(-15deg) translateY(-30px); opacity: 0; } 100% { transform: rotate(0) translateY(0); opacity: 1; } }
+        @keyframes flashBlinkText { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+        @keyframes shakeAlertText { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+        @keyframes rainbowShiftText { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+        @keyframes trackingExpandText { 0% { letter-spacing: -4px; opacity: 0; } 100% { letter-spacing: normal; opacity: 1; } }
+        @keyframes shadowBurstText { 0% { text-shadow: 0 0 0 rgba(255,255,255,0); opacity: 0; } 50% { text-shadow: 0 0 25px rgba(255,255,255,0.9); } 100% { text-shadow: 0 2px 8px rgba(0,0,0,0.8); opacity: 1; } }
+        @keyframes goldenShimmerText { 0% { filter: drop-shadow(0 0 2px #eab308); } 50% { filter: drop-shadow(0 0 15px #facc15) brightness(1.2); } 100% { filter: drop-shadow(0 0 2px #eab308); } }
+        @keyframes twist3DText { 0% { transform: rotate(-10deg) scale(0.85); opacity: 0; } 100% { transform: rotate(0) scale(1); opacity: 1; } }
+        @keyframes smoothFloatText { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+      `}</style>
+
+      {/* ১. জরুরি ব্রেকিং মোড */}
       {settings?.breaking_on && (
         <section className="relative overflow-hidden border-b border-red-900/60 shadow-2xl">
           {(() => {
@@ -516,6 +534,7 @@ export function HeroCarousel() {
 
                   {settings.breaking_title && (
                     <h2
+                      key={activeTextEffect + settings.breaking_title}
                       className={cn('mt-4 text-balance font-serif font-bold leading-snug drop-shadow-md', getSizeClass(settings.breaking_title_size))}
                       style={{ color: settings.breaking_title_color || '#ffffff' }}
                     >
@@ -551,9 +570,7 @@ export function HeroCarousel() {
         </section>
       )}
 
-      {/* ========================================================
-          ২. মূল হিরো স্লাইডার (ব্রেকিং মোডের নিচেই স্বাচ্ছন্দ্যে চলবে)
-      ======================================================== */}
+      {/* ২. মূল হিরো স্লাইডার */}
       {slides.length > 0 && (
         <section aria-roledescription="carousel" aria-label="Featured stories" className="relative">
           <div
@@ -594,7 +611,7 @@ export function HeroCarousel() {
                   aria-hidden={!isActive}
                   className={cn('absolute inset-0 transition-all duration-700 ease-in-out', getTransitionClass(isActive))}
                 >
-                  {/* মিডিয়া প্লেয়ার */}
+                  {/* মিডিয়া রেন্ডারার */}
                   {currentMedia?.type === 'video' ? (
                     isActive ? (
                       ytUrl ? (
@@ -638,7 +655,7 @@ export function HeroCarousel() {
                     </div>
                   )}
 
-                  {/* নেস্টেড একাধিক ছবি থাকলে সাব-ইন্ডিকেটর */}
+                  {/* নেস্টেড সাব-ইন্ডিকেটর */}
                   {isActive && currentMediaList.length > 1 && (
                     <div className="absolute top-4 left-6 z-20 flex items-center gap-1.5 bg-black/50 backdrop-blur px-3 py-1 rounded-full">
                       <span className="text-[11px] text-white/90">
@@ -647,7 +664,7 @@ export function HeroCarousel() {
                     </div>
                   )}
 
-                  {/* স্বাধীন টেক্সট টুলস ও গ্লাস কার্ড */}
+                  {/* টেক্সট ও গ্লাস কার্ড */}
                   {hasAnyText && (
                     <div
                       className={cn(
