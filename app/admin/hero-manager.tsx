@@ -22,14 +22,16 @@ import {
 } from "../../lib/hero"
 import type { HeroSlide } from "../../lib/hero"
 
+// ক্র্যাশ রোধে সেফ cn ফাংশন
+function cn(...classes: (string | boolean | undefined | null)[]) {
+  return classes.filter(Boolean).join(" ")
+}
+
 const inp = "w-full border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm bg-slate-950 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
 const selectInp = "w-full border border-slate-700 rounded-xl px-3 py-2 text-sm bg-slate-950 text-white focus:outline-none focus:border-green-500 transition-all"
 const btnSave = "w-full bg-green-700 hover:bg-green-600 text-white rounded-xl py-3 font-semibold text-sm transition-all disabled:opacity-50 shadow-lg cursor-pointer"
 const cardBox = "bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4"
-// cn হেল্পার ফাংশন (যাতে কোনো পাথ বা ইমপোর্ট মিস না হয়)
-function cn(...classes: (string | boolean | undefined | null)[]) {
-  return classes.filter(Boolean).join(" ")
-}
+
 function hexToRgba(hex: any, opacity: any) {
   const alpha = (Number(opacity) || 60) / 100
   if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return `rgba(0, 0, 0, ${alpha})`
@@ -132,7 +134,6 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [expSel, setExpSel] = useState("none")
   const [oldExpires, setOldExpires] = useState<string | null>(null)
 
-  // সুরক্ষিত ডাটা লোড
   async function load() {
     try {
       const res = await getHeroSlides(token)
@@ -180,7 +181,6 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       .catch(() => {})
   }, [token])
 
-  // প্রিভিউ ইমেজ লিঙ্ক স্টেট (মেমোরি লিক ও ক্র্যাশ মুক্ত)
   const [previewImg, setPreviewImg] = useState<string>("/images/hero-1.png")
   useEffect(() => {
     if (Array.isArray(selectedFiles) && selectedFiles.length > 0 && typeof window !== "undefined") {
@@ -564,7 +564,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         </div>
       )}
 
-      {/* সেকশন ১: সার্বিক স্লাইডার গতি ও ২০টি ট্রানজিশন নিয়ন্ত্রণ */}
+      {/* সেকশন ১: সার্বিক স্লাইডার গতি ও ট্রানজিশন নিয়ন্ত্রণ */}
       <div className={cardBox}>
         <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
           <span className="text-lg">⚙️</span>
