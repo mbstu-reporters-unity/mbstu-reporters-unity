@@ -177,6 +177,20 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       .catch(() => {})
   }, [token])
 
+  // প্রিভিউ ইমেজ লিঙ্ক স্টেট (মেমোরি লিক ও ক্র্যাশ মুক্ত)
+  const [previewImg, setPreviewImg] = useState<string>("/images/hero-1.png")
+  useEffect(() => {
+    if (Array.isArray(selectedFiles) && selectedFiles.length > 0 && typeof window !== "undefined") {
+      try {
+        const url = URL.createObjectURL(selectedFiles[0])
+        setPreviewImg(url)
+        return () => URL.revokeObjectURL(url)
+      } catch {}
+    } else {
+      setPreviewImg(oldImage || "/images/hero-1.png")
+    }
+  }, [selectedFiles, oldImage])
+
   function applyTemplate(type: "classic" | "minimal" | "golden" | "compact") {
     if (type === "classic") {
       setShowCardBg(true)
@@ -538,14 +552,6 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
 
   const safeList = Array.isArray(list) ? list : []
   const safePosts = Array.isArray(posts) ? posts : []
-
-  // প্রিভিউ ছবির লিঙ্ক নির্ধারণ
-  let previewImg = oldImage || "/images/hero-1.png"
-  if (Array.isArray(selectedFiles) && selectedFiles.length > 0 && typeof window !== "undefined") {
-    try {
-      previewImg = URL.createObjectURL(selectedFiles[0])
-    } catch {}
-  }
 
   return (
     <div className="space-y-6 text-white max-w-4xl mx-auto pb-16">
@@ -991,5 +997,4 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   )
 }
 
-// ডিফল্ট এবং নেমড এক্সপোর্ট উভয়ই সংযুক্ত
 export { HeroManager }
