@@ -6,12 +6,12 @@ export type SubMediaType = "color" | "image" | "video" | "link_preview"
 export interface SubMediaItem {
   id: string
   type: SubMediaType
-  // কালার স্লাইডের জন্য:
+  // ১. কালার স্লাইডের জন্য:
   color?: string
   gradient?: string
-  // ছবি/ভিডিও/ফাইলের জন্য:
+  // ২ ও ৩. ছবি ও ভিডিওর ফাইলের জন্য:
   url?: string
-  // হাইপারলিংক বা সোশ্যাল লিংক প্রিভিউয়ের জন্য:
+  // ৪. হাইপারলিংক ও সোশ্যাল প্রিভিউয়ের জন্য:
   external_url?: string
   preview_title?: string
   preview_desc?: string
@@ -56,7 +56,7 @@ export const TEXT_EFFECTS_30 = [
   { label: "৩০. গ্রেডিয়েন্ট ফ্লো টেক্সট (Gradient Flow)", value: "gradient-flow" },
 ]
 
-// ফন্ট তালিকা
+// ফন্ট তালিকা (বাংলা ও ইংরেজি)
 export const FONTS = [
   { label: "হিন্দ শিলিগুড়ি (Hind Siliguri - বাংলা)", value: "'Hind Siliguri', sans-serif" },
   { label: "কালপুরুষ (Kalpurush - বাংলা)", value: "'Kalpurush', sans-serif" },
@@ -173,7 +173,7 @@ export function parseMediaOrLink(rawUrl: string): {
   if (!rawUrl || typeof rawUrl !== "string") return { isEmbedVideo: false }
   const url = rawUrl.trim()
 
-  // ১. YouTube
+  // ১. YouTube ভিডিও শনাক্তকরণ
   const ytMatch = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)
   if (ytMatch && ytMatch[2]?.length === 11) {
     return {
@@ -183,7 +183,7 @@ export function parseMediaOrLink(rawUrl: string): {
     }
   }
 
-  // ২. Facebook Video
+  // ২. Facebook Video শনাক্তকরণ
   if (url.includes("facebook.com") || url.includes("fb.watch")) {
     return {
       isEmbedVideo: true,
@@ -201,7 +201,7 @@ export function parseMediaOrLink(rawUrl: string): {
     }
   }
 
-  // ৪. সাধারণ হাইপারলিংক
+  // ৪. সাধারণ ওয়েবসাইট হাইপারলিংক
   return {
     isEmbedVideo: false,
     platform: "web",
@@ -226,7 +226,7 @@ export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   }
 }
 
-// ড্যাশবোর্ডে সাম্প্রতিক নিউজ ড্রপডাউন লোড
+// সাম্প্রতিক পোস্ট তালিকা (ড্রপডাউনে লিংকের জন্য)
 export async function getRecentPosts(): Promise<Array<{ id: string; title: string; image_url?: string; summary?: string }>> {
   try {
     const res = await fetch(
@@ -243,7 +243,7 @@ export async function getRecentPosts(): Promise<Array<{ id: string; title: strin
   }
 }
 
-// নতুন হিরো পোস্ট তৈরি (সর্বোচ্চ sort_order দেওয়া হবে যাতে সবার উপরে অবস্থান করে)
+// নতুন হিরো পোস্ট তৈরি (সর্বোচ্চ sort_order দেওয়া হবে যাতে তা সর্বদা সবার উপরে আসে)
 export async function createHeroSlide(token: string, data: Partial<HeroSlide>) {
   const currentTimestamp = Date.now()
   const payload = {
@@ -279,7 +279,7 @@ export async function deleteHeroSlide(token: string, id: string) {
   if (!res.ok) throw new Error("স্লাইড ডিলিট করা যায়নি")
 }
 
-// হিরো ও ব্রেকিং গ্লোবাল সেটিংস লোড
+// হিরো ও ব্রেকিং সেটিংস লোড
 export async function getHeroSettings(): Promise<HeroSettings | null> {
   try {
     const res = await fetch(`${SB_URL}/rest/v1/hero_settings?select=*&id=eq.1`, {
@@ -294,7 +294,7 @@ export async function getHeroSettings(): Promise<HeroSettings | null> {
   }
 }
 
-// সেটিংস সেভ
+// সেটিংস সংরক্ষণ
 export async function saveHeroSettings(token: string, data: Partial<HeroSettings>) {
   await fetch(`${SB_URL}/rest/v1/hero_settings?id=eq.1`, {
     method: "PATCH",
