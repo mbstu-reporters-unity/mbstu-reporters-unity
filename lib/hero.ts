@@ -63,7 +63,7 @@ export const BREAKING_BADGES = [
   { label: "🎆 ২১. রেইনবো শিফট (Rainbow Shift)", value: "rainbow-shift" },
 ]
 
-// ব্রেকিং শিরোনাম ও বিবরণের জন্য ২০টি ডাইনামিক টেক্সট ইফেক্ট
+// ব্রেকিং টেক্সট অ্যানিমেশন ইফেক্ট
 export const BREAKING_TEXT_EFFECTS = [
   { label: "🎲 স্বয়ংক্রিয় প্যাটার্ন (Auto Rotation - একা একাই বদলাবে)", value: "auto" },
   { label: "১. টাইপরাইটার ইফেক্ট (Typewriter)", value: "typewriter" },
@@ -112,6 +112,25 @@ export const FONT_WEIGHTS = [
   { label: "অতিরিক্ত গাঢ় (Extra Bold 800)", value: "800" },
 ]
 
+// লেখার সাইজ অপশন
+export const TEXT_SIZES = [
+  { label: "ছোট (Small)", value: "sm" },
+  { label: "স্বাভাবিক (Normal)", value: "base" },
+  { label: "মাঝারি (Medium)", value: "lg" },
+  { label: "বড় (Large)", value: "xl" },
+  { label: "অতিরিক্ত বড় (2XL)", value: "2xl" },
+  { label: "বিশাল (3XL)", value: "3xl" },
+  { label: "মেগা (4XL)", value: "4xl" },
+]
+
+// লেখার স্টাইল অপশন
+export const TEXT_STYLES = [
+  { label: "স্বাভাবিক (Normal)", value: "normal" },
+  { label: "গাঢ় (Bold)", value: "bold" },
+  { label: "ইটালিক (Italic বাঁকা)", value: "italic" },
+  { label: "বোল্ড ও ইটালিক (Bold Italic)", value: "bold-italic" },
+]
+
 export const MAX_LIVE = 100
 
 export type HeroSlide = {
@@ -124,12 +143,30 @@ export type HeroSlide = {
   media_type?: "image" | "video" | null
   video_url?: string | null
   extra_media?: string | null
+  media_urls?: string | null // ডিভাইস থেকে একসাথে আপলোড করা একাধিক মিডিয়া
   button_text?: string | null
+  // স্বাধীন শিরোনাম স্টাইল
+  title_font?: string | null
+  title_size?: string | null
+  title_style?: string | null
   title_color?: string | null
   title_bg_color?: string | null
+  // স্বাধীন বিবরণ স্টাইল
+  summary_font?: string | null
+  summary_size?: string | null
+  summary_style?: string | null
+  summary_color?: string | null
+  // স্বাধীন ব্যাজ স্টাইল
+  badge_font?: string | null
+  badge_size?: string | null
+  badge_text_color?: string | null
   badge_color?: string | null
-  font_family?: string | null
-  font_weight?: string | null
+  // স্বাধীন বাটন স্টাইল
+  btn_font?: string | null
+  btn_size?: string | null
+  btn_color?: string | null
+  btn_bg_color?: string | null
+  // অন্যান্য লেআউট ও কার্ড
   text_align?: "left" | "center" | "right" | null
   content_pos_v?: "top" | "center" | "bottom" | null
   content_pos_h?: "left" | "center" | "right" | null
@@ -160,6 +197,7 @@ export type HeroSettings = {
   breaking_media_type?: "none" | "image" | "video" | null
   breaking_media_url?: string | null
   breaking_extra_media?: string | null
+  breaking_media_urls?: string | null
   breaking_bg_color?: string | null
   breaking_bg_gradient?: string | null
   breaking_shape?: string | null
@@ -168,6 +206,10 @@ export type HeroSettings = {
   breaking_pulse_speed_pct?: number | null
   breaking_text_effect?: string | null
   breaking_text_speed_pct?: number | null
+  breaking_title_size?: string | null
+  breaking_title_color?: string | null
+  breaking_text_size?: string | null
+  breaking_text_color?: string | null
   max_slides?: number | null
   slide_speed?: number | null
   transition_type?: string | null
@@ -204,7 +246,7 @@ export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   }
 }
 
-// সাইটের পোস্টগুলো ড্রপডাউনে লোড করা
+// সাইটের পোস্টগুলো লোড করা
 export async function getRecentPosts(): Promise<Array<{ id: string; title: string; image_url?: string; summary?: string }>> {
   try {
     const res = await fetch(
