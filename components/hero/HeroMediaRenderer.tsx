@@ -2,7 +2,7 @@
 
 import React from 'react'
 import type { SubMediaItem } from '@/lib/hero'
-import { ExternalLink, Play } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 
 interface HeroMediaRendererProps {
   item: SubMediaItem
@@ -10,12 +10,12 @@ interface HeroMediaRendererProps {
   isActive: boolean
 }
 
-// ইউটিউব ও ফেসবুক এম্বেড রূপান্তর
+// সোশ্যাল ও ভিডিও প্ল্যাটফর্ম এম্বেড শনাক্তকরণ ফাংশন
 function getEmbedDetails(url?: string) {
   if (!url || typeof url !== 'string') return null
   const cleanUrl = url.trim()
 
-  // ইউটিউব লিংক শনাক্তকরণ
+  // ১. YouTube ভিডিও শনাক্তকরণ
   const ytMatch = cleanUrl.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)
   if (ytMatch && ytMatch[2]?.length === 11) {
     return {
@@ -24,7 +24,7 @@ function getEmbedDetails(url?: string) {
     }
   }
 
-  // ফেসবুক ভিডিও লিংক শনাক্তকরণ
+  // ২. Facebook ভিডিও শনাক্তকরণ
   if (cleanUrl.includes('facebook.com') || cleanUrl.includes('fb.watch')) {
     return {
       type: 'facebook',
@@ -38,7 +38,7 @@ function getEmbedDetails(url?: string) {
 export function HeroMediaRenderer({ item, fitMode = 'contain', isActive }: HeroMediaRendererProps) {
   const embed = getEmbedDetails(item.url || item.external_url)
 
-  // ১. কালার ব্যাকগ্রাউন্ড (সলিড RGB বা গ্রেডিয়েন্ট)
+  // ১. সলিড কালার বা গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড
   if (item.type === 'color') {
     const bgStyle = {
       background: item.gradient || item.color || '#0f172a',
@@ -48,10 +48,10 @@ export function HeroMediaRenderer({ item, fitMode = 'contain', isActive }: HeroM
         {item.link && (
           <a
             href={item.link}
-            target="_blank"
+            target={item.link.startsWith('http') ? '_blank' : '_self'}
             rel="noopener noreferrer"
             className="absolute inset-0 z-0 cursor-pointer"
-            aria-label="ভিজিট করুন"
+            aria-label="লিংকে যান"
           />
         )}
       </div>
@@ -66,15 +66,17 @@ export function HeroMediaRenderer({ item, fitMode = 'contain', isActive }: HeroM
         <img
           src={item.url || '/images/hero-1.png'}
           alt="Slide Media"
-          className={`w-full h-full transition-all duration-700 ${
+          className={`w-full h-full transition-all duration-700 select-none ${
             fitMode === 'cover' ? 'object-cover' : 'object-contain'
           }`}
           loading="eager"
+          draggable={false}
         />
+        {/* ছবিতে ক্লিক করলে নির্দিষ্ট লিংকে যাওয়ার ব্যবস্থা */}
         {item.link && (
           <a
             href={item.link}
-            target="_blank"
+            target={item.link.startsWith('http') ? '_blank' : '_self'}
             rel="noopener noreferrer"
             className="absolute inset-0 z-0 cursor-pointer"
             aria-label="ছবিতে ক্লিক করে লিংকে যান"
@@ -84,21 +86,21 @@ export function HeroMediaRenderer({ item, fitMode = 'contain', isActive }: HeroM
     )
   }
 
-  // ৩. ভিডিও সেকশন (ভিডিও ফাইল অথবা সোশ্যাল ভিডিও লিংক)
+  // ৩. ভিডিও সেকশন (ভিডিও ফাইল অথবা ইউটিউব/ফেসবুক ভিডিও লিংক)
   if (item.type === 'video') {
     return (
       <div className="relative w-full h-full flex items-center justify-center bg-black">
         {embed ? (
-          // যদি ইউটিউব বা ফেসবুক ভিডিও হয়
+          // সোশ্যাল ভিডিও এম্বেড প্লেয়ার (ইউটিউব/ফেসবুক)
           <iframe
             src={isActive ? embed.src : ''}
             className="w-full h-full aspect-video border-0 pointer-events-auto z-10"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-            title="Video Player"
+            title="Embedded Video Player"
           />
         ) : (
-          // যদি সরাসরি MP4 ফাইল বা আপলোড করা ভিডিও হয়
+          // সরাসরি MP4 ভিডিও প্লেয়ার
           <video
             src={item.url}
             controls
@@ -107,13 +109,13 @@ export function HeroMediaRenderer({ item, fitMode = 'contain', isActive }: HeroM
           />
         )}
 
-        {/* ঐচ্ছিক লিংক গার্ড (যদি ভিডিওর সাথে আলাদা বহিঃস্থ লিংক থাকে) */}
+        {/* ভিডিওর সাথে আলাদা বহিঃস্থ লিংক থাকলে প্রদর্শনের বোতাম */}
         {item.link && (
           <a
             href={item.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="absolute top-4 left-4 z-20 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 hover:bg-black text-white text-xs font-medium backdrop-blur transition-all border border-white/20"
+            className="absolute top-4 left-4 z-20 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/75 hover:bg-black text-white text-xs font-medium backdrop-blur transition-all border border-white/20 shadow-md"
           >
             <span>মূল লিংক দেখুন</span>
             <ExternalLink className="size-3" />
@@ -123,7 +125,7 @@ export function HeroMediaRenderer({ item, fitMode = 'contain', isActive }: HeroM
     )
   }
 
-  // ৪. হাইপারলিংক প্রিভিউ (সোশ্যাল বা ওয়েবসাইট লিংক কার্ড প্রিভিউ)
+  // ৪. হাইপারলিংক প্রিভিউ (সোশ্যাল বা ওয়েবসাইট লিংক কার্ড)
   if (item.type === 'link_preview') {
     const targetUrl = item.external_url || item.url || item.link || '#'
     return (
