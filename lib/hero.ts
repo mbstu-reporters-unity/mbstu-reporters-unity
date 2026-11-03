@@ -1,18 +1,31 @@
 import { SB_URL, SB_KEY } from "./sb"
 
+// ৪ ধরণের মিডিয়া ও সাব-স্লাইডের টাইপ
+export type SubMediaType = "color" | "image" | "video" | "link_preview"
+
 export interface SubMediaItem {
   id: string
-  type: "color" | "image" | "video"
-  url?: string
-  link?: string
+  type: SubMediaType
+  // কালার স্লাইডের জন্য:
   color?: string
   gradient?: string
+  // ছবি/ভিডিও/ফাইলের জন্য:
+  url?: string
+  // হাইপারলিংক বা সোশ্যাল লিংক প্রিভিউয়ের জন্য:
+  external_url?: string
+  preview_title?: string
+  preview_desc?: string
+  preview_image?: string
+  is_embed_video?: boolean
+  embed_src?: string
+  // প্রতিটি স্লাইডের নিজস্ব ঐচ্ছিক ক্লিক লিংক:
+  link?: string
 }
 
-// ৩০টি চমৎকার টেক্সট অ্যানিমেশন ইফেক্ট
+// ৩০টি চমৎকার ও আধুনিক টেক্সট অ্যানিমেশন ইফেক্ট
 export const TEXT_EFFECTS_30 = [
-  { label: "১. ফেড আপ ড্রপ (Fade Up)", value: "fade-up" },
-  { label: "২. টাইপরাইটার (Typewriter)", value: "typewriter" },
+  { label: "১. ফেড আপ ড্রপ (Fade Up Smooth)", value: "fade-up" },
+  { label: "২. টাইপরাইটার ইফেক্ট (Typewriter)", value: "typewriter" },
   { label: "৩. জুম ইন পপ (Zoom Pop)", value: "zoom-pop" },
   { label: "৪. নিয়ন পালস গ্লো (Neon Glow)", value: "neon-pulse" },
   { label: "৫. টেক্সট বাউন্স ইন (Text Bounce)", value: "bounce-in" },
@@ -32,8 +45,8 @@ export const TEXT_EFFECTS_30 = [
   { label: "১৯. গোল্ডেন শাইন শিমার (Golden Shimmer)", value: "golden-shimmer" },
   { label: "২০. টুইস্ট ৩ডি (Twist 3D)", value: "twist-3d" },
   { label: "২১. স্মুথ ফ্লোটিং (Smooth Float)", value: "smooth-float" },
-  { label: "২২. সুইং পেন্ডুলাম (Swing In)", value: "swing-in" },
-  { label: "২৩. সিনেমাটিক ড্রিফট (Ken Burns)", value: "ken-burns" },
+  { label: "২২. সুইং পেন্ডুলাম (Swing In 3D)", value: "swing-in" },
+  { label: "২৩. সিনেমাটিক ড্রিফট (Ken Burns Pan)", value: "ken-burns" },
   { label: "২৪. স্পটলাইট রিভিল (Spotlight)", value: "spotlight" },
   { label: "২৫. রাবার ব্যান্ড পপ (Rubber Band)", value: "rubber-band" },
   { label: "২৬. হার্টবিট থাম্প (Heartbeat)", value: "heartbeat" },
@@ -43,29 +56,32 @@ export const TEXT_EFFECTS_30 = [
   { label: "৩০. গ্রেডিয়েন্ট ফ্লো টেক্সট (Gradient Flow)", value: "gradient-flow" },
 ]
 
+// ফন্ট তালিকা
 export const FONTS = [
-  { label: "হিন্দ শিলিগুড়ি (Hind Siliguri)", value: "'Hind Siliguri', sans-serif" },
-  { label: "কালপুরুষ (Kalpurush)", value: "'Kalpurush', sans-serif" },
-  { label: "সোলাইমান লিপি (SolaimanLipi)", value: "'SolaimanLipi', sans-serif" },
+  { label: "হিন্দ শিলিগুড়ি (Hind Siliguri - বাংলা)", value: "'Hind Siliguri', sans-serif" },
+  { label: "কালপুরুষ (Kalpurush - বাংলা)", value: "'Kalpurush', sans-serif" },
+  { label: "সোলাইমান লিপি (SolaimanLipi - বাংলা)", value: "'SolaimanLipi', sans-serif" },
   { label: "নোটো সান্স বাংলা (Noto Sans Bengali)", value: "'Noto Sans Bengali', sans-serif" },
-  { label: "বালু দ্য ২ (Baloo Da 2)", value: "'Baloo Da 2', cursive" },
-  { label: "তিরো বাংলা (Tiro Bangla)", value: "'Tiro Bangla', serif" },
-  { label: "ইন্টার (Inter)", value: "'Inter', sans-serif" },
-  { label: "রোবোটো (Roboto)", value: "'Roboto', sans-serif" },
+  { label: "বালু দ্য ২ (Baloo Da 2 - বাংলা)", value: "'Baloo Da 2', cursive" },
+  { label: "তিরো বাংলা (Tiro Bangla - বাংলা)", value: "'Tiro Bangla', serif" },
+  { label: "ইন্টার (Inter - ইংরেজি)", value: "'Inter', sans-serif" },
+  { label: "রোবোটো (Roboto - ইংরেজি)", value: "'Roboto', sans-serif" },
   { label: "প্লেফেয়ার ডিসপ্লে (Playfair Display)", value: "'Playfair Display', serif" },
   { label: "মনটসেরাট (Montserrat)", value: "'Montserrat', sans-serif" },
 ]
 
+// লেখার আকার
 export const TEXT_SIZES = [
-  { label: "ছোট (Small)", value: "sm" },
-  { label: "স্বাভাবিক (Normal)", value: "base" },
-  { label: "মাঝারি (Medium)", value: "lg" },
-  { label: "বড় (Large)", value: "xl" },
+  { label: "ছোট (Small - sm)", value: "sm" },
+  { label: "স্বাভাবিক (Normal - base)", value: "base" },
+  { label: "মাঝারি (Medium - lg)", value: "lg" },
+  { label: "বড় (Large - xl)", value: "xl" },
   { label: "অতিরিক্ত বড় (2XL)", value: "2xl" },
   { label: "বিশাল (3XL)", value: "3xl" },
   { label: "মেগা (4XL)", value: "4xl" },
 ]
 
+// লেখার স্টাইল
 export const TEXT_STYLES = [
   { label: "স্বাভাবিক (Normal)", value: "normal" },
   { label: "গাঢ় (Bold)", value: "bold" },
@@ -73,27 +89,24 @@ export const TEXT_STYLES = [
   { label: "বোল্ড ও ইটালিক", value: "bold-italic" },
 ]
 
-export const TRANSITIONS = [
-  { label: "ফেড (Smooth Fade)", value: "fade" },
-  { label: "স্লাইড বামে (Slide Left)", value: "slide-left" },
-  { label: "স্লাইড ডানে (Slide Right)", value: "slide-right" },
-  { label: "জুম ইন (Zoom In)", value: "zoom-in" },
-  { label: "স্কেল ফেড (Scale Fade)", value: "scale-fade" },
-]
-
-export type HeroSlide = {
+// মূল হিরো স্লাইড পোস্ট অবজেক্ট টাইপ
+export interface HeroSlide {
   id: string
   title: string | null
   summary: string | null
   category: string | null
   button_text: string | null
   link_url: string | null
-  
-  // সাব-স্লাইড সমূহ (ছবি, ভিডিও বা কালার)
-  media_items?: SubMediaItem[]
-  slide_duration?: number
+  slide_type?: SubMediaType
 
-  // টেক্সট স্টাইল ও ৩০টি অ্যানিমেশন
+  // সাব-স্লাইড তালিকা
+  media_items?: SubMediaItem[]
+
+  // সময় ও গতি নিয়ন্ত্রণ
+  slide_duration?: number
+  slide_speed_pct?: number
+
+  // টেক্সট টাইপোগ্রাফি ও ইফেক্ট
   text_effect?: string
   text_effect_speed?: number
   title_font?: string | null
@@ -113,6 +126,7 @@ export type HeroSlide = {
   btn_bg_color?: string | null
   btn_color?: string | null
 
+  // গ্লাস কার্ড ওভারলে সেটিংস
   content_pos_v?: "top" | "center" | "bottom" | null
   content_pos_h?: "left" | "center" | "right" | null
   show_card_bg?: boolean | null
@@ -130,14 +144,14 @@ export type HeroSlide = {
   created_at: string
 }
 
-export type HeroSettings = {
+// গ্লোবাল হিরো ও ব্রেকিং সেটিংস
+export interface HeroSettings {
+  id: number
   breaking_on: boolean
   breaking_title: string | null
   breaking_text: string | null
   breaking_link: string | null
   breaking_btn_text?: string | null
-  breaking_media_type?: "none" | "image" | "video" | null
-  breaking_media_url?: string | null
   breaking_bg_color?: string | null
   breaking_bg_gradient?: string | null
   slide_speed?: number | null
@@ -150,12 +164,60 @@ function hdr(token?: string, json = false): Record<string, string> {
   return h
 }
 
+// সোশ্যাল ভিডিও ও যেকোনো ওয়েবসাইটের প্রিভিউ শনাক্তকরণ
+export function parseMediaOrLink(rawUrl: string): {
+  isEmbedVideo: boolean
+  embedSrc?: string
+  platform?: "youtube" | "facebook" | "direct_video" | "web"
+} {
+  if (!rawUrl || typeof rawUrl !== "string") return { isEmbedVideo: false }
+  const url = rawUrl.trim()
+
+  // ১. YouTube
+  const ytMatch = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)
+  if (ytMatch && ytMatch[2]?.length === 11) {
+    return {
+      isEmbedVideo: true,
+      platform: "youtube",
+      embedSrc: `https://www.youtube.com/embed/${ytMatch[2]}?enablejsapi=1&rel=0&modestbranding=1&controls=1`,
+    }
+  }
+
+  // ২. Facebook Video
+  if (url.includes("facebook.com") || url.includes("fb.watch")) {
+    return {
+      isEmbedVideo: true,
+      platform: "facebook",
+      embedSrc: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`,
+    }
+  }
+
+  // ৩. সরাসরি ভিডিও ফাইল (.mp4, .webm ইত্যাদি)
+  if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url)) {
+    return {
+      isEmbedVideo: true,
+      platform: "direct_video",
+      embedSrc: url,
+    }
+  }
+
+  // ৪. সাধারণ হাইপারলিংক
+  return {
+    isEmbedVideo: false,
+    platform: "web",
+  }
+}
+
+// স্লাইড পোস্ট ডাটা লোড (সবার শেষের পোস্টটি আগে দেখানোর জন্য sort_order DESC ও created_at DESC)
 export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/hero_slides?select=*&order=sort_order.asc,created_at.desc&limit=100`, {
-      headers: hdr(token),
-      cache: "no-store",
-    })
+    const res = await fetch(
+      `${SB_URL}/rest/v1/hero_slides?select=*&order=sort_order.desc,created_at.desc&limit=100`,
+      {
+        headers: hdr(token),
+        cache: "no-store",
+      }
+    )
     if (!res.ok) return []
     const data = await res.json()
     return Array.isArray(data) ? data : []
@@ -164,12 +226,16 @@ export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   }
 }
 
+// ড্যাশবোর্ডে সাম্প্রতিক নিউজ ড্রপডাউন লোড
 export async function getRecentPosts(): Promise<Array<{ id: string; title: string; image_url?: string; summary?: string }>> {
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/posts?select=id,title,image_url,summary&order=created_at.desc&limit=30`, {
-      headers: hdr(),
-      cache: "no-store",
-    })
+    const res = await fetch(
+      `${SB_URL}/rest/v1/posts?select=id,title,image_url,summary&order=created_at.desc&limit=30`,
+      {
+        headers: hdr(),
+        cache: "no-store",
+      }
+    )
     if (!res.ok) return []
     return await res.json()
   } catch {
@@ -177,32 +243,43 @@ export async function getRecentPosts(): Promise<Array<{ id: string; title: strin
   }
 }
 
-export async function createHeroSlide(token: string, data: any) {
+// নতুন হিরো পোস্ট তৈরি (সর্বোচ্চ sort_order দেওয়া হবে যাতে সবার উপরে অবস্থান করে)
+export async function createHeroSlide(token: string, data: Partial<HeroSlide>) {
+  const currentTimestamp = Date.now()
+  const payload = {
+    ...data,
+    sort_order: data.sort_order ?? currentTimestamp,
+    updated_at: new Date().toISOString(),
+  }
+
   const res = await fetch(`${SB_URL}/rest/v1/hero_slides`, {
     method: "POST",
     headers: { ...hdr(token, true), Prefer: "return=minimal" },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   })
   if (!res.ok) throw new Error("স্লাইড তৈরি করা সম্ভব হয়নি")
 }
 
-export async function updateHeroSlide(token: string, id: string, data: any) {
+// স্লাইড পোস্ট আপডেট
+export async function updateHeroSlide(token: string, id: string, data: Partial<HeroSlide>) {
   const res = await fetch(`${SB_URL}/rest/v1/hero_slides?id=eq.${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { ...hdr(token, true), Prefer: "return=minimal" },
     body: JSON.stringify({ ...data, updated_at: new Date().toISOString() }),
   })
-  if (!res.ok) throw new Error("স্লাইড আপডেট হয়নি")
+  if (!res.ok) throw new Error("স্লাইড আপডেট করা যায়নি")
 }
 
+// স্লাইড পোস্ট ডিলিট
 export async function deleteHeroSlide(token: string, id: string) {
   const res = await fetch(`${SB_URL}/rest/v1/hero_slides?id=eq.${encodeURIComponent(id)}`, {
     method: "DELETE",
     headers: hdr(token),
   })
-  if (!res.ok) throw new Error("স্লাইড ডিলিট হয়নি")
+  if (!res.ok) throw new Error("স্লাইড ডিলিট করা যায়নি")
 }
 
+// হিরো ও ব্রেকিং গ্লোবাল সেটিংস লোড
 export async function getHeroSettings(): Promise<HeroSettings | null> {
   try {
     const res = await fetch(`${SB_URL}/rest/v1/hero_settings?select=*&id=eq.1`, {
@@ -217,10 +294,11 @@ export async function getHeroSettings(): Promise<HeroSettings | null> {
   }
 }
 
+// সেটিংস সেভ
 export async function saveHeroSettings(token: string, data: Partial<HeroSettings>) {
   await fetch(`${SB_URL}/rest/v1/hero_settings?id=eq.1`, {
     method: "PATCH",
     headers: { ...hdr(token, true), Prefer: "return=minimal" },
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, updated_at: new Date().toISOString() }),
   })
 }
