@@ -828,7 +828,7 @@ export function HeroCarousel() {
               )
             })}
 
-            {/* নেভিগেশন তীর */}
+            {/* নেভিগেশন কন্ট্রোল */}
             {total > 1 && (
               <>
                 <div className="absolute bottom-6 right-6 flex items-center gap-2 sm:bottom-8 sm:right-10 z-20">
@@ -966,5 +966,5 @@ export function HeroCarousel() {
   )
 }
 
-// ডিফল্ট এক্সপোর্ট নিশ্চিত করা (যাতে নেক্সট জেএস কোনোভাবেই ক্র্যাশ না করে)
 export default HeroCarousel
+export { HeroCarousel }
