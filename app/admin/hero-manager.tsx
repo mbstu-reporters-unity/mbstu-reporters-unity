@@ -27,18 +27,21 @@ const selectInp = "w-full border border-slate-700 rounded-xl px-3 py-2 text-sm b
 const btnSave = "w-full bg-green-700 hover:bg-green-600 text-white rounded-xl py-3 font-semibold text-sm transition-all disabled:opacity-50 shadow-lg cursor-pointer"
 const cardBox = "bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4"
 
-function hexToRgba(hex: string | null | undefined, opacity: number | null | undefined) {
-  const alpha = (opacity ?? 60) / 100
-  if (!hex || !hex.startsWith('#')) return `rgba(0, 0, 0, ${alpha})`
-  let c = hex.substring(1)
-  if (c.length === 3) c = c.split('').map((x) => x + x).join('')
-  const num = parseInt(c, 16)
-  if (isNaN(num)) return `rgba(0, 0, 0, ${alpha})`
-  const r = (num >> 16) & 255
-  const g = (num >> 8) & 255
-  const b = num & 255
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+function hexToRgba(hex: any, opacity: any) {
+  const alpha = (Number(opacity) || 60) / 100
+  if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return `rgba(0, 0, 0, ${alpha})`
+  try {
+    let c = hex.substring(1)
+    if (c.length === 3) c = c.split('').map((x) => x + x).join('')
+    const num = parseInt(c, 16)
+    if (isNaN(num)) return `rgba(0, 0, 0, ${alpha})`
+    return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`
+  } catch {
+    return `rgba(0, 0, 0, ${alpha})`
+  }
 }
+
+const isLive = (s: HeroSlide) => s && s.is_active && (!s.expires_at || new Date(s.expires_at) > new Date())
 
 export default function HeroManager({ token, shrink }: { token: string; shrink: (f: File) => Promise<Blob> }) {
   const [list, setList] = useState<HeroSlide[]>([])
@@ -46,15 +49,14 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [msg, setMsg] = useState("")
   const [busy, setBusy] = useState(false)
 
-  // ট্যাব স্টেট: 'content' | 'design' | 'publish'
   const [activeTab, setActiveTab] = useState<"content" | "design" | "publish">("content")
 
-  // সার্বিক স্লাইডার গতি ও ট্রানজিশন সেটিংস
+  // গতি ও ট্রানজিশন সেটিংস
   const [slideSpeed, setSlideSpeed] = useState<number>(4500)
   const [transType, setTransType] = useState<string>("fade")
   const [textMotion, setTextMotion] = useState<boolean>(true)
 
-  // ব্রেকিং মোড স্টেট
+  // ব্রেকিং মোড
   const [bOn, setBOn] = useState(false)
   const [bTitle, setBTitle] = useState("")
   const [bTitleSize, setBTitleSize] = useState("3xl")
@@ -75,10 +77,8 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [bTextEffect, setBTextEffect] = useState("auto")
   const [bTextSpeedPct, setBTextSpeedPct] = useState<number>(50)
 
-  // একক স্লাইড ফর্ম স্টেট
+  // একক স্লাইড
   const [editId, setEditId] = useState<string | null>(null)
-
-  // ১. কনটেন্ট
   const [title, setTitle] = useState("")
   const [summary, setSummary] = useState("")
   const [category, setCategory] = useState("")
@@ -93,7 +93,6 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [pos, setPos] = useState<"top" | "center" | "bottom">("center")
   const [fitMode, setFitMode] = useState<"contain" | "cover">("contain")
 
-  // ২. ডিজাইন ও স্টাইলিং
   const [titleFont, setTitleFont] = useState(FONTS[0].value)
   const [titleSize, setTitleSize] = useState("2xl")
   const [titleStyle, setTitleStyle] = useState("bold")
@@ -116,7 +115,6 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [btnColor, setBtnColor] = useState("#ffffff")
   const [btnBgColor, setBtnBgColor] = useState("#15803d")
 
-  // গ্লাস কার্ড কন্ট্রোল
   const [contentPosV, setContentPosV] = useState<"top" | "center" | "bottom">("bottom")
   const [contentPosH, setContentPosH] = useState<"left" | "center" | "right">("left")
   const [showCardBg, setShowCardBg] = useState(true)
@@ -127,46 +125,58 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   const [cardBgColor, setCardBgColor] = useState("#000000")
   const [cardOpacity, setCardOpacity] = useState<number>(60)
 
-  // ৩. প্রকাশ ও মেয়াদ
   const [active, setActive] = useState(true)
   const [expSel, setExpSel] = useState("none")
   const [oldExpires, setOldExpires] = useState<string | null>(null)
 
+  // সুরক্ষিত ডাটা লোড
   async function load() {
-    setList(await getHeroSlides(token))
-    getRecentPosts().then(setPosts)
+    try {
+      const res = await getHeroSlides(token)
+      setList(Array.isArray(res) ? res : [])
+    } catch {
+      setList([])
+    }
+
+    try {
+      const p = await getRecentPosts()
+      setPosts(Array.isArray(p) ? p : [])
+    } catch {
+      setPosts([])
+    }
   }
 
   useEffect(() => {
     load()
-    getHeroSettings().then((s) => {
-      if (s) {
-        setBOn(s.breaking_on)
-        setBTitle(s.breaking_title || "")
-        setBTitleSize(s.breaking_title_size || "3xl")
-        setBTitleColor(s.breaking_title_color || "#ffffff")
-        setBText(s.breaking_text || "")
-        setBTextSize(s.breaking_text_size || "base")
-        setBTextColor(s.breaking_text_color || "#f1f5f9")
-        setBLink(s.breaking_link || "")
-        setBBtnText(s.breaking_btn_text || "বিস্তারিত")
-        setBMediaType(s.breaking_media_type || "none")
-        setBMediaUrl(s.breaking_media_url || "")
-        setBExtraMedia(s.breaking_extra_media || "")
-        setBBgColor(s.breaking_bg_color || "#881337")
-        setBBgGradient(s.breaking_bg_gradient || "#0f172a")
-        setBBadgeStyle(s.breaking_badge_style || "pulse-circle")
-        setBPulseSpeedPct(s.breaking_pulse_speed_pct ?? 50)
-        setBTextEffect(s.breaking_text_effect || "auto")
-        setBTextSpeedPct(s.breaking_text_speed_pct ?? 50)
-        setSlideSpeed(s.slide_speed ?? 4500)
-        setTransType(s.transition_type || "fade")
-        setTextMotion(s.text_motion ?? true)
-      }
-    })
+    getHeroSettings()
+      .then((s) => {
+        if (s) {
+          setBOn(Boolean(s.breaking_on))
+          setBTitle(s.breaking_title || "")
+          setBTitleSize(s.breaking_title_size || "3xl")
+          setBTitleColor(s.breaking_title_color || "#ffffff")
+          setBText(s.breaking_text || "")
+          setBTextSize(s.breaking_text_size || "base")
+          setBTextColor(s.breaking_text_color || "#f1f5f9")
+          setBLink(s.breaking_link || "")
+          setBBtnText(s.breaking_btn_text || "বিস্তারিত")
+          setBMediaType((s.breaking_media_type as any) || "none")
+          setBMediaUrl(s.breaking_media_url || "")
+          setBExtraMedia(s.breaking_extra_media || "")
+          setBBgColor(s.breaking_bg_color || "#881337")
+          setBBgGradient(s.breaking_bg_gradient || "#0f172a")
+          setBBadgeStyle(s.breaking_badge_style || "pulse-circle")
+          setBPulseSpeedPct(Number(s.breaking_pulse_speed_pct) || 50)
+          setBTextEffect(s.breaking_text_effect || "auto")
+          setBTextSpeedPct(Number(s.breaking_text_speed_pct) || 50)
+          setSlideSpeed(Number(s.slide_speed) || 4500)
+          setTransType(s.transition_type || "fade")
+          setTextMotion(s.text_motion ?? true)
+        }
+      })
+      .catch(() => {})
   }, [token])
 
-  // ৪টি কুইক রেডিমেড টেমপ্লেট
   function applyTemplate(type: "classic" | "minimal" | "golden" | "compact") {
     if (type === "classic") {
       setShowCardBg(true)
@@ -214,9 +224,10 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   }
 
   function handlePostSelect(postId: string) {
-    const p = posts.find((x) => x.id === postId)
+    const safePosts = Array.isArray(posts) ? posts : []
+    const p = safePosts.find((x) => x && x.id === postId)
     if (!p) return
-    setTitle(p.title)
+    setTitle(p.title || "")
     if (p.summary) setSummary(p.summary)
     if (p.image_url) setOldImage(p.image_url)
     setLink(`/post/${p.id}`)
@@ -231,7 +242,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         transition_type: transType,
         text_motion: textMotion,
       })
-      setMsg("✅ স্লাইডারের গতি ও ট্রানজিশন সেটিংস সংরক্ষিত হয়েছে")
+      setMsg("✅ স্লাইডারের গতি ও ট্রানজিশন সংরক্ষিত হয়েছে")
     } catch (e) {
       setMsg("❌ " + (e instanceof Error ? e.message : "কিছু ভুল হয়েছে"))
     }
@@ -241,12 +252,13 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setBusy(true)
     try {
       let uploadedBreakingUrls: string[] = []
-      if (bFiles.length > 0) {
+      const safeShrink = typeof shrink === "function" ? shrink : async (f: File) => f
+      if (Array.isArray(bFiles) && bFiles.length > 0) {
         for (const f of bFiles) {
           if (f.type.startsWith("video/")) {
             uploadedBreakingUrls.push(await uploadImage(token, f))
           } else {
-            uploadedBreakingUrls.push(await uploadImage(token, await shrink(f)))
+            uploadedBreakingUrls.push(await uploadImage(token, await safeShrink(f)))
           }
         }
       }
@@ -254,7 +266,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       const allBreakingMedia = [
         ...(bMediaUrl ? [bMediaUrl] : []),
         ...uploadedBreakingUrls,
-        ...(bExtraMedia ? bExtraMedia.split(/[\n,]+/).map((u) => u.trim()).filter(Boolean) : []),
+        ...(typeof bExtraMedia === "string" ? bExtraMedia.split(/[\n,]+/).map((u) => u.trim()).filter(Boolean) : []),
       ].join("\n")
 
       await saveHeroSettings(token, {
@@ -278,7 +290,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         breaking_text_speed_pct: Number(bTextSpeedPct),
       })
       setBOn(on)
-      setMsg(on ? "🔴 ব্রেকিং মোড চালু হয়েছে (স্লাইডারের ওপরে অবস্থান করছে)" : "✅ ব্রেকিং মোড বন্ধ, সাধারণ স্লাইডার উপরে ফিরেছে")
+      setMsg(on ? "🔴 ব্রেকিং মোড চালু হয়েছে (স্লাইডারের ওপরে দেখাচ্ছে)" : "✅ ব্রেকিং মোড বন্ধ, স্লাইডার স্বাভাবিক হয়েছে")
     } catch (e) {
       setMsg("❌ " + (e instanceof Error ? e.message : "কিছু ভুল হয়েছে"))
     }
@@ -340,6 +352,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   }
 
   function startEdit(s: HeroSlide) {
+    if (!s) return
     setEditId(s.id)
     setActiveTab("content")
     setTitle(s.title || "")
@@ -348,7 +361,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setTitleStyle(s.title_style || "bold")
     setTitleColor(s.title_color || "#FFFFFF")
     setTitleBgColor(s.title_bg_color || "")
-    setTextAlign(s.text_align || "left")
+    setTextAlign((s.text_align as any) || "left")
 
     setSummary(s.summary || "")
     setSummaryFont(s.summary_font || FONTS[0].value)
@@ -369,29 +382,31 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setBtnBgColor(s.btn_bg_color || "#15803d")
     setLink(s.link_url || "")
 
-    setMediaType(s.media_type || "image")
+    setMediaType((s.media_type as any) || "image")
     setVideoUrl(s.video_url || "")
     setSelectedFiles([])
     setOldImage(s.image_url)
     setOldMediaUrls(s.media_urls || null)
     setExtraMedia(s.extra_media || "")
-    setPos(s.image_pos)
-    setFitMode(s.fit_mode || "contain")
+    setPos(s.image_pos || "center")
+    setFitMode((s.fit_mode as any) || "contain")
 
-    setContentPosV(s.content_pos_v || "bottom")
-    setContentPosH(s.content_pos_h || "left")
+    setContentPosV((s.content_pos_v as any) || "bottom")
+    setContentPosH((s.content_pos_h as any) || "left")
     setShowCardBg(s.show_card_bg ?? true)
-    setCardWidthPct(s.card_width_pct ?? 90)
-    setCardRadiusPct(s.card_radius_pct ?? 20)
-    setCardPaddingVal(s.card_padding_val ?? 20)
-    setCardBlur(s.card_blur ?? 12)
+    setCardWidthPct(Number(s.card_width_pct) || 90)
+    setCardRadiusPct(Number(s.card_radius_pct) || 20)
+    setCardPaddingVal(Number(s.card_padding_val) || 20)
+    setCardBlur(Number(s.card_blur) || 12)
     setCardBgColor(s.card_bg_color || "#000000")
-    setCardOpacity(s.card_opacity ?? 60)
+    setCardOpacity(Number(s.card_opacity) || 60)
 
-    setActive(s.is_active)
+    setActive(Boolean(s.is_active))
     setExpSel("keep")
     setOldExpires(s.expires_at)
-    window.scrollTo({ top: 350, behavior: "smooth" })
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 350, behavior: "smooth" })
+    }
   }
 
   async function save() {
@@ -408,12 +423,14 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     setMsg("")
     try {
       let uploadedUrls: string[] = []
-      if (selectedFiles.length > 0) {
+      const safeShrink = typeof shrink === "function" ? shrink : async (f: File) => f
+
+      if (Array.isArray(selectedFiles) && selectedFiles.length > 0) {
         for (const f of selectedFiles) {
           if (f.type.startsWith("video/")) {
             uploadedUrls.push(await uploadImage(token, f))
           } else {
-            uploadedUrls.push(await uploadImage(token, await shrink(f)))
+            uploadedUrls.push(await uploadImage(token, await safeShrink(f)))
           }
         }
       }
@@ -421,8 +438,8 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
       const primaryImg = uploadedUrls[0] || oldImage
       const allMediaCombined = [
         ...uploadedUrls,
-        ...(oldMediaUrls ? oldMediaUrls.split("\n") : []),
-        ...(extraMedia ? extraMedia.split(/[\n,]+/).map((u) => u.trim()).filter(Boolean) : []),
+        ...(typeof oldMediaUrls === "string" ? oldMediaUrls.split("\n") : []),
+        ...(typeof extraMedia === "string" ? extraMedia.split(/[\n,]+/).map((u) => u.trim()).filter(Boolean) : []),
       ].filter(Boolean).join("\n")
 
       let expires: string | null = oldExpires
@@ -478,9 +495,10 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         card_opacity: Number(cardOpacity),
       }
 
+      const safeList = Array.isArray(list) ? list : []
       if (editId) await updateHeroSlide(token, editId, data)
       else {
-        const first = list.length ? Math.min(...list.map((s) => s.sort_order)) - 10 : 0
+        const first = safeList.length ? Math.min(...safeList.map((s) => s.sort_order)) - 10 : 0
         await createHeroSlide(token, { ...data, sort_order: first })
       }
       reset()
@@ -493,9 +511,10 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
   }
 
   async function move(i: number, dir: -1 | 1) {
+    const safeList = Array.isArray(list) ? list : []
     const j = i + dir
-    if (j < 0 || j >= list.length) return
-    const arr = [...list]
+    if (j < 0 || j >= safeList.length) return
+    const arr = [...safeList]
     ;[arr[i], arr[j]] = [arr[j], arr[i]]
     try {
       await Promise.all(
@@ -517,8 +536,16 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
     }
   }
 
-  // লাইভ প্রিভিউতে দেখানোর ছবির লিঙ্ক
-  const previewImgUrl = selectedFiles.length > 0 ? URL.createObjectURL(selectedFiles[0]) : oldImage || "/images/hero-1.png"
+  const safeList = Array.isArray(list) ? list : []
+  const safePosts = Array.isArray(posts) ? posts : []
+
+  // প্রিভিউ ছবির লিঙ্ক নির্ধারণ
+  let previewImg = oldImage || "/images/hero-1.png"
+  if (Array.isArray(selectedFiles) && selectedFiles.length > 0 && typeof window !== "undefined") {
+    try {
+      previewImg = URL.createObjectURL(selectedFiles[0])
+    } catch {}
+  }
 
   return (
     <div className="space-y-6 text-white max-w-4xl mx-auto pb-16">
@@ -528,9 +555,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         </div>
       )}
 
-      {/* ========================================================
-          সেকশন ১: সার্বিক স্লাইডার গতি ও ২০টি ট্রানজিশন নিয়ন্ত্রণ
-      ======================================================== */}
+      {/* সেকশন ১: সার্বিক স্লাইডার গতি ও ২০টি ট্রানজিশন নিয়ন্ত্রণ */}
       <div className={cardBox}>
         <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
           <span className="text-lg">⚙️</span>
@@ -560,14 +585,12 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           </div>
         </div>
 
-        <button onClick={saveSliderSettings} className="bg-slate-800 hover:bg-slate-700 text-white text-xs px-4 py-2.5 rounded-xl font-medium transition-all">
+        <button onClick={saveSliderSettings} className="bg-slate-800 hover:bg-slate-700 text-white text-xs px-4 py-2.5 rounded-xl font-medium transition-all cursor-pointer">
           গতি ও ট্রানজিশন সংরক্ষণ করুন
         </button>
       </div>
 
-      {/* ========================================================
-          সেকশন ২: 🔴 জরুরি ব্রেকিং মোড
-      ======================================================== */}
+      {/* সেকশন ২: 🔴 জরুরি ব্রেকিং মোড */}
       <div className={`${cardBox} ${bOn ? "border-red-600/60 bg-red-950/20" : ""}`}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
@@ -598,9 +621,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         </div>
       </div>
 
-      {/* ========================================================
-          সেকশন ৩: 📱 আধুনিক লাইভ প্রিভিউ ও ট্যাবভিত্তিক স্লাইডার বিল্ডার
-      ======================================================== */}
+      {/* সেকশন ৩: 📱 লাইভ প্রিভিউ ও ট্যাবভিত্তিক স্লাইডার বিল্ডার */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
@@ -609,17 +630,16 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
               {editId ? "স্লাইড এডিট ও লাইভ প্রিভিউ" : "নতুন স্লাইড তৈরি ও লাইভ প্রিভিউ"}
             </h2>
           </div>
-          {editId && <button onClick={reset} className="text-xs text-red-400 hover:underline">বাতিল করুন</button>}
+          {editId && <button onClick={reset} className="text-xs text-red-400 hover:underline cursor-pointer">বাতিল করুন</button>}
         </div>
 
-        {/* 👁️ রিয়েল-টাইম লাইভ প্রিভিউ বক্স */}
+        {/* 👁️ লাইভ প্রিভিউ বক্স */}
         <div className="space-y-1.5">
-          <span className="text-xs font-semibold text-gray-400 block">👁️ রিয়েল-টাইম লাইভ প্রিভিউ (সাইটে যেমন দেখাবে):</span>
-          <div className="relative h-64 sm:h-72 w-full rounded-2xl overflow-hidden border border-slate-700 bg-black shadow-inner flex items-center justify-center">
-            {/* ব্যাকগ্রাউন্ড ছবি */}
+          <span className="text-xs font-semibold text-gray-400 block">👁️ রিয়েল-টাইম লাইভ প্রিভিউ:</span>
+          <div className="relative h-60 sm:h-72 w-full rounded-2xl overflow-hidden border border-slate-700 bg-black shadow-inner flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={previewImgUrl}
+              src={previewImg}
               alt="Live Preview"
               className={cn(
                 "absolute inset-0 w-full h-full",
@@ -628,7 +648,6 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
 
-            {/* লাইভ গ্লাস কার্ড লেয়ার */}
             <div
               className={cn(
                 "absolute inset-0 p-4 flex pointer-events-none",
@@ -645,12 +664,11 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
                 style={{
                   width: `${cardWidthPct}%`,
                   padding: showCardBg ? `${cardPaddingVal}px` : undefined,
-                  borderRadius: showCardBg ? `${Math.round((cardRadiusPct / 100) * 45)}px` : undefined,
+                  borderRadius: showCardBg ? `${Math.round(((Number(cardRadiusPct) || 20) / 100) * 45)}px` : undefined,
                   backgroundColor: showCardBg ? hexToRgba(cardBgColor, cardOpacity) : "transparent",
                   backdropFilter: showCardBg ? `blur(${cardBlur}px)` : undefined,
                 }}
               >
-                {/* ব্যাজ */}
                 {category && (
                   <span
                     className="inline-block px-2.5 py-0.5 rounded text-[11px] font-semibold mb-1"
@@ -660,11 +678,10 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
                   </span>
                 )}
 
-                {/* শিরোনাম */}
                 {title ? (
                   <h3
                     className={cn("leading-snug block", titleStyle === "italic" ? "italic" : titleStyle === "bold-italic" ? "font-bold italic" : "font-bold")}
-                    style={{ color: titleColor, fontFamily: titleFont, fontSize: titleSize === "3xl" ? "22px" : titleSize === "2xl" ? "18px" : "15px" }}
+                    style={{ color: titleColor, fontFamily: titleFont, fontSize: titleSize === "3xl" ? "20px" : titleSize === "2xl" ? "17px" : "14px" }}
                   >
                     <span style={{ backgroundColor: titleBgColor || undefined, padding: titleBgColor ? "2px 6px" : undefined, borderRadius: "4px" }}>
                       {title}
@@ -674,14 +691,12 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
                   <p className="text-gray-500 text-xs italic">শিরোনাম লিখলে এখানে ফুটে উঠবে...</p>
                 )}
 
-                {/* বিবরণ */}
                 {summary && (
                   <p className="text-xs line-clamp-2 mt-1" style={{ color: summaryColor, fontFamily: summaryFont }}>
                     {summary}
                   </p>
                 )}
 
-                {/* বাটন */}
                 {btnText && (
                   <div className="mt-2">
                     <span
@@ -697,16 +712,14 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
           </div>
         </div>
 
-        {/* 🗂️ আধুনিক ৩টি ট্যাব নেভিগেশন */}
+        {/* ৩টি ট্যাব */}
         <div className="flex border-b border-slate-800 pt-2 gap-2">
           <button
             type="button"
             onClick={() => setActiveTab("content")}
             className={cn(
               "flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-all cursor-pointer border-b-2",
-              activeTab === "content"
-                ? "bg-slate-800/80 text-green-400 border-green-500"
-                : "text-gray-400 hover:text-white border-transparent"
+              activeTab === "content" ? "bg-slate-800/80 text-green-400 border-green-500" : "text-gray-400 hover:text-white border-transparent"
             )}
           >
             📝 ১. কনটেন্ট
@@ -716,9 +729,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             onClick={() => setActiveTab("design")}
             className={cn(
               "flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-all cursor-pointer border-b-2",
-              activeTab === "design"
-                ? "bg-slate-800/80 text-green-400 border-green-500"
-                : "text-gray-400 hover:text-white border-transparent"
+              activeTab === "design" ? "bg-slate-800/80 text-green-400 border-green-500" : "text-gray-400 hover:text-white border-transparent"
             )}
           >
             🎨 ২. ডিজাইন ও কার্ড
@@ -728,36 +739,31 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
             onClick={() => setActiveTab("publish")}
             className={cn(
               "flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-all cursor-pointer border-b-2",
-              activeTab === "publish"
-                ? "bg-slate-800/80 text-green-400 border-green-500"
-                : "text-gray-400 hover:text-white border-transparent"
+              activeTab === "publish" ? "bg-slate-800/80 text-green-400 border-green-500" : "text-gray-400 hover:text-white border-transparent"
             )}
           >
             ⏱️ ৩. প্রকাশ ও মেয়াদ
           </button>
         </div>
 
-        {/* ========================================================
-            ট্যাব ১: কনটেন্ট
-        ======================================================== */}
+        {/* ট্যাব ১: কনটেন্ট */}
         {activeTab === "content" && (
           <div className="space-y-4 pt-2">
-            {posts.length > 0 && !editId && (
+            {safePosts.length > 0 && !editId && (
               <div>
-                <span className="text-xs text-gray-400 block mb-1">ওয়েবসাইটের পোস্ট থেকে নির্বাচন করুন (এক ক্লিকে অটো-ফিল):</span>
+                <span className="text-xs text-gray-400 block mb-1">ওয়েবসাইটের পোস্ট থেকে নির্বাচন করুন:</span>
                 <select className={selectInp} onChange={(e) => handlePostSelect(e.target.value)} defaultValue="">
                   <option value="">-- ওয়েবসাইট থেকে খবর বেছে নিন --</option>
-                  {posts.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  {safePosts.map((p) => p && <option key={p.id} value={p.id}>{p.title}</option>)}
                 </select>
               </div>
             )}
 
-            {/* ছবি বা ভিডিও আপলোড */}
             <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-2">
               <div className="flex gap-4 text-xs">
                 <label className="flex items-center gap-1.5 cursor-pointer font-medium">
                   <input type="radio" name="mtype" checked={mediaType === "image"} onChange={() => setMediaType("image")} />
-                  🖼️ ছবি (এক বা একাধিক ফাইল)
+                  🖼️ ছবি (এক বা একাধিক)
                 </label>
                 <label className="flex items-center gap-1.5 cursor-pointer font-medium">
                   <input type="radio" name="mtype" checked={mediaType === "video"} onChange={() => setMediaType("video")} />
@@ -769,61 +775,55 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
                 <input className={inp} placeholder="ইউটিউব বা ভিডিও লিঙ্ক (https://...)" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
               ) : (
                 <div>
-                  <span className="text-xs text-gray-400 block mb-1">ফোন বা কম্পিউটারের ফাইল থেকে ছবি নির্বাচন করুন:</span>
+                  <span className="text-xs text-gray-400 block mb-1">ছবি নির্বাচন করুন:</span>
                   <input type="file" multiple accept="image/*" onChange={(e) => setSelectedFiles(Array.from(e.target.files || []))} className="text-xs text-gray-400" />
                 </div>
               )}
             </div>
 
-            {/* শিরোনাম ও বিবরণ */}
             <div className="space-y-2">
-              <input className={inp} placeholder="শিরোনাম লিখুন (না চাইলে খালি রাখুন)" value={title} onChange={(e) => setTitle(e.target.value)} />
-              <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ (না চাইলে খালি রাখুন)" value={summary} onChange={(e) => setSummary(e.target.value)} />
+              <input className={inp} placeholder="শিরোনাম লিখুন (ঐচ্ছিক)" value={title} onChange={(e) => setTitle(e.target.value)} />
+              <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ (ঐচ্ছিক)" value={summary} onChange={(e) => setSummary(e.target.value)} />
             </div>
 
-            {/* ব্যাজ ও বাটন */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input className={inp} placeholder="কাস্টম ব্যাজ (যেমন: আজকের খবর)" value={category} onChange={(e) => setCategory(e.target.value)} />
               <input className={inp} placeholder="বাটন লেখা (যেমন: বিস্তারিত)" value={btnText} onChange={(e) => setBtnText(e.target.value)} />
             </div>
             <input className={inp} placeholder="ক্লিক লিঙ্ক (না দিলে পপ-আপে পূর্ণ খবর দেখাবে)" value={link} onChange={(e) => setLink(e.target.value)} />
 
-            <button type="button" onClick={() => setActiveTab("design")} className="w-full bg-slate-800 hover:bg-slate-700 text-white rounded-xl py-2.5 text-xs font-semibold">
+            <button type="button" onClick={() => setActiveTab("design")} className="w-full bg-slate-800 hover:bg-slate-700 text-white rounded-xl py-2.5 text-xs font-semibold cursor-pointer">
               পরবর্তী ধাপ: ডিজাইন ও কার্ড কাস্টমাইজেশন →
             </button>
           </div>
         )}
 
-        {/* ========================================================
-            ট্যাব ২: ডিজাইন ও কার্ড
-        ======================================================== */}
+        {/* ট্যাব ২: ডিজাইন ও কার্ড */}
         {activeTab === "design" && (
           <div className="space-y-4 pt-2">
-            {/* ৪টি কুইক রেডিমেড টেমপ্লেট */}
             <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-2">
-              <span className="text-xs font-semibold text-gray-300 block">⚡ ৪টি কুইক টেমপ্লেট (এক ক্লিকে প্রফেশনাল ডিজাইন):</span>
+              <span className="text-xs font-semibold text-gray-300 block">⚡ ৪টি কুইক টেমপ্লেট:</span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button type="button" onClick={() => applyTemplate("classic")} className="p-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-green-500 text-xs text-left">
+                <button type="button" onClick={() => applyTemplate("classic")} className="p-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-green-500 text-xs text-left cursor-pointer">
                   🌟 প্রমিত গ্লাস
                 </button>
-                <button type="button" onClick={() => applyTemplate("minimal")} className="p-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-green-500 text-xs text-left">
+                <button type="button" onClick={() => applyTemplate("minimal")} className="p-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-green-500 text-xs text-left cursor-pointer">
                   🖤 বোল্ড মিনিমাল
                 </button>
-                <button type="button" onClick={() => applyTemplate("golden")} className="p-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-green-500 text-xs text-left">
+                <button type="button" onClick={() => applyTemplate("golden")} className="p-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-green-500 text-xs text-left cursor-pointer">
                   👑 গোল্ডেন অ্যালার্ট
                 </button>
-                <button type="button" onClick={() => applyTemplate("compact")} className="p-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-green-500 text-xs text-left">
+                <button type="button" onClick={() => applyTemplate("compact")} className="p-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-green-500 text-xs text-left cursor-pointer">
                   📱 কম্প্যাক্ট কার্ড
                 </button>
               </div>
             </div>
 
-            {/* ফন্ট ও টেক্সট কন্ট্রোল */}
             <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-3">
-              <span className="text-xs font-semibold text-amber-400 block">🔤 শিরোনাম ও লেখার নিজস্ব স্টাইল:</span>
+              <span className="text-xs font-semibold text-amber-400 block">🔤 ফন্ট ও লেখার নিজস্ব স্টাইল:</span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div>
-                  <span className="text-xs text-gray-400 block mb-1">ফন্ট (১০টি)</span>
+                  <span className="text-xs text-gray-400 block mb-1">ফন্ট</span>
                   <select className={selectInp} value={titleFont} onChange={(e) => setTitleFont(e.target.value)}>
                     {FONTS.map((f) => <option key={f.label} value={f.value}>{f.label}</option>)}
                   </select>
@@ -843,9 +843,9 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
                 <div>
                   <span className="text-xs text-gray-400 block mb-1">অ্যালাইনমেন্ট</span>
                   <select className={selectInp} value={textAlign} onChange={(e) => setTextAlign(e.target.value as any)}>
-                    <option value="left">বামে (Left)</option>
-                    <option value="center">মাঝে (Center)</option>
-                    <option value="right">ডানে (Right)</option>
+                    <option value="left">বামে</option>
+                    <option value="center">মাঝে</option>
+                    <option value="right">ডানে</option>
                   </select>
                 </div>
               </div>
@@ -870,10 +870,9 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
               </div>
             </div>
 
-            {/* গ্লাস কার্ড স্লাইডার */}
             <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-green-400">🎚️ গ্লাস কার্ডের আকার ও ০-১০০% স্লাইডার:</span>
+                <span className="text-xs font-semibold text-green-400">🎚️ গ্লাস কার্ডের আকার ও স্লাইডার:</span>
                 <label className="flex items-center gap-1.5 text-xs text-gray-300 cursor-pointer">
                   <input type="checkbox" checked={showCardBg} onChange={(e) => setShowCardBg(e.target.checked)} className="rounded accent-green-600" />
                   কার্ড বক্স চালু
@@ -909,15 +908,13 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
               )}
             </div>
 
-            <button type="button" onClick={() => setActiveTab("publish")} className="w-full bg-slate-800 hover:bg-slate-700 text-white rounded-xl py-2.5 text-xs font-semibold">
+            <button type="button" onClick={() => setActiveTab("publish")} className="w-full bg-slate-800 hover:bg-slate-700 text-white rounded-xl py-2.5 text-xs font-semibold cursor-pointer">
               পরবর্তী ধাপ: প্রকাশ ও মেয়াদ নির্বাচন →
             </button>
           </div>
         )}
 
-        {/* ========================================================
-            ট্যাব ৩: প্রকাশ ও মেয়াদ
-        ======================================================== */}
+        {/* ট্যাব ৩: প্রকাশ ও মেয়াদ */}
         {activeTab === "publish" && (
           <div className="space-y-4 pt-2">
             <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-3">
@@ -929,10 +926,10 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
               </label>
 
               <div>
-                <span className="text-xs text-gray-400 block mb-1">মেয়াদ নির্বাচন (কখন স্বয়ংক্রিয়ভাবে বন্ধ হবে):</span>
+                <span className="text-xs text-gray-400 block mb-1">মেয়াদ নির্বাচন:</span>
                 <select className={selectInp} value={expSel} onChange={(e) => setExpSel(e.target.value)}>
                   {editId && <option value="keep">আগের মেয়াদ রাখুন</option>}
-                  <option value="none">স্থায়ী স্লাইড (নিজে সরানো পর্যন্ত)</option>
+                  <option value="none">স্থায়ী স্লাইড</option>
                   <option value="6">৬ ঘণ্টা পর বন্ধ হবে</option>
                   <option value="12">১২ ঘণ্টা পর বন্ধ হবে</option>
                   <option value="24">২৪ ঘণ্টা পর বন্ধ হবে</option>
@@ -947,18 +944,16 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
         )}
       </div>
 
-      {/* ========================================================
-          সেকশন ৪: 📋 সব স্লাইডের তালিকা (আনলিমিটেড)
-      ======================================================== */}
+      {/* সেকশন ৪: সব স্লাইডের তালিকা */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <h2 className="font-semibold text-base text-gray-200">সব স্লাইড ({list.length})</h2>
-          <span className="text-xs text-gray-400 font-medium">লাইভ স্লাইড সংখ্যা: আনলিমিটেড</span>
+          <h2 className="font-semibold text-base text-gray-200">সব স্লাইড ({safeList.length})</h2>
+          <span className="text-xs text-gray-400 font-medium">লাইভ স্লাইড: আনলিমিটেড</span>
         </div>
 
         <div className="space-y-2.5">
-          {list.map((s, i) => (
-            <div key={s.id} className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+          {safeList.map((s, i) => s && (
+            <div key={s.id || i} className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
               <div className="flex gap-3 items-center min-w-0">
                 {s.media_type === "video" ? (
                   <div className="w-16 h-12 bg-red-600 rounded-lg shrink-0 flex items-center justify-center text-white text-xs font-bold">
@@ -980,7 +975,7 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
 
               <div className="flex items-center gap-2 self-end sm:self-center text-xs">
                 <button onClick={() => move(i, -1)} disabled={i === 0} className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 disabled:opacity-30 cursor-pointer">⬆</button>
-                <button onClick={() => move(i, 1)} disabled={i === list.length - 1} className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 disabled:opacity-30 cursor-pointer">⬇</button>
+                <button onClick={() => move(i, 1)} disabled={i === safeList.length - 1} className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 disabled:opacity-30 cursor-pointer">⬇</button>
                 <button onClick={() => startEdit(s)} className="px-3 py-1.5 bg-green-950 border border-green-800/60 text-green-300 rounded-lg hover:bg-green-900 cursor-pointer">এডিট</button>
                 <button onClick={() => run(() => updateHeroSlide(token, s.id, { is_active: !s.is_active }))} className="px-3 py-1.5 bg-slate-900 border border-slate-800 text-gray-300 rounded-lg hover:bg-slate-800 cursor-pointer">
                   {s.is_active ? "লুকান" : "দেখান"}
@@ -989,9 +984,12 @@ export default function HeroManager({ token, shrink }: { token: string; shrink: 
               </div>
             </div>
           ))}
-          {list.length === 0 && <p className="text-sm text-gray-500 text-center py-4">কোনো স্লাইড নেই।</p>}
+          {safeList.length === 0 && <p className="text-sm text-gray-500 text-center py-4">কোনো স্লাইড নেই।</p>}
         </div>
       </div>
     </div>
   )
 }
+
+// ডিফল্ট এবং নেমড এক্সপোর্ট উভয়ই সংযুক্ত
+export { HeroManager }
