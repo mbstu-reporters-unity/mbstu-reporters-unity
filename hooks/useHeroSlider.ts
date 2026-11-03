@@ -11,12 +11,12 @@ export function useHeroSlider({ posts }: UseHeroSliderProps) {
   const [postIdx, setPostIdx] = useState(0)
   const [subIdx, setSubIdx] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
-  
-  // ড্র্যাগ ও সোয়াইপ ট্র্যাক করার জন্য রেফ
+
+  // টাচ ও ড্র্যাগ ট্র্যাক করার রেফারেন্স
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const totalPosts = posts.length
 
-  // বর্তমান পোস্ট ও তার সাব-স্লাইড সমূহ
+  // বর্তমান পোস্ট ও তার সাব-স্লাইড তালিকা
   const currentPost: HeroSlide | null = posts[postIdx] || null
   const mediaItems: SubMediaItem[] =
     currentPost?.media_items && currentPost.media_items.length > 0
@@ -24,16 +24,16 @@ export function useHeroSlider({ posts }: UseHeroSliderProps) {
       : [{ id: 'default', type: 'color', color: '#0f172a' }]
 
   const curSubMedia: SubMediaItem = mediaItems[subIdx] || mediaItems[0]
-  const isCurrentVideo = curSubMedia.type === 'video'
+  const isCurrentVideo = curSubMedia?.type === 'video'
 
   // পোস্টের জন্য নির্ধারিত সময়কাল (Duration)
   const duration = currentPost?.slide_duration || 5000
 
-  // ১. পরবর্তী সাব-স্লাইড বা পরবর্তী পোস্টে যাওয়ার ফাংশন
+  // ১. পরবর্তী সাব-স্লাইড অথবা পরবর্তী পোস্টে যাওয়ার মেথড
   const nextSlide = useCallback(() => {
     if (totalPosts === 0) return
 
-    // যদি বর্তমান পোস্টের আরও সাব-স্লাইড বাকি থাকে
+    // বর্তমান পোস্টের যদি আরও সাব-স্লাইড বাকি থাকে
     if (subIdx < mediaItems.length - 1) {
       setSubIdx((prev) => prev + 1)
     } else {
@@ -43,14 +43,14 @@ export function useHeroSlider({ posts }: UseHeroSliderProps) {
     }
   }, [subIdx, mediaItems.length, totalPosts])
 
-  // ২. আগের সাব-স্লাইড বা আগের পোস্টে যাওয়ার ফাংশন
+  // ২. আগের সাব-স্লাইড অথবা আগের পোস্টে যাওয়ার মেথড
   const prevSlide = useCallback(() => {
     if (totalPosts === 0) return
 
     if (subIdx > 0) {
       setSubIdx((prev) => prev - 1)
     } else {
-      // আগের পোস্টে যাওয়া এবং তার শেষ সাব-স্লাইড দেখানো
+      // আগের পোস্টে যাওয়া এবং তার শেষ সাব-স্লাইডটি প্রদর্শন করা
       const targetPostIdx = (postIdx - 1 + totalPosts) % totalPosts
       setPostIdx(targetPostIdx)
       const prevMedia = posts[targetPostIdx]?.media_items || []
@@ -64,7 +64,7 @@ export function useHeroSlider({ posts }: UseHeroSliderProps) {
     setSubIdx(0)
   }, [])
 
-  // ৪. সোয়াইপ হ্যান্ডলার (Touch / Push Gestures)
+  // ৪. সোয়াইপ অঙ্গভঙ্গি হ্যান্ডলার (Touch / Push Gestures)
   const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
@@ -121,3 +121,5 @@ export function useHeroSlider({ posts }: UseHeroSliderProps) {
     handleTouchEnd,
   }
 }
+
+export default useHeroSlider
