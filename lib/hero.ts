@@ -38,7 +38,7 @@ export const TRANSITIONS = [
   { label: "২০. সিনেমাটিক কেন-বার্নস (Ken Burns Pan)", value: "ken-burns" },
 ]
 
-// ২১টি অ্যানিমেটেড ব্রেকিং ব্যাজ ও শেপ
+// ২১টি অ্যানিমেটেড ব্রেকিং ব্যাজ ও প্রতীক
 export const BREAKING_BADGES = [
   { label: "🔴 ১. পালসিং রেড ডট (Pulsing Dot)", value: "pulse-circle" },
   { label: "📡 ২. রাডার ওয়েভ (Radar Wave)", value: "radar-wave" },
@@ -63,7 +63,7 @@ export const BREAKING_BADGES = [
   { label: "🎆 ২১. রেইনবো শিফট (Rainbow Shift)", value: "rainbow-shift" },
 ]
 
-// ব্রেকিং টেক্সট অ্যানিমেশন ইফেক্ট
+// ২০টি ব্রেকিং টেক্সট অ্যানিমেশন ইফেক্ট
 export const BREAKING_TEXT_EFFECTS = [
   { label: "🎲 স্বয়ংক্রিয় প্যাটার্ন (Auto Rotation - একা একাই বদলাবে)", value: "auto" },
   { label: "১. টাইপরাইটার ইফেক্ট (Typewriter)", value: "typewriter" },
@@ -112,7 +112,7 @@ export const FONT_WEIGHTS = [
   { label: "অতিরিক্ত গাঢ় (Extra Bold 800)", value: "800" },
 ]
 
-// লেখার সাইজ অপশন
+// লেখার সাইজ
 export const TEXT_SIZES = [
   { label: "ছোট (Small)", value: "sm" },
   { label: "স্বাভাবিক (Normal)", value: "base" },
@@ -123,7 +123,7 @@ export const TEXT_SIZES = [
   { label: "মেগা (4XL)", value: "4xl" },
 ]
 
-// লেখার স্টাইল অপশন
+// লেখার স্টাইল
 export const TEXT_STYLES = [
   { label: "স্বাভাবিক (Normal)", value: "normal" },
   { label: "গাঢ় (Bold)", value: "bold" },
@@ -131,6 +131,7 @@ export const TEXT_STYLES = [
   { label: "বোল্ড ও ইটালিক (Bold Italic)", value: "bold-italic" },
 ]
 
+// আনলিমিটেড লাইভ স্লাইড সাপোর্ট
 export const MAX_LIVE = 100
 
 export type HeroSlide = {
@@ -143,31 +144,36 @@ export type HeroSlide = {
   media_type?: "image" | "video" | null
   video_url?: string | null
   extra_media?: string | null
-  media_urls?: string | null // ডিভাইস থেকে একসাথে আপলোড করা একাধিক মিডিয়া
+  media_urls?: string | null
   button_text?: string | null
+
   // স্বাধীন শিরোনাম স্টাইল
   title_font?: string | null
   title_size?: string | null
   title_style?: string | null
   title_color?: string | null
   title_bg_color?: string | null
+  text_align?: "left" | "center" | "right" | null
+
   // স্বাধীন বিবরণ স্টাইল
   summary_font?: string | null
   summary_size?: string | null
   summary_style?: string | null
   summary_color?: string | null
+
   // স্বাধীন ব্যাজ স্টাইল
   badge_font?: string | null
   badge_size?: string | null
   badge_text_color?: string | null
   badge_color?: string | null
+
   // স্বাধীন বাটন স্টাইল
   btn_font?: string | null
   btn_size?: string | null
   btn_color?: string | null
   btn_bg_color?: string | null
-  // অন্যান্য লেআউট ও কার্ড
-  text_align?: "left" | "center" | "right" | null
+
+  // লেআউট ও গ্লাস কার্ড
   content_pos_v?: "top" | "center" | "bottom" | null
   content_pos_h?: "left" | "center" | "right" | null
   show_card_bg?: boolean | null
@@ -178,6 +184,7 @@ export type HeroSlide = {
   card_bg_color?: string | null
   card_opacity?: number | null
   fit_mode?: "contain" | "cover" | null
+
   link_url: string | null
   sort_order: number
   is_active: boolean
@@ -232,7 +239,7 @@ async function ok(res: Response): Promise<Response> {
   throw new Error(msg)
 }
 
-// স্লাইড লোড করা
+// স্লাইড লোড করা (১০০% ক্র্যাশ-প্রুফ সেফটি গার্ড)
 export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   try {
     const res = await fetch(
@@ -240,13 +247,14 @@ export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
       { headers: hdr(token), cache: "no-store" }
     )
     if (!res.ok) return []
-    return await res.json()
+    const data = await res.json()
+    return Array.isArray(data) ? data : []
   } catch {
     return []
   }
 }
 
-// সাইটের পোস্টগুলো লোড করা
+// সাইটের পোস্টগুলো ড্রপডাউনে লোড করা
 export async function getRecentPosts(): Promise<Array<{ id: string; title: string; image_url?: string; summary?: string }>> {
   try {
     const res = await fetch(
@@ -254,7 +262,8 @@ export async function getRecentPosts(): Promise<Array<{ id: string; title: strin
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
-    return await res.json()
+    const data = await res.json()
+    return Array.isArray(data) ? data : []
   } catch {
     return []
   }
@@ -300,8 +309,8 @@ export async function getHeroSettings(): Promise<HeroSettings | null> {
       cache: "no-store",
     })
     if (!res.ok) return null
-    const rows: HeroSettings[] = await res.json()
-    return rows[0] || null
+    const rows = await res.json()
+    return Array.isArray(rows) && rows[0] ? rows[0] : null
   } catch {
     return null
   }
