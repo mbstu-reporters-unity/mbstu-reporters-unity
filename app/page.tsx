@@ -1,7 +1,7 @@
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { NewsTicker } from '@/components/portal/news-ticker'
-import { HeroCarousel } from '@/components/portal/hero-carousel'
+import { HeroCarousel } from '@/components/hero/HeroCarousel'
 import { LeadershipSection } from '@/components/portal/leadership-section'
 import { GeneralNews } from '@/components/portal/general-news'
 import { CategorySections } from '@/components/portal/category-sections'
