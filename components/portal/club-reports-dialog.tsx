@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useId, useState } from 'react'
-import { CalendarDays, Check, Globe, Mail, Newspaper, Phone, Share2, UserRound, Users, X } from 'lucide-react'
+import { ArrowRight, CalendarDays, Check, Globe, Mail, Newspaper, Share2, UserRound, Users, X } from 'lucide-react'
 import type { Club } from '@/lib/data'
-import type { ClubItem } from '@/lib/clubs'
+import { getClubNewsPosts, type ClubItem } from '@/lib/clubs'
 
 export function ClubReportsDialog({
   club,
@@ -16,6 +16,7 @@ export function ClubReportsDialog({
 }) {
   const titleId = useId()
   const [copied, setCopied] = useState(false)
+  const [liveNews, setLiveNews] = useState<Array<{ id: string; title: string; created_at: string; author: string; image_url: string | null }>>([])
 
   useEffect(() => {
     if (!club) return
@@ -23,6 +24,10 @@ export function ClubReportsDialog({
     document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
+
+    // এই ক্লাবের সব প্রকাশিত খবর ডাটাবেস থেকে আনা
+    getClubNewsPosts(club.id).then(setLiveNews)
+
     return () => {
       document.body.style.overflow = prev
       window.removeEventListener('keydown', onKey)
@@ -110,9 +115,8 @@ export function ClubReportsDialog({
         </div>
 
         <div className="p-5 sm:p-6 space-y-6">
-          {/* ==================== সোশ্যাল মিডিয়া ও শেয়ার বার ==================== */}
+          {/* সোশ্যাল মিডিয়া ও শেয়ার বার */}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-gray-50 p-3 border border-border/80">
-            {/* সোশ্যাল লিংকসমূহ */}
             <div className="flex items-center gap-1.5 text-xs font-semibold">
               {rawClub?.fb_url && (
                 <a
@@ -149,7 +153,6 @@ export function ClubReportsDialog({
               )}
             </div>
 
-            {/* শেয়ার বাটনসমূহ */}
             <div className="flex items-center gap-1.5 ml-auto">
               <button
                 type="button"
@@ -180,7 +183,7 @@ export function ClubReportsDialog({
             </div>
           </div>
 
-          {/* ==================== ক্লাবের কার্যক্রম / পরিচিতি ==================== */}
+          {/* পরিচিতি ও কার্যক্রম */}
           {(club.activity || club.activityBn) && (
             <div className="rounded-2xl border p-4 bg-white space-y-1">
               <p className="text-[11px] font-bold uppercase tracking-wider text-brand">পরিচিতি ও সাম্প্রতিক কার্যক্রম</p>
@@ -194,7 +197,7 @@ export function ClubReportsDialog({
             </div>
           )}
 
-          {/* ==================== কমিটি সেকশন ==================== */}
+          {/* কমিটি সেকশন */}
           {members.length > 0 && (
             <div>
               <div className="flex items-center justify-between border-b pb-2">
@@ -226,7 +229,7 @@ export function ClubReportsDialog({
             </div>
           )}
 
-          {/* ==================== ক্লাব প্রতিবেদন সেকশন ==================== */}
+          {/* ==================== ক্লাব প্রতিবেদন / স্বয়ংক্রিয় লাইভ সংবাদ ==================== */}
           <div>
             <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-brand border-b pb-2">
               <Newspaper className="size-4" aria-hidden="true" />
@@ -234,8 +237,35 @@ export function ClubReportsDialog({
             </h3>
 
             <ul className="mt-3 space-y-3">
+              {/* এই ক্লাবের নামে পোস্ট করা সব লাইভ সংবাদ */}
+              {liveNews.map((p) => (
+                <li key={p.id} className="rounded-2xl border border-border p-4 transition-all hover:border-brand bg-white shadow-sm hover:shadow-md">
+                  <a href={`/post/${p.id}`} className="block group">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-serif font-bold leading-snug text-navy text-sm sm:text-base group-hover:text-brand transition-colors">
+                        {p.title}
+                      </p>
+                      <ArrowRight className="size-4 text-brand opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1" />
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground border-t pt-2">
+                      <span className="inline-flex items-center gap-1 font-medium">
+                        <CalendarDays className="size-3.5 text-gold" aria-hidden="true" />
+                        {new Date(p.created_at).toLocaleDateString('bn-BD')}
+                      </span>
+                      {p.author && (
+                        <span className="inline-flex items-center gap-1 font-medium text-brand">
+                          <UserRound className="size-3.5" aria-hidden="true" />
+                          {p.author}
+                        </span>
+                      )}
+                    </div>
+                  </a>
+                </li>
+              ))}
+
+              {/* অ্যাডমিন থেকে যুক্ত করা ম্যানুয়াল প্রতিবেদন (যদি থাকে) */}
               {club.reports.map((r, i) => (
-                <li key={i} className="rounded-2xl border border-border p-4 transition-colors hover:border-brand bg-white shadow-sm">
+                <li key={`manual-${i}`} className="rounded-2xl border border-border p-4 transition-colors hover:border-brand bg-white shadow-sm">
                   <p className="font-serif font-bold leading-snug text-navy text-sm sm:text-base">{r.title}</p>
                   <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground border-t pt-2">
                     <span className="inline-flex items-center gap-1 font-medium">
@@ -249,6 +279,12 @@ export function ClubReportsDialog({
                   </div>
                 </li>
               ))}
+
+              {liveNews.length === 0 && club.reports.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-4 italic">
+                  এই ক্লাবের কোনো প্রতিবেদন এখনো প্রকাশিত হয়নি।
+                </p>
+              )}
             </ul>
           </div>
 
