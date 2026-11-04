@@ -1,5 +1,5 @@
-export const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-export const SB_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+export const SB_URL = "https://pdualebabnvkoaqaqcut.supabase.co"
+export const SB_KEY = "sb_publishable_7SMqtPPUqsWVCPIXDqgPTw_Jrctzkwm"
 const BUCKET = "post-images"
 
 export type Post = {
