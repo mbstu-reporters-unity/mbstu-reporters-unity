@@ -28,6 +28,7 @@ export type ClubItem = {
   web_url: string | null
   committee_term?: string | null
   committee_members?: CommitteeMember[] | null
+  reports_title?: string | null
   reports?: ClubReportItem[] | null
   contact_info: string | null
   sort_order: number
