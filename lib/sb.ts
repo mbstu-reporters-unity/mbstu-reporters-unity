@@ -51,9 +51,10 @@ export type SignupInfo = {
   newspaper_name?: string
 }
 
+// সঠিক সমাধান কোড:
 function hdr(token?: string, json = false): Record<string, string> {
   const h: Record<string, string> = { apikey: SB_KEY }
-  if (token) h.Authorization = `Bearer ${token}`
+  h.Authorization = `Bearer ${token || SB_KEY}`
   if (json) h["Content-Type"] = "application/json"
   return h
 }
