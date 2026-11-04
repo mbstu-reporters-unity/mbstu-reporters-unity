@@ -33,6 +33,7 @@ export function ClubReportsDialog({
   const members = rawClub?.committee_members || []
   const term = rawClub?.committee_term
   const logo = rawClub?.logo_url
+  const reportsHeading = rawClub?.reports_title || "Club Reports / ক্লাব প্রতিবেদন"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -82,7 +83,7 @@ export function ClubReportsDialog({
         </div>
 
         <div className="p-6 space-y-6">
-          {/* ==================== কমিটি সেকশন (যদি দেওয়া থাকে) ==================== */}
+          {/* ==================== কমিটি সেকশন ==================== */}
           {members.length > 0 && (
             <div>
               <div className="flex items-center justify-between border-b pb-2">
@@ -114,11 +115,11 @@ export function ClubReportsDialog({
             </div>
           )}
 
-          {/* ==================== ক্লাব প্রতিবেদন সেকশন ==================== */}
+          {/* ==================== ক্লাব প্রতিবেদন সেকশন (কাস্টম শিরোনামসহ) ==================== */}
           <div>
             <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-brand border-b pb-2">
               <Newspaper className="size-4" aria-hidden="true" />
-              Club Reports / ক্লাব প্রতিবেদন
+              {reportsHeading}
             </h3>
 
             <ul className="mt-3 space-y-3">
