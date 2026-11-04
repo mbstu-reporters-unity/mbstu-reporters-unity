@@ -890,3 +890,33 @@ export async function saveStudentItemReturningId(
   const rows: { id: string }[] = await res.json()
   return rows[0]?.id ?? null
 }
+// সেকশনের যেকোনো টেক্সট (উপ-টাইটেল, মূল টাইটেল বা বিবরণ) পড়ার জন্য
+export async function getSectionText(key: string, defaultVal: string): Promise<string> {
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/app_config?select=value&key=eq.${encodeURIComponent(key)}`, {
+      headers: { apikey: SB_KEY },
+      cache: "no-store",
+    })
+    if (!res.ok) return defaultVal
+    const rows = await res.json()
+    return rows[0]?.value || defaultVal
+  } catch {
+    return defaultVal
+  }
+}
+
+// সেকশনের টেক্সট সেভ করার জন্য (শুধু অ্যাডমিন)
+export async function saveSectionText(token: string, key: string, value: string) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/app_config`, {
+      method: "POST",
+      headers: {
+        apikey: SB_KEY,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify({ key, value, updated_at: new Date().toISOString() }),
+    })
+  )
+}
