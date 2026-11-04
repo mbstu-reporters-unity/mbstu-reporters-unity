@@ -50,7 +50,6 @@ export default function ClubManager({ token }: { token: string }) {
   const [ytUrl, setYtUrl] = useState("")
   const [webUrl, setWebUrl] = useState("")
   const [contactInfo, setContactInfo] = useState("")
-  const [order, setOrder] = useState(0)
 
   // লগো
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
@@ -60,7 +59,8 @@ export default function ClubManager({ token }: { token: string }) {
   const [committeeTerm, setCommitteeTerm] = useState("")
   const [members, setMembers] = useState<CommitteeMember[]>([])
 
-  // প্রতিবেদন
+  // প্রতিবেদন ও কাস্টম শিরোনাম
+  const [reportsTitle, setReportsTitle] = useState("ক্লাব প্রতিবেদন / Club Reports")
   const [reports, setReports] = useState<ClubReportItem[]>([])
 
   const [busy, setBusy] = useState(false)
@@ -75,10 +75,10 @@ export default function ClubManager({ token }: { token: string }) {
   function reset() {
     setEditId(null); setName(""); setNameBn(""); setTag("Social"); setIcon("star")
     setActivity(""); setActivityBn(""); setDate(""); setFbUrl(""); setYtUrl("")
-    setWebUrl(""); setContactInfo(""); setOrder(0)
+    setWebUrl(""); setContactInfo("")
     setLogoUrl(null); setLogoFile(null)
     setCommitteeTerm(""); setMembers([])
-    setReports([])
+    setReportsTitle("ক্লাব প্রতিবেদন / Club Reports"); setReports([])
   }
 
   function startEdit(c: ClubItem) {
@@ -94,11 +94,11 @@ export default function ClubManager({ token }: { token: string }) {
     setYtUrl(c.yt_url || "")
     setWebUrl(c.web_url || "")
     setContactInfo(c.contact_info || "")
-    setOrder(c.sort_order || 0)
     setLogoUrl(c.logo_url || null)
     setLogoFile(null)
     setCommitteeTerm(c.committee_term || "")
     setMembers(c.committee_members || [])
+    setReportsTitle(c.reports_title || "ক্লাব প্রতিবেদন / Club Reports")
     setReports(c.reports || [])
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
@@ -139,6 +139,23 @@ export default function ClubManager({ token }: { token: string }) {
     setReports(reports.filter((_, i) => i !== index))
   }
 
+  // তীর চিহ্ন দিয়ে ক্লাবের ক্রম পরিবর্তন (⬆ / ⬇)
+  async function move(i: number, dir: -1 | 1) {
+    const j = i + dir
+    if (j < 0 || j >= list.length) return
+    const arr = [...list]
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    setList(arr) // ইনস্ট্যান্ট UI আপডেট
+    try {
+      await Promise.all(
+        arr.map((c, k) => updateCampusClub(token, c.id, { sort_order: k * 10 }))
+      )
+      await load()
+    } catch (e) {
+      setMsg("❌ ক্রম পরিবর্তন ব্যর্থ হয়েছে: " + (e instanceof Error ? e.message : ""))
+    }
+  }
+
   async function save() {
     if (!name.trim()) {
       setMsg("❌ অন্তত ক্লাবের ইংরেজি নামটি লিখুন")
@@ -168,16 +185,16 @@ export default function ClubManager({ token }: { token: string }) {
         contact_info: contactInfo.trim() || null,
         committee_term: committeeTerm.trim() || null,
         committee_members: members.filter((m) => m.name.trim() || m.role.trim()),
+        reports_title: reportsTitle.trim() || "ক্লাব প্রতিবেদন / Club Reports",
         reports: reports.filter((r) => r.title.trim()),
-        sort_order: Number(order) || 0,
-        is_active: true,
       }
 
       if (editId) {
         await updateCampusClub(token, editId, data)
         setMsg("✅ ক্লাবের তথ্য সফলভাবে আপডেট হয়েছে")
       } else {
-        await createCampusClub(token, data)
+        const nextOrder = list.length ? Math.max(...list.map((c) => c.sort_order || 0)) + 10 : 0
+        await createCampusClub(token, { ...data, sort_order: nextOrder, is_active: true })
         setMsg("✅ নতুন ক্লাব যোগ করা হয়েছে")
       }
       reset()
@@ -203,6 +220,7 @@ export default function ClubManager({ token }: { token: string }) {
 
   return (
     <div className="space-y-4">
+      {/* এডিট বা যোগ করার ফর্ম */}
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
         <h2 className="font-semibold text-lg">{editId ? "ক্লাব এডিট করুন" : "নতুন ক্লাব যুক্ত করুন"}</h2>
         <p className="text-xs text-gray-500">সব তথ্য ঐচ্ছিক। লগো, কমিটি ও প্রতিবেদন আপনার পছন্দমতো যোগ/বিয়োগ করুন।</p>
@@ -223,7 +241,7 @@ export default function ClubManager({ token }: { token: string }) {
           </div>
         </div>
 
-        {/* ক্লাবের লগো / ছবি আপলোড */}
+        {/* লগো আপলোড */}
         <div className="rounded-xl border p-3 bg-gray-50 space-y-2">
           <label className="block text-sm font-semibold text-gray-700">ক্লাবের লগো / অফিসিয়াল ছবি (ঐচ্ছিক):</label>
           <input
@@ -251,7 +269,7 @@ export default function ClubManager({ token }: { token: string }) {
           )}
         </div>
 
-        {/* সাম্প্রতিক কার্যক্রম */}
+        {/* কার্যক্রম */}
         <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ বা সাম্প্রতিক কার্যক্রম (English)" value={activity} onChange={(e) => setActivity(e.target.value)} />
         <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ বা সাম্প্রতিক কার্যক্রম (বাংলা)" value={activityBn} onChange={(e) => setActivityBn(e.target.value)} />
         <input className={inp} placeholder="কার্যক্রমের তারিখ (যেমন: 27 Oct 2026)" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -264,7 +282,7 @@ export default function ClubManager({ token }: { token: string }) {
           <input className={inp} placeholder="অফিসিয়াল ওয়েবসাইট লিংক (https://...)" value={webUrl} onChange={(e) => setWebUrl(e.target.value)} />
         </div>
 
-        {/* ==================== কমিটি সেকশন ==================== */}
+        {/* কমিটি */}
         <div className="rounded-xl border p-3 bg-gray-50 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-bold text-gray-800">কমিটি ও সদস্যবৃন্দ (ঐচ্ছিক):</p>
@@ -292,19 +310,19 @@ export default function ClubManager({ token }: { token: string }) {
               <div className="grid grid-cols-2 gap-2">
                 <input
                   className={smallInp}
-                  placeholder="নাম (যেমন: মো: তানভীর আহমেদ)"
+                  placeholder="নাম"
                   value={m.name}
                   onChange={(e) => updateMember(idx, "name", e.target.value)}
                 />
                 <input
                   className={smallInp}
-                  placeholder="পদবি (যেমন: সভাপতি / সাধারণ সম্পাদক)"
+                  placeholder="পদবি (যেমন: সভাপতি)"
                   value={m.role}
                   onChange={(e) => updateMember(idx, "role", e.target.value)}
                 />
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-600 shrink-0">সদস্যের ছবি:</label>
+                <label className="text-xs text-gray-600 shrink-0">ছবি:</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -321,18 +339,12 @@ export default function ClubManager({ token }: { token: string }) {
               </div>
             </div>
           ))}
-          {members.length === 0 && (
-            <p className="text-xs text-gray-500 italic">কোনো সদস্য যোগ করা হয়নি। প্রয়োজনে উপরে "+ সদস্য যোগ করুন" চাপুন।</p>
-          )}
         </div>
 
-        {/* ==================== ক্লাব প্রতিবেদন সেকশন ==================== */}
+        {/* ==================== ক্লাব প্রতিবেদন ও কাস্টম শিরোনাম ==================== */}
         <div className="rounded-xl border p-3 bg-gray-50 space-y-3">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-gray-800">ক্লাব প্রতিবেদন / Reports (ঐচ্ছিক):</p>
-              <p className="text-xs text-gray-500">পপআপে দেখানো খবরের শিরোনাম, তারিখ ও প্রতিবেদকের নাম এখান থেকেই বদলানো যাবে।</p>
-            </div>
+            <p className="text-sm font-bold text-gray-800">ক্লাব প্রতিবেদন / Reports (ঐচ্ছিক):</p>
             <button
               type="button"
               onClick={addReport}
@@ -340,6 +352,19 @@ export default function ClubManager({ token }: { token: string }) {
             >
               + প্রতিবেদন যোগ করুন
             </button>
+          </div>
+
+          {/* সেকশনের নিজস্ব শিরোনাম এডিট করার বক্স */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              পপআপের প্রতিবেদনের শিরোনাম (প্রয়োজনে পরিবর্তন করুন):
+            </label>
+            <input
+              className={inp}
+              placeholder="যেমন: ক্লাব প্রতিবেদন / Club Reports"
+              value={reportsTitle}
+              onChange={(e) => setReportsTitle(e.target.value)}
+            />
           </div>
 
           {reports.map((r, idx) => (
@@ -350,7 +375,7 @@ export default function ClubManager({ token }: { token: string }) {
               </div>
               <input
                 className={smallInp}
-                placeholder="প্রতিবেদনের শিরোনাম (যেমন: মাদকবিরোধী র‍্যালি অনুষ্ঠিত)"
+                placeholder="প্রতিবেদনের শিরোনাম"
                 value={r.title}
                 onChange={(e) => updateReport(idx, "title", e.target.value)}
               />
@@ -363,24 +388,16 @@ export default function ClubManager({ token }: { token: string }) {
                 />
                 <input
                   className={smallInp}
-                  placeholder="প্রতিবেদক (যেমন: তানভীর আহমেদ / যেকারো নাম)"
+                  placeholder="প্রতিবেদকের নাম (যেমন: তানভীর আহমেদ)"
                   value={r.reporter}
                   onChange={(e) => updateReport(idx, "reporter", e.target.value)}
                 />
               </div>
             </div>
           ))}
-          {reports.length === 0 && (
-            <p className="text-xs text-gray-500 italic">কোনো কাস্টম প্রতিবেদন নেই। ডিফল্টভাবে ক্লাবের সাম্প্রতিক কার্যক্রমটি প্রতিবেদন হিসেবে দেখাবে।</p>
-          )}
         </div>
 
         <input className={inp} placeholder="যোগাযোগের ইমেইল / ফোন (ঐচ্ছিক)" value={contactInfo} onChange={(e) => setContactInfo(e.target.value)} />
-
-        <label className="block text-xs text-gray-600">
-          ক্রম / Serial Order (ছোট সংখ্যা আগে দেখাবে):
-          <input className={inp} type="number" value={order} onChange={(e) => setOrder(Number(e.target.value))} />
-        </label>
 
         <button className={btn} onClick={save} disabled={busy}>
           {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "যুক্ত করুন"}
@@ -389,28 +406,69 @@ export default function ClubManager({ token }: { token: string }) {
         {msg && <p className="text-sm font-semibold">{msg}</p>}
       </div>
 
-      {/* ক্লাবের তালিকা */}
+      {/* ==================== ক্লাব তালিকা (নম্বর ও তীর চিহ্নসহ) ==================== */}
       <div className="space-y-3">
-        <h2 className="font-semibold">বর্তমান ক্লাবসমূহ ({list.length})</h2>
-        {list.map((c) => (
-          <div key={c.id} className="bg-white rounded-2xl shadow p-3 text-sm flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              {c.logo_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={c.logo_url} alt="" className="w-10 h-10 rounded-xl object-contain border p-0.5 shrink-0 bg-white" />
-              )}
-              <div className="min-w-0">
-                <p className="font-semibold text-base truncate">{c.name}</p>
-                <p className="text-xs text-gray-500 truncate">{c.name_bn || "বাংলা নাম নেই"} · ট্যাগ: {c.tag}</p>
-                <p className="text-[11px] text-gray-400">
-                  {c.committee_members?.length ? `কমিটি: ${c.committee_members.length} জন · ` : ""}
-                  {c.reports?.length ? `প্রতিবেদন: ${c.reports.length} টি` : ""}
-                </p>
+        <h2 className="font-semibold text-base">বর্তমান ক্লাবসমূহ ({list.length})</h2>
+        <p className="text-xs text-gray-500">
+          প্রায়োরিটি সাজাতে ⬆ উপরে বা ⬇ নিচে চাপুন। তালিকার এক নম্বর ক্লাবটি হোমপেজে সবার প্রথমে দেখাবে।
+        </p>
+
+        {list.map((c, i) => (
+          <div key={c.id} className="bg-white rounded-2xl shadow p-3 text-sm space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                {/* ক্রমিক নম্বর ব্যাজ */}
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-green-100 font-bold text-xs text-green-800">
+                  {i + 1}
+                </span>
+
+                {c.logo_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.logo_url} alt="" className="w-10 h-10 rounded-xl object-contain border p-0.5 shrink-0 bg-white" />
+                )}
+                <div className="min-w-0">
+                  <p className="font-semibold text-base truncate">{c.name}</p>
+                  <p className="text-xs text-gray-500 truncate">{c.name_bn || "বাংলা নাম নেই"} · ট্যাগ: {c.tag}</p>
+                  <p className="text-[11px] text-gray-400">
+                    {c.committee_members?.length ? `কমিটি: ${c.committee_members.length} জন · ` : ""}
+                    {c.reports?.length ? `প্রতিবেদন: ${c.reports.length} টি` : ""}
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex gap-3 shrink-0">
-              <button onClick={() => startEdit(c)} className="text-green-700 font-semibold">এডিট</button>
-              <button onClick={() => remove(c.id, c.name)} className="text-red-600 font-semibold">মুছুন</button>
+
+            {/* অ্যাকশন বাটন: উপরে, নিচে, এডিট, মুছুন */}
+            <div className="flex flex-wrap items-center gap-3 border-t pt-2 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => move(i, -1)}
+                disabled={i === 0}
+                className="rounded-lg border px-2.5 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none"
+              >
+                ⬆ উপরে
+              </button>
+              <button
+                type="button"
+                onClick={() => move(i, 1)}
+                disabled={i === list.length - 1}
+                className="rounded-lg border px-2.5 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none"
+              >
+                ⬇ নিচে
+              </button>
+              <button
+                type="button"
+                onClick={() => startEdit(c)}
+                className="text-green-700 hover:underline ml-auto"
+              >
+                এডিট
+              </button>
+              <button
+                type="button"
+                onClick={() => remove(c.id, c.name)}
+                className="text-red-600 hover:underline"
+              >
+                মুছুন
+              </button>
             </div>
           </div>
         ))}
