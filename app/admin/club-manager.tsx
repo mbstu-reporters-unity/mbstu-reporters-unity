@@ -7,7 +7,19 @@ import type { ClubItem } from "../../lib/clubs"
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
 
-const ICONS = ["star", "megaphone", "book", "briefcase", "mic", "camera", "baby", "footprints", "flask", "droplet"]
+// আইকনগুলোর সহজ বাংলা তালিকা
+const ICON_OPTIONS = [
+  { key: "star", label: "⭐ তারা (ধ্রুবতারা / সাধারণ)" },
+  { key: "megaphone", label: "📢 মেগাফোন (সচেতনতা / সোচ্চার)" },
+  { key: "camera", label: "📷 ক্যামেরা (ফটোগ্রাফি)" },
+  { key: "mic", label: "🎤 মাইক্রোফোন (বিতর্ক / ডিবেট)" },
+  { key: "book", label: "📚 বই (সাহিত্য / রিডার জোন)" },
+  { key: "briefcase", label: "💼 ব্রিফকেস (ক্যারিয়ার ক্লাব)" },
+  { key: "droplet", label: "🩸 রক্তের ফোঁটা (বাঁধন / রক্তদান)" },
+  { key: "flask", label: "🧪 টেস্টটিউব (বিজ্ঞান ও গবেষণা)" },
+  { key: "baby", label: "👶 শিশু (শিশু কল্যাণ)" },
+  { key: "footprints", label: "👣 পদচিহ্ন (পথশিশু / সেবা)" },
+]
 
 export default function ClubManager({ token }: { token: string }) {
   const [list, setList] = useState<ClubItem[]>([])
@@ -127,11 +139,18 @@ export default function ClubManager({ token }: { token: string }) {
           <input className={inp} placeholder="ক্লাবের নাম (বাংলা)" value={nameBn} onChange={(e) => setNameBn(e.target.value)} />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <input className={inp} placeholder="ক্যাটেগরি/ট্যাগ (যেমন: Debate, Blood)" value={tag} onChange={(e) => setTag(e.target.value)} />
-          <select className={inp} value={icon} onChange={(e) => setIcon(e.target.value)}>
-            {ICONS.map((ic) => <option key={ic} value={ic}>{ic}</option>)}
-          </select>
+          <div>
+            <label className="text-xs text-gray-600 block mb-1">ক্লাবের আইকন বা প্রতীক:</label>
+            <select className={inp} value={icon} onChange={(e) => setIcon(e.target.value)}>
+              {ICON_OPTIONS.map((ic) => (
+                <option key={ic.key} value={ic.key}>
+                  {ic.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ বা সাম্প্রতিক কার্যক্রম (English)" value={activity} onChange={(e) => setActivity(e.target.value)} />
@@ -164,6 +183,7 @@ export default function ClubManager({ token }: { token: string }) {
         {msg && <p className="text-sm">{msg}</p>}
       </div>
 
+      {/* ক্লাবের তালিকা */}
       <div className="space-y-3">
         <h2 className="font-semibold">বর্তমান ক্লাবসমূহ ({list.length})</h2>
         {list.map((c) => (
@@ -172,14 +192,14 @@ export default function ClubManager({ token }: { token: string }) {
               <p className="font-semibold text-base">{c.name}</p>
               <p className="text-xs text-gray-500">{c.name_bn || "বাংলা নাম নেই"} · ট্যাগ: {c.tag}</p>
               <div className="flex gap-2 text-xs text-blue-600 mt-1">
-                {c.fb_url && <span>[FB]</span>}
-                {c.yt_url && <span>[YT]</span>}
-                {c.web_url && <span>[Web]</span>}
+                {c.fb_url && <span>[FB লিংক আছে]</span>}
+                {c.yt_url && <span>[YT লিংক আছে]</span>}
+                {c.web_url && <span>[ওয়েবসাইট আছে]</span>}
               </div>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => startEdit(c)} className="text-green-700">এডিট</button>
-              <button onClick={() => remove(c.id, c.name)} className="text-red-600">মুছুন</button>
+              <button onClick={() => startEdit(c)} className="text-green-700 font-semibold">এডিট</button>
+              <button onClick={() => remove(c.id, c.name)} className="text-red-600 font-semibold">মুছুন</button>
             </div>
           </div>
         ))}
