@@ -127,7 +127,6 @@ export default function AdminPage() {
       if (names.length) setCats(names)
       setHomeLimit(String(await getHomeLimit()))
       
-      // ক্যাম্পাস ক্লাবগুলোর তালিকা আনা
       const clubs = await getCampusClubs(t)
       setAvailableClubs(clubs)
 
@@ -328,7 +327,6 @@ export default function AdminPage() {
 
   if (!ready) return null
 
-  /* ---------- লগইন / সাইনআপ ---------- */
   if (!token) {
     return (
       <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -372,7 +370,6 @@ export default function AdminPage() {
     )
   }
 
-  /* ---------- অনুমোদনের অপেক্ষা ---------- */
   if (me && !me.approved) {
     return (
       <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -398,7 +395,6 @@ export default function AdminPage() {
     )
   }
 
-  /* ---------- ড্যাশবোর্ড ---------- */
   const canManage = (p: Post) => me.role === "admin" || me.role === "moderator" || p.user_id === me.id
   const tabCls = (name: string) =>
     `flex-1 rounded-xl py-2 text-sm ${tab === name ? "bg-green-700 text-white" : "bg-white border"}`
@@ -455,12 +451,10 @@ export default function AdminPage() {
               <input className={inp} placeholder="হেডিং (উপশিরোনাম)" value={heading} onChange={(e) => setHeading(e.target.value)} />
               <textarea className={inp} rows={6} placeholder="ক্যাপশন / বিস্তারিত লেখা *" value={body} onChange={(e) => setBody(e.target.value)} />
               
-              {/* ক্যাটাগরি ড্রপডাউন */}
               <select className={inp} value={category} onChange={(e) => setCategory(e.target.value)}>
                 {(cats.includes(category) ? cats : [...cats, category]).map((c) => <option key={c}>{c}</option>)}
               </select>
 
-              {/* ক্লাব ক্যাটাগরি সিলেক্ট করলেই স্বয়ংক্রিয়ভাবে ক্লাবের ড্রপডাউন চলে আসবে */}
               {isClubCategory && (
                 <div className="space-y-1.5 rounded-xl border border-green-600 bg-green-50/60 p-3 animate-in fade-in">
                   <label className="text-xs font-bold text-green-900 block">
@@ -580,8 +574,9 @@ export default function AdminPage() {
           <ClubManager token={token} />
         )}
 
+        {/* ==================== এখানে ক্যাশ/প্রপসজনিত সমস্যাটি ঠিক করা হয়েছে ==================== */}
         {tab === "limits" && isAdmin && (
-          <SectionLimits token={token} cats={cats} />
+          <SectionLimits token={token} />
         )}
 
         {tab === "directors" && isAdmin && (
