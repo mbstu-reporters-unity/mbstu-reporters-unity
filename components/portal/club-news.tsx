@@ -127,7 +127,8 @@ export function ClubNews() {
             return (
               <li
                 key={club.id}
-                className="animate-in fade-in group flex flex-col rounded-2xl border border-white/10 bg-white/5 p-5 transition-all hover:-translate-y-1 hover:border-brand hover:bg-white/10"
+                id={`club-${club.id}`}
+                className="scroll-mt-24 animate-in fade-in group flex flex-col rounded-2xl border border-white/10 bg-white/5 p-5 transition-all hover:-translate-y-1 hover:border-brand hover:bg-white/10"
               >
                 <div className="flex items-start justify-between gap-3">
                   {raw?.logo_url ? (
@@ -205,7 +206,7 @@ export function ClubNews() {
                   </div>
                 )}
 
-                {/* এই ওয়েবসাইটে ক্লাবের নিউজ, কমিটি ও রিপোর্ট দেখার বোতাম */}
+                {/* ক্লাব প্রতিবেদন দেখার বোতাম */}
                 <button
                   type="button"
                   onClick={() => setSelected(club)}
