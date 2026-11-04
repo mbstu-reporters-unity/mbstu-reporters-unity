@@ -17,6 +17,7 @@ import StudentManager from "./student-manager"
 import SectionLimits from "./section-limits"
 import DirectorManager from "./director-manager"
 import CategoryManager from "./category-manager"
+import ClubManager from "./club-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -27,7 +28,7 @@ const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabl
 
 type Tab =
   | "posts" | "comments" | "reporters" | "profile" | "leaders" | "notices"
-  | "hero" | "ticker" | "students" | "limits" | "directors" | "categories"
+  | "hero" | "ticker" | "students" | "limits" | "directors" | "categories" | "clubs"
 
 async function shrink(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file)
@@ -440,6 +441,7 @@ export default function AdminPage() {
               <button onClick={() => setTab("directors")} className={tabCls("directors")}>ডিরেক্টর প্যানেল</button>
               <button onClick={() => setTab("categories")} className={tabCls("categories")}>ক্যাটাগরি</button>
               <button onClick={() => setTab("students")} className={tabCls("students")}>স্টুডেন্ট কর্নার</button>
+              <button onClick={() => setTab("clubs")} className={tabCls("clubs")}>ক্যাম্পাস ক্লাব</button>
               <button onClick={() => setTab("limits")} className={tabCls("limits")}>হোম সেটিং</button>
             </>
           )}
@@ -553,6 +555,10 @@ export default function AdminPage() {
 
         {tab === "students" && isAdmin && (
           <StudentManager token={token} shrink={shrink} />
+        )}
+
+        {tab === "clubs" && isAdmin && (
+          <ClubManager token={token} />
         )}
 
         {tab === "limits" && isAdmin && (
