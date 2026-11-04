@@ -6,7 +6,6 @@ import { getLimits, saveLimit, limitKey, CAT_CAMPUS, CAT_CLUB, CAT_STUDENT, getS
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50 hover:bg-green-800 transition-all shadow-md cursor-pointer"
 const inp = "w-full border rounded-xl px-3.5 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-600"
 
-// যে ৫টি সেকশনের লেখা আপনি এডিট করতে পারবেন
 const SECTIONS_CONFIG = [
   { id: "leadership", name: "১. নেতৃত্ব ও এক নজরে (নেতৃত্বের বার্তা)", defaultEyebrow: "Leadership & At a Glance", defaultTitle: "নেতৃত্বের বার্তা", defaultDesc: "Messages from the leadership of MBSTU Reporters' Unity — committed to fearless, fair and factual campus journalism." },
   { id: "general_news", name: "২. সর্বশেষ ক্যাম্পাস সংবাদ", defaultEyebrow: "Campus News", defaultTitle: "ক্যাম্পাস সংবাদ", defaultDesc: "Verified reports from across MBSTU." },
@@ -48,14 +47,11 @@ export default function SectionLimits({ token, cats }: { token: string; cats: st
     setBusy(true)
     setMsg("")
     try {
-      // ১. পোস্ট সংখ্যা বা লিমিট সেভ করা
       const limitPromises = names.map((n) => saveLimit(token, limitKey(n), get(n)))
-      
-      // ২. টাইটেল ও সাবটাইটেল সেভ করা
       const textPromises = Object.keys(texts).map((k) => saveSectionText(token, `sec_${k}`, texts[k]))
 
       await Promise.all([...limitPromises, ...textPromises])
-      setMsg("✅ সফলভাবে সেভ হয়েছে! এখন হোম পেজ রিফ্রেশ করে পরিবর্তনগুলো দেখে নিন।")
+      setMsg("✅ সফলভাবে সেভ হয়েছে!")
     } catch (e) {
       setMsg("❌ " + (e instanceof Error ? e.message : "ব্যর্থ হয়েছে"))
     }
@@ -64,11 +60,8 @@ export default function SectionLimits({ token, cats }: { token: string; cats: st
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto pb-12">
-      {/* ১. পোস্ট সংখ্যা বা লিমিট সেটিং */}
       <div className="bg-white rounded-2xl shadow p-5 space-y-4">
         <h2 className="font-bold text-lg text-green-800">হোম পেজে কতটি করে পোস্ট দেখাবে</h2>
-        <p className="text-xs text-gray-500">>−</p>
-        
         <div className="space-y-3">
           {names.map((n) => (
             <div key={n} className="flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
@@ -91,20 +84,19 @@ export default function SectionLimits({ token, cats }: { token: string; cats: st
         </div>
       </div>
 
-      {/* ২. সেকশন টাইটেল, উপ-টাইটেল ও সাব-টাইটেল এডিটর */}
       <div className="bg-white rounded-2xl shadow p-5 space-y-5">
         <div>
           <h2 className="font-bold text-lg text-green-800">হোম পেজ সেকশন টেক্সট এডিটর</h2>
-          <p className="text-xs text-gray-500">এখানে আপনি ওয়েবসাইটের প্রতিটি সেকশনের উপ-টাইটেল, মূল টাইটেল ও সাবটাইটেল নিজের মতো করে বাংলায় বা ইংরেজিতে পরিবর্তন করতে পারবেন।</p>
+          <p className="text-xs text-gray-500">এখানে আপনি ওয়েবসাইটের প্রতিটি সেকশনের উপ-টাইটেল, মূল টাইটেল ও সাবটাইটেল পরিবর্তন করতে পারবেন।</p>
         </div>
 
         <div className="space-y-6">
           {SECTIONS_CONFIG.map((s) => (
             <div key={s.id} className="p-4 rounded-xl border border-gray-200 bg-gray-50/60 space-y-3 shadow-sm">
-              <h3 className="font-bold text-sm text-green-900 border-b border-gray-200 pb-1.5">📌 {s.name}</h3>
+              <h3 className="-bold text-sm text-green-900 border-b border-gray-200 pb-1.5 font-bold">📌 {s.name}</h3>
               
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-gray-600">১. উপ-টাইটেল (যেমন: Leadership & At a Glance):</label>
+                <label className="text-[11px] font-semibold text-gray-600">১. উপ-টাইটেল (Eyebrow):</label>
                 <input
                   type="text"
                   className={inp}
@@ -114,7 +106,7 @@ export default function SectionLimits({ token, cats }: { token: string; cats: st
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-gray-600">২. মূল টাইটেল (যেমন: নেতৃত্বের বার্তা):</label>
+                <label className="text-[11px] font-semibold text-gray-600">২. মূল টাইটেল (Title):</label>
                 <input
                   type="text"
                   className={inp}
@@ -124,7 +116,7 @@ export default function SectionLimits({ token, cats }: { token: string; cats: st
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-gray-600">৩. সাবটাইটেল / বিবরণ:</label>
+                <label className="text-[11px] font-semibold text-gray-600">৩. সাবটাইটেল / বিবরণ (Description):</label>
                 <textarea
                   rows={2}
                   className={inp}
