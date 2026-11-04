@@ -1,5 +1,17 @@
 import { SB_URL, SB_KEY } from "./sb"
-import { clubs as fallbackClubs } from "./data"
+
+export type CommitteeMember = {
+  name: string
+  role: string
+  photo_url?: string | null
+}
+
+export type ClubReportItem = {
+  title: string
+  date: string
+  reporter: string
+  link_url?: string | null
+}
 
 export type ClubItem = {
   id: string
@@ -7,13 +19,16 @@ export type ClubItem = {
   name_bn: string | null
   tag: string
   icon: string
+  logo_url?: string | null
   activity: string | null
   activity_bn: string | null
   date: string | null
   fb_url: string | null
   yt_url: string | null
   web_url: string | null
-  committee: string | null
+  committee_term?: string | null
+  committee_members?: CommitteeMember[] | null
+  reports?: ClubReportItem[] | null
   contact_info: string | null
   sort_order: number
   is_active: boolean
@@ -39,7 +54,6 @@ async function ok(res: Response): Promise<Response> {
   throw new Error(msg)
 }
 
-// পাবলিক বা অ্যাডমিন সবার জন্য ক্লাব আনা
 export async function getCampusClubs(token?: string): Promise<ClubItem[]> {
   try {
     const res = await fetch(
@@ -47,8 +61,7 @@ export async function getCampusClubs(token?: string): Promise<ClubItem[]> {
       { headers: hdr(token), cache: "no-store" }
     )
     if (!res.ok) return []
-    const data: ClubItem[] = await res.json()
-    return data
+    return await res.json()
   } catch {
     return []
   }
