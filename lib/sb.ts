@@ -920,3 +920,58 @@ export async function saveSectionText(token: string, key: string, value: string)
     })
   )
 }
+/* ---------- স্টুডেন্ট কর্নার ক্যাটাগরি ব্যবস্থাপনা ---------- */
+
+const DEFAULT_STUDENT_KINDS = ["Opinion", "Creative Writing", "Achievement", "Research Highlight"]
+
+export async function getStudentCategories(): Promise<string[]> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/student_corner_categories?select=name&order=id.asc`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return DEFAULT_STUDENT_KINDS
+    const rows: { name: string }[] = await res.json()
+    return rows.length > 0 ? rows.map((r) => r.name) : DEFAULT_STUDENT_KINDS
+  } catch {
+    return DEFAULT_STUDENT_KINDS
+  }
+}
+
+export async function addStudentCategory(token: string, name: string) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/student_corner_categories`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify({ name }),
+    })
+  )
+}
+
+export async function updateStudentCategory(token: string, oldName: string, newName: string) {
+  // ১. ক্যাটাগরি নাম আপডেট
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/student_corner_categories?name=eq.${encodeURIComponent(oldName)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify({ name: newName }),
+    })
+  )
+  // ২. পুরোনো পোস্টগুলোতে যাতে ক্যাটাগরি ঠিক থাকে সেজন্য অটো-আপডেট
+  try {
+    await fetch(`${SB_URL}/rest/v1/student_items?kind=eq.${encodeURIComponent(oldName)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify({ kind: newName }),
+    })
+  } catch {}
+}
+
+export async function deleteStudentCategory(token: string, name: string) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/student_corner_categories?name=eq.${encodeURIComponent(name)}`, {
+      method: "DELETE",
+      headers: hdr(token),
+    })
+  )
+}
