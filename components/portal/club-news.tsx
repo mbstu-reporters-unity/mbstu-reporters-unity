@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Baby,
   BookOpen,
@@ -11,17 +11,19 @@ import {
   FileText,
   FlaskConical,
   Footprints,
+  Globe,
   Megaphone,
   Mic,
   Star,
   type LucideIcon,
 } from 'lucide-react'
-import { clubs, type Club, type ClubIcon } from '@/lib/data'
+import { clubs as fallbackClubs, type Club, type ClubIcon } from '@/lib/data'
+import { getCampusClubs, type ClubItem } from '@/lib/clubs'
 import { cn } from '@/lib/utils'
 import { SectionHeading } from './section-heading'
 import { ClubReportsDialog } from './club-reports-dialog'
 
-export const clubIcons: Record<ClubIcon, LucideIcon> = {
+export const clubIcons: Record<string, LucideIcon> = {
   megaphone: Megaphone,
   book: BookOpen,
   briefcase: Briefcase,
@@ -34,23 +36,58 @@ export const clubIcons: Record<ClubIcon, LucideIcon> = {
   droplet: Droplet,
 }
 
-const tags = ['All', ...Array.from(new Set(clubs.map((c) => c.tag)))]
+// ডেটাবেসের ক্লাবকে পোর্টালের উপযোগী করা
+function formatClub(c: ClubItem): Club {
+  return {
+    id: c.id,
+    name: c.name,
+    nameBn: c.name_bn || '',
+    tag: c.tag || 'General',
+    icon: (c.icon as ClubIcon) || 'star',
+    activity: c.activity || 'No recent activity posted.',
+    activityBn: c.activity_bn || '',
+    date: c.date || 'Recent',
+    reports: [
+      {
+        title: c.activityBn || c.activity || c.name,
+        date: c.date || 'Recent',
+        reporter: 'MBSTU Reporters Unity',
+      },
+    ],
+  }
+}
 
 export function ClubNews() {
+  const [list, setList] = useState<Club[]>(fallbackClubs)
+  const [dbMap, setDbMap] = useState<Record<string, ClubItem>>({})
   const [filter, setFilter] = useState('All')
   const [selected, setSelected] = useState<Club | null>(null)
-  const visible = filter === 'All' ? clubs : clubs.filter((c) => c.tag === filter)
+
+  useEffect(() => {
+    getCampusClubs().then((items) => {
+      if (items && items.length > 0) {
+        setList(items.map(formatClub))
+        const map: Record<string, ClubItem> = {}
+        items.forEach((it) => { map[it.id] = it })
+        setDbMap(map)
+      }
+    })
+  }, [])
+
+  const tags = ['All', ...Array.from(new Set(list.map((c) => c.tag)))]
+  const visible = filter === 'All' ? list : list.filter((c) => c.tag === filter)
 
   return (
     <section id="club-news" className="bg-navy py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeading
           inverted
-          eyebrow="Club News Corner"
-          title="ক্লাব নিউজ কর্নার"
-          subtitle="Latest activities from the 10 campus clubs and organisations of MBSTU."
+          eyebrow="Campus Clubs"
+          title="ক্যাম্পাস ক্লাবসমূহ"
+          subtitle="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের কার্যক্রম এবং পরিচিতি।"
         />
 
+        {/* ফিল্টারিং বাটন */}
         <div className="mb-8 flex gap-2 overflow-x-auto pb-2" role="group" aria-label="Filter clubs by category">
           {tags.map((tag) => (
             <button
@@ -67,15 +104,18 @@ export function ClubNews() {
             >
               {tag}
               {tag !== 'All' && (
-                <span className="ml-1.5 text-xs opacity-70">{clubs.filter((c) => c.tag === tag).length}</span>
+                <span className="ml-1.5 text-xs opacity-70">{list.filter((c) => c.tag === tag).length}</span>
               )}
             </button>
           ))}
         </div>
 
+        {/* ক্লাবের কার্ড গ্রিড */}
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((club) => {
-            const Icon = clubIcons[club.icon]
+            const Icon = clubIcons[club.icon] || Star
+            const raw = dbMap[club.id]
+
             return (
               <li
                 key={club.id}
@@ -92,16 +132,63 @@ export function ClubNews() {
                 <h3 className="mt-4 text-pretty font-serif text-base font-bold leading-snug text-white">{club.name}</h3>
                 <p className="text-sm text-white/60">{club.nameBn}</p>
 
+                {/* পরিচিতি ও কার্যক্রম বক্স */}
                 <div className="mt-4 flex-1 rounded-xl border border-white/10 bg-navy/40 p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-soft/80">Latest Activity</p>
                   <p className="mt-1 text-sm leading-relaxed text-white/85">{club.activity}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-white/55">{club.activityBn}</p>
-                  <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-white/50">
-                    <CalendarDays className="size-3.5" aria-hidden="true" />
-                    {club.date}
-                  </p>
+                  {club.activityBn && (
+                    <p className="mt-1 text-xs leading-relaxed text-white/55">{club.activityBn}</p>
+                  )}
+                  {club.date && (
+                    <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-white/50">
+                      <CalendarDays className="size-3.5" aria-hidden="true" />
+                      {club.date}
+                    </p>
+                  )}
                 </div>
 
+                {/* ১ম ধরনের লিংক: ক্লাবের সোশ্যাল মিডিয়া (যদি অ্যাডমিন দিয়ে থাকেন) */}
+                {raw && (raw.fb_url || raw.yt_url || raw.web_url) && (
+                  <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
+                    <span className="text-[11px] text-white/50">সোশ্যাল:</span>
+                    {raw.fb_url && (
+                      <a
+                        href={raw.fb_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg bg-white/10 px-2 py-1 text-xs font-semibold text-white transition hover:bg-blue-600"
+                        title="Facebook Page"
+                      >
+                        Facebook
+                      </a>
+                    )}
+                    {raw.yt_url && (
+                      <a
+                        href={raw.yt_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg bg-white/10 px-2 py-1 text-xs font-semibold text-white transition hover:bg-red-600"
+                        title="YouTube Channel"
+                      >
+                        YouTube
+                      </a>
+                    )}
+                    {raw.web_url && (
+                      <a
+                        href={raw.web_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 text-xs font-semibold text-white transition hover:bg-brand"
+                        title="Official Website"
+                      >
+                        <Globe className="size-3" />
+                        Web
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* ২য় ধরনের লিংক: এই ওয়েবসাইটে ক্লাবের নিউজ ও রিপোর্ট দেখার বোতাম */}
                 <button
                   type="button"
                   onClick={() => setSelected(club)}
