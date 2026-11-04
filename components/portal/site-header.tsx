@@ -1,20 +1,24 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ChevronDown, ChevronRight, Lock, Menu, Star, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Layers, Lock, Menu, X } from 'lucide-react'
 import { navLinks, clubs as fallbackClubs } from '@/lib/data'
 import { getCampusClubs, type ClubItem } from '@/lib/clubs'
+import { getVisibleCategoryNames } from '@/lib/categories'
 import { Logo } from './logo'
 import { Tx, useLang } from '@/lib/i18n'
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [clubsExpanded, setClubsExpanded] = useState(false)
+  const [categoriesExpanded, setCategoriesExpanded] = useState(false)
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
+  const [categoriesList, setCategoriesList] = useState<string[]>([])
   const { lang, pick } = useLang()
 
-  // ক্লাবগুলোর সম্পূর্ণ ডেটা লোড করা (লগো সহ)
+  // ক্লাব ও ক্যাটাগরি ডাটাবেস থেকে রিয়েল-টাইমে লোড করা
   useEffect(() => {
+    // ১. ক্লাব লোড
     getCampusClubs().then((res) => {
       if (res && res.length > 0) {
         setClubsList(res)
@@ -41,13 +45,20 @@ export function SiteHeader() {
         )
       }
     })
+
+    // ২. অ্যাডমিন প্যানেলের সক্রিয় ক্যাটাগরি লোড
+    getVisibleCategoryNames().then((cats) => {
+      if (cats && cats.length > 0) {
+        setCategoriesList(cats)
+      } else {
+        setCategoriesList(["ক্যাম্পাস সংবাদ", "ক্লাব", "একাডেমিক", "গবেষণা", "খেলাধুলা", "সংস্কৃতি", "পরিবেশ"])
+      }
+    })
   }, [])
 
-  // যেকোনো ক্লাবের ওপর টাচ করলে তার উইন্ডো খুলে দেওয়ার ফাংশন
   function openClubWindow(clubId: string) {
     setMenuOpen(false)
     setClubsExpanded(false)
-    // হোমপেজে স্ক্রল করা এবং ক্লাবের উইন্ডো খোলার ইভেন্ট পাঠানো
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href)
       url.searchParams.set('club', clubId)
@@ -73,57 +84,91 @@ export function SiteHeader() {
 
                 if (isClubLink) {
                   return (
-                    <li key={link.href} className="relative group">
-                      <a
-                        href="#club-news"
-                        className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 transition-colors hover:bg-brand-soft hover:text-brand"
-                      >
-                        {lang === 'bn' ? link.bn : link.label}
-                        <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
-                      </a>
+                    <li key={link.href} className="flex items-center gap-1">
+                      {/* ১. নিউজ ক্যাটাগরি ড্রপডাউন */}
+                      <div className="relative group">
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 transition-colors hover:bg-brand-soft hover:text-brand"
+                        >
+                          <span>{pick('নিউজ ক্যাটাগরি', 'News Categories')}</span>
+                          <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
+                        </button>
 
-                      {/* ডেস্কটপ ড্রপডাউন (লগো সহ) */}
-                      <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-80 rounded-2xl border border-border bg-card p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
-                        <p className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/60">
-                          {pick('ক্লাবসমূহের নামের তালিকা:', 'List of Clubs:')}
-                        </p>
+                        <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-60 rounded-2xl border border-border bg-card p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
+                          <p className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/60">
+                            {pick('সংবাদ বিভাগসমূহ', 'All Categories')}
+                          </p>
+                          <div className="space-y-0.5 pt-1">
+                            {categoriesList.map((cat, i) => (
+                              <a
+                                key={cat}
+                                href={`/category/${encodeURIComponent(cat)}`}
+                                className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium text-navy hover:bg-brand-soft transition-colors"
+                              >
+                                <span className="truncate">
+                                  <span className="font-bold text-brand mr-1.5">{i + 1}.</span>
+                                  {cat}
+                                </span>
+                                <ChevronRight className="size-3 text-muted-foreground opacity-60" />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ২. ক্যাম্পাস ক্লাবসমূহ ড্রপডাউন (আগের মতোই অক্ষত) */}
+                      <div className="relative group">
                         <a
                           href="#club-news"
-                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-brand hover:bg-brand-soft mt-1"
+                          className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 transition-colors hover:bg-brand-soft hover:text-brand"
                         >
-                          <ChevronRight className="size-3.5" />
-                          <span>{pick('➔ সব ক্লাব একনজরে দেখুন', '➔ View All Clubs')}</span>
+                          {lang === 'bn' ? link.bn : link.label}
+                          <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
                         </a>
 
-                        <div className="space-y-1 pt-1">
-                          {clubsList.map((c, i) => (
-                            <button
-                              key={c.id}
-                              type="button"
-                              onClick={() => openClubWindow(c.id)}
-                              className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left hover:bg-brand-soft transition-colors"
-                            >
-                              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
-                                {i + 1}
-                              </span>
-                              {c.logo_url ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={c.logo_url}
-                                  alt=""
-                                  className="size-7 shrink-0 rounded-lg object-contain bg-white p-0.5 border border-border"
-                                />
-                              ) : (
-                                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand text-white text-xs font-bold">
-                                  {c.name.charAt(0)}
+                        <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-80 rounded-2xl border border-border bg-card p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
+                          <p className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/60">
+                            {pick('ক্লাবসমূহের নামের তালিকা:', 'List of Clubs:')}
+                          </p>
+                          <a
+                            href="#club-news"
+                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-brand hover:bg-brand-soft mt-1"
+                          >
+                            <ChevronRight className="size-3.5" />
+                            <span>{pick('➔ সব ক্লাব একনজরে দেখুন', '➔ View All Clubs')}</span>
+                          </a>
+
+                          <div className="space-y-1 pt-1">
+                            {clubsList.map((c, i) => (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => openClubWindow(c.id)}
+                                className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left hover:bg-brand-soft transition-colors"
+                              >
+                                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
+                                  {i + 1}
                                 </span>
-                              )}
-                              <div className="min-w-0 flex-1">
-                                <p className="font-semibold text-xs text-navy truncate">{c.name}</p>
-                                {c.name_bn && <p className="text-[10px] text-muted-foreground truncate">{c.name_bn}</p>}
-                              </div>
-                            </button>
-                          ))}
+                                {c.logo_url ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={c.logo_url}
+                                    alt=""
+                                    className="size-7 shrink-0 rounded-lg object-contain bg-white p-0.5 border border-border"
+                                  />
+                                ) : (
+                                  <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand text-white text-xs font-bold">
+                                    {c.name.charAt(0)}
+                                  </span>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold text-xs text-navy truncate">{c.name}</p>
+                                  {c.name_bn && <p className="text-[10px] text-muted-foreground truncate">{c.name_bn}</p>}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </li>
@@ -172,84 +217,127 @@ export function SiteHeader() {
             aria-label="Mobile navigation"
             className="animate-in slide-in-from-top-2 fade-in border-t border-border bg-card xl:hidden max-h-[85vh] overflow-y-auto"
           >
-            <ul className="mx-auto grid max-w-7xl gap-1 px-4 py-3 sm:grid-cols-2">
+            <ul className="mx-auto grid max-w-7xl gap-1.5 px-4 py-3 sm:grid-cols-2">
               {navLinks.map((link) => {
                 const isClubLink = link.href === '#club-news'
 
                 if (isClubLink) {
                   return (
-                    <li key={link.href} className="sm:col-span-2 rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
-                      {/* মূল ট্যাব বাটন - চাপ দিলে তালিকা খুলবে */}
-                      <button
-                        type="button"
-                        onClick={() => setClubsExpanded(!clubsExpanded)}
-                        className="flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand hover:bg-brand-soft transition-colors"
-                      >
-                        <span className="flex items-center gap-2">
-                          <span>{lang === 'bn' ? link.bn : link.label}</span>
-                          <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
-                            {clubsList.length}টি ক্লাব
+                    <div key={link.href} className="sm:col-span-2 space-y-1.5">
+                      {/* ১. মোবাইল: নিউজ ক্যাটাগরি সাব-মেনু (অ্যাকর্ডিয়ন) */}
+                      <li className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setCategoriesExpanded(!categoriesExpanded)}
+                          className="flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand hover:bg-brand-soft transition-colors"
+                        >
+                          <span className="flex items-center gap-2">
+                            <Layers className="size-4" />
+                            <span>{pick('নিউজ ক্যাটাগরি', 'News Categories')}</span>
+                            <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
+                              {categoriesList.length}টি
+                            </span>
                           </span>
-                        </span>
-                        <ChevronDown className={`size-4 text-brand transition-transform duration-200 ${clubsExpanded ? 'rotate-180' : ''}`} />
-                      </button>
+                          <ChevronDown className={`size-4 text-brand transition-transform duration-200 ${categoriesExpanded ? 'rotate-180' : ''}`} />
+                        </button>
 
-                      {/* ক্লিক করার পর লগো সহ ক্লাবগুলোর তালিকা */}
-                      {clubsExpanded && (
-                        <div className="border-t border-brand/20 bg-card px-2.5 py-2 space-y-1 animate-in fade-in">
-                          <a
-                            href="#club-news"
-                            onClick={() => { setMenuOpen(false); setClubsExpanded(false) }}
-                            className="flex items-center gap-2 rounded-xl bg-brand px-3 py-2 text-xs font-bold text-white mb-2 shadow-sm"
-                          >
-                            <ChevronRight className="size-3.5" />
-                            <span>{pick('➔ সব ক্লাব একনজরে দেখুন', '➔ View All Clubs')}</span>
-                          </a>
-
-                          <p className="px-2 pt-1 pb-1 text-[11px] font-bold text-muted-foreground">
-                            {pick('ক্লাবসমূহের নামের তালিকা:', 'List of Clubs:')}
-                          </p>
-
-                          <div className="divide-y divide-border/40">
-                            {clubsList.map((c, i) => (
-                              <button
-                                key={c.id}
-                                type="button"
-                                onClick={() => openClubWindow(c.id)}
-                                className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left hover:bg-brand-soft transition-colors active:scale-[0.99]"
-                              >
-                                {/* সিরিয়াল নম্বর */}
-                                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand">
-                                  {i + 1}
-                                </span>
-
-                                {/* ক্লাবের লগো */}
-                                {c.logo_url ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img
-                                    src={c.logo_url}
-                                    alt=""
-                                    className="size-8 shrink-0 rounded-lg object-contain bg-white p-0.5 border border-border shadow-sm"
-                                  />
-                                ) : (
-                                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand text-white text-xs font-bold">
-                                    {c.name.charAt(0)}
+                        {/* ক্লিক করার পর ক্যাটাগরির তালিকা */}
+                        {categoriesExpanded && (
+                          <div className="border-t border-brand/20 bg-card px-2.5 py-2 space-y-1 animate-in fade-in">
+                            <p className="px-2 pt-1 pb-1 text-[11px] font-bold text-muted-foreground">
+                              {pick('ক্যাটাগরি বেছে নিন:', 'Select a Category:')}
+                            </p>
+                            <div className="divide-y divide-border/40">
+                              {categoriesList.map((cat, i) => (
+                                <a
+                                  key={cat}
+                                  href={`/category/${encodeURIComponent(cat)}`}
+                                  onClick={() => setMenuOpen(false)}
+                                  className="flex items-center justify-between rounded-xl px-2.5 py-2.5 text-xs font-medium text-navy hover:bg-brand-soft transition-colors active:scale-[0.99]"
+                                >
+                                  <span className="font-semibold">
+                                    <span className="font-bold text-brand mr-1.5">{i + 1}.</span>
+                                    {cat}
                                   </span>
-                                )}
-
-                                {/* নাম */}
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-semibold text-xs text-navy truncate">{c.name}</p>
-                                  {c.name_bn && (
-                                    <p className="text-[10px] text-muted-foreground truncate">{c.name_bn}</p>
-                                  )}
-                                </div>
-                              </button>
-                            ))}
+                                  <span className="text-[10px] text-brand bg-brand-soft px-2 py-0.5 rounded-full font-bold">
+                                    খবর দেখুন →
+                                  </span>
+                                </a>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </li>
+                        )}
+                      </li>
+
+                      {/* ২. মোবাইল: ক্যাম্পাস ক্লাবসমূহ সাব-মেনু (আগের মতোই অক্ষত) */}
+                      <li className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setClubsExpanded(!clubsExpanded)}
+                          className="flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand hover:bg-brand-soft transition-colors"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span>{lang === 'bn' ? link.bn : link.label}</span>
+                            <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
+                              {clubsList.length}টি ক্লাব
+                            </span>
+                          </span>
+                          <ChevronDown className={`size-4 text-brand transition-transform duration-200 ${clubsExpanded ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {clubsExpanded && (
+                          <div className="border-t border-brand/20 bg-card px-2.5 py-2 space-y-1 animate-in fade-in">
+                            <a
+                              href="#club-news"
+                              onClick={() => { setMenuOpen(false); setClubsExpanded(false) }}
+                              className="flex items-center gap-2 rounded-xl bg-brand px-3 py-2 text-xs font-bold text-white mb-2 shadow-sm"
+                            >
+                              <ChevronRight className="size-3.5" />
+                              <span>{pick('➔ সব ক্লাব একনজরে দেখুন', '➔ View All Clubs')}</span>
+                            </a>
+
+                            <p className="px-2 pt-1 pb-1 text-[11px] font-bold text-muted-foreground">
+                              {pick('ক্লাবসমূহের নামের তালিকা:', 'List of Clubs:')}
+                            </p>
+
+                            <div className="divide-y divide-border/40">
+                              {clubsList.map((c, i) => (
+                                <button
+                                  key={c.id}
+                                  type="button"
+                                  onClick={() => openClubWindow(c.id)}
+                                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left hover:bg-brand-soft transition-colors active:scale-[0.99]"
+                                >
+                                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand">
+                                    {i + 1}
+                                  </span>
+
+                                  {c.logo_url ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={c.logo_url}
+                                      alt=""
+                                      className="size-8 shrink-0 rounded-lg object-contain bg-white p-0.5 border border-border shadow-sm"
+                                    />
+                                  ) : (
+                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand text-white text-xs font-bold">
+                                      {c.name.charAt(0)}
+                                    </span>
+                                  )}
+
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-semibold text-xs text-navy truncate">{c.name}</p>
+                                    {c.name_bn && (
+                                      <p className="text-[10px] text-muted-foreground truncate">{c.name_bn}</p>
+                                    )}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </li>
+                    </div>
                   )
                 }
 
