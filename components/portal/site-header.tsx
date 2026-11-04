@@ -13,7 +13,7 @@ export function SiteHeader() {
   const [clubsList, setClubsList] = useState<Array<{ id: string; name: string; name_bn?: string | null }>>([])
   const { lang, pick } = useLang()
 
-  // অ্যাডমিন প্যানেলের প্রায়োরিটি ক্রম অনুযায়ী ক্লাবগুলোর তালিকা লোড করা
+  // ক্লাবগুলোর তালিকা লোড করা
   useEffect(() => {
     getCampusClubs().then((res) => {
       if (res && res.length > 0) {
@@ -50,7 +50,7 @@ export function SiteHeader() {
                       {/* ডেস্কটপ ড্রপডাউন */}
                       <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-72 rounded-2xl border border-border bg-card p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
                         <p className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/60">
-                          {pick('ক্যাম্পাস ক্লাবসমূহ (ক্রম অনুযায়ী)', 'Campus Clubs (In Priority Order)')}
+                          {pick('ক্লাবসমূহের নামের তালিকা', 'List of Campus Clubs')}
                         </p>
                         <a
                           href="#club-news"
@@ -145,7 +145,7 @@ export function SiteHeader() {
                         <ChevronDown className={`size-4 text-brand transition-transform duration-200 ${clubsExpanded ? 'rotate-180' : ''}`} />
                       </button>
 
-                      {/* ক্লিক করার পর ক্লাবগুলোর ক্রম অনুযায়ী তালিকা */}
+                      {/* ক্লিক করার পর ক্লাবগুলোর তালিকা */}
                       {clubsExpanded && (
                         <div className="border-t border-brand/20 bg-card px-2 py-2 space-y-1 animate-in fade-in">
                           <a
@@ -157,8 +157,9 @@ export function SiteHeader() {
                             <span>{pick('➔ সব ক্লাব একনজরে দেখুন', '➔ View All Clubs')}</span>
                           </a>
 
+                          {/* অনুরোধ অনুযায়ী পরিবর্তিত শিরোনাম */}
                           <p className="px-2 pt-1 text-[11px] font-semibold text-muted-foreground">
-                            {pick('ক্লাবের নামের তালিকা (অগ্রাধিকার অনুযায়ী):', 'Club list (In Priority Order):')}
+                            {pick('ক্লাবসমূহের নামের তালিকা:', 'List of Clubs:')}
                           </p>
 
                           <div className="divide-y divide-border/40">
