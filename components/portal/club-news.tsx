@@ -14,6 +14,7 @@ import {
   Globe,
   Megaphone,
   Mic,
+  Share2,
   Star,
   type LucideIcon,
 } from 'lucide-react'
@@ -74,12 +75,36 @@ export function ClubNews() {
   useEffect(() => {
     getCampusClubs().then((items) => {
       if (items && items.length > 0) {
-        setList(items.map(formatClub))
+        const formatted = items.map(formatClub)
+        setList(formatted)
         const map: Record<string, ClubItem> = {}
         items.forEach((it) => { map[it.id] = it })
         setDbMap(map)
+
+        // শেয়ার করা লিংক থেকে অটো উইন্ডো খোলা (যেমন: ?club=socchar)
+        if (typeof window !== 'undefined') {
+          const clubId = new URLSearchParams(window.location.search).get('club')
+          if (clubId) {
+            const found = formatted.find((c) => c.id === clubId)
+            if (found) setSelected(found)
+          }
+        }
       }
     })
+
+    // মেনুবার থেকে কোনো ক্লাবে চাপ দিলে উইন্ডো খোলার লিসেনার
+    const handleOpenModal = (e: Event) => {
+      const customEvent = e as CustomEvent<string>
+      const targetId = customEvent.detail
+      setList((cur) => {
+        const targetClub = cur.find((c) => c.id === targetId)
+        if (targetClub) setSelected(targetClub)
+        return cur
+      })
+    }
+
+    window.addEventListener('open-club-modal', handleOpenModal)
+    return () => window.removeEventListener('open-club-modal', handleOpenModal)
   }, [])
 
   const tags = ['All', ...Array.from(new Set(list.map((c) => c.tag)))]
@@ -136,10 +161,10 @@ export function ClubNews() {
                     <img
                       src={raw.logo_url}
                       alt={club.name}
-                      className="size-11 shrink-0 rounded-xl object-contain bg-white p-1 border border-white/20"
+                      className="size-12 shrink-0 rounded-xl object-contain bg-white p-1 border border-white/20 shadow-sm"
                     />
                   ) : (
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand text-white">
+                    <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand text-white">
                       <Icon className="size-5" aria-hidden="true" />
                     </span>
                   )}
