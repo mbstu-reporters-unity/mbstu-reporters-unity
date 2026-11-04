@@ -4,11 +4,12 @@ import { useEffect, useState } from "react"
 import {
   getStudentItems, saveStudentItem, deleteStudentItem,
   saveStudentItemReturningId, removeAllImages,
+  getStudentCategories, addStudentCategory, updateStudentCategory, deleteStudentCategory,
 } from "../../lib/sb"
 import type { StudentItem } from "../../lib/sb"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 
-const KINDS = ["Opinion", "Creative Writing", "Achievement", "Research Highlight"]
+const DEFAULT_KINDS = ["Opinion", "Creative Writing", "Achievement", "Research Highlight"]
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
 
@@ -20,8 +21,10 @@ export default function StudentManager({
   shrink: (f: File) => Promise<Blob>
 }) {
   const [items, setItems] = useState<StudentItem[]>([])
+  const [kinds, setKinds] = useState<string[]>(DEFAULT_KINDS)
+  const [showKindManager, setShowKindManager] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [kind, setKind] = useState(KINDS[0])
+  const [kind, setKind] = useState(DEFAULT_KINDS[0])
   const [title, setTitle] = useState("")
   const [excerpt, setExcerpt] = useState("")
   const [author, setAuthor] = useState("")
@@ -36,15 +39,27 @@ export default function StudentManager({
 
   const imgs = useImageSection("student")
 
+  async function loadKinds() {
+    try {
+      const list = await getStudentCategories()
+      if (list && list.length > 0) {
+        setKinds(list)
+        setKind((prev) => (list.includes(prev) ? prev : list[0]))
+      }
+    } catch {}
+  }
+
   async function load() {
     setItems(await getStudentItems(true))
   }
+
   useEffect(() => {
     load()
+    loadKinds()
   }, [])
 
   function reset() {
-    setEditId(null); setKind(KINDS[0]); setTitle(""); setExcerpt(""); setAuthor("")
+    setEditId(null); setKind(kinds[0] || DEFAULT_KINDS[0]); setTitle(""); setExcerpt(""); setAuthor("")
     setDept(""); setBatch(""); setLink(""); setFeatured(false); setOrder("0")
     setOldImage(null)
     imgs.reset()
@@ -58,6 +73,68 @@ export default function StudentManager({
     window.scrollTo({ top: 0, behavior: "smooth" })
     const rows = await imgs.load(it.id)
     if (it.image_url && rows.some((r) => r.url === it.image_url)) setOldImage(null)
+  }
+
+  /* --- ক্যাটাগরি যোগ / এডিট / ডিলিট হ্যান্ডলার --- */
+  async function handleAddKind() {
+    const name = window.prompt("নতুন ক্যাটাগরির নাম লিখুন:")?.trim()
+    if (!name) return
+    if (kinds.some((k) => k.toLowerCase() === name.toLowerCase())) {
+      alert("এই নামের ক্যাটাগরি ইতিমধ্যে রয়েছে!")
+      return
+    }
+    setBusy(true)
+    setMsg("")
+    try {
+      await addStudentCategory(token, name)
+      await loadKinds()
+      setKind(name)
+      setMsg("✅ নতুন ক্যাটাগরি যোগ হয়েছে")
+    } catch (e) {
+      setMsg("❌ " + (e instanceof Error ? e.message : "ব্যর্থ হয়েছে"))
+    }
+    setBusy(false)
+  }
+
+  async function handleRenameKind(oldName: string) {
+    const newName = window.prompt(`"${oldName}"-এর নতুন নাম লিখুন:`, oldName)?.trim()
+    if (!newName || newName === oldName) return
+    setBusy(true)
+    setMsg("")
+    try {
+      await updateStudentCategory(token, oldName, newName)
+      await loadKinds()
+      if (kind === oldName) setKind(newName)
+      await load()
+      setMsg("✅ ক্যাটাগরির নাম পরিবর্তন হয়েছে")
+    } catch (e) {
+      setMsg("❌ " + (e instanceof Error ? e.message : "ব্যর্থ হয়েছে"))
+    }
+    setBusy(false)
+  }
+
+  async function handleDeleteKind(delName: string) {
+    if (kinds.length <= 1) {
+      alert("কমপক্ষে একটি ক্যাটাগরি থাকতে হবে!")
+      return
+    }
+    const count = items.filter((it) => it.kind === delName).length
+    if (count > 0) {
+      alert(`❌ এই ক্যাটাগরিতে ${count}টি পোস্ট আছে, তাই মোছা যাবে না!`)
+      return
+    }
+    if (!confirm(`"${delName}" ক্যাটাগরি কি মুছে ফেলবেন?`)) return
+
+    setBusy(true)
+    setMsg("")
+    try {
+      await deleteStudentCategory(token, delName)
+      await loadKinds()
+      setMsg("✅ ক্যাটাগরি মুছে ফেলা হয়েছে")
+    } catch (e) {
+      setMsg("❌ " + (e instanceof Error ? e.message : "ব্যর্থ হয়েছে"))
+    }
+    setBusy(false)
   }
 
   async function submit() {
@@ -118,9 +195,64 @@ export default function StudentManager({
     <div className="space-y-4">
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
         <h2 className="font-semibold">{editId ? "লেখা এডিট করুন" : "স্টুডেন্ট কর্নারে নতুন লেখা"}</h2>
-        <select className={inp} value={kind} onChange={(e) => setKind(e.target.value)}>
-          {KINDS.map((k) => <option key={k}>{k}</option>)}
-        </select>
+
+        {/* ক্যাটাগরি নির্বাচন এবং ম্যানেজমেন্ট ড্রপডাউন */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-500">ক্যাটাগরি বা বিষয়</span>
+            <button
+              type="button"
+              onClick={() => setShowKindManager(!showKindManager)}
+              className="text-xs text-green-700 font-semibold hover:underline"
+            >
+              {showKindManager ? "✕ বন্ধ করুন" : "⚙️ ক্যাটাগরি ম্যানেজ"}
+            </button>
+          </div>
+
+          <select className={inp} value={kind} onChange={(e) => setKind(e.target.value)}>
+            {kinds.map((k) => <option key={k} value={k}>{k}</option>)}
+          </select>
+
+          {/* ক্যাটাগরি ম্যানেজ করার ছোট প্যানেল */}
+          {showKindManager && (
+            <div className="bg-gray-50 border border-green-200 rounded-xl p-3 space-y-2 text-sm">
+              <div className="flex justify-between items-center pb-1 border-b">
+                <span className="font-semibold text-xs text-gray-700">ক্যাটাগরি তালিকা ({kinds.length})</span>
+                <button
+                  type="button"
+                  onClick={handleAddKind}
+                  className="bg-green-700 text-white text-xs px-2.5 py-1 rounded-lg font-medium"
+                >
+                  + নতুন যোগ
+                </button>
+              </div>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                {kinds.map((k) => (
+                  <div key={k} className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-lg border text-xs">
+                    <span className="font-medium text-gray-800">{k}</span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleRenameKind(k)}
+                        className="text-green-700 font-semibold hover:underline"
+                      >
+                        এডিট
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteKind(k)}
+                        className="text-red-600 font-semibold hover:underline"
+                      >
+                        ডিলিট
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         <input className={inp} placeholder="শিরোনাম *" value={title} onChange={(e) => setTitle(e.target.value)} />
         <textarea className={inp} rows={3} placeholder="সংক্ষিপ্ত বিবরণ (বড় কার্ডে দেখাবে)" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} />
         <input className={inp} placeholder="লেখকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
