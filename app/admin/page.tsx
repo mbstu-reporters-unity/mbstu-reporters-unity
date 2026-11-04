@@ -9,6 +9,7 @@ import {
   createPostReturningId, removeAllImages,
 } from "../../lib/sb"
 import type { Post, PendingComment, Profile } from "../../lib/sb"
+import { getCampusClubs, type ClubItem } from "../../lib/clubs"
 import LeadershipManager from "./leadership-manager"
 import NoticeManager from "./notice-manager"
 import HeroManager from "./hero-manager"
@@ -62,12 +63,14 @@ export default function AdminPage() {
   const [pending, setPending] = useState<PendingComment[]>([])
   const [waiting, setWaiting] = useState<Profile[]>([])
   const [active, setActive] = useState<Profile[]>([])
+  const [availableClubs, setAvailableClubs] = useState<ClubItem[]>([])
 
   const [editId, setEditId] = useState<string | null>(null)
   const [title, setTitle] = useState("")
   const [heading, setHeading] = useState("")
   const [body, setBody] = useState("")
   const [category, setCategory] = useState(CATS[0])
+  const [selectedClubId, setSelectedClubId] = useState("")
   const [author, setAuthor] = useState("")
   const [oldImage, setOldImage] = useState<string | null>(null)
   const [videoFile, setVideoFile] = useState<File | null>(null)
@@ -123,6 +126,11 @@ export default function AdminPage() {
       const names = await getCategoryNames()
       if (names.length) setCats(names)
       setHomeLimit(String(await getHomeLimit()))
+      
+      // ক্যাম্পাস ক্লাবগুলোর তালিকা আনা
+      const clubs = await getCampusClubs(t)
+      setAvailableClubs(clubs)
+
       if (profile?.role === "admin" && profile.approved) {
         const [c, w, a] = await Promise.all([
           getPendingComments(t),
@@ -236,16 +244,9 @@ export default function AdminPage() {
   function resetForm() {
     setLinkUrl("")
     setEditId(null); setTitle(""); setHeading(""); setBody("")
-    setCategory(CATS[0]); setAuthor(me?.full_name || ""); setOldImage(null)
+    setCategory(CATS[0]); setSelectedClubId(""); setAuthor(me?.full_name || ""); setOldImage(null)
     setOldVideo(null); setVideoFile(null)
     imgs.reset()
-  }
-
-  async function saveLimit() {
-    try {
-      await saveHomeLimit(token, Number(homeLimit) || 12)
-      setMsg("✅ সংখ্যা সেভ হয়েছে")
-    } catch (e) { fail(e) }
   }
 
   async function submit() {
@@ -266,11 +267,15 @@ export default function AdminPage() {
 
       const cover = oldImage || imgs.visible[0]?.url || up[0]?.url || null
 
-      const data = {
+      const isClub = category.includes("ক্লাব") || category.includes("Club")
+      const finalClubId = isClub && selectedClubId ? selectedClubId : null
+
+      const data: any = {
         title: title.trim(),
         heading: heading.trim() || null,
         body: body.trim(),
         category,
+        club_id: finalClubId,
         author: author.trim() || me?.full_name || null,
         image_url: cover,
         video_url: vurl,
@@ -305,6 +310,7 @@ export default function AdminPage() {
     setHeading(p.heading || "")
     setBody(p.body || "")
     setCategory(p.category || CATS[0])
+    setSelectedClubId((p as any).club_id || "")
     setAuthor(p.author || "")
     setOldImage(p.image_url)
     setOldVideo(p.video_url || null)
@@ -397,6 +403,8 @@ export default function AdminPage() {
   const tabCls = (name: string) =>
     `flex-1 rounded-xl py-2 text-sm ${tab === name ? "bg-green-700 text-white" : "bg-white border"}`
 
+  const isClubCategory = category.includes("ক্লাব") || category.includes("Club")
+
   return (
     <main className="min-h-screen bg-gray-50 p-4 pb-16">
       <div className="max-w-xl mx-auto space-y-4">
@@ -447,10 +455,31 @@ export default function AdminPage() {
               <input className={inp} placeholder="হেডিং (উপশিরোনাম)" value={heading} onChange={(e) => setHeading(e.target.value)} />
               <textarea className={inp} rows={6} placeholder="ক্যাপশন / বিস্তারিত লেখা *" value={body} onChange={(e) => setBody(e.target.value)} />
               
-              {/* ক্যাটাগরি ড্রপডাউন (অতিরিক্ত বাটন ছাড়া একদম পরিচ্ছন্ন) */}
+              {/* ক্যাটাগরি ড্রপডাউন */}
               <select className={inp} value={category} onChange={(e) => setCategory(e.target.value)}>
                 {(cats.includes(category) ? cats : [...cats, category]).map((c) => <option key={c}>{c}</option>)}
               </select>
+
+              {/* ক্লাব ক্যাটাগরি সিলেক্ট করলেই স্বয়ংক্রিয়ভাবে ক্লাবের ড্রপডাউন চলে আসবে */}
+              {isClubCategory && (
+                <div className="space-y-1.5 rounded-xl border border-green-600 bg-green-50/60 p-3 animate-in fade-in">
+                  <label className="text-xs font-bold text-green-900 block">
+                    📌 কোন ক্যাম্পাসের ক্লাব? (বাছাই করলে সরাসরি ওই ক্লাবের উইন্ডোতে যুক্ত হবে):
+                  </label>
+                  <select
+                    className={inp}
+                    value={selectedClubId}
+                    onChange={(e) => setSelectedClubId(e.target.value)}
+                  >
+                    <option value="">— কোনো নির্দিষ্ট ক্লাব নয় (সাধারণ ক্লাব সংবাদ) —</option>
+                    {availableClubs.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {c.name_bn ? `(${c.name_bn})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <input className={inp} placeholder="প্রতিবেদকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
               <input className={inp} placeholder="লিংক (ঐচ্ছিক): /council অথবা https://..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
