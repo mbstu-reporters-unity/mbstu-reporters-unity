@@ -38,6 +38,20 @@ export const clubIcons: Record<string, LucideIcon> = {
 
 // ডেটাবেসের ক্লাবকে পোর্টালের উপযোগী করা
 function formatClub(c: ClubItem): Club {
+  const dynamicReports = c.reports && c.reports.length > 0
+    ? c.reports.map((r) => ({
+        title: r.title,
+        date: r.date || 'Recent',
+        reporter: r.reporter || 'MBSTU Reporters Unity',
+      }))
+    : [
+        {
+          title: c.activityBn || c.activity || c.name,
+          date: c.date || 'Recent',
+          reporter: 'MBSTU Reporters Unity',
+        },
+      ]
+
   return {
     id: c.id,
     name: c.name,
@@ -47,13 +61,7 @@ function formatClub(c: ClubItem): Club {
     activity: c.activity || 'No recent activity posted.',
     activityBn: c.activity_bn || '',
     date: c.date || 'Recent',
-    reports: [
-      {
-        title: c.activityBn || c.activity || c.name,
-        date: c.date || 'Recent',
-        reporter: 'MBSTU Reporters Unity',
-      },
-    ],
+    reports: dynamicReports,
   }
 }
 
@@ -122,9 +130,18 @@ export function ClubNews() {
                 className="animate-in fade-in group flex flex-col rounded-2xl border border-white/10 bg-white/5 p-5 transition-all hover:-translate-y-1 hover:border-brand hover:bg-white/10"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand text-white">
-                    <Icon className="size-5" aria-hidden="true" />
-                  </span>
+                  {raw?.logo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={raw.logo_url}
+                      alt={club.name}
+                      className="size-11 shrink-0 rounded-xl object-contain bg-white p-1 border border-white/20"
+                    />
+                  ) : (
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand text-white">
+                      <Icon className="size-5" aria-hidden="true" />
+                    </span>
+                  )}
                   <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-gold">
                     {club.tag}
                   </span>
@@ -147,7 +164,7 @@ export function ClubNews() {
                   )}
                 </div>
 
-                {/* ১ম ধরনের লিংক: ক্লাবের সোশ্যাল মিডিয়া (যদি অ্যাডমিন দিয়ে থাকেন) */}
+                {/* সোশ্যাল লিংক */}
                 {raw && (raw.fb_url || raw.yt_url || raw.web_url) && (
                   <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
                     <span className="text-[11px] text-white/50">সোশ্যাল:</span>
@@ -188,7 +205,7 @@ export function ClubNews() {
                   </div>
                 )}
 
-                {/* ২য় ধরনের লিংক: এই ওয়েবসাইটে ক্লাবের নিউজ ও রিপোর্ট দেখার বোতাম */}
+                {/* এই ওয়েবসাইটে ক্লাবের নিউজ, কমিটি ও রিপোর্ট দেখার বোতাম */}
                 <button
                   type="button"
                   onClick={() => setSelected(club)}
@@ -203,7 +220,11 @@ export function ClubNews() {
         </ul>
       </div>
 
-      <ClubReportsDialog club={selected} onClose={() => setSelected(null)} />
+      <ClubReportsDialog
+        club={selected}
+        rawClub={selected ? dbMap[selected.id] : undefined}
+        onClose={() => setSelected(null)}
+      />
     </section>
   )
 }
