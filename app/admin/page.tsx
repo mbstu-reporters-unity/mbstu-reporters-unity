@@ -241,16 +241,6 @@ export default function AdminPage() {
     imgs.reset()
   }
 
-  async function addCat() {
-    const name = window.prompt("নতুন ক্যাটাগরির নাম লিখুন")?.trim()
-    if (!name) return
-    try {
-      await addCategory(token, name)
-      setCats(await getCategoryNames())
-      setCategory(name)
-    } catch (e) { fail(e) }
-  }
-
   async function saveLimit() {
     try {
       await saveHomeLimit(token, Number(homeLimit) || 12)
@@ -456,12 +446,12 @@ export default function AdminPage() {
               <input className={inp} placeholder="শিরোনাম (টাইটেল) *" value={title} onChange={(e) => setTitle(e.target.value)} />
               <input className={inp} placeholder="হেডিং (উপশিরোনাম)" value={heading} onChange={(e) => setHeading(e.target.value)} />
               <textarea className={inp} rows={6} placeholder="ক্যাপশন / বিস্তারিত লেখা *" value={body} onChange={(e) => setBody(e.target.value)} />
+              
+              {/* ক্যাটাগরি ড্রপডাউন (অতিরিক্ত বাটন ছাড়া একদম পরিচ্ছন্ন) */}
               <select className={inp} value={category} onChange={(e) => setCategory(e.target.value)}>
                 {(cats.includes(category) ? cats : [...cats, category]).map((c) => <option key={c}>{c}</option>)}
               </select>
-              {isAdmin && (
-                <button type="button" onClick={addCat} className="text-sm text-green-700 underline">+ নতুন ক্যাটাগরি যোগ করুন</button>
-              )}
+
               <input className={inp} placeholder="প্রতিবেদকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
               <input className={inp} placeholder="লিংক (ঐচ্ছিক): /council অথবা https://..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
 
