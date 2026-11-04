@@ -7,13 +7,8 @@ import {
   updateCategory,
   deleteCategory,
   getAllPosts,
-  CAT_CAMPUS,
-  CAT_CLUB,
-  CAT_STUDENT,
 } from "../../lib/sb"
 import type { CategoryRow } from "../../lib/sb"
-
-const CORE = [CAT_CAMPUS, CAT_CLUB, CAT_STUDENT]
 
 export default function CategoryManager({
   token,
@@ -91,57 +86,64 @@ export default function CategoryManager({
         <p className="text-sm text-gray-600">
           লুকানো ক্যাটাগরি মডারেটররা দেখবেন না। লক করা ক্যাটাগরিতে মডারেটররা নতুন পোস্ট দিতে পারবেন না (পুরোনো পোস্ট ঠিক থাকবে)।
         </p>
-        <button onClick={add} disabled={busy} className="text-sm text-green-700 underline disabled:opacity-50">
+        <button onClick={add} disabled={busy} className="text-sm text-green-700 underline disabled:opacity-50 font-semibold">
           + নতুন ক্যাটাগরি যোগ করুন
         </button>
       </div>
 
-      {msg && <p className="text-sm">{msg}</p>}
+      {msg && <p className="text-sm font-semibold">{msg}</p>}
       {loading && <p className="text-sm text-gray-500">লোড হচ্ছে...</p>}
 
-      {rows.map((c) => {
-        const core = CORE.includes(c.name)
-        return (
-          <div key={c.name} className="bg-white rounded-2xl shadow p-3 text-sm space-y-2">
-            <p className="font-semibold">
-              {c.is_hidden ? "🙈 " : ""}
-              {c.is_locked ? "🔒 " : ""}
-              {c.name}
-              {core && <span className="text-xs text-gray-400"> (মূল ক্যাটাগরি)</span>}
-            </p>
-            {core ? (
-              <p className="text-xs text-gray-500">মূল ক্যাটাগরি নাম বদল, লুকানো বা মোছা যায় না।</p>
-            ) : (
-              <div className="flex flex-wrap gap-4">
-                <button disabled={busy} onClick={() => rename(c)} className="text-green-700 disabled:opacity-50">
-                  নাম বদলান
-                </button>
-                <button
-                  disabled={busy}
-                  onClick={() =>
-                    run(() => updateCategory(token, c.name, { is_hidden: !c.is_hidden }), c.is_hidden ? "দৃশ্যমান করা হয়েছে" : "লুকানো হয়েছে")
-                  }
-                  className="text-amber-600 disabled:opacity-50"
-                >
-                  {c.is_hidden ? "দেখান" : "লুকান"}
-                </button>
-                <button
-                  disabled={busy}
-                  onClick={() =>
-                    run(() => updateCategory(token, c.name, { is_locked: !c.is_locked }), c.is_locked ? "আনলক করা হয়েছে" : "লক করা হয়েছে")
-                  }
-                  className="text-blue-600 disabled:opacity-50"
-                >
-                  {c.is_locked ? "আনলক" : "লক"}
-                </button>
-                <button disabled={busy} onClick={() => remove(c)} className="text-red-600 disabled:opacity-50">
-                  ডিলিট
-                </button>
-              </div>
-            )}
+      {/* সকল ক্যাটাগরির তালিকা (সবগুলোই সমানভাবে এডিটেবল) */}
+      {rows.map((c) => (
+        <div key={c.name} className="bg-white rounded-2xl shadow p-3 text-sm space-y-2">
+          <p className="font-semibold text-base">
+            {c.is_hidden ? "🙈 " : ""}
+            {c.is_locked ? "🔒 " : ""}
+            {c.name}
+          </p>
+          <div className="flex flex-wrap items-center gap-4 pt-1">
+            <button
+              disabled={busy}
+              onClick={() => rename(c)}
+              className="text-green-700 font-semibold hover:underline disabled:opacity-50"
+            >
+              নাম বদলান
+            </button>
+            <button
+              disabled={busy}
+              onClick={() =>
+                run(
+                  () => updateCategory(token, c.name, { is_hidden: !c.is_hidden }),
+                  c.is_hidden ? "দৃশ্যমান করা হয়েছে" : "লুকানো হয়েছে"
+                )
+              }
+              className="text-amber-600 font-semibold hover:underline disabled:opacity-50"
+            >
+              {c.is_hidden ? "দেখান" : "লুকান"}
+            </button>
+            <button
+              disabled={busy}
+              onClick={() =>
+                run(
+                  () => updateCategory(token, c.name, { is_locked: !c.is_locked }),
+                  c.is_locked ? "আনলক করা হয়েছে" : "লক করা হয়েছে"
+                )
+              }
+              className="text-blue-600 font-semibold hover:underline disabled:opacity-50"
+            >
+              {c.is_locked ? "আনলক" : "লক"}
+            </button>
+            <button
+              disabled={busy}
+              onClick={() => remove(c)}
+              className="text-red-600 font-semibold hover:underline disabled:opacity-50"
+            >
+              ডিলিট
+            </button>
           </div>
-        )
-      })}
+        </div>
+      ))}
       {!loading && rows.length === 0 && <p className="text-sm text-gray-500">কোনো ক্যাটাগরি পাওয়া যায়নি।</p>}
     </div>
   )
