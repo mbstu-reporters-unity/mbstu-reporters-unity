@@ -7,6 +7,7 @@ import {
   fmtDateTime, isImageType,
 } from "../../lib/notices"
 import type { Notice, NoticeOwner, NoticeComment } from "../../lib/notices"
+import { getDepartments, type Department } from "../../lib/faculties"
 import { removeAllImages } from "../../lib/sb"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 
@@ -52,9 +53,11 @@ function ManageComments({ id, token }: { id: string; token: string }) {
 
 export default function NoticeManager({ token, isAdmin }: { token: string; isAdmin: boolean }) {
   const [list, setList] = useState<Notice[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
   const [owners, setOwners] = useState<Record<string, NoticeOwner>>({})
   const [editId, setEditId] = useState<string | null>(null)
   const [branch, setBranch] = useState<string>(BRANCHES[0].key)
+  const [deptId, setDeptId] = useState<string>("")
   const [title, setTitle] = useState("")
   const [heading, setHeading] = useState("")
   const [ref, setRef] = useState("")
@@ -72,8 +75,13 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
   const imgs = useImageSection("notice")
 
   async function load() {
-    const [ns, os] = await Promise.all([getNotices(token, true), getNoticeOwners(token)])
+    const [ns, os, depts] = await Promise.all([
+      getNotices(token, true),
+      getNoticeOwners(token),
+      getDepartments(),
+    ])
     setList(ns)
+    setDepartments(depts)
     const m: Record<string, NoticeOwner> = {}
     os.forEach((o) => { m[o.notice_id] = o })
     setOwners(m)
@@ -84,14 +92,14 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
   const bn = (k: string) => BRANCHES.find((b) => b.key === k)?.bn || k
 
   function reset() {
-    setEditId(null); setBranch(BRANCHES[0].key); setTitle(""); setHeading(""); setRef("")
+    setEditId(null); setBranch(BRANCHES[0].key); setDeptId(""); setTitle(""); setHeading(""); setRef("")
     setBody(""); setLink(""); setShowName(true); setPinned(false); setExpiry("")
     setFile(null); setOld(null)
     imgs.reset()
   }
 
   async function startEdit(n: Notice) {
-    setEditId(n.id); setBranch(n.branch); setTitle(n.title); setHeading(n.heading || "")
+    setEditId(n.id); setBranch(n.branch); setDeptId(n.department_id || ""); setTitle(n.title); setHeading(n.heading || "")
     setRef(n.ref_number || ""); setBody(n.body || ""); setLink(n.link_url || "")
     setShowName(n.show_name); setPinned(n.is_pinned)
     setExpiry(n.expires_at ? new Date(n.expires_at).toLocaleDateString("en-CA", { timeZone: "Asia/Dhaka" }) : "")
@@ -137,6 +145,7 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
 
       const data = {
         branch,
+        department_id: branch === "department" && deptId ? deptId : null,
         title: title.trim(),
         heading: heading.trim() || null,
         body: body.trim() || null,
@@ -159,10 +168,8 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
         try {
           await imgs.commit(token, noticeId, up, null)
         } catch (e) {
-          warn = " (নোটিশ সেভ হয়েছে, কিন্তু ছবির তালিকা জোড়া যায়নি: " + (e instanceof Error ? e.message : "ত্রুটি") + ")"
+          warn = " (নোটিশ সেভ হয়েছে, কিন্তু ছবির তালিকা জোড়া যায়নি)"
         }
-      } else if (up.length > 0) {
-        warn = " (নোটিশ সেভ হয়েছে, কিন্তু ছবি জোড়া যায়নি)"
       }
 
       reset()
@@ -189,6 +196,28 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
         <select className={inp} value={branch} onChange={(e) => setBranch(e.target.value)}>
           {BRANCHES.map((b) => <option key={b.key} value={b.key}>{b.bn}</option>)}
         </select>
+
+        {/* ⭐ ডিপার্টমেন্ট ব্রাঞ্চ সিলেক্ট করলে কোন ডিপার্টমেন্টের নোটিশ তা বাছাইয়ের ড্রপডাউন ⭐ */}
+        {branch === "department" && (
+          <div className="space-y-1.5 rounded-xl border border-green-600 bg-green-50/60 p-3 animate-in fade-in">
+            <label className="text-xs font-bold text-green-900 block">
+              📌 কোন ডিপার্টমেন্টের নোটিশ? (বাছাই করলে সরাসরি ওই ডিপার্টমেন্ট পেজেও সিঙ্ক হয়ে যাবে):
+            </label>
+            <select
+              className={inp}
+              value={deptId}
+              onChange={(e) => setDeptId(e.target.value)}
+            >
+              <option value="">— সব ডিপার্টমেন্ট (সাধারণ নোটিশ) —</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name} {d.code ? `(${d.code})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <input className={inp} placeholder="শিরোনাম (টাইটেল) *" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
         <input className={inp} placeholder="হেডিং (উপশিরোনাম)" value={heading} onChange={(e) => setHeading(e.target.value)} />
         <input className={inp} placeholder="রেফ নম্বর (ঐচ্ছিক, যেমন MBSTU-RU/2026/015)" value={ref} onChange={(e) => setRef(e.target.value)} />
@@ -227,7 +256,6 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
           <input type="checkbox" checked={showName} onChange={(e) => setShowName(e.target.checked)} />
           আমার নাম নোটিশে দেখান
         </label>
-        <p className="text-xs text-gray-500">নাম লুকালেও অ্যাডমিন সবসময় দেখবেন কে ও কখন নোটিশ দিয়েছেন।</p>
 
         {isAdmin && (
           <label className="flex items-center gap-2 text-sm">
@@ -248,10 +276,14 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
         {list.map((n) => {
           const o = owners[n.id]
           const expired = !!n.expires_at && new Date(n.expires_at) < new Date()
+          const dept = departments.find((d) => d.id === n.department_id)
+
           return (
             <div key={n.id} className="bg-white rounded-2xl shadow p-3 text-sm space-y-2">
               <div className="flex flex-wrap gap-2 text-xs">
-                <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5">{bn(n.branch)}</span>
+                <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5">
+                  {dept ? `🎓 ${dept.name}` : bn(n.branch)}
+                </span>
                 {n.is_pinned && <span className="bg-yellow-100 text-yellow-800 rounded-full px-2 py-0.5">📌 পিন</span>}
                 {expired && <span className="bg-gray-200 rounded-full px-2 py-0.5">মেয়াদ শেষ</span>}
                 {!n.show_name && <span className="bg-gray-100 rounded-full px-2 py-0.5">নাম লুকানো</span>}
@@ -291,7 +323,6 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
             </div>
           )
         })}
-        {list.length === 0 && <p className="text-sm text-gray-500">এখনো কোনো নোটিশ নেই।</p>}
       </div>
     </div>
   )
