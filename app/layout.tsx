@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Hind_Siliguri, Noto_Serif_Bengali } from 'next/font/google'
 import './globals.css'
 import { LangProvider } from '@/lib/i18n'
+import { GlobalTextStudio } from '@/components/portal/global-text-studio'
 
 const hind = Hind_Siliguri({
   subsets: ['bengali', 'latin'],
@@ -84,7 +85,6 @@ const organizationJsonLd = {
   },
 }
 
-// পেজ আঁকার আগেই সেভ করা থিম ও ভাষা বসায়, তাই ঝলক (ফ্ল্যাশ) হয় না
 const themeScript = `(function(){try{var ok=['light','dark','sepia','mint','night','contrast'];var t=localStorage.getItem('mbstu_theme');if(ok.indexOf(t)<0){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('mbstu_lang');if(l==='en'||l==='bn'){document.documentElement.lang=l}}catch(e){}})();`
 
 export default function RootLayout({
@@ -106,7 +106,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
-        <LangProvider>{children}</LangProvider>
+        <LangProvider>
+          {children}
+          {/* ⭐ পুরো ওয়েবসাইট জুড়ে কার্যকর টেক্সট স্টুডিও ⭐ */}
+          <GlobalTextStudio />
+        </LangProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
