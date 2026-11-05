@@ -1,7 +1,8 @@
 export const navLinks = [
   { label: 'Home', bn: 'হোম', href: '#home' },
   { label: 'About', bn: 'পরিচিতি', href: '#about' },
-  { label: 'Leadership', bn: 'নেতৃত্ব', href: '#leadership' },
+  // ⭐ এখানে "নেতৃত্ব" এর জায়গায় "কার্যনির্বাহী পরিষদ" করা হয়েছে ⭐
+  { label: 'Executive Council', bn: 'কার্যনির্বাহী পরিষদ', href: '#leadership' },
   { label: 'Director Panel', bn: 'ডিরেক্টর প্যানেল', href: '/council' },
   { label: 'Campus News', bn: 'ক্যাম্পাস সংবাদ', href: '#general-news' },
   { label: 'Campus Clubs', bn: 'ক্যাম্পাস ক্লাবসমূহ', href: '#club-news' },
@@ -9,6 +10,7 @@ export const navLinks = [
   { label: 'Notices', bn: 'নোটিশ', href: '/notices' },
   { label: 'Contact', bn: 'যোগাযোগ', href: '#contact' },
 ]
+
 export const siteContact = {
   address: 'Room 214, Student Welfare / Administrative Building, MBSTU, Santosh, Tangail-1902',
   officeRoom: 'Room 214, Student Welfare / Administrative Building',
