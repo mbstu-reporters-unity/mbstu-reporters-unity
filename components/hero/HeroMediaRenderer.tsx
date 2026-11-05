@@ -16,7 +16,7 @@ function getEmbedDetails(url?: string) {
   const cleanUrl = url.trim()
 
   // ১. YouTube ভিডিও শনাক্তকরণ
-  const ytMatch = cleanUrl.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)
+  const ytMatch = cleanUrl.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/)
   if (ytMatch && ytMatch[2]?.length === 11) {
     return {
       type: 'youtube',
