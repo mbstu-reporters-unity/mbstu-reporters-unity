@@ -21,6 +21,7 @@ import CategoryManager from "./category-manager"
 import ClubManager from "./club-manager"
 import FacultyManager from "./faculty-manager"
 import AssociationManager from "./association-manager"
+import SocialSiteManager from "./social-site-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -31,7 +32,7 @@ const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabl
 
 type Tab =
   | "posts" | "comments" | "reporters" | "profile" | "leaders" | "notices"
-  | "hero" | "ticker" | "students" | "limits" | "directors" | "categories" | "clubs" | "faculties" | "associations"
+  | "hero" | "ticker" | "students" | "limits" | "directors" | "categories" | "clubs" | "faculties" | "associations" | "social_sites"
 
 async function shrink(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file)
@@ -428,9 +429,10 @@ export default function AdminPage() {
               <button onClick={() => setTab("students")} className={tabCls("students")}>স্টুডেন্ট কর্নার</button>
               <button onClick={() => setTab("clubs")} className={tabCls("clubs")}>ক্যাম্পাস ক্লাব</button>
               <button onClick={() => setTab("faculties")} className={tabCls("faculties")}>অনুষদ ও বিভাগ</button>
-              
-              {/* ⭐ অন্যান্য সমিতি ট্যাব ⭐ */}
               <button onClick={() => setTab("associations")} className={tabCls("associations")}>অন্যান্য সমিতি</button>
+
+              {/* ⭐ নতুন MBSTU Social Site ট্যাব ⭐ */}
+              <button onClick={() => setTab("social_sites")} className={tabCls("social_sites")}>সোশ্যাল সাইট</button>
               
               <button onClick={() => setTab("limits")} className={tabCls("limits")}>হোম সেটিং</button>
             </>
@@ -552,9 +554,10 @@ export default function AdminPage() {
         {tab === "students" && isAdmin && <StudentManager token={token} shrink={shrink} />}
         {tab === "clubs" && isAdmin && <ClubManager token={token} />}
         {tab === "faculties" && isAdmin && <FacultyManager token={token} shrink={shrink} />}
-        
-        {/* ⭐ অন্যান্য সাংবাদিক সমিতি ম্যানেজার ⭐ */}
         {tab === "associations" && isAdmin && <AssociationManager token={token} shrink={shrink} />}
+
+        {/* ⭐ সোশ্যাল সাইট ম্যানেজার রেন্ডার ⭐ */}
+        {tab === "social_sites" && isAdmin && <SocialSiteManager token={token} shrink={shrink} />}
 
         {tab === "limits" && isAdmin && <SectionLimits token={token} cats={cats} />}
         {tab === "directors" && isAdmin && <DirectorManager token={token} members={active} onChanged={() => refresh(token, me)} />}
