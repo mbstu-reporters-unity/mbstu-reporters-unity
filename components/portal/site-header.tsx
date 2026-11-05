@@ -81,17 +81,26 @@ export function SiteHeader() {
     getFacultiesWithDepartments().then(setFacultiesList)
   }, [])
 
+  // ⭐ যেকোনো পেজ থেকে সরাসরি ক্লাবের পপ-আপ খোলার সমাধান ⭐
   function openClubWindow(clubId: string) {
     setMenuOpen(false)
     setClubsExpanded(false)
     if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href)
-      url.searchParams.set('club', clubId)
-      window.history.pushState({}, '', url.toString())
-      window.dispatchEvent(new CustomEvent('open-club-modal', { detail: clubId }))
+      const isHome = window.location.pathname === '/' || window.location.pathname === ''
+      
+      if (isHome) {
+        // যদি আগেই হোমপেজে থাকি, সরাসরি উইন্ডো খুলবে
+        const url = new URL(window.location.href)
+        url.searchParams.set('club', clubId)
+        window.history.pushState({}, '', url.toString())
+        window.dispatchEvent(new CustomEvent('open-club-modal', { detail: clubId }))
 
-      const el = document.getElementById(`club-${clubId}`)
-      if (el) el.scrollIntoView({ behavior: 'smooth' })
+        const el = document.getElementById(`club-${clubId}`)
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      } else {
+        // অন্য কোনো পেজে (যেমন ডিপার্টমেন্ট, ক্যাটাগরি ইত্যাদি) থাকলে হোমপেজের ক্লাব উইন্ডোতে নিয়ে যাবে
+        window.location.href = `/?club=${clubId}#club-${clubId}`
+      }
     }
   }
 
@@ -133,12 +142,12 @@ export function SiteHeader() {
               
               {/* হোম */}
               <li>
-                <a href="#home" className="rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand">
+                <a href="/" className="rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand">
                   {pick('হোম', 'Home')}
                 </a>
               </li>
 
-              {/* ⭐ নতুন ড্রপডাউন: অনুষদ ও বিভাগসমূহ ⭐ */}
+              {/* অনুষদ ও বিভাগসমূহ */}
               <li className="relative group">
                 <button
                   type="button"
@@ -192,7 +201,7 @@ export function SiteHeader() {
                 </div>
               </li>
 
-              {/* বাকি মেনু লিংকসমূহ (ক্যাটাগরি, ক্লাব, নোটিশ ইত্যাদি ১০০% বিদ্যমান) */}
+              {/* বাকি মেনু লিংকসমূহ */}
               {navLinks.slice(1).map((link) => {
                 const isClubLink = link.href === '#club-news'
 
@@ -234,7 +243,7 @@ export function SiteHeader() {
                       {/* ক্যাম্পাস ক্লাবসমূহ */}
                       <div className="relative group">
                         <a
-                          href="#club-news"
+                          href="/#club-news"
                           className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand"
                         >
                           {lang === 'bn' ? link.bn : link.label}
@@ -246,7 +255,7 @@ export function SiteHeader() {
                             {pick('ক্লাবসমূহের নামের তালিকা:', 'List of Clubs:')}
                           </p>
                           <a
-                            href="#club-news"
+                            href="/#club-news"
                             className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-brand hover:bg-brand-soft mt-1"
                           >
                             <ChevronRight className="size-3.5" />
@@ -259,7 +268,7 @@ export function SiteHeader() {
                                 key={c.id}
                                 type="button"
                                 onClick={() => openClubWindow(c.id)}
-                                className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left hover:bg-brand-soft transition-colors"
+                                className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left hover:bg-brand-soft transition-colors cursor-pointer"
                               >
                                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
                                   {i + 1}
@@ -313,7 +322,7 @@ export function SiteHeader() {
         {menuOpen && (
           <nav className="border-t border-border bg-card xl:hidden max-h-[85vh] overflow-y-auto px-4 py-3 space-y-2">
             
-            {/* ১. মোবাইল: অনুষদ ও বিভাগসমূহ অ্যাকর্ডিয়ন */}
+            {/* ১. মোবাইল: অনুষদ ও বিভাগসমূহ */}
             <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
               <button
                 type="button"
@@ -384,7 +393,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৩. মোবাইল: ক্যাম্পাস ক্লাবসমূহ */}
+            {/* ৩. মোবাইল: ক্যাম্পাস ক্লাবসমূহ (ক্লিক করলেই সরাসরি পপআপ খুলবে) */}
             <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
               <button
                 type="button"
@@ -401,7 +410,7 @@ export function SiteHeader() {
                       key={c.id}
                       type="button"
                       onClick={() => openClubWindow(c.id)}
-                      className="block w-full text-left text-xs font-medium text-navy hover:text-brand py-1 px-2 truncate"
+                      className="block w-full text-left text-xs font-medium text-navy hover:text-brand py-1.5 px-2 truncate active:bg-brand-soft rounded-lg cursor-pointer"
                     >
                       ➔ {c.name}
                     </button>
