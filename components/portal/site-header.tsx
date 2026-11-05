@@ -14,6 +14,7 @@ import {
   Lock,
   Menu,
   Newspaper,
+  Star,
   UserCheck,
   Users,
   X,
@@ -69,24 +70,24 @@ export function SiteHeader() {
       })
       .catch(() => {})
 
-    // ক্লাবসমূহ
+    // ক্লাবসমূহ লোড
     getCampusClubs().then((res) => {
       if (res && res.length > 0) setClubsList(res)
     })
 
-    // ক্যাটাগরি
+    // ক্যাটাগরি লোড
     getVisibleCategoryNames().then(setCategoriesList)
 
-    // অনুষদ ও বিভাগসমূহ
+    // অনুষদ ও বিভাগসমূহ লোড
     getFacultiesWithDepartments().then(setFacultiesList)
 
-    // অন্যান্য সাংবাদিক সমিতি
+    // অন্যান্য সাংবাদিক সমিতি লোড
     getUniversityAssociations().then(setAssociationsList)
 
-    // MBSTU Social Site
+    // MBSTU Social Site লোড
     getSocialSites().then(setSocialSitesList)
 
-    // কার্যনির্বাহী পরিষদ সদস্যবৃন্দ
+    // কার্যনির্বাহী পরিষদ সদস্যবৃন্দ লোড
     getLeaders().then((rows) => {
       if (Array.isArray(rows)) {
         setLeadersList(rows.filter((l) => l.is_visible))
@@ -127,7 +128,6 @@ export function SiteHeader() {
     }
   }
 
-  // মোবাইল মেনুর একরকম ও প্রিমিয়াম স্টাইল
   const mobileCardCls =
     'flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand hover:bg-brand-soft transition-colors'
   const mobileWrapperCls =
@@ -311,6 +311,10 @@ export function SiteHeader() {
                           <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
                             {i + 1}
                           </span>
+                          {assoc.logo_url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={assoc.logo_url} alt="" className="size-7 rounded-lg object-contain bg-white border p-0.5 shrink-0" />
+                          )}
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-xs text-navy truncate">{assoc.name}</p>
                           </div>
@@ -355,6 +359,10 @@ export function SiteHeader() {
                           <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
                             {i + 1}
                           </span>
+                          {site.logo_url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={site.logo_url} alt="" className="size-7 rounded-lg object-contain bg-white border p-0.5 shrink-0" />
+                          )}
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-xs text-navy truncate">{site.name}</p>
                           </div>
@@ -365,7 +373,7 @@ export function SiteHeader() {
                 </div>
               </li>
 
-              {/* নিউজ ক্যাটাগরি ও ক্লাবসমূহ */}
+              {/* নিউজ ক্যাটাগরি ও ক্লাবসমূহ (ডেস্কটপ) */}
               <li className="flex items-center gap-1">
                 <div className="relative group">
                   <button
@@ -410,8 +418,21 @@ export function SiteHeader() {
                           <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
                             {i + 1}
                           </span>
+                          {c.logo_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={c.logo_url}
+                              alt=""
+                              className="size-7 shrink-0 rounded-lg object-contain bg-white p-0.5 border border-border"
+                            />
+                          ) : (
+                            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand text-white text-xs font-bold">
+                              {c.name.charAt(0)}
+                            </span>
+                          )}
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-xs text-navy truncate">{c.name}</p>
+                            {c.name_bn && <p className="text-[10px] text-muted-foreground truncate">{c.name_bn}</p>}
                           </div>
                         </button>
                       ))}
@@ -469,11 +490,11 @@ export function SiteHeader() {
           </div>
         </div>
 
-        {/* ==================== মোবাইল ড্রয়ার মেনু (শতভাগ কার্ড ডিজাইনে সাজানো) ==================== */}
+        {/* ==================== মোবাইল ড্রয়ার মেনু ==================== */}
         {menuOpen && (
           <nav className="border-t border-border bg-card xl:hidden max-h-[85vh] overflow-y-auto px-4 py-3 space-y-2">
             
-            {/* ⭐ ১. "হোম" - সবার শীর্ষে এবং সুন্দর কার্ড স্টাইলে ⭐ */}
+            {/* ১. "হোম" - সবার শীর্ষে */}
             <div className={mobileWrapperCls}>
               <a
                 href="/"
@@ -488,7 +509,7 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ২. কার্যনির্বাহী পরিষদ (Executive Council) */}
+            {/* ২. কার্যনির্বাহী পরিষদ */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -656,7 +677,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৭. ক্যাম্পাস ক্লাবসমূহ */}
+            {/* ⭐ ৭. ক্যাম্পাস ক্লাবসমূহ (ক্রমিক নম্বর ১, ২, ৩ ও ছবি/লগো সহ পুনরুদ্ধার করা হয়েছে) ⭐ */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -664,28 +685,72 @@ export function SiteHeader() {
                 className={mobileCardCls}
               >
                 <span className="flex items-center gap-2.5">
-                  <Users className="size-4" />
+                  <Star className="size-4" />
                   <span>{pick('ক্যাম্পাস ক্লাবসমূহ', 'Campus Clubs')}</span>
+                  <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
+                    {clubsList.length}টি ক্লাব
+                  </span>
                 </span>
                 <ChevronDown className={`size-4 transition-transform ${clubsExpanded ? 'rotate-180' : ''}`} />
               </button>
+
               {clubsExpanded && (
-                <div className="border-t border-brand/20 bg-card p-2 space-y-1">
-                  {clubsList.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => openClubWindow(c.id)}
-                      className="block w-full text-left text-xs font-medium text-navy hover:text-brand py-1.5 px-2 truncate"
-                    >
-                      ➔ {c.name}
-                    </button>
-                  ))}
+                <div className="border-t border-brand/20 bg-card p-3 space-y-2">
+                  <a
+                    href="/#club-news"
+                    onClick={() => scrollToSection('#club-news')}
+                    className="flex items-center gap-2 rounded-xl bg-brand px-3 py-2 text-xs font-bold text-white shadow-sm"
+                  >
+                    <ChevronRight className="size-3.5" />
+                    <span>{pick('➔ সব ক্লাব একনজরে দেখুন', '➔ View All Clubs')}</span>
+                  </a>
+
+                  <p className="px-1 pt-1 text-[11px] font-bold text-muted-foreground">
+                    {pick('ক্লাবসমূহের তালিকা:', 'List of Clubs:')}
+                  </p>
+
+                  <div className="divide-y divide-border/40">
+                    {clubsList.map((c, i) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => openClubWindow(c.id)}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left hover:bg-brand-soft transition-colors active:scale-[0.99] cursor-pointer"
+                      >
+                        {/* ক্রমিক নম্বর ১, ২, ৩... */}
+                        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand">
+                          {i + 1}
+                        </span>
+
+                        {/* ক্লাবের লগো / ছবি (অ্যাডমিন থেকে যা দেওয়া আছে) */}
+                        {c.logo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={c.logo_url}
+                            alt=""
+                            className="size-8 shrink-0 rounded-lg object-contain bg-white p-0.5 border border-border shadow-sm"
+                          />
+                        ) : (
+                          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand text-white text-xs font-bold">
+                            {c.name.charAt(0)}
+                          </span>
+                        )}
+
+                        {/* ক্লাবের নাম ও বাংলা নাম */}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-xs text-navy truncate">{c.name}</p>
+                          {c.name_bn && (
+                            <p className="text-[10px] text-muted-foreground truncate">{c.name_bn}</p>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* ⭐ ৮. ডিরেক্টর প্যানেল - কার্ড স্টাইলে ⭐ */}
+            {/* ৮. ডিরেক্টর প্যানেল */}
             <div className={mobileWrapperCls}>
               <a
                 href="/council"
@@ -700,7 +765,7 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ⭐ ৯. স্টুডেন্ট কর্নার - কার্ড স্টাইলে ⭐ */}
+            {/* ৯. স্টুডেন্ট কর্নার */}
             <div className={mobileWrapperCls}>
               <a
                 href="/student-corner"
@@ -715,7 +780,7 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ⭐ ১০. নোটিশ - কার্ড স্টাইলে ⭐ */}
+            {/* ১০. নোটিশ */}
             <div className={mobileWrapperCls}>
               <a
                 href="/notices"
@@ -730,7 +795,7 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ⭐ ১১. পরিচিতি - সবার নিচে এবং কার্ড স্টাইলে ⭐ */}
+            {/* ১১. পরিচিতি - সবার নিচে */}
             <div className={mobileWrapperCls}>
               <a
                 href="/#about"
