@@ -58,7 +58,7 @@ export default function CouncilPage() {
     async function load() {
       try {
         const res = await fetch(
-          `${SB_URL}/rest/v1/council_members?select=*&order=created_at.asc`,
+          `${SB_URL}/rest/v1/profiles?select=id,full_name,newspaper_name,avatar_url,role,director_visible&approved=eq.true&or=(director_visible.is.null,director_visible.eq.true)&order=created_at.asc `,
           { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }, cache: "no-store" }
         )
         if (res.ok) setList(await res.json())
