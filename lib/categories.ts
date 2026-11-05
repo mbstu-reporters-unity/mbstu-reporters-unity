@@ -26,7 +26,7 @@ export async function getVisibleCategoryNames(): Promise<string[]> {
 export async function getCategoryPosts(category: string, limit = 100): Promise<Post[]> {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/posts?select=*&hidden=eq.false&category=eq.${encodeURIComponent(category)}&order=created_at.desc&limit=${limit}`,
+      `${SB_URL}/rest/v1/posts?select=*&or=(hidden.is.null,hidden.eq.false)&category=eq.${encodeURIComponent(category)}&order=created_at.desc&limit=${limit}`,
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
