@@ -1,7 +1,23 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ChevronDown, ChevronRight, Globe2, GraduationCap, Layers, Lock, Menu, Newspaper, UserCheck, Users, X } from 'lucide-react'
+import {
+  Bell,
+  BookOpen,
+  ChevronDown,
+  ChevronRight,
+  Globe2,
+  GraduationCap,
+  Home,
+  Info,
+  Layers,
+  Lock,
+  Menu,
+  Newspaper,
+  UserCheck,
+  Users,
+  X,
+} from 'lucide-react'
 import { navLinks, clubs as fallbackClubs } from '@/lib/data'
 import { getCampusClubs, type ClubItem } from '@/lib/clubs'
 import { getVisibleCategoryNames } from '@/lib/categories'
@@ -70,7 +86,7 @@ export function SiteHeader() {
     // MBSTU Social Site
     getSocialSites().then(setSocialSitesList)
 
-    // ⭐ শুধুমাত্র অ্যাডমিনের অনুমোদিত ও হোমপেজে দৃশ্যমান কার্যনির্বাহী সদস্যদের আনা ⭐
+    // কার্যনির্বাহী পরিষদ সদস্যবৃন্দ
     getLeaders().then((rows) => {
       if (Array.isArray(rows)) {
         setLeadersList(rows.filter((l) => l.is_visible))
@@ -110,6 +126,12 @@ export function SiteHeader() {
       }
     }
   }
+
+  // মোবাইল মেনুর একরকম ও প্রিমিয়াম স্টাইল
+  const mobileCardCls =
+    'flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand hover:bg-brand-soft transition-colors'
+  const mobileWrapperCls =
+    'rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden'
 
   return (
     <>
@@ -154,14 +176,7 @@ export function SiteHeader() {
                 </a>
               </li>
 
-              {/* পরিচিতি */}
-              <li>
-                <a href="/#about" className="rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand">
-                  {pick('পরিচিতি', 'About')}
-                </a>
-              </li>
-
-              {/* ⭐ নতুন ড্রপডাউন: কার্যনির্বাহী পরিষদ (Executive Council) ⭐ */}
+              {/* কার্যনির্বাহী পরিষদ */}
               <li className="relative group">
                 <a
                   href="/#leadership"
@@ -211,13 +226,6 @@ export function SiteHeader() {
                     )}
                   </div>
                 </div>
-              </li>
-
-              {/* ডিরেক্টর প্যানেল */}
-              <li>
-                <a href="/council" className="rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand">
-                  {pick('ডিরেক্টর প্যানেল', 'Director Panel')}
-                </a>
               </li>
 
               {/* অনুষদ ও বিভাগসমূহ */}
@@ -357,81 +365,88 @@ export function SiteHeader() {
                 </div>
               </li>
 
-              {/* বাকি মেনু লিংকসমূহ */}
-              {navLinks.slice(4).map((link) => {
-                const isClubLink = link.href === '#club-news'
-
-                if (isClubLink) {
-                  return (
-                    <li key={link.href} className="flex items-center gap-1">
-                      {/* নিউজ ক্যাটাগরি */}
-                      <div className="relative group">
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand"
-                        >
-                          <span>{pick('নিউজ ক্যাটাগরি', 'News Categories')}</span>
-                          <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
-                        </button>
-                        <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-60 rounded-2xl border border-border bg-card p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
-                          <div className="space-y-0.5 pt-1">
-                            {categoriesList.map((cat, i) => (
-                              <a
-                                key={cat}
-                                href={`/category/${encodeURIComponent(cat)}`}
-                                className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium text-navy hover:bg-brand-soft transition-colors"
-                              >
-                                <span className="truncate">{cat}</span>
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* ক্যাম্পাস ক্লাবসমূহ */}
-                      <div className="relative group">
+              {/* নিউজ ক্যাটাগরি ও ক্লাবসমূহ */}
+              <li className="flex items-center gap-1">
+                <div className="relative group">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand"
+                  >
+                    <span>{pick('নিউজ ক্যাটাগরি', 'News Categories')}</span>
+                    <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
+                  </button>
+                  <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-60 rounded-2xl border border-border bg-card p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
+                    <div className="space-y-0.5 pt-1">
+                      {categoriesList.map((cat, i) => (
                         <a
-                          href="/#club-news"
-                          className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand"
+                          key={cat}
+                          href={`/category/${encodeURIComponent(cat)}`}
+                          className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium text-navy hover:bg-brand-soft transition-colors"
                         >
-                          {lang === 'bn' ? link.bn : link.label}
-                          <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
+                          <span className="truncate">{cat}</span>
                         </a>
-                        <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-80 rounded-2xl border border-border bg-card p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
-                          <div className="space-y-1 pt-1">
-                            {clubsList.map((c, i) => (
-                              <button
-                                key={c.id}
-                                type="button"
-                                onClick={() => openClubWindow(c.id)}
-                                className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left hover:bg-brand-soft transition-colors cursor-pointer"
-                              >
-                                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
-                                  {i + 1}
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-semibold text-xs text-navy truncate">{c.name}</p>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                  )
-                }
+                      ))}
+                    </div>
+                  </div>
+                </div>
 
-                return (
-                  <li key={link.href}>
-                    <a
-                      href={link.href}
-                      className="rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand"
-                    >
-                      {lang === 'bn' ? link.bn : link.label}
-                    </a>
-                  </li>
-                )
-              })}
+                <div className="relative group">
+                  <a
+                    href="/#club-news"
+                    className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand"
+                  >
+                    {pick('ক্যাম্পাস ক্লাবসমূহ', 'Campus Clubs')}
+                    <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
+                  </a>
+                  <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-80 rounded-2xl border border-border bg-card p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
+                    <div className="space-y-1 pt-1">
+                      {clubsList.map((c, i) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => openClubWindow(c.id)}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left hover:bg-brand-soft transition-colors cursor-pointer"
+                        >
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
+                            {i + 1}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-xs text-navy truncate">{c.name}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </li>
+
+              {/* ডিরেক্টর প্যানেল */}
+              <li>
+                <a href="/council" className="rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand">
+                  {pick('ডিরেক্টর প্যানেল', 'Director Panel')}
+                </a>
+              </li>
+
+              {/* স্টুডেন্ট কর্নার */}
+              <li>
+                <a href="/student-corner" className="rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand">
+                  {pick('স্টুডেন্ট কর্নার', 'Student Corner')}
+                </a>
+              </li>
+
+              {/* নোটিশ */}
+              <li>
+                <a href="/notices" className="rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand">
+                  {pick('নোটিশ', 'Notices')}
+                </a>
+              </li>
+
+              {/* পরিচিতি */}
+              <li>
+                <a href="/#about" className="rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand">
+                  {pick('পরিচিতি', 'About')}
+                </a>
+              </li>
             </ul>
           </nav>
 
@@ -454,18 +469,33 @@ export function SiteHeader() {
           </div>
         </div>
 
-        {/* ==================== মোবাইল ড্রয়ার মেনু ==================== */}
+        {/* ==================== মোবাইল ড্রয়ার মেনু (শতভাগ কার্ড ডিজাইনে সাজানো) ==================== */}
         {menuOpen && (
           <nav className="border-t border-border bg-card xl:hidden max-h-[85vh] overflow-y-auto px-4 py-3 space-y-2">
             
-            {/* ⭐ মোবাইল: কার্যনির্বাহী পরিষদ (Executive Council) ⭐ */}
-            <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
+            {/* ⭐ ১. "হোম" - সবার শীর্ষে এবং সুন্দর কার্ড স্টাইলে ⭐ */}
+            <div className={mobileWrapperCls}>
+              <a
+                href="/"
+                onClick={() => setMenuOpen(false)}
+                className={mobileCardCls}
+              >
+                <span className="flex items-center gap-2.5">
+                  <Home className="size-4" />
+                  <span>{pick('হোম', 'Home')}</span>
+                </span>
+                <ChevronRight className="size-4 opacity-50" />
+              </a>
+            </div>
+
+            {/* ২. কার্যনির্বাহী পরিষদ (Executive Council) */}
+            <div className={mobileWrapperCls}>
               <button
                 type="button"
                 onClick={() => setExecutiveExpanded(!executiveExpanded)}
-                className="flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand"
+                className={mobileCardCls}
               >
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2.5">
                   <Users className="size-4" />
                   <span>{pick('কার্যনির্বাহী পরিষদ', 'Executive Council')}</span>
                   <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
@@ -512,14 +542,14 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* মোবাইল: অনুষদ ও বিভাগসমূহ */}
-            <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
+            {/* ৩. অনুষদ ও বিভাগসমূহ */}
+            <div className={mobileWrapperCls}>
               <button
                 type="button"
                 onClick={() => setFacultiesExpanded(!facultiesExpanded)}
-                className="flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand"
+                className={mobileCardCls}
               >
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2.5">
                   <GraduationCap className="size-4" />
                   <span>{pick('অনুষদ ও বিভাগসমূহ', 'Faculties & Depts')}</span>
                 </span>
@@ -543,14 +573,14 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* মোবাইল: অন্যান্য সাংবাদিক সমিতি */}
-            <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
+            {/* ৪. অন্যান্য সাংবাদিক সমিতি */}
+            <div className={mobileWrapperCls}>
               <button
                 type="button"
                 onClick={() => setAssociationsExpanded(!associationsExpanded)}
-                className="flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand"
+                className={mobileCardCls}
               >
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2.5">
                   <Newspaper className="size-4" />
                   <span>{pick('অন্যান্য সাংবাদিক সমিতি', 'Other Press Clubs')}</span>
                 </span>
@@ -570,14 +600,14 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* মোবাইল: MBSTU Social Site */}
-            <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
+            {/* ৫. MBSTU Social Site */}
+            <div className={mobileWrapperCls}>
               <button
                 type="button"
                 onClick={() => setSocialSitesExpanded(!socialSitesExpanded)}
-                className="flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand"
+                className={mobileCardCls}
               >
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2.5">
                   <Globe2 className="size-4" />
                   <span>{pick('MBSTU Social Site', 'MBSTU Social Site')}</span>
                 </span>
@@ -597,14 +627,46 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* মোবাইল: ক্যাম্পাস ক্লাবসমূহ */}
-            <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
+            {/* ৬. নিউজ ক্যাটাগরি */}
+            <div className={mobileWrapperCls}>
+              <button
+                type="button"
+                onClick={() => setCategoriesExpanded(!categoriesExpanded)}
+                className={mobileCardCls}
+              >
+                <span className="flex items-center gap-2.5">
+                  <Layers className="size-4" />
+                  <span>{pick('নিউজ ক্যাটাগরি', 'News Categories')}</span>
+                </span>
+                <ChevronDown className={`size-4 transition-transform ${categoriesExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              {categoriesExpanded && (
+                <div className="border-t border-brand/20 bg-card p-2 space-y-1">
+                  {categoriesList.map((cat, i) => (
+                    <a
+                      key={cat}
+                      href={`/category/${encodeURIComponent(cat)}`}
+                      onClick={() => setMenuOpen(false)}
+                      className="block text-xs font-medium text-navy hover:text-brand py-1 px-2"
+                    >
+                      {i + 1}. {cat}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ৭. ক্যাম্পাস ক্লাবসমূহ */}
+            <div className={mobileWrapperCls}>
               <button
                 type="button"
                 onClick={() => setClubsExpanded(!clubsExpanded)}
-                className="flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand"
+                className={mobileCardCls}
               >
-                <span>{pick('ক্যাম্পাস ক্লাবসমূহ', 'Campus Clubs')}</span>
+                <span className="flex items-center gap-2.5">
+                  <Users className="size-4" />
+                  <span>{pick('ক্যাম্পাস ক্লাবসমূহ', 'Campus Clubs')}</span>
+                </span>
                 <ChevronDown className={`size-4 transition-transform ${clubsExpanded ? 'rotate-180' : ''}`} />
               </button>
               {clubsExpanded && (
@@ -623,26 +685,70 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* সাধারণ পেজের লিংকসমূহ */}
-            <a href="/" onClick={() => setMenuOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-brand-soft">
-              {pick('হোম', 'Home')}
-            </a>
-            <a href="/#about" onClick={() => scrollToSection('#about')} className="block rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-brand-soft">
-              {pick('পরিচিতি', 'About')}
-            </a>
-            <a href="/council" onClick={() => setMenuOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-brand-soft">
-              {pick('ডিরেক্টর প্যানেল', 'Director Panel')}
-            </a>
-            <a href="/student-corner" onClick={() => setMenuOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-brand-soft">
-              {pick('স্টুডেন্ট কর্নার', 'Student Corner')}
-            </a>
-            <a href="/notices" onClick={() => setMenuOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-brand-soft">
-              {pick('নোটিশ', 'Notices')}
-            </a>
+            {/* ⭐ ৮. ডিরেক্টর প্যানেল - কার্ড স্টাইলে ⭐ */}
+            <div className={mobileWrapperCls}>
+              <a
+                href="/council"
+                onClick={() => setMenuOpen(false)}
+                className={mobileCardCls}
+              >
+                <span className="flex items-center gap-2.5">
+                  <UserCheck className="size-4" />
+                  <span>{pick('ডিরেক্টর প্যানেল', 'Director Panel')}</span>
+                </span>
+                <ChevronRight className="size-4 opacity-50" />
+              </a>
+            </div>
 
+            {/* ⭐ ৯. স্টুডেন্ট কর্নার - কার্ড স্টাইলে ⭐ */}
+            <div className={mobileWrapperCls}>
+              <a
+                href="/student-corner"
+                onClick={() => setMenuOpen(false)}
+                className={mobileCardCls}
+              >
+                <span className="flex items-center gap-2.5">
+                  <BookOpen className="size-4" />
+                  <span>{pick('স্টুডেন্ট কর্নার', 'Student Corner')}</span>
+                </span>
+                <ChevronRight className="size-4 opacity-50" />
+              </a>
+            </div>
+
+            {/* ⭐ ১০. নোটিশ - কার্ড স্টাইলে ⭐ */}
+            <div className={mobileWrapperCls}>
+              <a
+                href="/notices"
+                onClick={() => setMenuOpen(false)}
+                className={mobileCardCls}
+              >
+                <span className="flex items-center gap-2.5">
+                  <Bell className="size-4" />
+                  <span>{pick('নোটিশ', 'Notices')}</span>
+                </span>
+                <ChevronRight className="size-4 opacity-50" />
+              </a>
+            </div>
+
+            {/* ⭐ ১১. পরিচিতি - সবার নিচে এবং কার্ড স্টাইলে ⭐ */}
+            <div className={mobileWrapperCls}>
+              <a
+                href="/#about"
+                onClick={() => scrollToSection('#about')}
+                className={mobileCardCls}
+              >
+                <span className="flex items-center gap-2.5">
+                  <Info className="size-4" />
+                  <span>{pick('পরিচিতি', 'About')}</span>
+                </span>
+                <ChevronRight className="size-4 opacity-50" />
+              </a>
+            </div>
+
+            {/* ১২. সাংবাদিক লগইন বাটন */}
             <a
               href="/admin"
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white mt-2"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3 text-sm font-semibold text-white mt-3 shadow-md"
             >
               <Lock className="size-4" />
               {pick('সাংবাদিক লগইন', 'Reporter Login')}
