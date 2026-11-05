@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ChevronDown, ChevronRight, GraduationCap, Layers, Lock, Menu, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, GraduationCap, Layers, Lock, Menu, Newspaper, X } from 'lucide-react'
 import { navLinks, clubs as fallbackClubs } from '@/lib/data'
 import { getCampusClubs, type ClubItem } from '@/lib/clubs'
 import { getVisibleCategoryNames } from '@/lib/categories'
 import { getFacultiesWithDepartments, type FacultyWithDepartments } from '@/lib/faculties'
+import { getUniversityAssociations, type UniversityAssociation } from '@/lib/associations'
 import { SB_URL, SB_KEY } from '@/lib/sb'
 import { Logo } from './logo'
 import { Tx, useLang } from '@/lib/i18n'
@@ -15,10 +16,12 @@ export function SiteHeader() {
   const [clubsExpanded, setClubsExpanded] = useState(false)
   const [categoriesExpanded, setCategoriesExpanded] = useState(false)
   const [facultiesExpanded, setFacultiesExpanded] = useState(false)
+  const [associationsExpanded, setAssociationsExpanded] = useState(false)
 
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
   const [categoriesList, setCategoriesList] = useState<string[]>([])
   const [facultiesList, setFacultiesList] = useState<FacultyWithDepartments[]>([])
+  const [associationsList, setAssociationsList] = useState<UniversityAssociation[]>([])
   const { lang, pick } = useLang()
 
   // বিশ্ববিদ্যালয় লোগো, লিংক ও টেক্সট
@@ -46,59 +49,32 @@ export function SiteHeader() {
 
     // ক্লাবসমূহ
     getCampusClubs().then((res) => {
-      if (res && res.length > 0) {
-        setClubsList(res)
-      } else {
-        setClubsList(
-          fallbackClubs.map((c) => ({
-            id: c.id,
-            name: c.name,
-            name_bn: c.nameBn,
-            tag: c.tag,
-            icon: c.icon,
-            logo_url: null,
-            activity: c.activity,
-            activity_bn: c.activityBn,
-            date: c.date,
-            fb_url: null,
-            yt_url: null,
-            web_url: null,
-            contact_info: null,
-            sort_order: 0,
-            is_active: true,
-            created_at: '',
-          }))
-        )
-      }
+      if (res && res.length > 0) setClubsList(res)
     })
 
     // ক্যাটাগরি
-    getVisibleCategoryNames().then((cats) => {
-      if (cats && cats.length > 0) setCategoriesList(cats)
-    })
+    getVisibleCategoryNames().then(setCategoriesList)
 
     // অনুষদ ও বিভাগসমূহ
     getFacultiesWithDepartments().then(setFacultiesList)
+
+    // অন্যান্য সাংবাদিক সমিতি
+    getUniversityAssociations().then(setAssociationsList)
   }, [])
 
-  // ⭐ যেকোনো পেজ থেকে সরাসরি ক্লাবের পপ-আপ খোলার সমাধান ⭐
   function openClubWindow(clubId: string) {
     setMenuOpen(false)
     setClubsExpanded(false)
     if (typeof window !== 'undefined') {
       const isHome = window.location.pathname === '/' || window.location.pathname === ''
-      
       if (isHome) {
-        // যদি আগেই হোমপেজে থাকি, সরাসরি উইন্ডো খুলবে
         const url = new URL(window.location.href)
         url.searchParams.set('club', clubId)
         window.history.pushState({}, '', url.toString())
         window.dispatchEvent(new CustomEvent('open-club-modal', { detail: clubId }))
-
         const el = document.getElementById(`club-${clubId}`)
         if (el) el.scrollIntoView({ behavior: 'smooth' })
       } else {
-        // অন্য কোনো পেজে (যেমন ডিপার্টমেন্ট, ক্যাটাগরি ইত্যাদি) থাকলে হোমপেজের ক্লাব উইন্ডোতে নিয়ে যাবে
         window.location.href = `/?club=${clubId}#club-${clubId}`
       }
     }
@@ -147,7 +123,7 @@ export function SiteHeader() {
                 </a>
               </li>
 
-              {/* অনুষদ ও বিভাগসমূহ */}
+              {/* অনুষদ ও বিভাগসমূহ ড্রপডাউন */}
               <li className="relative group">
                 <button
                   type="button"
@@ -194,8 +170,64 @@ export function SiteHeader() {
                         )}
                       </div>
                     ))}
-                    {facultiesList.length === 0 && (
-                      <p className="text-xs text-gray-500 text-center py-2">কোনো অনুষদ পাওয়া যায়নি।</p>
+                  </div>
+                </div>
+              </li>
+
+              {/* ⭐ নতুন ড্রপডাউন: অন্যান্য সাংবাদিক সমিতি ⭐ */}
+              <li className="relative group">
+                <a
+                  href="/associations"
+                  className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand"
+                >
+                  <Newspaper className="size-4 text-brand" />
+                  <span>{pick('অন্যান্য সাংবাদিক সমিতি', 'Other Journalist Associations')}</span>
+                  <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
+                </a>
+
+                <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-80 rounded-2xl border border-border bg-card p-3 shadow-2xl z-50 max-h-[85vh] overflow-y-auto">
+                  <div className="flex items-center justify-between border-b border-border/60 pb-2 px-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {pick('সাংবাদিক সমিতিসমূহ', 'Journalist Associations')}
+                    </p>
+                    <a href="/associations" className="text-[11px] font-bold text-brand hover:underline">
+                      {pick('সবগুলো দেখুন →', 'View All →')}
+                    </a>
+                  </div>
+
+                  <div className="space-y-1 pt-2">
+                    {associationsList.map((assoc, i) => {
+                      const link = assoc.website_url || assoc.fb_url || assoc.yt_url || '/associations'
+                      return (
+                        <a
+                          key={assoc.id}
+                          href={link}
+                          target={link.startsWith('http') ? '_blank' : '_self'}
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 hover:bg-brand-soft transition-colors"
+                        >
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
+                            {i + 1}
+                          </span>
+                          {assoc.logo_url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={assoc.logo_url}
+                              alt=""
+                              className="size-7 rounded-lg object-contain bg-white border p-0.5 shrink-0"
+                            />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-xs text-navy truncate">{assoc.name}</p>
+                            {assoc.university_name && (
+                              <p className="text-[10px] text-gray-500 truncate">{assoc.university_name}</p>
+                            )}
+                          </div>
+                        </a>
+                      )
+                    })}
+                    {associationsList.length === 0 && (
+                      <p className="text-xs text-gray-500 text-center py-2">কোনো সমিতি যোগ করা হয়নি।</p>
                     )}
                   </div>
                 </div>
@@ -322,7 +354,7 @@ export function SiteHeader() {
         {menuOpen && (
           <nav className="border-t border-border bg-card xl:hidden max-h-[85vh] overflow-y-auto px-4 py-3 space-y-2">
             
-            {/* ১. মোবাইল: অনুষদ ও বিভাগসমূহ */}
+            {/* মোবাইল: অনুষদ ও বিভাগসমূহ */}
             <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
               <button
                 type="button"
@@ -364,7 +396,56 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ২. মোবাইল: নিউজ ক্যাটাগরি */}
+            {/* ⭐ মোবাইল: অন্যান্য সাংবাদিক সমিতি ⭐ */}
+            <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setAssociationsExpanded(!associationsExpanded)}
+                className="flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand"
+              >
+                <span className="flex items-center gap-2">
+                  <Newspaper className="size-4" />
+                  <span>{pick('অন্যান্য সাংবাদিক সমিতি', 'Other Journalist Associations')}</span>
+                  <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
+                    {associationsList.length}টি
+                  </span>
+                </span>
+                <ChevronDown className={`size-4 transition-transform ${associationsExpanded ? 'rotate-180' : ''}`} />
+              </button>
+
+              {associationsExpanded && (
+                <div className="border-t border-brand/20 bg-card p-3 space-y-2">
+                  <a
+                    href="/associations"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-xs font-bold text-brand bg-brand-soft/80 p-2 rounded-xl text-center"
+                  >
+                    ➔ সকল সমিতি একনজরে দেখুন
+                  </a>
+                  {associationsList.map((assoc) => {
+                    const link = assoc.website_url || assoc.fb_url || assoc.yt_url || '/associations'
+                    return (
+                      <a
+                        key={assoc.id}
+                        href={link}
+                        target={link.startsWith('http') ? '_blank' : '_self'}
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2 text-xs font-semibold text-navy hover:text-brand py-1 px-1 border-b border-border/40"
+                      >
+                        {assoc.logo_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={assoc.logo_url} alt="" className="size-5 rounded object-contain border" />
+                        )}
+                        <span className="truncate">{assoc.name}</span>
+                      </a>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* মোবাইল: নিউজ ক্যাটাগরি */}
             <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
               <button
                 type="button"
@@ -393,7 +474,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৩. মোবাইল: ক্যাম্পাস ক্লাবসমূহ (ক্লিক করলেই সরাসরি পপআপ খুলবে) */}
+            {/* মোবাইল: ক্যাম্পাস ক্লাবসমূহ */}
             <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
               <button
                 type="button"
