@@ -39,11 +39,13 @@ export type Teacher = {
 
 export type DeptNotice = {
   id: string
-  department_id: string
+  department_id?: string | null
+  branch?: string
   title: string
   body: string | null
-  date: string | null
+  date?: string | null
   file_url: string | null
+  image_urls?: string[] | null
   created_at: string
 }
 
@@ -53,7 +55,8 @@ export type DeptEvent = {
   title: string
   details: string | null
   date: string | null
-  image_url: string | null
+  image_url?: string | null
+  image_urls?: string[] | null
   created_at: string
 }
 
@@ -212,11 +215,11 @@ export async function deleteTeacher(token: string, id: string) {
   )
 }
 
-/* ==================== বিভাগীয় নোটিশ ==================== */
+/* ==================== বিভাগীয় নোটিশ (মূল নোটিশের সাথে শতভাগ সিঙ্কড) ==================== */
 export async function getDeptNotices(deptId: string): Promise<DeptNotice[]> {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/department_notices?select=*&department_id=eq.${encodeURIComponent(deptId)}&order=created_at.desc`,
+      `${SB_URL}/rest/v1/board_notices?select=*&department_id=eq.${encodeURIComponent(deptId)}&order=created_at.desc`,
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
@@ -226,26 +229,37 @@ export async function getDeptNotices(deptId: string): Promise<DeptNotice[]> {
   }
 }
 
-export async function createDeptNotice(token: string, data: Partial<DeptNotice>) {
+export async function createDeptNoticeSync(
+  token: string,
+  data: { department_id: string; title: string; body: string | null; image_urls?: string[] }
+) {
   await ok(
-    await fetch(`${SB_URL}/rest/v1/department_notices`, {
+    await fetch(`${SB_URL}/rest/v1/board_notices`, {
       method: "POST",
       headers: { ...hdr(token, true), Prefer: "return=minimal" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        department_id: data.department_id,
+        branch: "department",
+        title: data.title,
+        body: data.body,
+        image_urls: data.image_urls || [],
+        show_name: true,
+        is_pinned: false,
+      }),
     })
   )
 }
 
 export async function deleteDeptNotice(token: string, id: string) {
   await ok(
-    await fetch(`${SB_URL}/rest/v1/department_notices?id=eq.${encodeURIComponent(id)}`, {
+    await fetch(`${SB_URL}/rest/v1/board_notices?id=eq.${encodeURIComponent(id)}`, {
       method: "DELETE",
       headers: hdr(token),
     })
   )
 }
 
-/* ==================== বিভাগীয় ইভেন্ট ==================== */
+/* ==================== বিভাগীয় ইভেন্ট (একাধিক ছবি সহ) ==================== */
 export async function getDeptEvents(deptId: string): Promise<DeptEvent[]> {
   try {
     const res = await fetch(
