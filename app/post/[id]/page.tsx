@@ -5,6 +5,7 @@ import { ReactionBar } from '@/components/portal/reaction-bar'
 import { getPost, getApprovedComments, getImagesMeta, getLayout } from '@/lib/sb'
 import { CommentForm } from '@/components/portal/comment-form'
 import RichGallery from '@/components/portal/rich-gallery'
+import { FormattedText } from '@/components/portal/formatted-text'
 
 export const dynamic = 'force-dynamic'
 
@@ -95,7 +96,10 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         {post.video_url && (
           <video src={post.video_url} controls playsInline className="w-full rounded-xl bg-black" />
         )}
-        <p className="whitespace-pre-line leading-relaxed">{post.body}</p>
+        
+        {/* ⭐ এখানে FormattedText যুক্ত করা হয়েছে যাতে টেক্সট স্টুডিওর গ্রেডিয়েন্ট ও ফরম্যাটিং নিখুঁতভাবে প্রদর্শিত হয় ⭐ */}
+        <FormattedText text={post.body} className="text-base text-navy/90" />
+        
         <ReactionBar postId={id} title={post.title} />
 
         <section className="space-y-3 pt-6">
