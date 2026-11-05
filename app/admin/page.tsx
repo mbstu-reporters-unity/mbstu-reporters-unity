@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import {
-  login, signUp, getMe, getAllPosts, setPostHidden, getCategoryNames, addCategory, getHomeLimit, saveHomeLimit, updatePost, deletePost, uploadImage, uploadVideo,
+  login, signUp, getMe, getAllPosts, setPostHidden, getCategoryNames, getHomeLimit, updatePost, deletePost, uploadImage, uploadVideo,
   getPendingComments, approveComment, deleteComment,
   getReporters, approveReporter, removeReporter,
   updateMyProfile,
@@ -19,6 +19,7 @@ import SectionLimits from "./section-limits"
 import DirectorManager from "./director-manager"
 import CategoryManager from "./category-manager"
 import ClubManager from "./club-manager"
+import FacultyManager from "./faculty-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -29,7 +30,7 @@ const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabl
 
 type Tab =
   | "posts" | "comments" | "reporters" | "profile" | "leaders" | "notices"
-  | "hero" | "ticker" | "students" | "limits" | "directors" | "categories" | "clubs"
+  | "hero" | "ticker" | "students" | "limits" | "directors" | "categories" | "clubs" | "faculties"
 
 async function shrink(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file)
@@ -232,7 +233,7 @@ export default function AdminPage() {
 
   function pickVideo(f: File | null) {
     if (f && f.size > MAX_VIDEO_MB * 1024 * 1024) {
-      setMsg(`❌ ভিডিও ${MAX_VIDEO_MB} MB-এর বেশি হতে পারবে না (আপনারটি ${(f.size / 1048576).toFixed(1)} MB)`)
+      setMsg(`❌ ভিডিও ${MAX_VIDEO_MB} MB-এর বেশি হতে পারবে না`)
       setVideoFile(null)
       return
     }
@@ -265,7 +266,6 @@ export default function AdminPage() {
       }
 
       const cover = oldImage || imgs.visible[0]?.url || up[0]?.url || null
-
       const isClub = category.includes("ক্লাব") || category.includes("Club")
       const finalClubId = isClub && selectedClubId ? selectedClubId : null
 
@@ -291,10 +291,8 @@ export default function AdminPage() {
         try {
           await imgs.commit(token, postId, up, oldImage)
         } catch (e) {
-          imgWarn = " (সংবাদ সেভ হয়েছে, কিন্তু ছবির তালিকা জোড়া যায়নি: " + (e instanceof Error ? e.message : "ত্রুটি") + ")"
+          imgWarn = " (সংবাদ সেভ হয়েছে, কিন্তু ছবির তালিকা জোড়া যায়নি)"
         }
-      } else if (up.length > 0) {
-        imgWarn = " (সংবাদ সেভ হয়েছে, কিন্তু ছবি জোড়া যায়নি)"
       }
 
       resetForm()
@@ -384,17 +382,7 @@ export default function AdminPage() {
     )
   }
 
-  if (!me) {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-3">
-          <p>প্রোফাইল পাওয়া যায়নি।</p>
-          {msg && <p className="text-sm">{msg}</p>}
-          <button onClick={logout} className="underline text-red-600">লগআউট</button>
-        </div>
-      </main>
-    )
-  }
+  if (!me) return null
 
   const canManage = (p: Post) => me.role === "admin" || me.role === "moderator" || p.user_id === me.id
   const tabCls = (name: string) =>
@@ -422,6 +410,7 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* অ্যাডমিন ট্যাব বার */}
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setTab("posts")} className={tabCls("posts")}>সংবাদ</button>
           <button onClick={() => setTab("notices")} className={tabCls("notices")}>নোটিশ</button>
@@ -437,6 +426,8 @@ export default function AdminPage() {
               <button onClick={() => setTab("categories")} className={tabCls("categories")}>ক্যাটাগরি</button>
               <button onClick={() => setTab("students")} className={tabCls("students")}>স্টুডেন্ট কর্নার</button>
               <button onClick={() => setTab("clubs")} className={tabCls("clubs")}>ক্যাম্পাস ক্লাব</button>
+              {/* ⭐ নতুন অনুষদ ও বিভাগ ট্যাব ⭐ */}
+              <button onClick={() => setTab("faculties")} className={tabCls("faculties")}>অনুষদ ও বিভাগ</button>
               <button onClick={() => setTab("limits")} className={tabCls("limits")}>হোম সেটিং</button>
             </>
           )}
@@ -457,16 +448,16 @@ export default function AdminPage() {
               </select>
 
               {isClubCategory && (
-                <div className="space-y-1.5 rounded-xl border border-green-600 bg-green-50/60 p-3 animate-in fade-in">
+                <div className="space-y-1.5 rounded-xl border border-green-600 bg-green-50/60 p-3">
                   <label className="text-xs font-bold text-green-900 block">
-                    📌 কোন ক্যাম্পাসের ক্লাব? (বাছাই করলে সরাসরি ওই ক্লাবের উইন্ডোতে যুক্ত হবে):
+                    📌 কোন ক্যাম্পাসের ক্লাব?:
                   </label>
                   <select
                     className={inp}
                     value={selectedClubId}
                     onChange={(e) => setSelectedClubId(e.target.value)}
                   >
-                    <option value="">— কোনো নির্দিষ্ট ক্লাব নয় (সাধারণ ক্লাব সংবাদ) —</option>
+                    <option value="">— কোনো নির্দিষ্ট ক্লাব নয় —</option>
                     {availableClubs.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name} {c.name_bn ? `(${c.name_bn})` : ""}
@@ -477,7 +468,7 @@ export default function AdminPage() {
               )}
 
               <input className={inp} placeholder="প্রতিবেদকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
-              <input className={inp} placeholder="লিংক (ঐচ্ছিক): /council অথবা https://..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
+              <input className={inp} placeholder="লিংক (ঐচ্ছিক)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
 
               {oldImage && (
                 <div className="relative">
@@ -500,9 +491,7 @@ export default function AdminPage() {
                 <input className="block mt-1 text-sm" type="file" accept="video/*" onChange={(e) => pickVideo(e.target.files?.[0] || null)} />
               </label>
               {videoFile && (
-                <p className="text-xs text-gray-600">
-                  {videoFile.name} ({(videoFile.size / 1048576).toFixed(1)} MB)
-                </p>
+                <p className="text-xs text-gray-600">{videoFile.name}</p>
               )}
               {!videoFile && oldVideo && (
                 <div className="space-y-1">
@@ -528,7 +517,6 @@ export default function AdminPage() {
                     <p className="font-semibold truncate">{p.hidden ? "🙈 " : ""}{p.title}</p>
                     <p className="text-xs text-gray-500">
                       {p.author} · {new Date(p.created_at).toLocaleDateString("bn-BD")}
-                      {p.video_url ? " · 🎥" : ""}
                     </p>
                     {canManage(p) && (
                       <div className="flex gap-4 mt-2 text-sm">
@@ -550,42 +538,22 @@ export default function AdminPage() {
                   </div>
                 </div>
               ))}
-              {posts.length === 0 && <p className="text-sm text-gray-500">এখনো কোনো সংবাদ নেই।</p>}
             </div>
           </>
         )}
 
-        {tab === "notices" && (
-          <NoticeManager token={token} isAdmin={!!isAdmin} />
-        )}
-
-        {tab === "hero" && isAdmin && (
-          <HeroManager token={token} shrink={shrink} />
-        )}
-
-        {tab === "ticker" && isAdmin && (
-          <TickerManager token={token} author={me.full_name} />
-        )}
-
-        {tab === "students" && isAdmin && (
-          <StudentManager token={token} shrink={shrink} />
-        )}
-
-        {tab === "clubs" && isAdmin && (
-          <ClubManager token={token} />
-        )}
-        {/* ==================== এখানে ক্যাশ/প্রপসজনিত সমস্যাটি ঠিক করা হয়েছে ==================== */}
-{tab === "limits" && isAdmin && (
-  <SectionLimits token={token} cats={cats} />
-)}
-
-        {tab === "directors" && isAdmin && (
-          <DirectorManager token={token} members={active} onChanged={() => refresh(token, me)} />
-        )}
-
-        {tab === "categories" && isAdmin && (
-          <CategoryManager token={token} onChanged={() => refresh(token, me)} />
-        )}
+        {tab === "notices" && <NoticeManager token={token} isAdmin={!!isAdmin} />}
+        {tab === "hero" && isAdmin && <HeroManager token={token} shrink={shrink} />}
+        {tab === "ticker" && isAdmin && <TickerManager token={token} author={me.full_name} />}
+        {tab === "students" && isAdmin && <StudentManager token={token} shrink={shrink} />}
+        {tab === "clubs" && isAdmin && <ClubManager token={token} />}
+        
+        {/* ⭐ অনুষদ ও বিভাগ ম্যানেজার রেন্ডার ⭐ */}
+        {tab === "faculties" && isAdmin && <FacultyManager token={token} shrink={shrink} />}
+        
+        {tab === "limits" && isAdmin && <SectionLimits token={token} cats={cats} />}
+        {tab === "directors" && isAdmin && <DirectorManager token={token} members={active} onChanged={() => refresh(token, me)} />}
+        {tab === "categories" && isAdmin && <CategoryManager token={token} onChanged={() => refresh(token, me)} />}
 
         {tab === "profile" && (
           <div className="bg-white rounded-2xl shadow p-4 space-y-3">
@@ -595,7 +563,7 @@ export default function AdminPage() {
               <img src={pFile ? URL.createObjectURL(pFile) : me.avatar_url || ""} alt="" className="w-28 h-28 rounded-full object-cover mx-auto" />
             )}
             <label className="block">
-              <span className="text-sm text-gray-600">আমার ছবি (গ্যালারি থেকে)</span>
+              <span className="text-sm text-gray-600">আমার ছবি</span>
               <input className="block mt-1 text-sm" type="file" accept="image/*" onChange={(e) => setPFile(e.target.files?.[0] || null)} />
             </label>
             <input className={inp} placeholder="পূর্ণ নাম" value={pName} onChange={(e) => setPName(e.target.value)} />
@@ -620,51 +588,34 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
-            {pending.length === 0 && <p className="text-sm text-gray-500">অপেক্ষমাণ কোনো কমেন্ট নেই।</p>}
           </div>
         )}
 
-        {tab === "leaders" && isAdmin && (
-          <LeadershipManager token={token} members={active} shrink={shrink} />
-        )}
+        {tab === "leaders" && isAdmin && <LeadershipManager token={token} members={active} shrink={shrink} />}
 
         {tab === "reporters" && isAdmin && (
           <div className="space-y-5">
             <div className="space-y-3">
-              <h2 className="font-semibold">অনুমোদনের অপেক্ষায়</h2>
+              <h2 className="font-semibold">অনুমোদনের অপেক্ষায় ({waiting.length})</h2>
               {waiting.map((r) => (
                 <div key={r.id} className="bg-white rounded-2xl shadow p-4 space-y-1 text-sm">
                   <p className="font-semibold text-base">{r.full_name}</p>
-                  {r.newspaper_name && <p>পত্রিকা: {r.newspaper_name}</p>}
                   <p>বিভাগ: {r.department} · ব্যাচ: {r.batch}</p>
-                  <p>আইডি: {r.student_id}</p>
-                  <p>মোবাইল: {r.phone}</p>
-                  <p>ইমেইল: {r.email}</p>
                   <div className="flex gap-4 pt-2">
                     <button onClick={() => act(() => approveReporter(token, r.id))} className="text-green-700">অনুমোদন</button>
                     <button onClick={() => act(() => removeReporter(token, r.id), "বাতিল করবেন?")} className="text-red-600">বাতিল</button>
                   </div>
                 </div>
               ))}
-              {waiting.length === 0 && <p className="text-sm text-gray-500">কেউ অপেক্ষায় নেই।</p>}
             </div>
 
             <div className="space-y-3">
               <h2 className="font-semibold">অনুমোদিত সাংবাদিক ({active.length})</h2>
               {active.map((r) => (
                 <div key={r.id} className="bg-white rounded-2xl shadow p-3 text-sm flex justify-between items-center gap-3">
-                  <div className="flex items-center gap-3">
-                    {r.avatar_url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={r.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
-                    )}
-                    <div>
-                      <p className="font-semibold">{r.full_name} {r.role === "admin" && "(অ্যাডমিন)"}</p>
-                      <p className="text-gray-500">{r.newspaper_name || r.department} · {r.batch}</p>
-                    </div>
-                  </div>
+                  <p className="font-semibold">{r.full_name}</p>
                   {r.id !== me.id && (
-                    <button onClick={() => act(() => removeReporter(token, r.id), "এই সাংবাদিককে সরাবেন?")} className="text-red-600">সরান</button>
+                    <button onClick={() => act(() => removeReporter(token, r.id), "সরবেন?")} className="text-red-600">সরান</button>
                   )}
                 </div>
               ))}
