@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ChevronDown, ChevronRight, GraduationCap, Layers, Lock, Menu, Newspaper, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Globe2, GraduationCap, Layers, Lock, Menu, Newspaper, X } from 'lucide-react'
 import { navLinks, clubs as fallbackClubs } from '@/lib/data'
 import { getCampusClubs, type ClubItem } from '@/lib/clubs'
 import { getVisibleCategoryNames } from '@/lib/categories'
 import { getFacultiesWithDepartments, type FacultyWithDepartments } from '@/lib/faculties'
 import { getUniversityAssociations, type UniversityAssociation } from '@/lib/associations'
+import { getSocialSites, type SocialSite } from '@/lib/social-sites'
 import { SB_URL, SB_KEY } from '@/lib/sb'
 import { Logo } from './logo'
 import { Tx, useLang } from '@/lib/i18n'
@@ -17,11 +18,13 @@ export function SiteHeader() {
   const [categoriesExpanded, setCategoriesExpanded] = useState(false)
   const [facultiesExpanded, setFacultiesExpanded] = useState(false)
   const [associationsExpanded, setAssociationsExpanded] = useState(false)
+  const [socialSitesExpanded, setSocialSitesExpanded] = useState(false)
 
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
   const [categoriesList, setCategoriesList] = useState<string[]>([])
   const [facultiesList, setFacultiesList] = useState<FacultyWithDepartments[]>([])
   const [associationsList, setAssociationsList] = useState<UniversityAssociation[]>([])
+  const [socialSitesList, setSocialSitesList] = useState<SocialSite[]>([])
   const { lang, pick } = useLang()
 
   // বিশ্ববিদ্যালয় লোগো, লিংক ও টেক্সট
@@ -60,6 +63,9 @@ export function SiteHeader() {
 
     // অন্যান্য সাংবাদিক সমিতি
     getUniversityAssociations().then(setAssociationsList)
+
+    // MBSTU Social Site
+    getSocialSites().then(setSocialSitesList)
   }, [])
 
   function openClubWindow(clubId: string) {
@@ -123,7 +129,7 @@ export function SiteHeader() {
                 </a>
               </li>
 
-              {/* অনুষদ ও বিভাগসমূহ ড্রপডাউন */}
+              {/* অনুষদ ও বিভাগসমূহ */}
               <li className="relative group">
                 <button
                   type="button"
@@ -174,14 +180,14 @@ export function SiteHeader() {
                 </div>
               </li>
 
-              {/* ⭐ নতুন ড্রপডাউন: অন্যান্য সাংবাদিক সমিতি ⭐ */}
+              {/* অন্যান্য সাংবাদিক সমিতি */}
               <li className="relative group">
                 <a
                   href="/associations"
                   className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand"
                 >
                   <Newspaper className="size-4 text-brand" />
-                  <span>{pick('অন্যান্য সাংবাদিক সমিতি', 'Other Journalist Associations')}</span>
+                  <span>{pick('অন্যান্য সাংবাদিক সমিতি', 'Other Press Clubs')}</span>
                   <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
                 </a>
 
@@ -211,11 +217,7 @@ export function SiteHeader() {
                           </span>
                           {assoc.logo_url && (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={assoc.logo_url}
-                              alt=""
-                              className="size-7 rounded-lg object-contain bg-white border p-0.5 shrink-0"
-                            />
+                            <img src={assoc.logo_url} alt="" className="size-7 rounded-lg object-contain bg-white border p-0.5 shrink-0" />
                           )}
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-xs text-navy truncate">{assoc.name}</p>
@@ -226,8 +228,60 @@ export function SiteHeader() {
                         </a>
                       )
                     })}
-                    {associationsList.length === 0 && (
-                      <p className="text-xs text-gray-500 text-center py-2">কোনো সমিতি যোগ করা হয়নি।</p>
+                  </div>
+                </div>
+              </li>
+
+              {/* ⭐ নতুন ড্রপডাউন: MBSTU Social Site ⭐ */}
+              <li className="relative group">
+                <a
+                  href="/social-sites"
+                  className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand"
+                >
+                  <Globe2 className="size-4 text-brand" />
+                  <span>{pick('MBSTU Social Site', 'MBSTU Social Site')}</span>
+                  <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
+                </a>
+
+                <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-80 rounded-2xl border border-border bg-card p-3 shadow-2xl z-50 max-h-[85vh] overflow-y-auto">
+                  <div className="flex items-center justify-between border-b border-border/60 pb-2 px-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {pick('সোশ্যাল সাইট ও গ্রুপসমূহ', 'Social Sites & Groups')}
+                    </p>
+                    <a href="/social-sites" className="text-[11px] font-bold text-brand hover:underline">
+                      {pick('সবগুলো দেখুন →', 'View All →')}
+                    </a>
+                  </div>
+
+                  <div className="space-y-1 pt-2">
+                    {socialSitesList.map((site, i) => {
+                      const link = site.fb_url || site.website_url || site.yt_url || '/social-sites'
+                      return (
+                        <a
+                          key={site.id}
+                          href={link}
+                          target={link.startsWith('http') ? '_blank' : '_self'}
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 hover:bg-brand-soft transition-colors"
+                        >
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
+                            {i + 1}
+                          </span>
+                          {site.logo_url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={site.logo_url} alt="" className="size-7 rounded-lg object-contain bg-white border p-0.5 shrink-0" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-xs text-navy truncate">{site.name}</p>
+                            {site.category && (
+                              <p className="text-[10px] text-gray-500 truncate">{site.category}</p>
+                            )}
+                          </div>
+                        </a>
+                      )
+                    })}
+                    {socialSitesList.length === 0 && (
+                      <p className="text-xs text-gray-500 text-center py-2">কোনো সাইট যোগ করা হয়নি।</p>
                     )}
                   </div>
                 </div>
@@ -396,7 +450,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ⭐ মোবাইল: অন্যান্য সাংবাদিক সমিতি ⭐ */}
+            {/* মোবাইল: অন্যান্য সাংবাদিক সমিতি */}
             <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
               <button
                 type="button"
@@ -405,7 +459,7 @@ export function SiteHeader() {
               >
                 <span className="flex items-center gap-2">
                   <Newspaper className="size-4" />
-                  <span>{pick('অন্যান্য সাংবাদিক সমিতি', 'Other Journalist Associations')}</span>
+                  <span>{pick('অন্যান্য সাংবাদিক সমিতি', 'Other Press Clubs')}</span>
                   <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
                     {associationsList.length}টি
                   </span>
@@ -438,6 +492,55 @@ export function SiteHeader() {
                           <img src={assoc.logo_url} alt="" className="size-5 rounded object-contain border" />
                         )}
                         <span className="truncate">{assoc.name}</span>
+                      </a>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* ⭐ মোবাইল: MBSTU Social Site ⭐ */}
+            <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setSocialSitesExpanded(!socialSitesExpanded)}
+                className="flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand"
+              >
+                <span className="flex items-center gap-2">
+                  <Globe2 className="size-4" />
+                  <span>{pick('MBSTU Social Site', 'MBSTU Social Site')}</span>
+                  <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
+                    {socialSitesList.length}টি
+                  </span>
+                </span>
+                <ChevronDown className={`size-4 transition-transform ${socialSitesExpanded ? 'rotate-180' : ''}`} />
+              </button>
+
+              {socialSitesExpanded && (
+                <div className="border-t border-brand/20 bg-card p-3 space-y-2">
+                  <a
+                    href="/social-sites"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-xs font-bold text-brand bg-brand-soft/80 p-2 rounded-xl text-center"
+                  >
+                    ➔ সকল সাইট ও গ্রুপ একনজরে দেখুন
+                  </a>
+                  {socialSitesList.map((site) => {
+                    const link = site.fb_url || site.website_url || site.yt_url || '/social-sites'
+                    return (
+                      <a
+                        key={site.id}
+                        href={link}
+                        target={link.startsWith('http') ? '_blank' : '_self'}
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2 text-xs font-semibold text-navy hover:text-brand py-1 px-1 border-b border-border/40"
+                      >
+                        {site.logo_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={site.logo_url} alt="" className="size-5 rounded object-contain border" />
+                        )}
+                        <span className="truncate">{site.name}</span>
                       </a>
                     )
                   })}
