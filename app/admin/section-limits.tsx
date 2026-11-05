@@ -10,7 +10,6 @@ import {
   CAT_STUDENT,
   SB_URL,
   SB_KEY,
-  saveSectionText,
 } from "../../lib/sb"
 
 const btn =
@@ -38,6 +37,24 @@ export default function SectionLimits({
   const fixed = [CAT_CAMPUS, CAT_CLUB, CAT_STUDENT]
   const names = [...fixed, ...cats.filter((c) => !fixed.includes(c))]
 
+  // ডাটাবেজের app_config টেবিলে নিরাপদে সেভ করার ফাংশন (যেখানে updated_at নেই)
+  async function saveConfigData(keyName: string, val: string) {
+    const res = await fetch(`${SB_URL}/rest/v1/app_config`, {
+      method: "POST",
+      headers: {
+        apikey: SB_KEY,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify({ key: keyName, value: val }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.message || "সংরক্ষণ করা যায়নি")
+    }
+  }
+
   useEffect(() => {
     // সেকশন লিমিট লোড
     getLimits().then(setVals)
@@ -64,7 +81,7 @@ export default function SectionLimits({
   const set = (n: string, v: number) =>
     setVals((o) => ({ ...o, [limitKey(n)]: Math.max(1, Math.min(500, v || 1)) }))
 
-  // ১. শুধুমাত্র বিশ্ববিদ্যালয়ের তথ্য ও লোগো আপডেট করার ফাংশন
+  // ১. শুধুমাত্র বিশ্ববিদ্যালয়ের তথ্য ও লোগো আপডেট করার ফাংশন
   async function saveUnivInfo() {
     setUnivBusy(true)
     setUnivMsg("")
@@ -93,13 +110,14 @@ export default function SectionLimits({
         setLogoFile(null)
       }
 
+      // নিরাপদে শুধুমাত্র key ও value সেভ করা
       await Promise.all([
-        saveSectionText(token, "univ_logo_url", finalLogo.trim()),
-        saveSectionText(token, "univ_link_url", univLink.trim()),
-        saveSectionText(token, "univ_text", univText.trim()),
+        saveConfigData("univ_logo_url", finalLogo.trim()),
+        saveConfigData("univ_link_url", univLink.trim()),
+        saveConfigData("univ_text", univText.trim()),
       ])
 
-      setUnivMsg("✅ বিশ্ববিদ্যালয়ের তথ্য সফলভাবে আপডেট হয়েছে! হোমপেজ রিফ্রেশ করে দেখুন।")
+      setUnivMsg("✅ বিশ্ববিদ্যালয়ের তথ্য সফলভাবে আপডেট হয়েছে! হোমপেজ রিফ্রেশ করে দেখুন।")
     } catch (e) {
       setUnivMsg("❌ " + (e instanceof Error ? e.message : "আপডেট ব্যর্থ হয়েছে"))
     }
@@ -112,9 +130,9 @@ export default function SectionLimits({
     setMsg("")
     try {
       await Promise.all(names.map((n) => saveLimit(token, limitKey(n), get(n))))
-      setMsg("✅ সব সেকশনের খবর সংখ্যা সেভ হয়েছে।")
+      setMsg("✅ সব সেকশনের খবর সংখ্যা সেভ হয়েছে।")
     } catch (e) {
-      setMsg("❌ " + (e instanceof Error ? e.message : "ব্যর্থ হয়েছে"))
+      setMsg("❌ " + (e instanceof Error ? e.message : "ব্যর্থ হয়েছে"))
     }
     setBusy(false)
   }
