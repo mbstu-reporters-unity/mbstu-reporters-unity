@@ -609,7 +609,7 @@ export type StudentInput = Omit<StudentItem, "id" | "created_at">
 
 export async function getStudentItems(includeHidden = false): Promise<StudentItem[]> {
   try {
-    const f = includeHidden ? "" : "&hidden=eq.false"
+    const f = includeHidden ? "" : "&or=(hidden.is.null,hidden.eq.false)"
     const res = await fetch(
       `${SB_URL}/rest/v1/student_items?select=*${f}&order=featured.desc,sort_order.asc,created_at.desc`,
       { headers: hdr(), cache: "no-store" }
