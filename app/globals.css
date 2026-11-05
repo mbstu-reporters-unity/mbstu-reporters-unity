@@ -94,11 +94,18 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
-  /* সংবাদের বিস্তারিত বর্ণনার জন্য জাস্টিফাই অ্যালাইনমেন্ট */
-article p, .prose p, .whitespace-pre-line {
-  text-align: justify;
-  text-justify: inter-word;
-}
+  /* ==========================================================
+     পুরো ওয়েবসাইট জুড়ে সমস্ত লেখার স্বয়ংক্রিয় জাস্টিফাই অ্যালাইনমেন্ট
+     ========================================================== */
+  p, article, article p, article h1, article h2, article h3, .prose, .prose p, .whitespace-pre-line {
+    text-align: justify !important;
+    text-justify: inter-word !important;
+  }
+
+  /* যে লেখাগুলো সেন্টারে বা মাঝে থাকার কথা সেগুলোর সুরক্ষা */
+  .text-center, .text-center * {
+    text-align: center !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
