@@ -422,7 +422,7 @@ export async function removeLeader(token: string, id: string) {
 export async function getVisiblePosts(limit = 50): Promise<Post[]> {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/posts?select=*&hidden=eq.false&order=created_at.desc&limit=${limit}`,
+      `${SB_URL}/rest/v1/posts?select=*&or=(hidden.is.null,hidden.eq.false)&order=created_at.desc&limit=${limit}`,
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
