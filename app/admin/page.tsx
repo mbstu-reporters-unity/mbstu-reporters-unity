@@ -573,11 +573,10 @@ export default function AdminPage() {
         {tab === "clubs" && isAdmin && (
           <ClubManager token={token} />
         )}
-
         {/* ==================== এখানে ক্যাশ/প্রপসজনিত সমস্যাটি ঠিক করা হয়েছে ==================== */}
-        {tab === "limits" && isAdmin && (
-          <SectionLimits token={token} />
-        )}
+{tab === "limits" && isAdmin && (
+  <SectionLimits token={token} cats={cats} />
+)}
 
         {tab === "directors" && isAdmin && (
           <DirectorManager token={token} members={active} onChanged={() => refresh(token, me)} />
