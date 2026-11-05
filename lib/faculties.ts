@@ -215,7 +215,7 @@ export async function deleteTeacher(token: string, id: string) {
   )
 }
 
-/* ==================== বিভাগীয় নোটিশ (মূল নোটিশের সাথে শতভাগ সিঙ্কড) ==================== */
+/* ==================== বিভাগীয় নোটিশ (স্বয়ংক্রিয় সিঙ্ক) ==================== */
 export async function getDeptNotices(deptId: string): Promise<DeptNotice[]> {
   try {
     const res = await fetch(
@@ -229,7 +229,7 @@ export async function getDeptNotices(deptId: string): Promise<DeptNotice[]> {
   }
 }
 
-export async function createDeptNoticeSync(
+export async function createDeptNotice(
   token: string,
   data: { department_id: string; title: string; body: string | null; image_urls?: string[] }
 ) {
@@ -250,6 +250,9 @@ export async function createDeptNoticeSync(
   )
 }
 
+// উভয় নামেই এক্সপোর্ট রাখা হলো যাতে কোনো ফাইলেই অমিল না হয়
+export const createDeptNoticeSync = createDeptNotice
+
 export async function deleteDeptNotice(token: string, id: string) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/board_notices?id=eq.${encodeURIComponent(id)}`, {
@@ -259,7 +262,7 @@ export async function deleteDeptNotice(token: string, id: string) {
   )
 }
 
-/* ==================== বিভাগীয় ইভেন্ট (একাধিক ছবি সহ) ==================== */
+/* ==================== বিভাগীয় ইভেন্ট ==================== */
 export async function getDeptEvents(deptId: string): Promise<DeptEvent[]> {
   try {
     const res = await fetch(
