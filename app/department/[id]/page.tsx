@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, BookOpen, CalendarDays, Mail, MapPin, Megaphone, Phone, Users } from 'lucide-react'
+import { ArrowLeft, BookOpen, CalendarDays, Mail, MapPin, Megaphone, Phone, Users, Share2 } from 'lucide-react'
 import { getDepartmentById, getFaculties, getTeachers, getDeptNotices, getDeptEvents } from '@/lib/faculties'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
-import { ShareButton } from '@/components/portal/share-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,6 +40,8 @@ export default async function DepartmentDetailPage({
   ])
 
   const faculty = facs.find((f) => f.id === dept.faculty_id)
+  const siteUrl = 'https://mbsturu.vercel.app'
+  const deptUrl = `${siteUrl}/department/${dept.id}`
 
   return (
     <>
@@ -143,7 +144,7 @@ export default async function DepartmentDetailPage({
           {/* নোটিশ ও ইভেন্ট কর্নার */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            {/* নোটিশ কর্নার (একাধিক ছবি ও শেয়ারিং সহ) */}
+            {/* নোটিশ কর্নার */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-border space-y-4">
               <h2 className="text-lg font-bold text-navy flex items-center gap-2 border-b pb-2">
                 <Megaphone className="size-5 text-brand" />
@@ -178,8 +179,28 @@ export default async function DepartmentDetailPage({
                         </div>
                       )}
 
-                      {/* শেয়ার বাটন */}
-                      <ShareButton title={`${dept.name}: ${n.title}`} path={`/department/${dept.id}`} />
+                      {/* সরাসরি শেয়ার বাটন (কোনো এক্সটার্নাল ফাইল ছাড়াই কাজ করবে) */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-border/60 text-[11px]">
+                        <span className="text-gray-500 font-medium flex items-center gap-1">
+                          <Share2 className="size-3" /> শেয়ার:
+                        </span>
+                        <a
+                          href={`https://wa.me/?text=${encodeURIComponent(`${dept.name}: ${n.title} - ${deptUrl}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-md bg-emerald-600 text-white px-2 py-0.5 font-semibold hover:bg-emerald-700"
+                        >
+                          WhatsApp
+                        </a>
+                        <a
+                          href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(deptUrl)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-md bg-blue-600 text-white px-2 py-0.5 font-semibold hover:bg-blue-700"
+                        >
+                          Facebook
+                        </a>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -188,7 +209,7 @@ export default async function DepartmentDetailPage({
               )}
             </div>
 
-            {/* ইভেন্ট কর্নার (একাধিক ছবি ও শেয়ারিং সহ) */}
+            {/* ইভেন্টসমূহ */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-border space-y-4">
               <h2 className="text-lg font-bold text-navy flex items-center gap-2 border-b pb-2">
                 <CalendarDays className="size-5 text-brand" />
@@ -220,8 +241,28 @@ export default async function DepartmentDetailPage({
                         </div>
                       )}
 
-                      {/* শেয়ার বাটন */}
-                      <ShareButton title={`${dept.name} ইভেন্ট: ${ev.title}`} path={`/department/${dept.id}`} />
+                      {/* সরাসরি শেয়ার বাটন */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-border/60 text-[11px]">
+                        <span className="text-gray-500 font-medium flex items-center gap-1">
+                          <Share2 className="size-3" /> শেয়ার:
+                        </span>
+                        <a
+                          href={`https://wa.me/?text=${encodeURIComponent(`${dept.name} ইভেন্ট: ${ev.title} - ${deptUrl}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-md bg-emerald-600 text-white px-2 py-0.5 font-semibold hover:bg-emerald-700"
+                        >
+                          WhatsApp
+                        </a>
+                        <a
+                          href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(deptUrl)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-md bg-blue-600 text-white px-2 py-0.5 font-semibold hover:bg-blue-700"
+                        >
+                          Facebook
+                        </a>
+                      </div>
                     </div>
                   ))}
                 </div>
