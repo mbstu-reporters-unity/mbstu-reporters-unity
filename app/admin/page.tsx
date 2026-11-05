@@ -279,6 +279,7 @@ export default function AdminPage() {
         image_url: cover,
         video_url: vurl,
         link_url: linkUrl.trim() || null,
+        hidden: false,
       }
 
       let postId = editId
