@@ -94,14 +94,11 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
-
-  /* ==========================================================
-     নিরাপদ জাস্টিফাই অ্যালাইনমেন্ট (যাতে সব লেখা সবসময় জাস্টিফাই হয়)
-     ========================================================== */
-  p, article p, .prose p, .whitespace-pre-line {
-    text-align: justify !important;
-    text-justify: inter-word !important;
-  }
+  /* সংবাদের বিস্তারিত বর্ণনার জন্য জাস্টিফাই অ্যালাইনমেন্ট */
+article p, .prose p, .whitespace-pre-line {
+  text-align: justify;
+  text-justify: inter-word;
+}
 }
 
 @media (prefers-reduced-motion: reduce) {
