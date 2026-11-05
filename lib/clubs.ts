@@ -101,7 +101,7 @@ export async function deleteCampusClub(token: string, id: string) {
 export async function getClubNewsPosts(clubId: string) {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/posts?select=id,title,created_at,author,image_url&hidden=eq.false&club_id=eq.${encodeURIComponent(clubId)}&order=created_at.desc&limit=50`,
+      `${SB_URL}/rest/v1/posts?select=id,title,created_at,author,image_url&or=(hidden.is.null,hidden.eq.false)&club_id=eq.${encodeURIComponent(clubId)}&order=created_at.desc&limit=50`,
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
