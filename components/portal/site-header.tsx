@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ChevronDown, ChevronRight, Globe2, GraduationCap, Layers, Lock, Menu, Newspaper, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Globe2, GraduationCap, Layers, Lock, Menu, Newspaper, UserCheck, Users, X } from 'lucide-react'
 import { navLinks, clubs as fallbackClubs } from '@/lib/data'
 import { getCampusClubs, type ClubItem } from '@/lib/clubs'
 import { getVisibleCategoryNames } from '@/lib/categories'
 import { getFacultiesWithDepartments, type FacultyWithDepartments } from '@/lib/faculties'
 import { getUniversityAssociations, type UniversityAssociation } from '@/lib/associations'
 import { getSocialSites, type SocialSite } from '@/lib/social-sites'
+import { getLeaders, POSITIONS, type Leader } from '@/lib/sb'
 import { SB_URL, SB_KEY } from '@/lib/sb'
 import { Logo } from './logo'
 import { Tx, useLang } from '@/lib/i18n'
@@ -19,12 +20,14 @@ export function SiteHeader() {
   const [facultiesExpanded, setFacultiesExpanded] = useState(false)
   const [associationsExpanded, setAssociationsExpanded] = useState(false)
   const [socialSitesExpanded, setSocialSitesExpanded] = useState(false)
+  const [executiveExpanded, setExecutiveExpanded] = useState(false)
 
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
   const [categoriesList, setCategoriesList] = useState<string[]>([])
   const [facultiesList, setFacultiesList] = useState<FacultyWithDepartments[]>([])
   const [associationsList, setAssociationsList] = useState<UniversityAssociation[]>([])
   const [socialSitesList, setSocialSitesList] = useState<SocialSite[]>([])
+  const [leadersList, setLeadersList] = useState<Leader[]>([])
   const { lang, pick } = useLang()
 
   // বিশ্ববিদ্যালয় লোগো, লিংক ও টেক্সট
@@ -66,6 +69,13 @@ export function SiteHeader() {
 
     // MBSTU Social Site
     getSocialSites().then(setSocialSitesList)
+
+    // ⭐ শুধুমাত্র অ্যাডমিনের অনুমোদিত ও হোমপেজে দৃশ্যমান কার্যনির্বাহী সদস্যদের আনা ⭐
+    getLeaders().then((rows) => {
+      if (Array.isArray(rows)) {
+        setLeadersList(rows.filter((l) => l.is_visible))
+      }
+    })
   }, [])
 
   function openClubWindow(clubId: string) {
@@ -82,6 +92,21 @@ export function SiteHeader() {
         if (el) el.scrollIntoView({ behavior: 'smooth' })
       } else {
         window.location.href = `/?club=${clubId}#club-${clubId}`
+      }
+    }
+  }
+
+  function scrollToSection(href: string) {
+    setMenuOpen(false)
+    if (typeof window !== 'undefined') {
+      if (href.startsWith('#')) {
+        const id = href.replace('#', '')
+        const el = document.getElementById(id)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' })
+        } else if (window.location.pathname !== '/') {
+          window.location.href = `/${href}`
+        }
       }
     }
   }
@@ -129,6 +154,72 @@ export function SiteHeader() {
                 </a>
               </li>
 
+              {/* পরিচিতি */}
+              <li>
+                <a href="/#about" className="rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand">
+                  {pick('পরিচিতি', 'About')}
+                </a>
+              </li>
+
+              {/* ⭐ নতুন ড্রপডাউন: কার্যনির্বাহী পরিষদ (Executive Council) ⭐ */}
+              <li className="relative group">
+                <a
+                  href="/#leadership"
+                  className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand"
+                >
+                  <Users className="size-4 text-brand" />
+                  <span>{pick('কার্যনির্বাহী পরিষদ', 'Executive Council')}</span>
+                  <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
+                </a>
+
+                <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-80 rounded-2xl border border-border bg-card p-3 shadow-2xl z-50 max-h-[85vh] overflow-y-auto">
+                  <div className="flex items-center justify-between border-b border-border/60 pb-2 px-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {pick('কার্যনির্বাহী পরিষদ সদস্যবৃন্দ', 'Council Members')}
+                    </p>
+                    <a href="/#leadership" className="text-[11px] font-bold text-brand hover:underline">
+                      {pick('একনজরে দেখুন →', 'View All →')}
+                    </a>
+                  </div>
+
+                  <div className="space-y-1.5 pt-2">
+                    {leadersList.map((leader) => {
+                      const pos = POSITIONS.find((p) => p.key === leader.position)
+                      return (
+                        <a
+                          key={leader.id}
+                          href="/#leadership"
+                          className="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 hover:bg-brand-soft transition-colors"
+                        >
+                          {leader.photo_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={leader.photo_url} alt="" className="size-8 rounded-full object-cover border shrink-0 bg-white" />
+                          ) : (
+                            <span className="size-8 rounded-full bg-brand text-white font-bold text-xs flex items-center justify-center shrink-0">
+                              {leader.display_name.charAt(0)}
+                            </span>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-xs text-navy truncate">{leader.display_name}</p>
+                            <p className="text-[10px] text-brand font-semibold truncate">{pos?.bn || leader.position}</p>
+                          </div>
+                        </a>
+                      )
+                    })}
+                    {leadersList.length === 0 && (
+                      <p className="text-xs text-gray-400 text-center py-2">কোনো সদস্য যুক্ত নেই।</p>
+                    )}
+                  </div>
+                </div>
+              </li>
+
+              {/* ডিরেক্টর প্যানেল */}
+              <li>
+                <a href="/council" className="rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand">
+                  {pick('ডিরেক্টর প্যানেল', 'Director Panel')}
+                </a>
+              </li>
+
               {/* অনুষদ ও বিভাগসমূহ */}
               <li className="relative group">
                 <button
@@ -144,7 +235,6 @@ export function SiteHeader() {
                   <p className="px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/60">
                     {pick('অনুষদ ও এর অধীনস্থ বিভাগসমূহ', 'Faculties & Departments')}
                   </p>
-
                   <div className="space-y-3 pt-2">
                     {facultiesList.map((f) => (
                       <div key={f.id} className="rounded-xl border border-border/60 bg-gray-50/70 p-2.5">
@@ -157,7 +247,6 @@ export function SiteHeader() {
                           )}
                           <p className="text-xs font-bold text-navy truncate">{f.name}</p>
                         </div>
-
                         {f.departments && f.departments.length > 0 ? (
                           <div className="space-y-1 pl-4 border-l-2 border-brand/40 ml-2">
                             {f.departments.map((d) => (
@@ -200,7 +289,6 @@ export function SiteHeader() {
                       {pick('সবগুলো দেখুন →', 'View All →')}
                     </a>
                   </div>
-
                   <div className="space-y-1 pt-2">
                     {associationsList.map((assoc, i) => {
                       const link = assoc.website_url || assoc.fb_url || assoc.yt_url || '/associations'
@@ -215,15 +303,8 @@ export function SiteHeader() {
                           <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
                             {i + 1}
                           </span>
-                          {assoc.logo_url && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={assoc.logo_url} alt="" className="size-7 rounded-lg object-contain bg-white border p-0.5 shrink-0" />
-                          )}
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-xs text-navy truncate">{assoc.name}</p>
-                            {assoc.university_name && (
-                              <p className="text-[10px] text-gray-500 truncate">{assoc.university_name}</p>
-                            )}
                           </div>
                         </a>
                       )
@@ -232,7 +313,7 @@ export function SiteHeader() {
                 </div>
               </li>
 
-              {/* ⭐ নতুন ড্রপডাউন: MBSTU Social Site ⭐ */}
+              {/* MBSTU Social Site */}
               <li className="relative group">
                 <a
                   href="/social-sites"
@@ -252,7 +333,6 @@ export function SiteHeader() {
                       {pick('সবগুলো দেখুন →', 'View All →')}
                     </a>
                   </div>
-
                   <div className="space-y-1 pt-2">
                     {socialSitesList.map((site, i) => {
                       const link = site.fb_url || site.website_url || site.yt_url || '/social-sites'
@@ -267,28 +347,18 @@ export function SiteHeader() {
                           <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
                             {i + 1}
                           </span>
-                          {site.logo_url && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={site.logo_url} alt="" className="size-7 rounded-lg object-contain bg-white border p-0.5 shrink-0" />
-                          )}
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-xs text-navy truncate">{site.name}</p>
-                            {site.category && (
-                              <p className="text-[10px] text-gray-500 truncate">{site.category}</p>
-                            )}
                           </div>
                         </a>
                       )
                     })}
-                    {socialSitesList.length === 0 && (
-                      <p className="text-xs text-gray-500 text-center py-2">কোনো সাইট যোগ করা হয়নি।</p>
-                    )}
                   </div>
                 </div>
               </li>
 
               {/* বাকি মেনু লিংকসমূহ */}
-              {navLinks.slice(1).map((link) => {
+              {navLinks.slice(4).map((link) => {
                 const isClubLink = link.href === '#club-news'
 
                 if (isClubLink) {
@@ -303,11 +373,7 @@ export function SiteHeader() {
                           <span>{pick('নিউজ ক্যাটাগরি', 'News Categories')}</span>
                           <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
                         </button>
-
                         <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-60 rounded-2xl border border-border bg-card p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
-                          <p className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/60">
-                            {pick('সংবাদ বিভাগসমূহ', 'All Categories')}
-                          </p>
                           <div className="space-y-0.5 pt-1">
                             {categoriesList.map((cat, i) => (
                               <a
@@ -315,11 +381,7 @@ export function SiteHeader() {
                                 href={`/category/${encodeURIComponent(cat)}`}
                                 className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium text-navy hover:bg-brand-soft transition-colors"
                               >
-                                <span className="truncate">
-                                  <span className="font-bold text-brand mr-1.5">{i + 1}.</span>
-                                  {cat}
-                                </span>
-                                <ChevronRight className="size-3 text-muted-foreground opacity-60" />
+                                <span className="truncate">{cat}</span>
                               </a>
                             ))}
                           </div>
@@ -335,19 +397,7 @@ export function SiteHeader() {
                           {lang === 'bn' ? link.bn : link.label}
                           <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
                         </a>
-
                         <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-80 rounded-2xl border border-border bg-card p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
-                          <p className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/60">
-                            {pick('ক্লাবসমূহের নামের তালিকা:', 'List of Clubs:')}
-                          </p>
-                          <a
-                            href="/#club-news"
-                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-brand hover:bg-brand-soft mt-1"
-                          >
-                            <ChevronRight className="size-3.5" />
-                            <span>{pick('➔ সব ক্লাব একনজরে দেখুন', '➔ View All Clubs')}</span>
-                          </a>
-
                           <div className="space-y-1 pt-1">
                             {clubsList.map((c, i) => (
                               <button
@@ -408,6 +458,60 @@ export function SiteHeader() {
         {menuOpen && (
           <nav className="border-t border-border bg-card xl:hidden max-h-[85vh] overflow-y-auto px-4 py-3 space-y-2">
             
+            {/* ⭐ মোবাইল: কার্যনির্বাহী পরিষদ (Executive Council) ⭐ */}
+            <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setExecutiveExpanded(!executiveExpanded)}
+                className="flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand"
+              >
+                <span className="flex items-center gap-2">
+                  <Users className="size-4" />
+                  <span>{pick('কার্যনির্বাহী পরিষদ', 'Executive Council')}</span>
+                  <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
+                    {leadersList.length} জন
+                  </span>
+                </span>
+                <ChevronDown className={`size-4 transition-transform ${executiveExpanded ? 'rotate-180' : ''}`} />
+              </button>
+
+              {executiveExpanded && (
+                <div className="border-t border-brand/20 bg-card p-3 space-y-2">
+                  <a
+                    href="/#leadership"
+                    onClick={() => scrollToSection('#leadership')}
+                    className="block text-xs font-bold text-brand bg-brand-soft/80 p-2 rounded-xl text-center"
+                  >
+                    ➔ সম্পূর্ণ পরিষদ একনজরে দেখুন
+                  </a>
+                  {leadersList.map((leader) => {
+                    const pos = POSITIONS.find((p) => p.key === leader.position)
+                    return (
+                      <a
+                        key={leader.id}
+                        href="/#leadership"
+                        onClick={() => scrollToSection('#leadership')}
+                        className="flex items-center gap-2.5 py-1.5 border-b border-border/40 text-xs"
+                      >
+                        {leader.photo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={leader.photo_url} alt="" className="size-7 rounded-full object-cover border" />
+                        ) : (
+                          <span className="size-7 rounded-full bg-brand text-white font-bold text-[10px] flex items-center justify-center">
+                            {leader.display_name.charAt(0)}
+                          </span>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-navy truncate">{leader.display_name}</p>
+                          <p className="text-[10px] text-brand font-semibold truncate">{pos?.bn || leader.position}</p>
+                        </div>
+                      </a>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* মোবাইল: অনুষদ ও বিভাগসমূহ */}
             <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
               <button
@@ -418,29 +522,18 @@ export function SiteHeader() {
                 <span className="flex items-center gap-2">
                   <GraduationCap className="size-4" />
                   <span>{pick('অনুষদ ও বিভাগসমূহ', 'Faculties & Depts')}</span>
-                  <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
-                    {facultiesList.length}টি
-                  </span>
                 </span>
                 <ChevronDown className={`size-4 transition-transform ${facultiesExpanded ? 'rotate-180' : ''}`} />
               </button>
-
               {facultiesExpanded && (
                 <div className="border-t border-brand/20 bg-card p-3 space-y-3">
                   {facultiesList.map((f) => (
                     <div key={f.id} className="space-y-1.5 border-b border-border/40 pb-2">
-                      <p className="font-bold text-xs text-navy flex items-center gap-1.5">
-                        🏛️ {f.name}
-                      </p>
+                      <p className="font-bold text-xs text-navy">🏛️ {f.name}</p>
                       <div className="pl-4 space-y-1">
                         {f.departments.map((d) => (
-                          <a
-                            key={d.id}
-                            href={`/department/${d.id}`}
-                            onClick={() => setMenuOpen(false)}
-                            className="block text-xs text-brand font-medium hover:underline py-0.5"
-                          >
-                            ➔ {d.name} {d.code ? `(${d.code})` : ""}
+                          <a key={d.id} href={`/department/${d.id}`} onClick={() => setMenuOpen(false)} className="block text-xs text-brand py-0.5">
+                            ➔ {d.name}
                           </a>
                         ))}
                       </div>
@@ -460,46 +553,24 @@ export function SiteHeader() {
                 <span className="flex items-center gap-2">
                   <Newspaper className="size-4" />
                   <span>{pick('অন্যান্য সাংবাদিক সমিতি', 'Other Press Clubs')}</span>
-                  <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
-                    {associationsList.length}টি
-                  </span>
                 </span>
                 <ChevronDown className={`size-4 transition-transform ${associationsExpanded ? 'rotate-180' : ''}`} />
               </button>
-
               {associationsExpanded && (
                 <div className="border-t border-brand/20 bg-card p-3 space-y-2">
-                  <a
-                    href="/associations"
-                    onClick={() => setMenuOpen(false)}
-                    className="block text-xs font-bold text-brand bg-brand-soft/80 p-2 rounded-xl text-center"
-                  >
+                  <a href="/associations" onClick={() => setMenuOpen(false)} className="block text-xs font-bold text-brand bg-brand-soft/80 p-2 rounded-xl text-center">
                     ➔ সকল সমিতি একনজরে দেখুন
                   </a>
-                  {associationsList.map((assoc) => {
-                    const link = assoc.website_url || assoc.fb_url || assoc.yt_url || '/associations'
-                    return (
-                      <a
-                        key={assoc.id}
-                        href={link}
-                        target={link.startsWith('http') ? '_blank' : '_self'}
-                        rel="noopener noreferrer"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2 text-xs font-semibold text-navy hover:text-brand py-1 px-1 border-b border-border/40"
-                      >
-                        {assoc.logo_url && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={assoc.logo_url} alt="" className="size-5 rounded object-contain border" />
-                        )}
-                        <span className="truncate">{assoc.name}</span>
-                      </a>
-                    )
-                  })}
+                  {associationsList.map((assoc) => (
+                    <a key={assoc.id} href={assoc.website_url || '/associations'} onClick={() => setMenuOpen(false)} className="block text-xs font-semibold py-1 border-b truncate">
+                      {assoc.name}
+                    </a>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* ⭐ মোবাইল: MBSTU Social Site ⭐ */}
+            {/* মোবাইল: MBSTU Social Site */}
             <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
               <button
                 type="button"
@@ -509,68 +580,17 @@ export function SiteHeader() {
                 <span className="flex items-center gap-2">
                   <Globe2 className="size-4" />
                   <span>{pick('MBSTU Social Site', 'MBSTU Social Site')}</span>
-                  <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
-                    {socialSitesList.length}টি
-                  </span>
                 </span>
                 <ChevronDown className={`size-4 transition-transform ${socialSitesExpanded ? 'rotate-180' : ''}`} />
               </button>
-
               {socialSitesExpanded && (
                 <div className="border-t border-brand/20 bg-card p-3 space-y-2">
-                  <a
-                    href="/social-sites"
-                    onClick={() => setMenuOpen(false)}
-                    className="block text-xs font-bold text-brand bg-brand-soft/80 p-2 rounded-xl text-center"
-                  >
+                  <a href="/social-sites" onClick={() => setMenuOpen(false)} className="block text-xs font-bold text-brand bg-brand-soft/80 p-2 rounded-xl text-center">
                     ➔ সকল সাইট ও গ্রুপ একনজরে দেখুন
                   </a>
-                  {socialSitesList.map((site) => {
-                    const link = site.fb_url || site.website_url || site.yt_url || '/social-sites'
-                    return (
-                      <a
-                        key={site.id}
-                        href={link}
-                        target={link.startsWith('http') ? '_blank' : '_self'}
-                        rel="noopener noreferrer"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2 text-xs font-semibold text-navy hover:text-brand py-1 px-1 border-b border-border/40"
-                      >
-                        {site.logo_url && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={site.logo_url} alt="" className="size-5 rounded object-contain border" />
-                        )}
-                        <span className="truncate">{site.name}</span>
-                      </a>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* মোবাইল: নিউজ ক্যাটাগরি */}
-            <div className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setCategoriesExpanded(!categoriesExpanded)}
-                className="flex w-full items-center justify-between px-3.5 py-3 text-sm font-bold text-brand"
-              >
-                <span className="flex items-center gap-2">
-                  <Layers className="size-4" />
-                  <span>{pick('নিউজ ক্যাটাগরি', 'News Categories')}</span>
-                </span>
-                <ChevronDown className={`size-4 transition-transform ${categoriesExpanded ? 'rotate-180' : ''}`} />
-              </button>
-              {categoriesExpanded && (
-                <div className="border-t border-brand/20 bg-card p-2 space-y-1">
-                  {categoriesList.map((cat, i) => (
-                    <a
-                      key={cat}
-                      href={`/category/${encodeURIComponent(cat)}`}
-                      onClick={() => setMenuOpen(false)}
-                      className="block text-xs font-medium text-navy hover:text-brand py-1 px-2"
-                    >
-                      {i + 1}. {cat}
+                  {socialSitesList.map((site) => (
+                    <a key={site.id} href={site.fb_url || '/social-sites'} onClick={() => setMenuOpen(false)} className="block text-xs font-semibold py-1 border-b truncate">
+                      {site.name}
                     </a>
                   ))}
                 </div>
@@ -594,7 +614,7 @@ export function SiteHeader() {
                       key={c.id}
                       type="button"
                       onClick={() => openClubWindow(c.id)}
-                      className="block w-full text-left text-xs font-medium text-navy hover:text-brand py-1.5 px-2 truncate active:bg-brand-soft rounded-lg cursor-pointer"
+                      className="block w-full text-left text-xs font-medium text-navy hover:text-brand py-1.5 px-2 truncate"
                     >
                       ➔ {c.name}
                     </button>
@@ -603,17 +623,22 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* বাকি লিংকসমূহ */}
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="block rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-brand-soft"
-              >
-                {lang === 'bn' ? link.bn : link.label}
-              </a>
-            ))}
+            {/* সাধারণ পেজের লিংকসমূহ */}
+            <a href="/" onClick={() => setMenuOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-brand-soft">
+              {pick('হোম', 'Home')}
+            </a>
+            <a href="/#about" onClick={() => scrollToSection('#about')} className="block rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-brand-soft">
+              {pick('পরিচিতি', 'About')}
+            </a>
+            <a href="/council" onClick={() => setMenuOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-brand-soft">
+              {pick('ডিরেক্টর প্যানেল', 'Director Panel')}
+            </a>
+            <a href="/student-corner" onClick={() => setMenuOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-brand-soft">
+              {pick('স্টুডেন্ট কর্নার', 'Student Corner')}
+            </a>
+            <a href="/notices" onClick={() => setMenuOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-navy hover:bg-brand-soft">
+              {pick('নোটিশ', 'Notices')}
+            </a>
 
             <a
               href="/admin"
