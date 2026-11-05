@@ -29,8 +29,9 @@ async function shrink(file: File): Promise<Blob> {
   c.width = Math.round(bmp.width * scale)
   c.height = Math.round(bmp.height * scale)
   c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height)
+  const mime = file.type === "image/png" ? "image/png" : "image/jpeg"
   return new Promise((res, rej) =>
-    c.toBlob((b) => (b ? res(b) : rej(new Error("ছবি প্রসেস করা যায়নি"))), "image/jpeg", 0.82)
+    c.toBlob((b) => (b ? res(b) : rej(new Error("ছবি প্রসেস করা যায়নি"))), mime, 0.85)
   )
 }
 
