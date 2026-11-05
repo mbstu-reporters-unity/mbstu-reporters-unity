@@ -6,9 +6,11 @@ import {
   downloadUrl, fmtDateTime, timeAgo, isImageType,
 } from "../../lib/notices"
 import type { Notice, NoticeComment } from "../../lib/notices"
+import { getDepartments, type Department } from "../../lib/faculties"
 import { getImagesMetaForMany, getLayoutsForMany } from "../../lib/sb"
 import RichGallery from "../../components/portal/rich-gallery"
 import type { GalleryItem } from "../../components/portal/rich-gallery"
+import { FormattedText } from "../../components/portal/formatted-text"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const safeUrl = (u: string | null) => !!u && /^https?:\/\//i.test(u)
@@ -59,12 +61,13 @@ function Comments({ id }: { id: string }) {
 }
 
 function NoticeCard({
-  n, highlight, items, layout,
+  n, highlight, items, layout, deptName,
 }: {
   n: Notice
   highlight: boolean
   items: GalleryItem[]
   layout: string
+  deptName?: string
 }) {
   const [open, setOpen] = useState(false)
   const [more, setMore] = useState(false)
@@ -77,7 +80,7 @@ function NoticeCard({
     if (highlight) ref.current?.scrollIntoView({ behavior: "smooth", block: "center" })
   }, [highlight])
 
-  const branch = BRANCHES.find((b) => b.key === n.branch)?.bn || n.branch
+  const branch = deptName ? `🎓 ${deptName}` : (BRANCHES.find((b) => b.key === n.branch)?.bn || n.branch)
   const isNew = Date.now() - new Date(n.created_at).getTime() < 48 * 3600 * 1000
   const link = `${origin}/notices?n=${n.id}`
   const long = (n.body || "").length > 300
@@ -93,6 +96,9 @@ function NoticeCard({
       setTimeout(() => setCopied(false), 2000)
     } catch {}
   }
+
+  // একাধিক ছবি (image_urls বা items উভয় থেকেই নেওয়া)
+  const allImages = items.length > 0 ? items : (n.image_urls || []).map((u) => ({ url: u }))
 
   return (
     <div
@@ -113,7 +119,9 @@ function NoticeCard({
 
       {n.body && (
         <div>
-          <p className={`whitespace-pre-line ${long && !more ? "line-clamp-5" : ""}`}>{n.body}</p>
+          <div className={long && !more ? "line-clamp-5" : ""}>
+            <FormattedText text={n.body} className="text-sm text-navy/90" />
+          </div>
           {long && (
             <button onClick={() => setMore(!more)} className="text-sm text-green-700 mt-1">
               {more ? "কম দেখুন" : "আরও পড়ুন"}
@@ -122,7 +130,8 @@ function NoticeCard({
         </div>
       )}
 
-      <RichGallery items={items} layout={layout} />
+      {/* একাধিক ছবির গ্যালারি */}
+      <RichGallery items={allImages} layout={layout} />
 
       {n.file_url && isImageType(n.file_type) && (
         <a href={n.file_url} target="_blank" rel="noopener noreferrer">
@@ -152,9 +161,7 @@ function NoticeCard({
       </div>
 
       <div className="text-xs text-gray-500 space-y-0.5">
-        <p>
-          প্রকাশক: {n.poster_name || "ডিরেক্টর প্যানেল"}
-        </p>
+        <p>প্রকাশক: {n.poster_name || "ডিরেক্টর প্যানেল"}</p>
         <p>
           {fmtDateTime(n.created_at)} · {timeAgo(n.created_at)}
           {n.updated_at ? ` · সম্পাদিত: ${fmtDateTime(n.updated_at)}` : ""}
@@ -176,6 +183,7 @@ function NoticeCard({
 
 export default function NoticesPage() {
   const [list, setList] = useState<Notice[]>([])
+  const [departments, setDepartments] = useState<Record<string, Department>>({})
   const [imgs, setImgs] = useState<Record<string, GalleryItem[]>>({})
   const [layouts, setLayouts] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
@@ -186,9 +194,14 @@ export default function NoticesPage() {
   useEffect(() => {
     const n = new URLSearchParams(window.location.search).get("n")
     if (n) setHl(n)
-    getNotices().then(async (r) => {
+    
+    Promise.all([getNotices(), getDepartments()]).then(async ([r, depts]) => {
       setList(r)
+      const dMap: Record<string, Department> = {}
+      depts.forEach((d) => { dMap[d.id] = d })
+      setDepartments(dMap)
       setLoading(false)
+
       const ids = r.map((x) => x.id)
       const [map, lay] = await Promise.all([
         getImagesMetaForMany("notice", ids),
@@ -247,6 +260,7 @@ export default function NoticesPage() {
             highlight={n.id === hl}
             items={imgs[n.id] || []}
             layout={layouts[n.id] || "grid"}
+            deptName={n.department_id ? departments[n.department_id]?.name : undefined}
           />
         ))}
 
