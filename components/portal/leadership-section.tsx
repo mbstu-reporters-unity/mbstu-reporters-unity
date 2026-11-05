@@ -24,6 +24,7 @@ export function LeadershipSection() {
   const [globalStyle, setGlobalStyle] = useState<PhotoStyle>(DEFAULT_STYLE)
 
   useEffect(() => {
+    // শুধুমাত্র অ্যাডমিনের অনুমোদিত ও দৃশ্যমান কার্যনির্বাহী সদস্যদের আনা
     getLeaders().then((rows) => setLeaders((rows as LeaderWithStyle[]).filter((l) => l.is_visible)))
     getGlobalStyle().then(setGlobalStyle)
   }, [])
@@ -32,10 +33,12 @@ export function LeadershipSection() {
     <section id="leadership" className="bg-muted py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4">
         <div id="about" className="-mt-24 pt-24" />
+        
+        {/* ⭐ নাম পরিবর্তন: কার্যনির্বাহী পরিষদ (Executive Council) ⭐ */}
         <SectionHeading
-          eyebrow="Leadership & At a Glance"
-          title="নেতৃত্বের বার্তা"
-          subtitle="Messages from the leadership of MBSTU Reporters' Unity — committed to fearless, fair and factual campus journalism."
+          eyebrow="Executive Council & At a Glance"
+          title="কার্যনির্বাহী পরিষদ"
+          subtitle="মাভাবিপ্রবি রিপোর্টার্স ইউনিটির কার্যনির্বাহী পরিষদ — নির্ভীক, নিরপেক্ষ ও তথ্যনির্ভর ক্যাম্পাস সাংবাদিকতায় অঙ্গীকারবদ্ধ।"
         />
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -89,7 +92,7 @@ export function LeadershipSection() {
         </div>
 
         {leaders.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground">নেতৃত্বের তথ্য শীঘ্রই যুক্ত করা হবে।</p>
+          <p className="text-center text-sm text-muted-foreground">কার্যনির্বাহী পরিষদের তথ্য শীঘ্রই যুক্ত করা হবে।</p>
         )}
 
         <ul className="mt-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
