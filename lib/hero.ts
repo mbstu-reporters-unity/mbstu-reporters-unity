@@ -174,7 +174,7 @@ export function parseMediaOrLink(rawUrl: string): {
   const url = rawUrl.trim()
 
   // ১. YouTube ভিডিও শনাক্তকরণ
-  const ytMatch = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)
+  const ytMatch = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/)
   if (ytMatch && ytMatch[2]?.length === 11) {
     return {
       isEmbedVideo: true,
