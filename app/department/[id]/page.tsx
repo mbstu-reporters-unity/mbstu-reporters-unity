@@ -6,6 +6,7 @@ import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
+import { ShareButton } from '@/components/portal/share-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,7 +53,7 @@ export default async function DepartmentDetailPage({
             <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
           </a>
 
-          {/* ব্যানার */}
+          {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark via-brand to-navy text-white p-6 sm:p-10 shadow-lg">
             {dept.image_url && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -95,7 +96,7 @@ export default async function DepartmentDetailPage({
                 যোগাযোগ ও অফিস
               </h2>
               <p className="whitespace-pre-line text-xs sm:text-sm text-gray-700 leading-relaxed">
-                {dept.contact_info || "অফিসের কোনো যোগাযোগের তথ্য দেওয়া নেই।"}
+                {dept.contact_info || "অফিসের যোগাযোগের তথ্য দেওয়া নেই।"}
               </p>
             </div>
           </div>
@@ -139,22 +140,46 @@ export default async function DepartmentDetailPage({
             )}
           </div>
 
-          {/* নোটিশ ও ইভেন্ট */}
+          {/* নোটিশ ও ইভেন্ট কর্নার */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* নোটিশ কর্নার (একাধিক ছবি ও শেয়ারিং সহ) */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-border space-y-4">
               <h2 className="text-lg font-bold text-navy flex items-center gap-2 border-b pb-2">
                 <Megaphone className="size-5 text-brand" />
                 বিভাগীয় নোটিশ কর্নার
               </h2>
+
               {notices.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {notices.map((n) => (
-                    <div key={n.id} className="p-3 bg-gray-50 rounded-xl space-y-1 border border-border/80">
-                      <p className="font-bold text-sm text-navy">{n.title}</p>
-                      {n.body && <p className="text-xs text-gray-600 whitespace-pre-line">{n.body}</p>}
-                      <p className="text-[11px] text-gray-400 flex items-center gap-1 pt-1">
-                        <CalendarDays className="size-3 text-gold" /> {n.date}
-                      </p>
+                    <div key={n.id} className="p-4 bg-gray-50 rounded-2xl space-y-2 border border-border/80">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-bold text-sm text-navy leading-snug">{n.title}</p>
+                        <span className="text-[11px] text-gold font-semibold shrink-0 flex items-center gap-1">
+                          <CalendarDays className="size-3" />
+                          {new Date(n.created_at).toLocaleDateString("bn-BD")}
+                        </span>
+                      </div>
+
+                      {n.body && (
+                        <p className="text-xs text-gray-600 whitespace-pre-line leading-relaxed">{n.body}</p>
+                      )}
+
+                      {/* নোটিশের একাধিক ছবি */}
+                      {n.image_urls && n.image_urls.length > 0 && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-1">
+                          {n.image_urls.map((img, i) => (
+                            <a key={i} href={img} target="_blank" rel="noopener noreferrer">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={img} alt="" className="size-20 w-full object-cover rounded-lg border hover:opacity-90" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* শেয়ার বাটন */}
+                      <ShareButton title={`${dept.name}: ${n.title}`} path={`/department/${dept.id}`} />
                     </div>
                   ))}
                 </div>
@@ -163,24 +188,40 @@ export default async function DepartmentDetailPage({
               )}
             </div>
 
+            {/* ইভেন্ট কর্নার (একাধিক ছবি ও শেয়ারিং সহ) */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-border space-y-4">
               <h2 className="text-lg font-bold text-navy flex items-center gap-2 border-b pb-2">
                 <CalendarDays className="size-5 text-brand" />
                 বিভাগীয় ইভেন্টসমূহ
               </h2>
+
               {events.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {events.map((ev) => (
-                    <div key={ev.id} className="p-3 bg-gray-50 rounded-xl flex gap-3 border border-border/80">
-                      {ev.image_url && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={ev.image_url} alt="" className="size-16 rounded-xl object-cover shrink-0 border" />
-                      )}
-                      <div className="min-w-0 space-y-1">
-                        <p className="font-bold text-sm text-navy">{ev.title}</p>
-                        {ev.details && <p className="text-xs text-gray-600 line-clamp-2">{ev.details}</p>}
-                        <p className="text-[11px] text-gold font-semibold">{ev.date}</p>
+                    <div key={ev.id} className="p-4 bg-gray-50 rounded-2xl space-y-2 border border-border/80">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-bold text-sm text-navy leading-snug">{ev.title}</p>
+                        <span className="text-[11px] text-gold font-semibold shrink-0">{ev.date}</span>
                       </div>
+
+                      {ev.details && (
+                        <p className="text-xs text-gray-600 whitespace-pre-line leading-relaxed">{ev.details}</p>
+                      )}
+
+                      {/* ইভেন্টের একাধিক ছবি */}
+                      {ev.image_urls && ev.image_urls.length > 0 && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-1">
+                          {ev.image_urls.map((img, i) => (
+                            <a key={i} href={img} target="_blank" rel="noopener noreferrer">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={img} alt="" className="size-20 w-full object-cover rounded-lg border hover:opacity-90" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* শেয়ার বাটন */}
+                      <ShareButton title={`${dept.name} ইভেন্ট: ${ev.title}`} path={`/department/${dept.id}`} />
                     </div>
                   ))}
                 </div>
@@ -188,6 +229,7 @@ export default async function DepartmentDetailPage({
                 <p className="text-xs text-gray-400 py-3">বর্তমানে কোনো ইভেন্ট নেই।</p>
               )}
             </div>
+
           </div>
 
         </div>
