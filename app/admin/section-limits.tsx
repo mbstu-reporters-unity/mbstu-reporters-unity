@@ -4,8 +4,7 @@ import { useEffect, useState } from "react"
 import { getLimits, saveLimit, limitKey, CAT_CAMPUS, CAT_CLUB, CAT_STUDENT } from "../../lib/sb"
 
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50 hover:bg-green-800 transition-all shadow-md cursor-pointer"
-
-export default function SectionLimits({ token, cats }: { token: string; cats: string[] }) {
+export default function SectionLimits({ token, cats = [] }: { token: string; cats?: string[] }) {
   const [vals, setVals] = useState<Record<string, number>>({})
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState("")
