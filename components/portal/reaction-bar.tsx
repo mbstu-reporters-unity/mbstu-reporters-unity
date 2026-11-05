@@ -13,7 +13,11 @@ const REACTIONS = [
   { key: 'angry', icon: '😡', label: 'রাগ' },
 ]
 
-const H = { apikey: SB_KEY, 'Content-Type': 'application/json' }
+const H = {
+  apikey: SB_KEY,
+  Authorization: `Bearer ${SB_KEY}`,
+  'Content-Type': 'application/json',
+}
 
 function deviceId() {
   try {
