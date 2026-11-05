@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, Layers, Lock, Menu, X } from 'lucide-react'
 import { navLinks, clubs as fallbackClubs } from '@/lib/data'
 import { getCampusClubs, type ClubItem } from '@/lib/clubs'
 import { getVisibleCategoryNames } from '@/lib/categories'
+import { SB_URL, SB_KEY } from '@/lib/sb'
 import { Logo } from './logo'
 import { Tx, useLang } from '@/lib/i18n'
 
@@ -16,9 +17,31 @@ export function SiteHeader() {
   const [categoriesList, setCategoriesList] = useState<string[]>([])
   const { lang, pick } = useLang()
 
-  // ক্লাব ও ক্যাটাগরি ডাটাবেস থেকে রিয়েল-টাইমে লোড করা
+  // বিশ্ববিদ্যালয় লোগো, লিংক ও ঐচ্ছিক টেক্সট স্টেট
+  const [univLogo, setUnivLogo] = useState('https://mbstu.ac.bd/images/logo.png')
+  const [univLink, setUnivLink] = useState('https://mbstu.ac.bd')
+  const [univText, setUnivText] = useState('')
+
+  // ডেটাবেস থেকে রিয়েল-টাইমে লোড করা
   useEffect(() => {
-    // ১. ক্লাব লোড
+    // ১. বিশ্ববিদ্যালয় লোগো, লিংক ও টেক্সট লোড
+    fetch(
+      `${SB_URL}/rest/v1/app_config?select=key,value&key=in.(univ_logo_url,univ_link_url,univ_text)`,
+      { headers: { apikey: SB_KEY }, cache: 'no-store' }
+    )
+      .then((res) => res.json())
+      .then((rows) => {
+        if (Array.isArray(rows)) {
+          rows.forEach((r) => {
+            if (r.key === 'univ_logo_url' && r.value) setUnivLogo(r.value)
+            if (r.key === 'univ_link_url' && r.value) setUnivLink(r.value)
+            if (r.key === 'univ_text') setUnivText(r.value || '')
+          })
+        }
+      })
+      .catch(() => {})
+
+    // ২. ক্লাব লোড
     getCampusClubs().then((res) => {
       if (res && res.length > 0) {
         setClubsList(res)
@@ -46,12 +69,20 @@ export function SiteHeader() {
       }
     })
 
-    // ২. অ্যাডমিন প্যানেলের সক্রিয় ক্যাটাগরি লোড
+    // ৩. ক্যাটাগরি লোড
     getVisibleCategoryNames().then((cats) => {
       if (cats && cats.length > 0) {
         setCategoriesList(cats)
       } else {
-        setCategoriesList(["ক্যাম্পাস সংবাদ", "ক্লাব", "একাডেমিক", "গবেষণা", "খেলাধুলা", "সংস্কৃতি", "পরিবেশ"])
+        setCategoriesList([
+          'ক্যাম্পাস সংবাদ',
+          'ক্লাব',
+          'একাডেমিক',
+          'গবেষণা',
+          'খেলাধুলা',
+          'সংস্কৃতি',
+          'পরিবেশ',
+        ])
       }
     })
   }, [])
@@ -64,7 +95,7 @@ export function SiteHeader() {
       url.searchParams.set('club', clubId)
       window.history.pushState({}, '', url.toString())
       window.dispatchEvent(new CustomEvent('open-club-modal', { detail: clubId }))
-      
+
       const el = document.getElementById(`club-${clubId}`)
       if (el) el.scrollIntoView({ behavior: 'smooth' })
     }
@@ -73,8 +104,41 @@ export function SiteHeader() {
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-border/60 bg-card/75 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-card/65">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
-          <Logo />
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 sm:gap-4 px-4 py-3">
+          
+          {/* ==================== বামপাশ: সাইট লোগো + বিশ্ববিদ্যালয়ের লোগো ==================== */}
+          <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
+            {/* ১. মাভাবিপ্রবি রিপোর্টার্স ইউনিটি লোগো ও নাম */}
+            <Logo />
+
+            {/* হালকা পার্টিশন দাগ (Divider) */}
+            <span className="h-6 w-px bg-border/80 shrink-0" aria-hidden="true" />
+
+            {/* ২. বিশ্ববিদ্যালয়ের অফিশিয়াল লোগো, লিংক ও ঐচ্ছিক বক্স */}
+            <a
+              href={univLink || 'https://mbstu.ac.bd'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 group transition-transform active:scale-95 shrink-0"
+              title="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয় (অফিশিয়াল ওয়েবসাইট)"
+            >
+              {univLogo && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={univLogo}
+                  alt="MBSTU University Official Logo"
+                  className="size-8 sm:size-9 rounded-full object-contain bg-white p-0.5 border border-border/80 shadow-sm transition-all group-hover:border-brand group-hover:shadow"
+                />
+              )}
+
+              {/* ঐচ্ছিক লেখা: কিছু লিখলে তবেই জায়গা নেবে, ফাঁকা থাকলে একদম হাইড থাকবে (0px) */}
+              {univText && univText.trim() !== '' && (
+                <span className="text-[11px] sm:text-xs font-bold text-navy/90 group-hover:text-brand transition-colors max-w-[100px] sm:max-w-[150px] truncate leading-tight">
+                  {univText}
+                </span>
+              )}
+            </a>
+          </div>
 
           {/* ==================== ডেস্কটপ মেনু ==================== */}
           <nav aria-label="Main navigation" className="hidden xl:block">
@@ -85,7 +149,7 @@ export function SiteHeader() {
                 if (isClubLink) {
                   return (
                     <li key={link.href} className="flex items-center gap-1">
-                      {/* ১. নিউজ ক্যাটাগরি ড্রপডাউন */}
+                      {/* নিউজ ক্যাটাগরি ড্রপডাউন */}
                       <div className="relative group">
                         <button
                           type="button"
@@ -117,7 +181,7 @@ export function SiteHeader() {
                         </div>
                       </div>
 
-                      {/* ২. ক্যাম্পাস ক্লাবসমূহ ড্রপডাউন (আগের মতোই অক্ষত) */}
+                      {/* ক্যাম্পাস ক্লাবসমূহ ড্রপডাউন */}
                       <div className="relative group">
                         <a
                           href="#club-news"
@@ -189,7 +253,8 @@ export function SiteHeader() {
             </ul>
           </nav>
 
-          <div className="flex items-center gap-2">
+          {/* ==================== ডানপাশ: লগইন বাটন ও মেনু টগল ==================== */}
+          <div className="flex items-center gap-2 shrink-0">
             <a
               href="/admin"
               className="hidden items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-[0_0_18px_rgba(4,106,56,0.55)] transition-all hover:bg-brand-dark hover:shadow-[0_0_26px_rgba(4,106,56,0.75)] sm:inline-flex"
@@ -205,7 +270,9 @@ export function SiteHeader() {
               className="flex size-10 items-center justify-center rounded-lg border border-border bg-card text-navy xl:hidden"
             >
               {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-              <span className="sr-only">{pick(menuOpen ? 'মেনু বন্ধ করুন' : 'মেনু খুলুন', menuOpen ? 'Close menu' : 'Open menu')}</span>
+              <span className="sr-only">
+                {pick(menuOpen ? 'মেনু বন্ধ করুন' : 'মেনু খুলুন', menuOpen ? 'Close menu' : 'Open menu')}
+              </span>
             </button>
           </div>
         </div>
@@ -224,7 +291,7 @@ export function SiteHeader() {
                 if (isClubLink) {
                   return (
                     <div key={link.href} className="sm:col-span-2 space-y-1.5">
-                      {/* ১. মোবাইল: নিউজ ক্যাটাগরি সাব-মেনু (অ্যাকর্ডিয়ন) */}
+                      {/* মোবাইল: নিউজ ক্যাটাগরি সাব-মেনু */}
                       <li className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
                         <button
                           type="button"
@@ -238,10 +305,13 @@ export function SiteHeader() {
                               {categoriesList.length}টি
                             </span>
                           </span>
-                          <ChevronDown className={`size-4 text-brand transition-transform duration-200 ${categoriesExpanded ? 'rotate-180' : ''}`} />
+                          <ChevronDown
+                            className={`size-4 text-brand transition-transform duration-200 ${
+                              categoriesExpanded ? 'rotate-180' : ''
+                            }`}
+                          />
                         </button>
 
-                        {/* ক্লিক করার পর ক্যাটাগরির তালিকা */}
                         {categoriesExpanded && (
                           <div className="border-t border-brand/20 bg-card px-2.5 py-2 space-y-1 animate-in fade-in">
                             <p className="px-2 pt-1 pb-1 text-[11px] font-bold text-muted-foreground">
@@ -269,7 +339,7 @@ export function SiteHeader() {
                         )}
                       </li>
 
-                      {/* ২. মোবাইল: ক্যাম্পাস ক্লাবসমূহ সাব-মেনু (আগের মতোই অক্ষত) */}
+                      {/* মোবাইল: ক্যাম্পাস ক্লাবসমূহ সাব-মেনু */}
                       <li className="rounded-2xl border border-brand/20 bg-brand-soft/20 overflow-hidden">
                         <button
                           type="button"
@@ -282,14 +352,21 @@ export function SiteHeader() {
                               {clubsList.length}টি ক্লাব
                             </span>
                           </span>
-                          <ChevronDown className={`size-4 text-brand transition-transform duration-200 ${clubsExpanded ? 'rotate-180' : ''}`} />
+                          <ChevronDown
+                            className={`size-4 text-brand transition-transform duration-200 ${
+                              clubsExpanded ? 'rotate-180' : ''
+                            }`}
+                          />
                         </button>
 
                         {clubsExpanded && (
                           <div className="border-t border-brand/20 bg-card px-2.5 py-2 space-y-1 animate-in fade-in">
                             <a
                               href="#club-news"
-                              onClick={() => { setMenuOpen(false); setClubsExpanded(false) }}
+                              onClick={() => {
+                                setMenuOpen(false)
+                                setClubsExpanded(false)
+                              }}
                               className="flex items-center gap-2 rounded-xl bg-brand px-3 py-2 text-xs font-bold text-white mb-2 shadow-sm"
                             >
                               <ChevronRight className="size-3.5" />
@@ -328,7 +405,9 @@ export function SiteHeader() {
                                   <div className="min-w-0 flex-1">
                                     <p className="font-semibold text-xs text-navy truncate">{c.name}</p>
                                     {c.name_bn && (
-                                      <p className="text-[10px] text-muted-foreground truncate">{c.name_bn}</p>
+                                      <p className="text-[10px] text-muted-foreground truncate">
+                                        {c.name_bn}
+                                      </p>
                                     )}
                                   </div>
                                 </button>
@@ -349,7 +428,9 @@ export function SiteHeader() {
                       className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-navy hover:bg-brand-soft hover:text-brand"
                     >
                       {lang === 'bn' ? link.bn : link.label}
-                      <span className="text-xs text-muted-foreground">{lang === 'bn' ? link.label : link.bn}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {lang === 'bn' ? link.label : link.bn}
+                      </span>
                     </a>
                   </li>
                 )
