@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Baby,
   BookOpen,
@@ -14,7 +14,6 @@ import {
   Globe,
   Megaphone,
   Mic,
-  Share2,
   Star,
   type LucideIcon,
 } from 'lucide-react'
@@ -37,7 +36,6 @@ export const clubIcons: Record<string, LucideIcon> = {
   droplet: Droplet,
 }
 
-// ডেটাবেসের ক্লাবকে পোর্টালের উপযোগী করা
 function formatClub(c: ClubItem): Club {
   const dynamicReports = c.reports && c.reports.length > 0
     ? c.reports.map((r) => ({
@@ -71,41 +69,60 @@ export function ClubNews() {
   const [dbMap, setDbMap] = useState<Record<string, ClubItem>>({})
   const [filter, setFilter] = useState('All')
   const [selected, setSelected] = useState<Club | null>(null)
+  
+  // ক্লাবের তালিকা নিরাপদে সংরক্ষণ
+  const clubsRef = useRef<Club[]>(fallbackClubs)
 
   useEffect(() => {
     getCampusClubs().then((items) => {
-      if (items && items.length > 0) {
-        const formatted = items.map(formatClub)
-        setList(formatted)
-        const map: Record<string, ClubItem> = {}
+      const formatted = items && items.length > 0 ? items.map(formatClub) : fallbackClubs
+      setList(formatted)
+      clubsRef.current = formatted
+      
+      const map: Record<string, ClubItem> = {}
+      if (items) {
         items.forEach((it) => { map[it.id] = it })
-        setDbMap(map)
+      }
+      setDbMap(map)
 
-        // শেয়ার করা লিংক থেকে অটো উইন্ডো খোলা (যেমন: ?club=socchar)
-        if (typeof window !== 'undefined') {
-          const clubId = new URLSearchParams(window.location.search).get('club')
-          if (clubId) {
-            const found = formatted.find((c) => c.id === clubId)
-            if (found) setSelected(found)
+      // ইউআরএলে ?club=ID থাকলে তাৎক্ষণিক পপ-আপ খোলা
+      if (typeof window !== 'undefined') {
+        const clubId = new URLSearchParams(window.location.search).get('club')
+        if (clubId) {
+          const found = formatted.find((c) => c.id === clubId)
+          if (found) {
+            setSelected(found)
+            const el = document.getElementById(`club-${clubId}`)
+            if (el) el.scrollIntoView({ behavior: 'smooth' })
           }
         }
       }
     })
 
-    // মেনুবার থেকে কোনো ক্লাবে চাপ দিলে উইন্ডো খোলার লিসেনার
+    // মেনুবার থেকে ক্লিকের নির্ভরযোগ্য লিসেনার
     const handleOpenModal = (e: Event) => {
       const customEvent = e as CustomEvent<string>
       const targetId = customEvent.detail
-      setList((cur) => {
-        const targetClub = cur.find((c) => c.id === targetId)
-        if (targetClub) setSelected(targetClub)
-        return cur
-      })
+      const targetClub = clubsRef.current.find((c) => c.id === targetId)
+      if (targetClub) {
+        setSelected(targetClub)
+        const el = document.getElementById(`club-${targetId}`)
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      }
     }
 
     window.addEventListener('open-club-modal', handleOpenModal)
     return () => window.removeEventListener('open-club-modal', handleOpenModal)
   }, [])
+
+  function handleCloseDialog() {
+    setSelected(null)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('club')
+      window.history.replaceState({}, '', url.pathname + (url.hash || ''))
+    }
+  }
 
   const tags = ['All', ...Array.from(new Set(list.map((c) => c.tag)))]
   const visible = filter === 'All' ? list : list.filter((c) => c.tag === filter)
@@ -120,7 +137,6 @@ export function ClubNews() {
           subtitle="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের কার্যক্রম এবং পরিচিতি।"
         />
 
-        {/* ফিল্টারিং বাটন */}
         <div className="mb-8 flex gap-2 overflow-x-auto pb-2" role="group" aria-label="Filter clubs by category">
           {tags.map((tag) => (
             <button
@@ -143,7 +159,6 @@ export function ClubNews() {
           ))}
         </div>
 
-        {/* ক্লাবের কার্ড গ্রিড */}
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((club) => {
             const Icon = clubIcons[club.icon] || Star
@@ -175,7 +190,6 @@ export function ClubNews() {
                 <h3 className="mt-4 text-pretty font-serif text-base font-bold leading-snug text-white">{club.name}</h3>
                 <p className="text-sm text-white/60">{club.nameBn}</p>
 
-                {/* পরিচিতি ও কার্যক্রম বক্স */}
                 <div className="mt-4 flex-1 rounded-xl border border-white/10 bg-navy/40 p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-soft/80">Latest Activity</p>
                   <p className="mt-1 text-sm leading-relaxed text-white/85">{club.activity}</p>
@@ -190,7 +204,6 @@ export function ClubNews() {
                   )}
                 </div>
 
-                {/* সোশ্যাল লিংক */}
                 {raw && (raw.fb_url || raw.yt_url || raw.web_url) && (
                   <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
                     <span className="text-[11px] text-white/50">সোশ্যাল:</span>
@@ -231,11 +244,10 @@ export function ClubNews() {
                   </div>
                 )}
 
-                {/* ক্লাব প্রতিবেদন দেখার বোতাম */}
                 <button
                   type="button"
                   onClick={() => setSelected(club)}
-                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold cursor-pointer"
                 >
                   <FileText className="size-4" aria-hidden="true" />
                   View Club Reports
@@ -249,7 +261,7 @@ export function ClubNews() {
       <ClubReportsDialog
         club={selected}
         rawClub={selected ? dbMap[selected.id] : undefined}
-        onClose={() => setSelected(null)}
+        onClose={handleCloseDialog}
       />
     </section>
   )
