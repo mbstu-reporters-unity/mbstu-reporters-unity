@@ -11,6 +11,7 @@ export const BRANCHES = [
 export type Notice = {
   id: string
   branch: string
+  department_id?: string | null
   title: string
   heading: string | null
   body: string | null
@@ -19,6 +20,7 @@ export type Notice = {
   file_url: string | null
   file_name: string | null
   file_type: string | null
+  image_urls?: string[] | null
   show_name: boolean
   poster_name: string | null
   is_pinned: boolean
@@ -29,8 +31,8 @@ export type Notice = {
 
 export type NoticeInput = Pick<
   Notice,
-  | "branch" | "title" | "heading" | "body" | "ref_number" | "link_url"
-  | "file_url" | "file_name" | "file_type" | "show_name" | "is_pinned" | "expires_at"
+  | "branch" | "department_id" | "title" | "heading" | "body" | "ref_number" | "link_url"
+  | "file_url" | "file_name" | "file_type" | "image_urls" | "show_name" | "is_pinned" | "expires_at"
 >
 
 export type NoticeOwner = {
@@ -65,7 +67,6 @@ async function ok(res: Response): Promise<Response> {
 }
 
 /* ---------- নোটিশ পড়া ---------- */
-
 export async function getNotices(token?: string, includeExpired = false): Promise<Notice[]> {
   try {
     let url = `${SB_URL}/rest/v1/board_notices?select=*&order=is_pinned.desc,created_at.desc&limit=300`
@@ -81,7 +82,6 @@ export async function getNotices(token?: string, includeExpired = false): Promis
   }
 }
 
-// শুধু অ্যাডমিন (সবার) ও নোটিশদাতা (নিজের) এটা দেখতে পাবেন
 export async function getNoticeOwners(token: string): Promise<NoticeOwner[]> {
   try {
     const res = await fetch(
@@ -96,7 +96,6 @@ export async function getNoticeOwners(token: string): Promise<NoticeOwner[]> {
 }
 
 /* ---------- নোটিশ লেখা ---------- */
-
 export async function createNotice(token: string, data: NoticeInput) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/board_notices`, {
@@ -126,8 +125,7 @@ export async function deleteNotice(token: string, id: string) {
   )
 }
 
-/* ---------- ফাইল আপলোড (ছবি, PDF, DOC) ---------- */
-
+/* ---------- ফাইল আপলোড ---------- */
 export const MAX_NOTICE_FILE_MB = 20
 
 export async function uploadNoticeFile(
@@ -153,13 +151,11 @@ export async function uploadNoticeFile(
   }
 }
 
-// এই লিংকে চাপলে ফাইল সরাসরি ডাউনলোড হয়
 export function downloadUrl(url: string, name: string | null) {
   return `${url}?download=${encodeURIComponent(name || "notice")}`
 }
 
 /* ---------- কমেন্ট ---------- */
-
 export async function getNoticeComments(noticeId: string): Promise<NoticeComment[]> {
   try {
     const res = await fetch(
@@ -192,8 +188,7 @@ export async function deleteNoticeComment(token: string, id: string) {
   )
 }
 
-/* ---------- সময় দেখানো ---------- */
-
+/* ---------- তারিখ ও ফরম্যাটিং ---------- */
 export function fmtDateTime(iso: string) {
   return new Date(iso).toLocaleString("bn-BD", {
     timeZone: "Asia/Dhaka",
@@ -217,7 +212,6 @@ export function isImageType(type: string | null) {
   return !!type && type.startsWith("image/")
 }
 
-/* নতুন নোটিশ তৈরি করে id ফেরত দেয় (ছবি জোড়ার জন্য) */
 export async function createNoticeReturningId(
   token: string,
   data: NoticeInput
