@@ -5,7 +5,7 @@ import {
   getFaculties, createFaculty, updateFaculty, deleteFaculty,
   getDepartments, createDepartment, updateDepartment, deleteDepartment,
   getTeachers, createTeacher, deleteTeacher,
-  getDeptNotices, createDeptNoticeSync, deleteDeptNotice,
+  getDeptNotices, createDeptNotice, deleteDeptNotice,
   getDeptEvents, createDeptEvent, deleteDeptEvent,
   type Faculty, type Department, type Teacher, type DeptNotice, type DeptEvent,
 } from "../../lib/faculties"
@@ -191,7 +191,7 @@ export default function FacultyManager({
           uploadedUrls.push(u)
         }
       }
-      await createDeptNoticeSync(token, {
+      await createDeptNotice(token, {
         department_id: selectedDeptId,
         title: nTitle.trim(),
         body: nBody.trim() || null,
