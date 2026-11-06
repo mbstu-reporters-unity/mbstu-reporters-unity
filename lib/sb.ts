@@ -926,7 +926,7 @@ export async function saveSectionText(token: string, key: string, value: string)
         "Content-Type": "application/json",
         Prefer: "resolution=merge-duplicates,return=minimal",
       },
-      body: JSON.stringify({ key, value,}),
+      body: JSON.stringify({ key, value }),
     })
   )
 }
