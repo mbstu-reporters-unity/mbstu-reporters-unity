@@ -45,7 +45,7 @@ function formatClub(c: ClubItem): Club {
       }))
     : [
         {
-          title: c.activityBn || c.activity || c.name,
+          title: c.activity_bn || c.activity || c.name,
           date: c.date || 'Recent',
           reporter: 'MBSTU Reporters Unity',
         },
