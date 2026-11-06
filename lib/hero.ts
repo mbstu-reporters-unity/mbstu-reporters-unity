@@ -1,7 +1,24 @@
 import { SB_URL, SB_KEY } from "./sb"
 
-// ১. পোস্ট ও মিডিয়ার ৪টি ধরন
-export type HeroPostType = "color" | "image" | "video" | "embed_link"
+// ১. পোস্ট ও মিডিয়ার ধরন
+export type HeroPostType = "color" | "image" | "video" | "link_preview" | "embed_link"
+export type SubMediaType = "color" | "image" | "video" | "link_preview"
+
+// পুরোনো ও নতুন উভয় কম্পোনেন্টের জন্য মিডিয়া আইটেম টাইপ
+export interface SubMediaItem {
+  id: string
+  type: SubMediaType
+  color?: string
+  gradient?: string
+  url?: string
+  external_url?: string
+  preview_title?: string
+  preview_desc?: string
+  preview_image?: string
+  is_embed_video?: boolean
+  embed_src?: string
+  link?: string
+}
 
 // গ্রেডিয়েন্ট কালার স্টপ (৩ থেকে ৫ রঙের জন্য)
 export interface GradientStop {
@@ -32,7 +49,7 @@ export interface TextLayer {
   italic: boolean
   color: string
   bg_color?: string
-  animation: string // ৩৫টি অ্যানিমেশনের যেকোনো একটি
+  animation: string // অ্যানিমেশন
 }
 
 // ভিডিও কনফিগারেশন
@@ -45,7 +62,6 @@ export interface VideoConfig {
 
 // ৩৫টি চমৎকার টেক্সট অ্যানিমেশন (১০টি অটো-লুপ সহ)
 export const TEXT_EFFECTS_35 = [
-  // সাধারণ অ্যানিমেশন
   { label: "১. ফেড আপ ড্রপ (Fade Up)", value: "fade-up" },
   { label: "২. টাইপরাইটার ইফেক্ট (Typewriter)", value: "typewriter" },
   { label: "৩. জুম ইন পপ (Zoom Pop)", value: "zoom-pop" },
@@ -83,6 +99,28 @@ export const TEXT_EFFECTS_35 = [
   { label: "৩৩. [অটো] সাবটল গ্লিচ লুপ (Subtle Glitch)", value: "auto-glitch" },
   { label: "৩৪. [অটো] পেন্ডুলাম সুইং লুপ (Pendulum)", value: "auto-swing" },
   { label: "৩৫. [অটো] বাউন্স ড্রপ লুপ (Soft Bounce)", value: "auto-bounce" },
+]
+
+// পুরোনো ফাইলের জন্য ব্যাকওয়ার্ড অ্যালিয়াস (যাতে বিল্ড কোনো এরর না দেয়)
+export const TEXT_EFFECTS_30 = TEXT_EFFECTS_35
+
+// লেখার আকার
+export const TEXT_SIZES = [
+  { label: "ছোট (Small - sm)", value: "sm" },
+  { label: "স্বাভাবিক (Normal - base)", value: "base" },
+  { label: "মাঝারি (Medium - lg)", value: "lg" },
+  { label: "বড় (Large - xl)", value: "xl" },
+  { label: "অতিরিক্ত বড় (2XL)", value: "2xl" },
+  { label: "বিশাল (3XL)", value: "3xl" },
+  { label: "মেগা (4XL)", value: "4xl" },
+]
+
+// লেখার স্টাইল
+export const TEXT_STYLES = [
+  { label: "স্বাভাবিক (Normal)", value: "normal" },
+  { label: "গাঢ় (Bold)", value: "bold" },
+  { label: "ইটালিক (Italic)", value: "italic" },
+  { label: "বোল্ড ও ইটালিক", value: "bold-italic" },
 ]
 
 // ৩০টি আধুনিক স্লাইড ট্রানজিশন
@@ -139,20 +177,20 @@ export interface HeroSlide {
   category: string | null
   button_text: string | null
   link_url: string | null
-  slide_type: HeroPostType
+  slide_type?: HeroPostType
 
   // আধুনিক কনফিগারেশন
-  banner_config: BannerConfig
-  text_layers: TextLayer[]
-  video_config: VideoConfig
-  transition_effect: string
+  banner_config?: BannerConfig
+  text_layers?: TextLayer[]
+  video_config?: VideoConfig
+  transition_effect?: string
 
-  // স্লাইডার সময়কাল (০ থেকে ১০০ সেকেন্ড)
-  slide_duration: number
-  slide_speed_pct: number
+  // স্লাইডার সময়কাল
+  slide_duration?: number
+  slide_speed_pct?: number
 
-  // পুরোনো সেটিংসের ব্যাকওয়ার্ড কম্প্যাটিবিলিটি
-  media_items?: any[]
+  // ব্যাকওয়ার্ড কম্প্যাটিবিলিটি
+  media_items?: SubMediaItem[]
   text_effect?: string
   text_effect_speed?: number
   title_font?: string | null
@@ -174,9 +212,9 @@ export interface HeroSlide {
 
   sort_order: number
   is_active: boolean
-  expires_at: string | null
+  expires_at?: string | null
   created_at: string
-  updated_at: string
+  updated_at?: string
 }
 
 // হিরো গ্লোবাল সেটিংস (স্প্লিট ও ব্রেকিং)
@@ -189,9 +227,9 @@ export interface HeroSettings {
   breaking_btn_text?: string | null
   breaking_bg_color?: string | null
   breaking_bg_gradient?: string | null
-  desktop_splits: number // ১, ২ বা ৩ স্প্লিট স্ক্রিন
-  default_duration: number
-  default_transition: string
+  desktop_splits?: number // ১, ২ বা ৩ স্প্লিট স্ক্রিন
+  default_duration?: number
+  default_transition?: string
 }
 
 function hdr(token?: string, json = false): Record<string, string> {
@@ -237,7 +275,7 @@ export function parseVideoUrl(rawUrl: string): {
   }
 }
 
-// স্লাইডসমূহ লোড করা (সর্বশেষ পোস্টটি সবার আগে আসবে)
+// স্লাইডসমূহ লোড করা
 export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
   try {
     const res = await fetch(
@@ -290,10 +328,10 @@ export async function deleteHeroSlide(token: string, id: string) {
 // হিরো সেটিংস লোড
 export async function getHeroSettings(): Promise<HeroSettings | null> {
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/hero_settings?select=*&id=eq.1`, {
-      headers: hdr(),
-      cache: "no-store",
-    })
+    const res = await fetch(
+      `${SB_URL}/rest/v1/hero_settings?select=*&id=eq.1`,
+      { headers: hdr(), cache: "no-store" }
+    )
     if (!res.ok) return null
     const rows = await res.json()
     return Array.isArray(rows) && rows[0] ? rows[0] : null
@@ -311,7 +349,7 @@ export async function saveHeroSettings(token: string, data: Partial<HeroSettings
   })
 }
 
-// সাম্প্রতিক সংবাদের তালিকা (ড্রপডাউনে পোস্টের সাথে লিঙ্ক করার জন্য)
+// সাম্প্রতিক সংবাদের তালিকা
 export async function getRecentPosts(): Promise<Array<{ id: string; title: string; image_url?: string; summary?: string }>> {
   try {
     const res = await fetch(
