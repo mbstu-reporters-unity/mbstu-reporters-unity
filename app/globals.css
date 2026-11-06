@@ -94,17 +94,27 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
-  /* ==========================================================
-     পুরো ওয়েবসাইট জুড়ে সমস্ত লেখার স্বয়ংক্রিয় জাস্টিফাই অ্যালাইনমেন্ট
-     ========================================================== */
-  p, article, article p, article h1, article h2, article h3, .prose, .prose p, .whitespace-pre-line {
-    text-align: justify !important;
-    text-justify: inter-word !important;
+
+  /* দীর্ঘ আর্টিকেলের লেখা জাস্টিফাই হবে */
+  article p, .prose p, .article-body, .whitespace-pre-line {
+    text-align: justify;
+    text-justify: inter-word;
   }
 
-  /* যে লেখাগুলো সেন্টারে বা মাঝে থাকার কথা সেগুলোর সুরক্ষা */
+  /* সব হেডিং ও টাইটেল স্বাভাবিক বামে থাকবে */
+  h1, h2, h3, h4, h5, h6, article h1, article h2, article h3 {
+    text-align: left;
+  }
+
+  /* সেন্টার ও রাইটের জন্য নিরাপত্তা */
   .text-center, .text-center * {
     text-align: center !important;
+  }
+  .text-right, .text-right * {
+    text-align: right !important;
+  }
+  .text-left, .text-left * {
+    text-align: left !important;
   }
 }
 
