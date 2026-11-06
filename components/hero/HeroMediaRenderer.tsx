@@ -1,179 +1,229 @@
 'use client'
 
-import React from 'react'
-import type { SubMediaItem } from '@/lib/hero'
-import { ExternalLink } from 'lucide-react'
+import React, { useEffect, useRef } from 'react'
+import type { HeroSlide, SubMediaItem } from '@/lib/hero'
+import { parseVideoUrl } from '@/lib/hero'
+import { ExternalLink, Volume2, VolumeX } from 'lucide-react'
 
 interface HeroMediaRendererProps {
-  item: SubMediaItem
+  slide?: HeroSlide | null
+  item?: SubMediaItem | null
   fitMode?: 'contain' | 'cover'
   isActive: boolean
 }
 
-// সোশ্যাল ও ভিডিও প্ল্যাটফর্ম এম্বেড শনাক্তকরণ ফাংশন
-function getEmbedDetails(url?: string) {
-  if (!url || typeof url !== 'string') return null
-  const cleanUrl = url.trim()
+// ৩ থেকে ৫ রঙের মাল্টি-স্টপ গ্রেডিয়েন্ট এবং সাইজ জেনারেটর
+function getBannerStyle(slide?: HeroSlide | null, item?: SubMediaItem | null) {
+  if (slide?.banner_config) {
+    const cfg = slide.banner_config
+    if (cfg.mode === 'solid') {
+      const color = cfg.stops?.[0]?.color || '#064e3b'
+      return { background: color }
+    }
+    const angle = cfg.angle ?? 135
+    const stops = cfg.stops && cfg.stops.length > 0
+      ? cfg.stops
+      : [
+          { color: '#064e3b', stop: 0 },
+          { color: '#0f172a', stop: 50 },
+          { color: '#1e1b4b', stop: 100 },
+        ]
+    const stopString = [...stops]
+      .sort((a, b) => a.stop - b.stop)
+      .map((s) => `${s.color} ${s.stop}%`)
+      .join(', ')
 
-  // ১. YouTube ভিডিও শনাক্তকরণ
-  const ytMatch = cleanUrl.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/)
-  if (ytMatch && ytMatch[2]?.length === 11) {
     return {
-      type: 'youtube',
-      src: `https://www.youtube.com/embed/${ytMatch[2]}?enablejsapi=1&rel=0&modestbranding=1&controls=1&playsinline=1`,
+      background: `linear-gradient(${angle}deg, ${stopString})`,
     }
   }
 
-  // ২. Facebook ভিডিও শনাক্তকরণ
-  if (cleanUrl.includes('facebook.com') || cleanUrl.includes('fb.watch')) {
-    return {
-      type: 'facebook',
-      src: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(cleanUrl)}&show_text=false`,
-    }
-  }
-
-  return null
+  // পুরোনো কালার ব্যাকওয়ার্ড সাপোর্ট
+  if (item?.gradient) return { background: item.gradient }
+  if (item?.color) return { background: item.color }
+  return { background: 'linear-gradient(135deg, #064e3b 0%, #0f172a 50%, #1e1b4b 100%)' }
 }
 
-export function HeroMediaRenderer({ item, fitMode = 'contain', isActive }: HeroMediaRendererProps) {
-  const embed = getEmbedDetails(item.url || item.external_url)
+export function HeroMediaRenderer({
+  slide,
+  item,
+  fitMode = 'contain',
+  isActive,
+}: HeroMediaRendererProps) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [muted, setMuted] = React.useState(true)
 
-  // ১. সলিড কালার বা গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড
-  if (item.type === 'color') {
-    const bgStyle = {
-      background: item.gradient || item.color || '#0f172a',
+  // টাইপ নির্ধারণ (নতুন কনফিগ অথবা পুরোনো আইটেম)
+  const type = slide?.slide_type || item?.type || 'color'
+  const videoUrl = slide?.video_config?.url || item?.url || ''
+  const parsedVideo = parseVideoUrl(videoUrl)
+  const imageUrl = item?.url || (slide?.media_items?.[0] as any)?.url || ''
+
+  // স্মার্ট অডিও ও প্লে কন্ট্রোল: স্লাইড সরে গেলে ভিডিও পজ ও সাউন্ড বন্ধ হবে
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v) return
+    if (isActive) {
+      v.play().catch(() => {})
+    } else {
+      v.pause()
+      v.muted = true
+      setMuted(true)
     }
-    return (
-      <div className="relative w-full h-full" style={bgStyle}>
-        {item.link && (
-          <a
-            href={item.link}
-            target={item.link.startsWith('http') ? '_blank' : '_self'}
-            rel="noopener noreferrer"
-            className="absolute inset-0 z-0 cursor-pointer"
-            aria-label="লিংকে যান"
-          />
-        )}
-      </div>
-    )
+  }, [isActive])
+
+  const toggleSound = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const v = videoRef.current
+    if (v) {
+      v.muted = !v.muted
+      setMuted(v.muted)
+    }
   }
 
-  // ২. ছবি স্লাইডার
-  if (item.type === 'image') {
-    return (
-      <div className="relative w-full h-full flex items-center justify-center bg-black/90 overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={item.url || '/images/hero-1.png'}
-          alt="Slide Media"
-          className={`w-full h-full transition-all duration-700 select-none ${
-            fitMode === 'cover' ? 'object-cover' : 'object-contain'
-          }`}
-          loading="eager"
-          draggable={false}
+  return (
+    <div className="relative w-full h-full overflow-hidden select-none">
+      {/* ================= ১. কালার ব্যানার (সলিড বা ৩-৫ রঙের গ্রেডিয়েন্ট) ================= */}
+      {type === 'color' && (
+        <div
+          className="w-full h-full transition-all duration-700"
+          style={getBannerStyle(slide, item)}
         />
-        {/* ছবিতে ক্লিক করলে নির্দিষ্ট লিংকে যাওয়ার ব্যবস্থা */}
-        {item.link && (
-          <a
-            href={item.link}
-            target={item.link.startsWith('http') ? '_blank' : '_self'}
-            rel="noopener noreferrer"
-            className="absolute inset-0 z-0 cursor-pointer"
-            aria-label="ছবিতে ক্লিক করে লিংকে যান"
-          />
-        )}
-      </div>
-    )
-  }
+      )}
 
-  // ৩. ভিডিও সেকশন (ভিডিও ফাইল অথবা ইউটিউব/ফেসবুক ভিডিও লিংক)
-  if (item.type === 'video') {
-    return (
-      <div className="relative w-full h-full flex items-center justify-center bg-black">
-        {embed ? (
-          // সোশ্যাল ভিডিও এম্বেড প্লেয়ার (ইউটিউব/ফেসবুক)
-          <iframe
-            src={isActive ? embed.src : ''}
-            className="w-full h-full aspect-video border-0 pointer-events-auto z-10"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title="Embedded Video Player"
+      {/* ================= ২. ছবি ব্যানার ================= */}
+      {type === 'image' && (
+        <div className="relative w-full h-full flex items-center justify-center bg-black/90">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl || '/images/hero-1.png'}
+            alt="Hero Slide"
+            className={`w-full h-full transition-all duration-700 select-none ${
+              fitMode === 'cover' ? 'object-cover' : 'object-contain'
+            }`}
+            loading="eager"
+            draggable={false}
           />
-        ) : (
-          // সরাসরি MP4 ভিডিও প্লেয়ার
-          <video
-            src={item.url}
-            controls
-            playsInline
-            className="w-full h-full max-h-[620px] object-contain pointer-events-auto z-10"
-          />
-        )}
+        </div>
+      )}
 
-        {/* ভিডিওর সাথে আলাদা বহিঃস্থ লিংক থাকলে প্রদর্শনের বোতাম */}
-        {item.link && (
-          <a
-            href={item.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute top-4 left-4 z-20 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/75 hover:bg-black text-white text-xs font-medium backdrop-blur transition-all border border-white/20 shadow-md"
-          >
-            <span>মূল লিংক দেখুন</span>
-            <ExternalLink className="size-3" />
-          </a>
-        )}
-      </div>
-    )
-  }
-
-  // ৪. হাইপারলিংক প্রিভিউ (সোশ্যাল বা ওয়েবসাইট লিংক কার্ড)
-  if (item.type === 'link_preview') {
-    const targetUrl = item.external_url || item.url || item.link || '#'
-    return (
-      <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-black p-6 sm:p-12">
-        {embed ? (
-          <div className="w-full h-full flex items-center justify-center">
-            <iframe
-              src={isActive ? embed.src : ''}
-              className="w-full h-full aspect-video border-0 pointer-events-auto rounded-xl shadow-2xl"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              title="Social Video Preview"
-            />
-          </div>
-        ) : (
-          <a
-            href={targetUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group max-w-lg w-full bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 hover:border-green-500 rounded-2xl p-5 sm:p-6 backdrop-blur-xl shadow-2xl transition-all duration-300 text-left cursor-pointer flex flex-col justify-between"
-          >
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold">
-                <span>🔗 হাইপারলিংক প্রিভিউ</span>
+      {/* ================= ৩. ভিডিও বা ভিডিওর লিংক ================= */}
+      {type === 'video' && (
+        <div className="relative w-full h-full flex items-center justify-center bg-black">
+          {parsedVideo.isEmbed ? (
+            // YouTube বা Facebook ভিডিও এম্বেড (স্লাইড সক্রিয় না থাকলে সাউন্ড বন্ধ থাকবে)
+            isActive ? (
+              <iframe
+                src={`${parsedVideo.embedSrc}&autoplay=1&mute=1`}
+                className="w-full h-full aspect-video border-0 pointer-events-auto"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Embedded Video Player"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-slate-950 text-white/40 text-xs">
+                ভিডিও পজ করা আছে
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-green-300 transition-colors line-clamp-2">
-                {item.preview_title || targetUrl}
-              </h3>
-              {item.preview_desc && (
-                <p className="text-xs sm:text-sm text-gray-300 line-clamp-3">
-                  {item.preview_desc}
-                </p>
-              )}
-            </div>
+            )
+          ) : (
+            // সরাসরি MP4 ভিডিও প্লেয়ার
+            <>
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                playsInline
+                loop
+                muted={muted}
+                className="w-full h-full object-contain pointer-events-auto"
+              />
+              {/* সাউন্ড অন/অফ করার ভাসমান বাটন */}
+              <button
+                type="button"
+                onClick={toggleSound}
+                className="absolute top-4 left-4 z-30 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-all border border-white/20 shadow cursor-pointer"
+                aria-label="সাউন্ড অন/অফ"
+              >
+                {muted ? <VolumeX className="size-4 text-red-400" /> : <Volume2 className="size-4 text-green-400" />}
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
-            <div className="mt-5 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-gray-400 group-hover:text-white">
-              <span className="truncate max-w-[220px]">{targetUrl}</span>
-              <span className="flex items-center gap-1 text-green-400 font-semibold">
-                ভিজিট করুন <ExternalLink className="size-3.5" />
-              </span>
-            </div>
-          </a>
-        )}
-      </div>
-    )
-  }
+      {/* ================= ৪. লিঙ্ক প্রিভিউ ================= */}
+      {type === 'link_preview' && (
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-black p-6">
+          <div className="max-w-md w-full bg-slate-900/90 border border-slate-700 rounded-2xl p-5 shadow-2xl text-center space-y-2">
+            <span className="text-xs text-green-400 font-bold px-3 py-1 bg-green-950/60 rounded-full border border-green-800">
+              🔗 লিঙ্ক প্রিভিউ
+            </span>
+            <p className="text-sm font-bold text-white truncate">{item?.external_url || slide?.link_url || 'ওয়েব লিঙ্ক'}</p>
+          </div>
+        </div>
+      )}
 
-  return <div className="w-full h-full bg-slate-950" />
+      {/* ================= ৫. ফ্রি-ফর্ম টেক্সট লেয়ার (০–১০০% X/Y পজিশন ও ৩৫টি অ্যানিমেশন) ================= */}
+      {slide?.text_layers && slide.text_layers.length > 0 ? (
+        <div className="absolute inset-0 pointer-events-none">
+          {slide.text_layers.map((layer, idx) => (
+            <div
+              key={layer.id || idx}
+              className="absolute pointer-events-auto transition-all duration-300"
+              style={{
+                left: `${layer.x ?? 50}%`,
+                top: `${layer.y ?? 50}%`,
+                transform: 'translate(-50%, -50%)',
+                zIndex: 25,
+                maxWidth: '92%',
+              }}
+            >
+              <div
+                style={{
+                  transform: `scale(${layer.scale || 1})`,
+                  transformOrigin: 'center center',
+                }}
+              >
+                <div
+                  className={`anim_${layer.animation || 'fade-up'}`}
+                  style={{
+                    fontFamily: layer.font || undefined,
+                    color: layer.color || '#FFFFFF',
+                    backgroundColor: layer.bg_color || undefined,
+                    padding: layer.bg_color ? '4px 12px' : undefined,
+                    borderRadius: layer.bg_color ? '8px' : undefined,
+                  }}
+                >
+                  {layer.title && (
+                    <h2
+                      className={`leading-tight drop-shadow-lg ${
+                        layer.weight === 'bold'
+                          ? 'font-bold'
+                          : layer.weight === 'semibold'
+                          ? 'font-semibold'
+                          : 'font-normal'
+                      } ${layer.italic ? 'italic' : ''} text-lg sm:text-2xl md:text-3xl`}
+                    >
+                      {layer.title}
+                    </h2>
+                  )}
+                  {layer.subtitle && (
+                    <h3 className="text-xs sm:text-sm md:text-base opacity-90 mt-1 drop-shadow">
+                      {layer.subtitle}
+                    </h3>
+                  )}
+                  {layer.description && (
+                    <p className="text-[11px] sm:text-xs md:text-sm opacity-80 mt-1 line-clamp-3 drop-shadow leading-relaxed">
+                      {layer.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 export default HeroMediaRenderer
