@@ -515,6 +515,16 @@ export async function updateCategory(
       body: JSON.stringify(data),
     })
   )
+
+  if (data.name && data.name !== name) {
+    try {
+      await fetch(`${SB_URL}/rest/v1/posts?category=eq.${encodeURIComponent(name)}`, {
+        method: "PATCH",
+        headers: { ...hdr(token, true), Prefer: "return=minimal" },
+        body: JSON.stringify({ category: data.name }),
+      })
+    } catch {}
+  }
 }
 
 export async function deleteCategory(token: string, name: string) {
@@ -916,7 +926,7 @@ export async function saveSectionText(token: string, key: string, value: string)
         "Content-Type": "application/json",
         Prefer: "resolution=merge-duplicates,return=minimal",
       },
-      body: JSON.stringify({ key, value, updated_at: new Date().toISOString() }),
+      body: JSON.stringify({ key, value,}),
     })
   )
 }
