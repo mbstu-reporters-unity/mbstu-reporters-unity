@@ -23,10 +23,7 @@ export function GlobalTextStudio() {
   useEffect(() => {
     function handleFocus(e: FocusEvent) {
       const target = e.target
-      if (
-        (target instanceof HTMLInputElement && (target.type === 'text' || target.type === 'search' || !target.type)) ||
-        target instanceof HTMLTextAreaElement
-      ) {
+      if (target instanceof HTMLTextAreaElement) {
         // স্টুডিওর ভেতরের নিজস্ব বক্স হলে ইগনোর করবে
         if (target.closest('.text-studio-modal')) return
 
