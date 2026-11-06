@@ -26,14 +26,14 @@ import {
   Video,
   Plus,
   Trash2,
-  Move,
   Type,
-  Sparkles,
   Layers,
-  ExternalLink,
   Upload,
-  Check,
   Eye,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
 } from "lucide-react"
 
 const inp = "w-full border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs bg-slate-950 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
@@ -50,15 +50,11 @@ export default function HeroManager({
 }) {
   const [list, setList] = useState<HeroSlide[]>([])
   const [settings, setSettings] = useState<HeroSettings | null>(null)
-  const [posts, setPosts] = useState<Array<{ id: string; title: string; image_url?: string }>>([])
   const [editId, setEditId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState("")
 
-  // ১. পোস্টের ধরন
   const [slideType, setSlideType] = useState<HeroPostType>("color")
-
-  // ২. কালার ব্যানার কনফিগারেশন (সলিড বা ৩-৫ রঙের গ্রেডিয়েন্ট)
   const [bannerMode, setBannerMode] = useState<"solid" | "gradient">("gradient")
   const [bannerAngle, setBannerAngle] = useState(135)
   const [gradientStops, setGradientStops] = useState<GradientStop[]>([
@@ -68,14 +64,13 @@ export default function HeroManager({
   ])
   const [bannerHeight, setBannerHeight] = useState(480)
 
-  // ৩. ছবি ও ভিডিও
   const [imgUrl, setImgUrl] = useState("")
   const [imgFile, setImgFile] = useState<File | null>(null)
   const [videoUrl, setVideoUrl] = useState("")
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [fitMode, setFitMode] = useState<"contain" | "cover">("contain")
 
-  // ৪. ফ্রি-ফর্ম টেক্সট লেয়ারসমূহ (০-১০০% X/Y পজিশন সহ)
+  // টেক্সট লেয়ারে ডিফল্টভাবে এলাইনমেন্ট সেন্টার ও মার্জিত করা হয়েছে
   const [textLayers, setTextLayers] = useState<TextLayer[]>([
     {
       id: "txt_1",
@@ -88,33 +83,28 @@ export default function HeroManager({
       font: FONTS[0].value,
       weight: "bold",
       italic: false,
+      align: "center", // ডিফল্ট সেন্টার
       color: "#FFFFFF",
       bg_color: "",
       animation: "fade-up",
     },
   ])
 
-  // ৫. লিংক ও স্লাইডার ডিউরেশন
   const [linkUrl, setLinkUrl] = useState("")
   const [category, setCategory] = useState("ক্যাম্পাস বার্তা")
   const [btnText, setBtnText] = useState("বিস্তারিত")
-  const [slideDuration, setSlideDuration] = useState(5) // সেকেন্ডে (০ - ১০০ সেকেন্ড)
+  const [slideDuration, setSlideDuration] = useState(5)
   const [transitionEffect, setTransitionEffect] = useState("fade")
-
-  // ৬. গ্লোবাল স্প্লিট ভিউ (১, ২ বা ৩ স্প্লিট)
   const [desktopSplits, setDesktopSplits] = useState(1)
 
-  // ডেটা লোড
   async function loadData() {
     try {
-      const [slidesData, settingsData, postsData] = await Promise.all([
+      const [slidesData, settingsData] = await Promise.all([
         getHeroSlides(token),
         getHeroSettings(),
-        getRecentPosts(),
       ])
       setList(slidesData)
       setSettings(settingsData)
-      setPosts(postsData)
       if (settingsData?.desktop_splits) {
         setDesktopSplits(settingsData.desktop_splits)
       }
@@ -125,21 +115,14 @@ export default function HeroManager({
     loadData()
   }, [token])
 
-  // গ্রেডিয়েন্ট রঙ যোগ ও বিয়োগ (৩ থেকে ৫ রঙের সীমা)
   const addColorStop = () => {
-    if (gradientStops.length >= 5) {
-      alert("সর্বোচ্চ ৫টি রঙ যুক্ত করতে পারবেন")
-      return
-    }
-    const nextStop = Math.min(100, (gradientStops.length) * 25)
+    if (gradientStops.length >= 5) return
+    const nextStop = Math.min(100, gradientStops.length * 25)
     setGradientStops([...gradientStops, { color: "#3b82f6", stop: nextStop }])
   }
 
   const removeColorStop = (idx: number) => {
-    if (gradientStops.length <= 2) {
-      alert("কমপক্ষে ২টি বা ৩টি রঙ থাকতে হবে")
-      return
-    }
+    if (gradientStops.length <= 2) return
     setGradientStops(gradientStops.filter((_, i) => i !== idx))
   }
 
@@ -149,7 +132,6 @@ export default function HeroManager({
     setGradientStops(updated)
   }
 
-  // টেক্সট লেয়ার যোগ ও বিয়োগ
   const addTextLayer = () => {
     const newL: TextLayer = {
       id: `txt_${Date.now()}`,
@@ -162,6 +144,7 @@ export default function HeroManager({
       font: FONTS[0].value,
       weight: "bold",
       italic: false,
+      align: "center",
       color: "#FFFFFF",
       animation: "zoom-pop",
     }
@@ -178,7 +161,6 @@ export default function HeroManager({
     setTextLayers(updated)
   }
 
-  // ফর্ম রিসেট
   const resetForm = () => {
     setEditId(null)
     setSlideType("color")
@@ -204,6 +186,7 @@ export default function HeroManager({
         scale: 1,
         weight: "bold",
         italic: false,
+        align: "center",
         color: "#FFFFFF",
         animation: "fade-up",
       },
@@ -212,7 +195,6 @@ export default function HeroManager({
     setSlideDuration(5)
   }
 
-  // এডিট শুরু
   const startEdit = (s: HeroSlide) => {
     setEditId(s.id)
     setSlideType(s.slide_type || "color")
@@ -236,8 +218,9 @@ export default function HeroManager({
           scale: 1,
           weight: "bold",
           italic: false,
-          color: s.title_color || "#FFFFFF",
-          animation: s.text_effect || "fade-up",
+          align: "center",
+          color: "#FFFFFF",
+          animation: "fade-up",
         },
       ])
     }
@@ -249,7 +232,6 @@ export default function HeroManager({
     window.scrollTo({ top: 300, behavior: "smooth" })
   }
 
-  // স্লাইড সংরক্ষণ (নতুন পোস্ট সাথে সাথে লাইভ হবে)
   const handleSaveSlide = async () => {
     setBusy(true)
     setMsg("")
@@ -262,7 +244,7 @@ export default function HeroManager({
 
       let finalVideo = videoUrl
       if (videoFile) {
-        setMsg("ভিডিও ফাইল আপলোড হচ্ছে...")
+        setMsg("ভিডিও আপলোড হচ্ছে...")
         finalVideo = await uploadVideo(token, videoFile)
       }
 
@@ -307,29 +289,27 @@ export default function HeroManager({
         setMsg("✅ পোস্ট সফলভাবে আপডেট হয়েছে")
       } else {
         await createHeroSlide(token, { ...payload, sort_order: Date.now() })
-        setMsg("✅ নতুন পোস্ট সফলভাবে প্রকাশিত হয়েছে এবং হোমপেজে সবার উপরে থাকবে")
+        setMsg("✅ নতুন পোস্ট সফলভাবে তৈরি হয়েছে এবং হোমপেজে দৃশ্যমান")
       }
 
       resetForm()
       await loadData()
     } catch (e: any) {
-      setMsg("❌ " + (e?.message || "কিছু ভুল হয়েছে"))
+      setMsg("❌ " + (e?.message || "পোস্ট করতে সমস্যা হয়েছে"))
     }
     setBusy(false)
   }
 
-  // স্প্লিট লেআউট সেভ
   const handleSaveSplits = async (splits: number) => {
     setDesktopSplits(splits)
     try {
       await saveHeroSettings(token, { desktop_splits: splits })
-      setMsg(`✅ হোমপেজে ${splits}টি স্প্লিট ভিউ সেট করা হয়েছে`)
+      setMsg(`✅ হোমপেজে ${splits}টি স্প্লিট ভিউ সেট হয়েছে`)
     } catch {
-      setMsg("❌ স্প্লিট সেটিং সেভ করা যায়নি")
+      setMsg("❌ স্প্লিট সেভ করা যায়নি")
     }
   }
 
-  // লাইভ প্রিভিউ ব্যাকগ্রাউন্ড স্টাইল গণনা
   const previewBg =
     bannerMode === "solid"
       ? gradientStops[0]?.color || "#064e3b"
@@ -341,18 +321,18 @@ export default function HeroManager({
   return (
     <div className="space-y-6 text-white max-w-4xl mx-auto pb-20">
       {msg && (
-        <div className="p-3 bg-blue-950/90 border border-blue-500/50 text-blue-200 rounded-xl text-xs font-semibold text-center">
+        <div className="p-3 bg-blue-950/90 border border-blue-500/50 text-blue-200 rounded-xl text-xs font-semibold text-center shadow-lg">
           {msg}
         </div>
       )}
 
-      {/* ================= ১. লাইভ রিয়েল-টাইম প্রিভিউ বক্স ================= */}
+      {/* ================= ১. রিয়েল-টাইম প্রিভিউ বক্স ================= */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <span className="text-xs font-bold text-green-400 flex items-center gap-1.5">
             <Eye className="size-4" /> 👁️ লাইভ রিয়েল-টাইম প্রিভিউ (হোমপেজে যেমন দেখাবে):
           </span>
-          <span className="text-[10px] text-gray-400">রঙ, সাইজ বা লেখা সরালে সরাসরি পরিবর্তন হবে</span>
+          <span className="text-[10px] text-gray-400">এলাইনমেন্ট ও পজিশন পরিবর্তন এখানে সরাসরি দেখা যাবে</span>
         </div>
 
         <div
@@ -362,7 +342,6 @@ export default function HeroManager({
             background: slideType === "color" ? previewBg : "#000000",
           }}
         >
-          {/* ইমেজ প্রিভিউ */}
           {slideType === "image" && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -372,7 +351,6 @@ export default function HeroManager({
             />
           )}
 
-          {/* ভিডিও প্রিভিউ */}
           {slideType === "video" && (
             <div className="w-full h-full flex items-center justify-center bg-black">
               {parseVideoUrl(videoUrl).isEmbed ? (
@@ -384,13 +362,13 @@ export default function HeroManager({
               ) : (
                 <div className="text-xs text-red-400 flex items-center gap-2">
                   <Video className="size-5" />
-                  <span>ভিডিও প্লেয়ার প্রিভিউ সক্রিয়</span>
+                  <span>ভিডিও প্লেয়ার প্রিভিউ সক্রিয়</span>
                 </div>
               )}
             </div>
           )}
 
-          {/* টেক্সট লেয়ারসমূহ (০-১০০% X/Y পজিশনে লাইভ প্রদর্শন) */}
+          {/* টেক্সট লেয়ারসমূহ (এলাইনমেন্ট অনুযায়ী রেন্ডার) */}
           <div className="absolute inset-0 pointer-events-none">
             {textLayers.map((layer) => (
               <div
@@ -400,7 +378,8 @@ export default function HeroManager({
                   left: `${layer.x}%`,
                   top: `${layer.y}%`,
                   transform: "translate(-50%, -50%)",
-                  maxWidth: "90%",
+                  maxWidth: "92%",
+                  textAlign: layer.align || "center",
                 }}
               >
                 <div style={{ transform: `scale(${layer.scale || 1})` }}>
@@ -412,7 +391,7 @@ export default function HeroManager({
                       backgroundColor: layer.bg_color || undefined,
                       padding: layer.bg_color ? "4px 10px" : undefined,
                       borderRadius: layer.bg_color ? "8px" : undefined,
-                      textAlign: "center",
+                      textAlign: layer.align || "center",
                     }}
                   >
                     {layer.title && (
@@ -428,8 +407,8 @@ export default function HeroManager({
                         {layer.title}
                       </h3>
                     )}
-                    {layer.subtitle && <p className="text-[10px] sm:text-xs opacity-90 drop-shadow">{layer.subtitle}</p>}
-                    {layer.description && <p className="text-[9px] sm:text-[11px] opacity-80 line-clamp-2 drop-shadow">{layer.description}</p>}
+                    {layer.subtitle && <p className="text-[10px] sm:text-xs opacity-90 drop-shadow mt-1">{layer.subtitle}</p>}
+                    {layer.description && <p className="text-[9px] sm:text-[11px] opacity-80 line-clamp-2 drop-shadow mt-1">{layer.description}</p>}
                   </div>
                 </div>
               </div>
@@ -438,7 +417,7 @@ export default function HeroManager({
         </div>
       </div>
 
-      {/* ================= ২. হিরো পোস্ট ক্রিয়েশন ও কন্ট্রোল প্যানেল ================= */}
+      {/* ================= ২. হিরো পোস্ট ফর্ম ================= */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h2 className="font-bold text-sm sm:text-base text-gray-200">
@@ -451,7 +430,7 @@ export default function HeroManager({
           )}
         </div>
 
-        {/* ধাপ ১: পোস্টের ধরন নির্বাচন */}
+        {/* পোস্টের ধরন */}
         <div className="space-y-2">
           <label className="text-xs font-bold text-gray-300 block">১. পোস্টের ধরন বেছে নিন:</label>
           <div className="grid grid-cols-3 gap-2">
@@ -491,7 +470,7 @@ export default function HeroManager({
           </div>
         </div>
 
-        {/* ================= কালার ব্যানার কন্ট্রোল (সলিড ও ৩-৫ রঙের গ্রেডিয়েন্ট) ================= */}
+        {/* কালার ব্যানার কন্ট্রোল */}
         {slideType === "color" && (
           <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-3">
             <div className="flex items-center justify-between">
@@ -521,7 +500,7 @@ export default function HeroManager({
             {bannerMode === "gradient" && (
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">গ্রেডিয়েন্টের দিক (Angle): {bannerAngle}°</span>
+                  <span className="text-gray-400">গ্রেডিয়েন্টের দিক: {bannerAngle}°</span>
                   <input
                     type="range"
                     min="0"
@@ -532,10 +511,9 @@ export default function HeroManager({
                   />
                 </div>
 
-                {/* ৩ থেকে ৫টি কালার স্টপ */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-300 font-semibold">রঙের প্যালেট ও স্লাইডার ({gradientStops.length}টি রঙ):</span>
+                    <span className="text-gray-300 font-semibold">রঙের প্যালেট ({gradientStops.length}টি রঙ):</span>
                     {gradientStops.length < 5 && (
                       <button
                         type="button"
@@ -587,7 +565,7 @@ export default function HeroManager({
 
             {bannerMode === "solid" && (
               <div className="flex items-center gap-3 pt-2">
-                <span className="text-xs text-gray-400">একটি নির্দিষ্ট রঙ বাছাই করুন:</span>
+                <span className="text-xs text-gray-400">রঙ বেছে নিন:</span>
                 <input
                   type="color"
                   value={gradientStops[0]?.color || "#064e3b"}
@@ -597,7 +575,6 @@ export default function HeroManager({
               </div>
             )}
 
-            {/* ব্যানারের উচ্চতা স্লাইডার */}
             <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
               <span className="text-gray-400">ব্যানারের উচ্চতা: {bannerHeight}px</span>
               <input
@@ -612,10 +589,10 @@ export default function HeroManager({
           </div>
         )}
 
-        {/* ================= ছবি আপলোড কন্ট্রোল ================= */}
+        {/* ছবি আপলোড */}
         {slideType === "image" && (
           <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
-            <label className="text-xs font-bold text-blue-400 block">🖼️ ছবি আপলোড বা ওয়েব লিংক দিন:</label>
+            <label className="text-xs font-bold text-blue-400 block">🖼️ ছবি আপলোড বা লিঙ্ক:</label>
             <div className="flex flex-col sm:flex-row gap-2">
               <label className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-gray-300 hover:bg-slate-800 cursor-pointer shrink-0">
                 <Upload className="size-3.5 text-blue-400" />
@@ -629,7 +606,7 @@ export default function HeroManager({
               </label>
               <input
                 className={inp}
-                placeholder="অথবা ছবির সরাসরি লিংক পেস্ট করুন (https://...)"
+                placeholder="অথবা ছবির সরাসরি লিঙ্ক (https://...)"
                 value={imgUrl}
                 onChange={(e) => setImgUrl(e.target.value)}
               />
@@ -638,13 +615,13 @@ export default function HeroManager({
           </div>
         )}
 
-        {/* ================= ভিডিও বা ভিডিওর লিংক ================= */}
+        {/* ভিডিও আপলোড বা লিঙ্ক */}
         {slideType === "video" && (
           <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
-            <label className="text-xs font-bold text-red-400 block">🎥 ভিডিও ফাইল বা ইউটিউব/ফেসবুক লিংক:</label>
+            <label className="text-xs font-bold text-red-400 block">🎥 ভিডিও ফাইল বা ইউটিউব/ফেসবুক লিঙ্ক:</label>
             <input
               className={inp}
-              placeholder="ইউটিউব, ফেসবুক বা সরাসরি MP4 ভিডিওর লিংক পেস্ট করুন (https://...)"
+              placeholder="ইউটিউব, ফেসবুক বা সরাসরি MP4 লিঙ্ক পেস্ট করুন (https://...)"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
             />
@@ -664,11 +641,11 @@ export default function HeroManager({
           </div>
         )}
 
-        {/* ================= ধাপ ২: ফ্রি-ফর্ম টেক্সট লেয়ার ও ০-১০০% X/Y পজিশনিং ================= */}
+        {/* ================= টেক্সট লেয়ার ও এলাইনমেন্ট কন্ট্রোল ================= */}
         <div className="p-3.5 bg-slate-950/90 border border-slate-800 rounded-xl space-y-3">
           <div className="flex items-center justify-between border-b border-slate-850 pb-2">
             <span className="text-xs font-bold text-yellow-400 flex items-center gap-1.5">
-              <Type className="size-4" /> ২. ব্যানার/ছবির ওপর লেখা ও পজিশন (ঐচ্ছিক):
+              <Type className="size-4" /> ২. লেখা, এলাইনমেন্ট ও পজিশন:
             </span>
             <button
               type="button"
@@ -680,7 +657,7 @@ export default function HeroManager({
           </div>
 
           {textLayers.map((layer, idx) => (
-            <div key={layer.id || idx} className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2.5">
+            <div key={layer.id || idx} className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-3">
               <div className="flex justify-between items-center text-xs text-gray-400">
                 <span className="font-bold text-white">লেখা বক্স #{idx + 1}</span>
                 {textLayers.length > 1 && (
@@ -690,7 +667,7 @@ export default function HeroManager({
                 )}
               </div>
 
-              {/* ৩টি টেক্সট বক্স: শিরোনাম, সাব-হেডিং, বিস্তারিত */}
+              {/* ৩টি টেক্সট বক্স */}
               <input
                 className={inp}
                 placeholder="শিরোনাম (ঐচ্ছিক)"
@@ -710,6 +687,59 @@ export default function HeroManager({
                   value={layer.description || ""}
                   onChange={(e) => updateTextLayer(idx, "description", e.target.value)}
                 />
+              </div>
+
+              {/* ⭐ নতুন: এলাইনমেন্ট অপশন (বামে, মাঝে, ডানে, জাস্টিফাই) ⭐ */}
+              <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
+                <span className="text-[11px] font-bold text-emerald-400 block">
+                  📐 লেখার এলাইনমেন্ট (Alignment) নির্ধারণ করুন:
+                </span>
+                <div className="grid grid-cols-4 gap-1.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => updateTextLayer(idx, "align", "left")}
+                    className={`py-1.5 rounded-lg border font-semibold flex items-center justify-center gap-1 ${
+                      (layer.align || "center") === "left"
+                        ? "bg-emerald-700 border-emerald-500 text-white"
+                        : "border-slate-800 text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <AlignLeft className="size-3.5" /> বামে
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateTextLayer(idx, "align", "center")}
+                    className={`py-1.5 rounded-lg border font-semibold flex items-center justify-center gap-1 ${
+                      (layer.align || "center") === "center"
+                        ? "bg-emerald-700 border-emerald-500 text-white"
+                        : "border-slate-800 text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <AlignCenter className="size-3.5" /> মাঝে
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateTextLayer(idx, "align", "right")}
+                    className={`py-1.5 rounded-lg border font-semibold flex items-center justify-center gap-1 ${
+                      layer.align === "right"
+                        ? "bg-emerald-700 border-emerald-500 text-white"
+                        : "border-slate-800 text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <AlignRight className="size-3.5" /> ডানে
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateTextLayer(idx, "align", "justify")}
+                    className={`py-1.5 rounded-lg border font-semibold flex items-center justify-center gap-1 ${
+                      layer.align === "justify"
+                        ? "bg-emerald-700 border-emerald-500 text-white"
+                        : "border-slate-800 text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <AlignJustify className="size-3.5" /> জাস্টিফাই
+                  </button>
+                </div>
               </div>
 
               {/* ০-১০০% X ও Y পজিশন স্লাইডার */}
@@ -744,10 +774,10 @@ export default function HeroManager({
                 </div>
               </div>
 
-              {/* লেখার স্টাইল ও ৩৫টি অ্যানিমেশন নির্বাচন */}
+              {/* ফন্ট, স্টাইল ও অ্যানিমেশন */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                 <div>
-                  <span className="text-[10px] text-gray-400 block mb-1">অ্যানিমেশন ইফেক্ট:</span>
+                  <span className="text-[10px] text-gray-400 block mb-1">অ্যানিমেশন:</span>
                   <select
                     className={selectInp}
                     value={layer.animation}
@@ -771,7 +801,7 @@ export default function HeroManager({
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-gray-400 block mb-1">লেখার রঙ:</span>
+                  <span className="text-[10px] text-gray-400 block mb-1">লেখার রঙ ও বোল্ড:</span>
                   <div className="flex items-center gap-1.5">
                     <input
                       type="color"
@@ -797,7 +827,7 @@ export default function HeroManager({
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-gray-400 block mb-1">লেখার সাইজ স্কেল:</span>
+                  <span className="text-[10px] text-gray-400 block mb-1">সাইজ স্কেল:</span>
                   <input
                     type="range"
                     min="0.6"
@@ -813,13 +843,13 @@ export default function HeroManager({
           ))}
         </div>
 
-        {/* ================= ধাপ ৩: স্লাইডার সময়কাল ও ট্রানজিশন ================= */}
+        {/* স্লাইডার সময়কাল ও ট্রানজিশন */}
         <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
           <span className="text-xs font-bold text-gray-300 block">৩. স্লাইডার স্পিড ও ট্রানজিশন:</span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <div className="flex justify-between text-xs text-gray-400 mb-1">
-                <span>স্লাইড প্রদর্শনের সময় (০-১০০ সেকেন্ড):</span>
+                <span>স্লাইড প্রদর্শনের সময়:</span>
                 <span className="text-emerald-400 font-bold">{slideDuration} সেকেন্ড</span>
               </div>
               <input
@@ -833,7 +863,7 @@ export default function HeroManager({
             </div>
 
             <div>
-              <span className="text-xs text-gray-400 block mb-1">স্লাইড ট্রানজিশন ইফেক্ট:</span>
+              <span className="text-xs text-gray-400 block mb-1">ট্রানজিশন ইফেক্ট:</span>
               <select
                 className={selectInp}
                 value={transitionEffect}
@@ -847,12 +877,12 @@ export default function HeroManager({
           </div>
         </div>
 
-        {/* ক্লিক লিঙ্ক */}
+        {/* লিঙ্ক */}
         <div>
-          <label className="text-xs font-bold text-gray-400 block mb-1">ক্লিক লিংক (ঐচ্ছিক - চাপলে যে লিংকে যাবে):</label>
+          <label className="text-xs font-bold text-gray-400 block mb-1">ক্লিক লিঙ্ক (ঐচ্ছিক):</label>
           <input
             className={inp}
-            placeholder="যেমন: https://facebook.com/... অথবা /post/..."
+            placeholder="যেমন: https://... অথবা /post/..."
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
           />
@@ -864,7 +894,7 @@ export default function HeroManager({
         </button>
       </div>
 
-      {/* ================= ৩. হোমপেজ স্প্লিট লেআউট কন্ট্রোল ================= */}
+      {/* ================= ৩. হোমপেজ স্প্লিট লেআউট ================= */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <span className="text-xs font-bold text-white flex items-center gap-1.5">
@@ -873,7 +903,7 @@ export default function HeroManager({
           <span className="text-[11px] text-emerald-400 font-bold">বর্তমান: {desktopSplits} স্প্লিট</span>
         </div>
         <p className="text-xs text-gray-400">
-          💡 কম্পিউটারে হোমপেজটি ১টি, ২টি নাকি ৩টি স্প্লিটে দেখতে চান তা বেছে নিন। মোবাইলে স্বয়ংক্রিয়ভাবে এটি ১ কলামে সুন্দর সোয়াইপ স্লাইডার হিসেবে থাকবে।
+          💡 কম্পিউটারে ১টি, ২টি নাকি ৩টি স্প্লিটে দেখাতে চান তা বেছে নিন। মোবাইলে স্বয়ংক্রিয়ভাবে সোয়াইপ স্লাইডার হিসেবে থাকবে।
         </p>
         <div className="grid grid-cols-3 gap-2">
           {[1, 2, 3].map((num) => (
@@ -887,7 +917,7 @@ export default function HeroManager({
                   : "bg-slate-950 border-slate-800 text-gray-400 hover:text-white"
               }`}
             >
-              {num === 1 ? "১টি স্প্লিট (ফুল স্ক্রিন)" : `${num}টি স্প্লিট (পাশাপাশি)`}
+              {num === 1 ? "১টি স্প্লিট" : `${num}টি স্প্লিট`}
             </button>
           ))}
         </div>
@@ -915,7 +945,7 @@ export default function HeroManager({
                     {slide.title || slide.text_layers?.[0]?.title || "শিরোনামহীন পোস্ট"}
                   </p>
                   <p className="text-[10px] text-gray-500">
-                    ধরণ: {slide.slide_type === "color" ? "কালার ব্যানার" : slide.slide_type === "image" ? "ছবি" : "ভিডিও"} · ডিউরেশন: {(slide.slide_duration || 5000) / 1000}s
+                    ধরণ: {slide.slide_type === "color" ? "কালার ব্যানার" : slide.slide_type === "image" ? "ছবি" : "ভিডিও"}
                   </p>
                 </div>
               </div>
