@@ -1,4 +1,4 @@
-"use client"
+nowe client"
 
 import { useEffect, useState } from "react"
 import { uploadImage, uploadVideo } from "@/lib/sb"
@@ -288,7 +288,7 @@ export default function HeroManager({
         await updateHeroSlide(token, editId, payload)
         setMsg("✅ পোস্ট সফলভাবে আপডেট হয়েছে")
       } else {
-        await createHeroSlide(token, { ...payload, sort_order: Date.now() })
+        await createHeroSlide(token, { ...payload, sort_order: await createHeroSlide(token, { ...payload, sort_order: Math.floor(Date.now() / 1000) }) })
         setMsg("✅ নতুন পোস্ট সফলভাবে তৈরি হয়েছে এবং হোমপেজে দৃশ্যমান")
       }
 
