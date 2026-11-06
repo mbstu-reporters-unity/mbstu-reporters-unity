@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react'
 import type { HeroSlide, SubMediaItem } from '@/lib/hero'
 import { parseVideoUrl } from '@/lib/hero'
-import { ExternalLink, Volume2, VolumeX } from 'lucide-react'
+import { Volume2, VolumeX, ExternalLink } from 'lucide-react'
 
 interface HeroMediaRendererProps {
   slide?: HeroSlide | null
@@ -12,7 +12,7 @@ interface HeroMediaRendererProps {
   isActive: boolean
 }
 
-// ৩ থেকে ৫ রঙের মাল্টি-স্টপ গ্রেডিয়েন্ট এবং সাইজ জেনারেটর
+// ৩ থেকে ৫ রঙের গ্রেডিয়েন্ট এবং সাইজ তৈরির ফাংশন
 function getBannerStyle(slide?: HeroSlide | null, item?: SubMediaItem | null) {
   if (slide?.banner_config) {
     const cfg = slide.banner_config
@@ -38,7 +38,6 @@ function getBannerStyle(slide?: HeroSlide | null, item?: SubMediaItem | null) {
     }
   }
 
-  // পুরোনো কালার ব্যাকওয়ার্ড সাপোর্ট
   if (item?.gradient) return { background: item.gradient }
   if (item?.color) return { background: item.color }
   return { background: 'linear-gradient(135deg, #064e3b 0%, #0f172a 50%, #1e1b4b 100%)' }
@@ -53,13 +52,12 @@ export function HeroMediaRenderer({
   const videoRef = useRef<HTMLVideoElement>(null)
   const [muted, setMuted] = React.useState(true)
 
-  // টাইপ নির্ধারণ (নতুন কনফিগ অথবা পুরোনো আইটেম)
   const type = slide?.slide_type || item?.type || 'color'
   const videoUrl = slide?.video_config?.url || item?.url || ''
   const parsedVideo = parseVideoUrl(videoUrl)
   const imageUrl = item?.url || (slide?.media_items?.[0] as any)?.url || ''
 
-  // স্মার্ট অডিও ও প্লে কন্ট্রোল: স্লাইড সরে গেলে ভিডিও পজ ও সাউন্ড বন্ধ হবে
+  // স্লাইড সরে গেলে ভিডিও পজ ও সাউন্ড বন্ধ হওয়ার লজিক
   useEffect(() => {
     const v = videoRef.current
     if (!v) return
@@ -107,11 +105,10 @@ export function HeroMediaRenderer({
         </div>
       )}
 
-      {/* ================= ৩. ভিডিও বা ভিডিওর লিংক ================= */}
+      {/* ================= ৩. ভিডিও বা ভিডিওর লিঙ্ক ================= */}
       {type === 'video' && (
         <div className="relative w-full h-full flex items-center justify-center bg-black">
           {parsedVideo.isEmbed ? (
-            // YouTube বা Facebook ভিডিও এম্বেড (স্লাইড সক্রিয় না থাকলে সাউন্ড বন্ধ থাকবে)
             isActive ? (
               <iframe
                 src={`${parsedVideo.embedSrc}&autoplay=1&mute=1`}
@@ -126,7 +123,6 @@ export function HeroMediaRenderer({
               </div>
             )
           ) : (
-            // সরাসরি MP4 ভিডিও প্লেয়ার
             <>
               <video
                 ref={videoRef}
@@ -136,7 +132,6 @@ export function HeroMediaRenderer({
                 muted={muted}
                 className="w-full h-full object-contain pointer-events-auto"
               />
-              {/* সাউন্ড অন/অফ করার ভাসমান বাটন */}
               <button
                 type="button"
                 onClick={toggleSound}
@@ -162,7 +157,7 @@ export function HeroMediaRenderer({
         </div>
       )}
 
-      {/* ================= ৫. ফ্রি-ফর্ম টেক্সট লেয়ার (০–১০০% X/Y পজিশন ও ৩৫টি অ্যানিমেশন) ================= */}
+      {/* ================= ৫. ফ্রি-ফর্ম টেক্সট লেয়ার (এলাইনমেন্ট: বামে, মাঝে, ডানে, জাস্টিফাই) ================= */}
       {slide?.text_layers && slide.text_layers.length > 0 ? (
         <div className="absolute inset-0 pointer-events-none">
           {slide.text_layers.map((layer, idx) => (
@@ -175,6 +170,7 @@ export function HeroMediaRenderer({
                 transform: 'translate(-50%, -50%)',
                 zIndex: 25,
                 maxWidth: '92%',
+                textAlign: layer.align || 'center',
               }}
             >
               <div
@@ -191,6 +187,7 @@ export function HeroMediaRenderer({
                     backgroundColor: layer.bg_color || undefined,
                     padding: layer.bg_color ? '4px 12px' : undefined,
                     borderRadius: layer.bg_color ? '8px' : undefined,
+                    textAlign: layer.align || 'center',
                   }}
                 >
                   {layer.title && (
@@ -222,6 +219,19 @@ export function HeroMediaRenderer({
           ))}
         </div>
       ) : null}
+
+      {/* ক্লিক লিঙ্ক বাটন (যদি লিঙ্ক দেওয়া থাকে) */}
+      {slide?.link_url && (
+        <a
+          href={slide.link_url}
+          target={slide.link_url.startsWith('http') ? '_blank' : '_self'}
+          rel="noopener noreferrer"
+          className="absolute bottom-5 left-6 z-30 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-700/90 hover:bg-emerald-600 text-white text-xs font-bold backdrop-blur shadow-lg transition-all"
+        >
+          <span>{slide.button_text || 'বিস্তারিত'}</span>
+          <ExternalLink className="size-3" />
+        </a>
+      )}
     </div>
   )
 }
