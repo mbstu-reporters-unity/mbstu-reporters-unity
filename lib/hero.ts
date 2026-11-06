@@ -218,7 +218,7 @@ export async function getHeroSlides(token?: string): Promise<HeroSlide[]> {
 export async function createHeroSlide(token: string, data: Partial<HeroSlide>) {
   const payload = {
     ...data,
-    sort_order: data.sort_order ?? Date.now(),
+    sort_order: data.sort_order ?? Math.floor(Date.now() / 1000),
     updated_at: new Date().toISOString(),
   }
 
