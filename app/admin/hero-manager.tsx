@@ -1,4 +1,4 @@
-nowe client"
+"use client"
 
 import { useEffect, useState } from "react"
 import { uploadImage, uploadVideo } from "@/lib/sb"
@@ -12,7 +12,6 @@ import {
   deleteHeroSlide,
   getHeroSettings,
   saveHeroSettings,
-  getRecentPosts,
   parseVideoUrl,
   type HeroSlide,
   type HeroSettings,
@@ -70,7 +69,6 @@ export default function HeroManager({
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [fitMode, setFitMode] = useState<"contain" | "cover">("contain")
 
-  // টেক্সট লেয়ারে ডিফল্টভাবে এলাইনমেন্ট সেন্টার ও মার্জিত করা হয়েছে
   const [textLayers, setTextLayers] = useState<TextLayer[]>([
     {
       id: "txt_1",
@@ -83,7 +81,7 @@ export default function HeroManager({
       font: FONTS[0].value,
       weight: "bold",
       italic: false,
-      align: "center", // ডিফল্ট সেন্টার
+      align: "center",
       color: "#FFFFFF",
       bg_color: "",
       animation: "fade-up",
@@ -219,8 +217,8 @@ export default function HeroManager({
           weight: "bold",
           italic: false,
           align: "center",
-          color: "#FFFFFF",
-          animation: "fade-up",
+          color: s.title_color || "#FFFFFF",
+          animation: s.text_effect || "fade-up",
         },
       ])
     }
@@ -288,7 +286,9 @@ export default function HeroManager({
         await updateHeroSlide(token, editId, payload)
         setMsg("✅ পোস্ট সফলভাবে আপডেট হয়েছে")
       } else {
-        await createHeroSlide(token, { ...payload, sort_order: await createHeroSlide(token, { ...payload, sort_order: Math.floor(Date.now() / 1000) }) })
+        // টাইমস্ট্যাম্পটি সেকেন্ডে রূপান্তর করা হয়েছে যাতে integer রেঞ্জ কখনোই পার না হয়
+        const safeOrder = Math.floor(Date.now() / 1000)
+        await createHeroSlide(token, { ...payload, sort_order: safeOrder })
         setMsg("✅ নতুন পোস্ট সফলভাবে তৈরি হয়েছে এবং হোমপেজে দৃশ্যমান")
       }
 
@@ -326,7 +326,7 @@ export default function HeroManager({
         </div>
       )}
 
-      {/* ================= ১. রিয়েল-টাইম প্রিভিউ বক্স ================= */}
+      {/* ১. রিয়েল-টাইম প্রিভিউ বক্স */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <span className="text-xs font-bold text-green-400 flex items-center gap-1.5">
@@ -368,7 +368,7 @@ export default function HeroManager({
             </div>
           )}
 
-          {/* টেক্সট লেয়ারসমূহ (এলাইনমেন্ট অনুযায়ী রেন্ডার) */}
+          {/* টেক্সট লেয়ারসমূহ */}
           <div className="absolute inset-0 pointer-events-none">
             {textLayers.map((layer) => (
               <div
@@ -417,7 +417,7 @@ export default function HeroManager({
         </div>
       </div>
 
-      {/* ================= ২. হিরো পোস্ট ফর্ম ================= */}
+      {/* ২. হিরো পোস্ট ফর্ম */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h2 className="font-bold text-sm sm:text-base text-gray-200">
@@ -470,7 +470,7 @@ export default function HeroManager({
           </div>
         </div>
 
-        {/* কালার ব্যানার কন্ট্রোল */}
+        {/* কালার ব্যানার সেটিংস */}
         {slideType === "color" && (
           <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-3">
             <div className="flex items-center justify-between">
@@ -615,7 +615,7 @@ export default function HeroManager({
           </div>
         )}
 
-        {/* ভিডিও আপলোড বা লিঙ্ক */}
+        {/* ভিডিও আপলোড */}
         {slideType === "video" && (
           <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
             <label className="text-xs font-bold text-red-400 block">🎥 ভিডিও ফাইল বা ইউটিউব/ফেসবুক লিঙ্ক:</label>
@@ -641,7 +641,7 @@ export default function HeroManager({
           </div>
         )}
 
-        {/* ================= টেক্সট লেয়ার ও এলাইনমেন্ট কন্ট্রোল ================= */}
+        {/* টেক্সট লেয়ার ও এলাইনমেন্ট কন্ট্রোল */}
         <div className="p-3.5 bg-slate-950/90 border border-slate-800 rounded-xl space-y-3">
           <div className="flex items-center justify-between border-b border-slate-850 pb-2">
             <span className="text-xs font-bold text-yellow-400 flex items-center gap-1.5">
@@ -689,10 +689,10 @@ export default function HeroManager({
                 />
               </div>
 
-              {/* ⭐ নতুন: এলাইনমেন্ট অপশন (বামে, মাঝে, ডানে, জাস্টিফাই) ⭐ */}
+              {/* এলাইনমেন্ট অপশন (বামে, মাঝে, ডানে, জাস্টিফাই) */}
               <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
                 <span className="text-[11px] font-bold text-emerald-400 block">
-                  📐 লেখার এলাইনমেন্ট (Alignment) নির্ধারণ করুন:
+                  📐 লেখার এলাইনমেন্ট নির্ধারণ করুন:
                 </span>
                 <div className="grid grid-cols-4 gap-1.5 text-xs">
                   <button
@@ -774,7 +774,7 @@ export default function HeroManager({
                 </div>
               </div>
 
-              {/* ফন্ট, স্টাইল ও অ্যানিমেশন */}
+              {/* ফন্ট, কালার ও অ্যানিমেশন */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                 <div>
                   <span className="text-[10px] text-gray-400 block mb-1">অ্যানিমেশন:</span>
@@ -894,7 +894,7 @@ export default function HeroManager({
         </button>
       </div>
 
-      {/* ================= ৩. হোমপেজ স্প্লিট লেআউট ================= */}
+      {/* ৩. হোমপেজ স্প্লিট লেআউট */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <span className="text-xs font-bold text-white flex items-center gap-1.5">
@@ -923,7 +923,7 @@ export default function HeroManager({
         </div>
       </div>
 
-      {/* ================= ৪. বর্তমান পোস্টসমূহের তালিকা ================= */}
+      {/* ৪. বর্তমান পোস্টসমূহের তালিকা */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <h2 className="font-bold text-xs sm:text-sm text-gray-200">বর্তমান হিরো স্লাইডসমূহ ({list.length})</h2>
