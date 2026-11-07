@@ -10,6 +10,7 @@ interface HeroMediaRendererProps {
   item?: SubMediaItem | null
   fitMode?: 'contain' | 'cover'
   isActive: boolean
+  isCompact?: boolean // ছোট ৫০% স্প্লিটের জন্য বিশেষ ফ্ল্যাগ
   onVideoStateChange?: (isPlaying: boolean) => void
   onVideoEnd?: () => void
 }
@@ -46,6 +47,7 @@ export function HeroMediaRenderer({
   item,
   fitMode = 'contain',
   isActive,
+  isCompact = false,
   onVideoStateChange,
   onVideoEnd,
 }: HeroMediaRendererProps) {
@@ -110,14 +112,22 @@ export function HeroMediaRenderer({
     }
   }
 
+  // টেক্সট লেয়ারগুলো আলাদা করা
+  const layers = slide?.text_layers || []
+  const titleLayer = layers.find((l: any) => l.enabled && (l.id === 'txt_title' || l.label?.includes('শিরোনাম'))) || layers[0]
+  const subtitleLayer = layers.find((l: any) => l.enabled && (l.id === 'txt_subtitle' || l.label?.includes('সাব-হেডিং')))
+  const descLayer = layers.find((l: any) => l.enabled && (l.id === 'txt_desc' || l.label?.includes('বিস্তারিত')))
+  const dateLayer = layers.find((l: any) => l.enabled && (l.id === 'txt_date' || l.label?.includes('তারিখ')))
+  const reporterLayer = layers.find((l: any) => l.enabled && (l.id === 'txt_reporter' || l.label?.includes('সাংবাদিক')))
+
   return (
     <div className="relative w-full h-full flex items-center justify-center overflow-hidden select-none bg-slate-950">
       <div
-        className="relative h-full transition-all duration-500 overflow-hidden"
+        className="relative h-full w-full transition-all duration-500 overflow-hidden"
         style={{
-          width: `${bannerWidth}%`,
+          width: isCompact ? '100%' : `${bannerWidth}%`,
           maxWidth: '100%',
-          maxHeight: `${bannerHeight}px`,
+          maxHeight: isCompact ? '100%' : `${bannerHeight}px`,
         }}
       >
         {/* ১. কালার ব্যানার */}
@@ -177,22 +187,20 @@ export function HeroMediaRenderer({
                   className="w-full h-full object-contain pointer-events-auto"
                   onClick={togglePlayPause}
                 />
-                <div className="absolute top-4 left-4 z-30 flex items-center gap-2">
+                <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={togglePlayPause}
-                    className="p-2 rounded-full bg-black/60 text-white hover:bg-black/90 transition-all border border-white/20 shadow cursor-pointer"
-                    aria-label="ভিডিও চালান বা বন্ধ করুন"
+                    className="p-1.5 rounded-full bg-black/60 text-white hover:bg-black/90 transition-all border border-white/20 shadow cursor-pointer"
                   >
-                    {isPlaying ? <Pause className="size-4 text-yellow-400" /> : <Play className="size-4 text-green-400" />}
+                    {isPlaying ? <Pause className="size-3.5 text-yellow-400" /> : <Play className="size-3.5 text-green-400" />}
                   </button>
                   <button
                     type="button"
                     onClick={toggleSound}
-                    className="p-2 rounded-full bg-black/60 text-white hover:bg-black/90 transition-all border border-white/20 shadow cursor-pointer"
-                    aria-label="সাউন্ড অন/অফ"
+                    className="p-1.5 rounded-full bg-black/60 text-white hover:bg-black/90 transition-all border border-white/20 shadow cursor-pointer"
                   >
-                    {muted ? <VolumeX className="size-4 text-red-400" /> : <Volume2 className="size-4 text-green-400" />}
+                    {muted ? <VolumeX className="size-3.5 text-red-400" /> : <Volume2 className="size-3.5 text-green-400" />}
                   </button>
                 </div>
               </>
@@ -200,83 +208,134 @@ export function HeroMediaRenderer({
           </div>
         )}
 
-        {/* ৪. স্বাধীন টেক্সট লেয়ারসমূহ (পূর্বের মতোই অক্ষত) */}
-        {slide?.text_layers && slide.text_layers.length > 0 ? (
-          <div className="absolute inset-0 pointer-events-none">
-            {slide.text_layers.map((layer: any, idx: number) => {
-              if (layer.enabled === false) return null
-              const displayText = layer.text || layer.title || ''
-              if (!displayText && !layer.subtitle && !layer.description) return null
-
-              const scale = layer.size_scale || layer.scale || 1
-              const align = layer.align || 'center'
-              const anim = layer.animation || 'fade-up'
-
-              return (
-                <div
-                  key={layer.id || idx}
-                  className="absolute pointer-events-auto transition-all duration-300"
-                  style={{
-                    left: `${layer.x ?? 50}%`,
-                    top: `${layer.y ?? 50}%`,
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 25,
-                    maxWidth: '92%',
-                    textAlign: align,
-                  }}
+        {/* ================= ৪. টেক্সট রেন্ডারিং ================= */}
+        {isCompact ? (
+          /* ⭐ ছোট (৫০%) স্প্লিটে ওভারল্যাপিং ছাড়া স্বয়ংক্রিয় ক্লিন লেআউট ⭐ */
+          <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between z-20 pointer-events-none bg-gradient-to-t from-black/80 via-black/30 to-black/40">
+            {/* মাঝের মূল লেখা */}
+            <div className="my-auto text-center space-y-1.5 px-1">
+              {titleLayer && (titleLayer.text || titleLayer.title) && (
+                <h3
+                  className="font-bold text-xs sm:text-sm leading-snug line-clamp-2 drop-shadow-md"
+                  style={{ color: titleLayer.color || '#FFFFFF', fontFamily: titleLayer.font }}
                 >
+                  {titleLayer.text || titleLayer.title}
+                </h3>
+              )}
+              {subtitleLayer && (subtitleLayer.text || subtitleLayer.subtitle) && (
+                <p
+                  className="text-[10px] sm:text-xs opacity-90 line-clamp-1 drop-shadow"
+                  style={{ color: subtitleLayer.color || '#E2E8F0' }}
+                >
+                  {subtitleLayer.text || subtitleLayer.subtitle}
+                </p>
+              )}
+              {descLayer && (descLayer.text || descLayer.description) && (
+                <p
+                  className="text-[9px] sm:text-[10px] opacity-75 line-clamp-2 leading-tight drop-shadow hidden sm:block"
+                  style={{ color: descLayer.color || '#CBD5E1' }}
+                >
+                  {descLayer.text || descLayer.description}
+                </p>
+              )}
+            </div>
+
+            {/* নিচের তথ্য ও বাটন (ওভারল্যাপ ছাড়া সুন্দর এক সারিতে) */}
+            <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-white/15 pointer-events-auto text-[10px]">
+              {slide?.link_url ? (
+                <a
+                  href={slide.link_url}
+                  className="px-2.5 py-1 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold transition-all shrink-0"
+                >
+                  {slide.button_text || 'বিস্তারিত'}
+                </a>
+              ) : (
+                <span />
+              )}
+              <div className="text-[9px] sm:text-[10px] text-white/80 truncate text-right">
+                {dateLayer?.text || reporterLayer?.text || ''}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* বড় (১০০%) স্প্লিটের পূর্ণাঙ্গ ডিজাইন */
+          layers.length > 0 && (
+            <div className="absolute inset-0 pointer-events-none">
+              {layers.map((layer: any, idx: number) => {
+                if (layer.enabled === false) return null
+                const displayText = layer.text || layer.title || ''
+                if (!displayText && !layer.subtitle && !layer.description) return null
+
+                const scale = layer.size_scale || layer.scale || 1
+                const align = layer.align || 'center'
+                const anim = layer.animation || 'fade-up'
+
+                return (
                   <div
+                    key={layer.id || idx}
+                    className="absolute pointer-events-auto transition-all duration-300"
                     style={{
-                      transform: `scale(${scale})`,
-                      transformOrigin: align === 'left' ? 'left center' : align === 'right' ? 'right center' : 'center center',
+                      left: `${layer.x ?? 50}%`,
+                      top: `${layer.y ?? 50}%`,
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: 25,
+                      maxWidth: '92%',
+                      textAlign: align,
                     }}
                   >
                     <div
-                      className={`anim_${anim}`}
                       style={{
-                        fontFamily: layer.font || undefined,
-                        color: layer.color || '#FFFFFF',
-                        backgroundColor: layer.bg_color || undefined,
-                        padding: layer.bg_color ? '4px 12px' : undefined,
-                        borderRadius: layer.bg_color ? '8px' : undefined,
-                        textAlign: align,
+                        transform: `scale(${scale})`,
+                        transformOrigin: align === 'left' ? 'left center' : align === 'right' ? 'right center' : 'center center',
                       }}
                     >
-                      {layer.text && (
-                        <div
-                          className={`leading-tight drop-shadow-lg ${
-                            layer.weight === 'bold'
-                              ? 'font-bold'
-                              : layer.weight === 'semibold'
-                              ? 'font-semibold'
-                              : 'font-normal'
-                          } ${layer.italic ? 'italic' : ''} text-base sm:text-2xl md:text-3xl`}
-                        >
-                          {layer.label === 'তারিখ' && <Calendar className="inline-block size-4 mr-1.5 opacity-80" />}
-                          {layer.label === 'প্রতিবেদক' && <User className="inline-block size-4 mr-1.5 opacity-80" />}
-                          {layer.text}
-                        </div>
-                      )}
-                      {!layer.text && layer.title && (
-                        <h2 className="font-bold text-lg sm:text-2xl drop-shadow-lg leading-tight">
-                          {layer.title}
-                        </h2>
-                      )}
+                      <div
+                        className={`anim_${anim}`}
+                        style={{
+                          fontFamily: layer.font || undefined,
+                          color: layer.color || '#FFFFFF',
+                          backgroundColor: layer.bg_color || undefined,
+                          padding: layer.bg_color ? '4px 12px' : undefined,
+                          borderRadius: layer.bg_color ? '8px' : undefined,
+                          textAlign: align,
+                        }}
+                      >
+                        {layer.text && (
+                          <div
+                            className={`leading-tight drop-shadow-lg ${
+                              layer.weight === 'bold'
+                                ? 'font-bold'
+                                : layer.weight === 'semibold'
+                                ? 'font-semibold'
+                                : 'font-normal'
+                            } ${layer.italic ? 'italic' : ''} text-sm sm:text-xl md:text-2xl`}
+                          >
+                            {layer.label === 'তারিখ' && <Calendar className="inline-block size-3.5 mr-1.5 opacity-80" />}
+                            {layer.label === 'প্রতিবেদক' && <User className="inline-block size-3.5 mr-1.5 opacity-80" />}
+                            {layer.text}
+                          </div>
+                        )}
+                        {!layer.text && layer.title && (
+                          <h2 className="font-bold text-base sm:text-2xl drop-shadow-lg leading-tight">
+                            {layer.title}
+                          </h2>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        ) : null}
+                )
+              })}
+            </div>
+          )
+        )}
 
-        {/* লিঙ্ক বোতাম */}
-        {slide?.link_url && (
+        {/* বড় ব্যানারে বিস্তারিত বাটন */}
+        {!isCompact && slide?.link_url && (
           <a
             href={slide.link_url}
             target={slide.link_url.startsWith('http') ? '_blank' : '_self'}
             rel="noopener noreferrer"
-            className="absolute bottom-5 left-6 z-30 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-700/90 hover:bg-emerald-600 text-white text-xs font-bold backdrop-blur shadow-lg transition-all"
+            className="absolute bottom-4 left-5 z-30 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-700/90 hover:bg-emerald-600 text-white text-xs font-bold backdrop-blur shadow-lg transition-all pointer-events-auto"
           >
             <span>{slide.button_text || 'বিস্তারিত'}</span>
             <ExternalLink className="size-3" />
