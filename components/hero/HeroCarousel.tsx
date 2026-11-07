@@ -21,9 +21,7 @@ export function HeroCarousel() {
   const [settings, setSettings] = useState<HeroSettings | null>(null)
   const [loaded, setLoaded] = useState(false)
   
-  // একক শিফটিং ইনডেক্স (ধারাবাহিক সাইক্লিং)
   const [currentIndex, setCurrentIndex] = useState(0)
-  
   const [isPaused, setIsPaused] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
@@ -31,7 +29,6 @@ export function HeroCarousel() {
   
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // ডেটাবেজ থেকে স্লাইড ও সেটিংস লোড
   useEffect(() => {
     Promise.all([getHeroSlides(), getHeroSettings()])
       .then(([slidesData, settingsData]) => {
@@ -48,35 +45,29 @@ export function HeroCarousel() {
   const total = slides.length
   const configuredSplits = settings?.desktop_splits || 1
   
-  // স্মার্ট ফলব্যাক: পোস্ট সংখ্যা কম হলে নিজে থেকেই মানিয়ে নেওয়া
   const activeSplits = useMemo(() => {
     if (total <= 1) return 1
     return Math.min(configuredSplits, total)
   }, [total, configuredSplits])
 
-  // বর্তমান স্লাইডের সময়কাল ও ট্রানজিশন
   const currentSlide = slides[currentIndex] || slides[0] || null
   const duration = currentSlide?.slide_duration || settings?.default_duration || 5000
   const transitionEffect = currentSlide?.transition_effect || settings?.default_transition || 'slide-left'
 
-  // পরবর্তী স্লাইডে যাওয়ার মেথড
   const nextSlide = useCallback(() => {
     if (total <= 1) return
     setCurrentIndex((prev) => (prev + 1) % total)
   }, [total])
 
-  // আগের স্লাইডে যাওয়ার মেথড
   const prevSlide = useCallback(() => {
     if (total <= 1) return
     setCurrentIndex((prev) => (prev - 1 + total) % total)
   }, [total])
 
-  // নির্দিষ্ট স্লাইডে যাওয়া
   const goToSlide = (idx: number) => {
     setCurrentIndex(idx % total)
   }
 
-  // স্বয়ংক্রিয় টাইমার লজিক (ভিডিও চলাকালে বা কার্সার রাখলে থামবে)
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
 
@@ -93,7 +84,6 @@ export function HeroCarousel() {
     }
   }, [nextSlide, duration, isPaused, isHovered, isVideoPlaying, total, currentIndex])
 
-  // মোবাইলে টাচ সোয়াইপ
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.touches[0].clientX)
   }
@@ -108,7 +98,6 @@ export function HeroCarousel() {
     setTouchStart(null)
   }
 
-  // আপনার আঁকা নকশা অনুযায়ী দৃশ্যমান স্লাইডগুলো সাজানো
   const visibleSlides = useMemo(() => {
     if (total === 0) return []
     const result: HeroSlide[] = []
@@ -124,20 +113,17 @@ export function HeroCarousel() {
 
   return (
     <div id="home" className="w-full flex flex-col bg-slate-950 text-white relative">
-      {/* স্মুথ অ্যানিমেশনের স্টাইল */}
       <style>{`
         @keyframes heroTimer { from { width: 0%; } to { width: 100%; } }
-        @keyframes tr_slide_left { from { transform: translateX(25px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes tr_slide_left { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes tr_fade { from { opacity: 0; } to { opacity: 1; } }
 
-        .tr_slide-left { animation: tr_slide_left 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .tr_fade { animation: tr_fade 0.6s ease-in-out forwards; }
+        .tr_slide-left { animation: tr_slide_left 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .tr_fade { animation: tr_fade 0.5s ease-in-out forwards; }
       `}</style>
 
-      {/* ব্রেকিং ব্যানার */}
       <HeroBreakingBanner settings={settings} />
 
-      {/* স্লাইডার কন্টেইনার */}
       {total > 0 && (
         <section
           aria-label="Hero Slider"
@@ -147,13 +133,14 @@ export function HeroCarousel() {
           onTouchEnd={handleTouchEnd}
           className="relative w-full overflow-hidden select-none bg-black p-2 sm:p-4"
         >
-          {/* ================= ১টি SPLIT হলে (চিত্র অনুযায়ী ১০০% প্রস্থ) ================= */}
+          {/* ================= ১টি SPLIT (১০০% প্রস্থ) ================= */}
           {activeSplits === 1 && visibleSlides[0] && (
-            <div className="relative h-[480px] sm:h-[540px] lg:h-[600px] w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-slate-900">
+            <div className="relative h-[440px] sm:h-[500px] lg:h-[560px] w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-slate-900">
               <div key={`${visibleSlides[0].id}_${currentIndex}`} className={`w-full h-full tr_${transitionEffect}`}>
                 <HeroMediaRenderer
                   slide={visibleSlides[0]}
                   isActive={true}
+                  isCompact={false}
                   onVideoStateChange={setIsVideoPlaying}
                   onVideoEnd={nextSlide}
                 />
@@ -161,27 +148,27 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ================= ২টি SPLIT হলে (চিত্র অনুযায়ী ১ম split ১০০%, ২য় split ১০০%) ================= */}
+          {/* ================= ২টি SPLIT (১ম ১০০%, ২য় ১০০%) ================= */}
           {activeSplits === 2 && visibleSlides.length >= 2 && (
-            <div className="flex flex-col gap-3 sm:gap-4 w-full">
-              {/* ১ম split (১০০%) */}
-              <div className="relative h-[240px] sm:h-[300px] w-full rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
+            <div className="flex flex-col gap-2.5 sm:gap-3.5 w-full">
+              <div className="relative h-[220px] sm:h-[280px] w-full rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
                 <div key={`${visibleSlides[0].id}_0_${currentIndex}`} className={`w-full h-full tr_${transitionEffect}`}>
                   <HeroMediaRenderer
                     slide={visibleSlides[0]}
                     isActive={true}
+                    isCompact={false}
                     onVideoStateChange={setIsVideoPlaying}
                     onVideoEnd={nextSlide}
                   />
                 </div>
               </div>
 
-              {/* ২য় split (১০০%) */}
-              <div className="relative h-[240px] sm:h-[300px] w-full rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
+              <div className="relative h-[220px] sm:h-[280px] w-full rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
                 <div key={`${visibleSlides[1].id}_1_${currentIndex}`} className={`w-full h-full tr_${transitionEffect}`}>
                   <HeroMediaRenderer
                     slide={visibleSlides[1]}
                     isActive={true}
+                    isCompact={false}
                     onVideoStateChange={setIsVideoPlaying}
                     onVideoEnd={nextSlide}
                   />
@@ -190,41 +177,42 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ================= ৩টি SPLIT হলে (চিত্র অনুযায়ী ১ম split ১০০%, নিচে ২য় split ৫০% ও ৩য় split ৫০%) ================= */}
+          {/* ================= ৩টি SPLIT (উপরে ১ম ১০০%, নিচে ২য় ৫০% ও ৩য় ৫০%) ================= */}
           {activeSplits === 3 && visibleSlides.length >= 3 && (
-            <div className="flex flex-col gap-3 sm:gap-4 w-full">
-              {/* ১ম split (উপরে ১০০%) */}
-              <div className="relative h-[260px] sm:h-[320px] w-full rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
+            <div className="flex flex-col gap-2.5 sm:gap-3.5 w-full">
+              {/* ১ম split (উপরে বড় ১০০%) */}
+              <div className="relative h-[250px] sm:h-[300px] w-full rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
                 <div key={`${visibleSlides[0].id}_top_${currentIndex}`} className={`w-full h-full tr_${transitionEffect}`}>
                   <HeroMediaRenderer
                     slide={visibleSlides[0]}
                     isActive={true}
+                    isCompact={false}
                     onVideoStateChange={setIsVideoPlaying}
                     onVideoEnd={nextSlide}
                   />
                 </div>
               </div>
 
-              {/* নিচে পাশাপাশি ২টি: ২য় split (৫০%) এবং ৩য় split (৫০%) */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
-                {/* ২য় split (৫০%) */}
-                <div className="relative h-[210px] sm:h-[270px] rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
+              {/* নিচে পাশাপাশি ২টি (৫০% + ৫০%): এখানে isCompact={true} দেওয়া হয়েছে */}
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 w-full">
+                <div className="relative h-[210px] sm:h-[250px] rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
                   <div key={`${visibleSlides[1].id}_b1_${currentIndex}`} className={`w-full h-full tr_${transitionEffect}`}>
                     <HeroMediaRenderer
                       slide={visibleSlides[1]}
                       isActive={true}
+                      isCompact={true}
                       onVideoStateChange={setIsVideoPlaying}
                       onVideoEnd={nextSlide}
                     />
                   </div>
                 </div>
 
-                {/* ৩য় split (৫০%) */}
-                <div className="relative h-[210px] sm:h-[270px] rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
+                <div className="relative h-[210px] sm:h-[250px] rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-slate-900">
                   <div key={`${visibleSlides[2].id}_b2_${currentIndex}`} className={`w-full h-full tr_${transitionEffect}`}>
                     <HeroMediaRenderer
                       slide={visibleSlides[2]}
                       isActive={true}
+                      isCompact={true}
                       onVideoStateChange={setIsVideoPlaying}
                       onVideoEnd={nextSlide}
                     />
@@ -234,64 +222,65 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ব্যাজ: বর্তমান পোস্টের ক্রম */}
-          <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow">
-            <Layers className="size-3.5 text-yellow-400" />
-            <span className="text-xs text-white font-medium">
+          {/* পোস্ট সংখ্যা ব্যাজ (উপরে ডানপাশে নিরাপদে) */}
+          <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 shadow">
+            <Layers className="size-3 text-yellow-400" />
+            <span className="text-[11px] text-white font-medium">
               পোস্ট {bn(currentIndex + 1)}/{bn(total)}
             </span>
           </div>
 
-          {/* কন্ট্রোল বোতাম (প্লে/পজ, আগে, পরে) */}
+          {/* ⭐ নতুন ডেডিকেটেড কন্ট্রোল বার (কার্ডের লেখার বাইরে নিচে আলাদাভাবে) ⭐ */}
           {total > 1 && (
-            <div className="absolute bottom-5 right-6 z-30 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsPaused(!isPaused)}
-                aria-label={isPaused ? 'চালান' : 'থামান'}
-                className="size-9 sm:size-10 rounded-full bg-black/60 text-white backdrop-blur border border-white/20 flex items-center justify-center hover:bg-white hover:text-black transition-all cursor-pointer shadow-lg"
-              >
-                {isPaused ? <Play className="size-4 text-green-400" /> : <Pause className="size-4 text-yellow-400" />}
-              </button>
-              <button
-                type="button"
-                onClick={prevSlide}
-                aria-label="আগের স্লাইড"
-                className="size-9 sm:size-10 rounded-full bg-black/60 text-white backdrop-blur border border-white/20 flex items-center justify-center hover:bg-white hover:text-black transition-all cursor-pointer shadow-lg"
-              >
-                <ChevronLeft className="size-5" />
-              </button>
-              <button
-                type="button"
-                onClick={nextSlide}
-                aria-label="পরের স্লাইড"
-                className="size-9 sm:size-10 rounded-full bg-black/60 text-white backdrop-blur border border-white/20 flex items-center justify-center hover:bg-white hover:text-black transition-all cursor-pointer shadow-lg"
-              >
-                <ChevronRight className="size-5" />
-              </button>
-            </div>
-          )}
+            <div className="flex items-center justify-between px-3 py-2.5 bg-slate-950/80 rounded-xl border border-white/10 mt-2.5">
+              {/* ডট ইন্ডিকেটর */}
+              <div className="flex items-center gap-1.5">
+                {slides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => goToSlide(idx)}
+                    aria-label={`স্লাইড ${idx + 1}`}
+                    className={`h-2 rounded-full transition-all cursor-pointer ${
+                      idx === currentIndex ? 'w-6 bg-emerald-500 shadow-md' : 'w-2 bg-white/30 hover:bg-white/70'
+                    }`}
+                  />
+                ))}
+              </div>
 
-          {/* ডট ইন্ডিকেটর */}
-          {total > 1 && (
-            <div className="absolute bottom-5 left-6 z-30 flex items-center gap-1.5">
-              {slides.map((_, idx) => (
+              {/* কন্ট্রোল বোতাম (প্লে/পজ, আগে, পরে) */}
+              <div className="flex items-center gap-2">
                 <button
-                  key={idx}
                   type="button"
-                  onClick={() => goToSlide(idx)}
-                  aria-label={`স্লাইড ${idx + 1}`}
-                  className={`h-2 rounded-full transition-all cursor-pointer ${
-                    idx === currentIndex ? 'w-8 bg-emerald-500 shadow' : 'w-2 bg-white/40 hover:bg-white/80'
-                  }`}
-                />
-              ))}
+                  onClick={() => setIsPaused(!isPaused)}
+                  aria-label={isPaused ? 'চালান' : 'থামান'}
+                  className="size-7 sm:size-8 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition cursor-pointer border border-white/10"
+                >
+                  {isPaused ? <Play className="size-3 text-green-400" /> : <Pause className="size-3 text-yellow-400" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={prevSlide}
+                  aria-label="আগের স্লাইড"
+                  className="size-7 sm:size-8 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition cursor-pointer border border-white/10"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={nextSlide}
+                  aria-label="পরের স্লাইড"
+                  className="size-7 sm:size-8 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition cursor-pointer border border-white/10"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
+              </div>
             </div>
           )}
 
-          {/* প্রোগ্রেস বার */}
+          {/* টাইমার প্রোগ্রেস বার */}
           {!isPaused && !isHovered && !isVideoPlaying && total > 1 && duration > 0 && (
-            <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 z-30 pointer-events-none">
+            <div className="w-full h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
               <div
                 key={currentIndex}
                 className="h-full bg-emerald-500 origin-left"
