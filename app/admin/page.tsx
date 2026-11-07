@@ -80,6 +80,7 @@ export default function AdminPage() {
   const [oldImage, setOldImage] = useState<string | null>(null)
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [oldVideo, setOldVideo] = useState<string | null>(null)
+  const [embedMediaUrl, setEmbedMediaUrl] = useState("")
   const [busy, setBusy] = useState(false)
   const [cats, setCats] = useState<string[]>(CATS)
   const [linkUrl, setLinkUrl] = useState("")
@@ -247,6 +248,7 @@ export default function AdminPage() {
 
   function resetForm() {
     setLinkUrl("")
+    setEmbedMediaUrl("")
     setEditId(null); setTitle(""); setHeading(""); setBody("")
     setCategory(CATS[0]); setSelectedClubId(""); setAuthor(me?.full_name || ""); setOldImage(null)
     setOldVideo(null); setVideoFile(null)
@@ -256,6 +258,10 @@ export default function AdminPage() {
   async function submit() {
     if (!title.trim() || !body.trim()) {
       setMsg("শিরোনাম ও ক্যাপশন লিখুন")
+      return
+    }
+    if (embedMediaUrl.trim() && !/^https?:\/\//i.test(embedMediaUrl.trim())) {
+      setMsg("❌ ভিডিও/ছবির লিংক http:// বা https:// দিয়ে শুরু হতে হবে")
       return
     }
     setBusy(true)
@@ -283,6 +289,7 @@ export default function AdminPage() {
         image_url: cover,
         video_url: vurl,
         link_url: linkUrl.trim() || null,
+        embed_media_url: embedMediaUrl.trim() || null,
         hidden: false,
       }
 
@@ -317,6 +324,7 @@ export default function AdminPage() {
     setOldImage(p.image_url)
     setOldVideo(p.video_url || null)
     setLinkUrl(p.link_url || "")
+    setEmbedMediaUrl((p as any).embed_media_url || "")
     setVideoFile(null)
     window.scrollTo({ top: 0, behavior: "smooth" })
     const rows = await imgs.load(p.id)
@@ -433,7 +441,6 @@ export default function AdminPage() {
               <button onClick={() => setTab("faculties")} className={tabCls("faculties")}>অনুষদ ও বিভাগ</button>
               <button onClick={() => setTab("associations")} className={tabCls("associations")}>অন্যান্য সমিতি</button>
               <button onClick={() => setTab("social_sites")} className={tabCls("social_sites")}>সোশ্যাল সাইট</button>
-              {/* ⭐ নতুন প্রশাসন ট্যাব ⭐ */}
               <button onClick={() => setTab("administration")} className={tabCls("administration")}>প্রশাসন</button>
               <button onClick={() => setTab("limits")} className={tabCls("limits")}>হোম সেটিং</button>
             </>
@@ -475,7 +482,24 @@ export default function AdminPage() {
               )}
 
               <input className={inp} placeholder="প্রতিবেদকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
-              <input className={inp} placeholder="লিংক (ঐচ্ছিক)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
+              
+              {/* ⭐ নতুন: সংবাদে ইউটিউব, ফেসবুক বা ছবির লিংক দেওয়ার ঐচ্ছিক বক্স ⭐ */}
+              <div className="space-y-1 rounded-xl border border-emerald-300 bg-emerald-50/60 p-3">
+                <label className="text-xs font-bold text-emerald-900 block">
+                  🎥 ভিডিও / ছবির লিংক (YouTube, Facebook ভিডিও বা ছবির সরাসরি লিংক - ঐচ্ছিক):
+                </label>
+                <input
+                  className={inp}
+                  placeholder="যেমন: https://youtube.com/watch?v=... বা ফেসবুক ভিডিও লিংক"
+                  value={embedMediaUrl}
+                  onChange={(e) => setEmbedMediaUrl(e.target.value)}
+                />
+                <p className="text-[11px] text-emerald-700">
+                  💡 লিংক দিলে সংবাদের বিস্তারিত পেজ ও কার্ডে লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবি দেখাবে।
+                </p>
+              </div>
+
+              <input className={inp} placeholder="অন্য ওয়েবসাইটের লিঙ্ক (ঐচ্ছিক)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
 
               {oldImage && (
                 <div className="relative">
@@ -522,9 +546,16 @@ export default function AdminPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate">{p.hidden ? "🙈 " : ""}{p.title}</p>
-                    <p className="text-xs text-gray-500">
-                      {p.author} · {new Date(p.created_at).toLocaleDateString("bn-BD")}
-                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-gray-500">
+                        {p.author} · {new Date(p.created_at).toLocaleDateString("bn-BD")}
+                      </span>
+                      {p.embed_media_url && (
+                        <span className="text-[10px] bg-blue-100 text-blue-800 rounded-full px-1.5 py-0.2 font-semibold">
+                          🎥 মিডিয়া
+                        </span>
+                      )}
+                    </div>
                     {canManage(p) && (
                       <div className="flex gap-4 mt-2 text-sm">
                         <button onClick={() => startEdit(p)} className="text-green-700">এডিট</button>
@@ -557,10 +588,7 @@ export default function AdminPage() {
         {tab === "faculties" && isAdmin && <FacultyManager token={token} shrink={shrink} />}
         {tab === "associations" && isAdmin && <AssociationManager token={token} shrink={shrink} />}
         {tab === "social_sites" && isAdmin && <SocialSiteManager token={token} shrink={shrink} />}
-
-        {/* ⭐ নতুন প্রশাসন ম্যানেজার রেন্ডার ⭐ */}
         {tab === "administration" && isAdmin && <AdministrationManager token={token} shrink={shrink} />}
-
         {tab === "limits" && isAdmin && <SectionLimits token={token} cats={cats} />}
         {tab === "directors" && isAdmin && <DirectorManager token={token} members={active} onChanged={() => refresh(token, me)} />}
         {tab === "categories" && isAdmin && <CategoryManager token={token} onChanged={() => refresh(token, me)} />}
