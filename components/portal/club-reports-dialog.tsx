@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from 'react'
 import { ArrowRight, CalendarDays, Check, Globe, Mail, Newspaper, Share2, UserRound, Users, X } from 'lucide-react'
 import type { Club } from '@/lib/data'
 import { getClubNewsPosts, type ClubItem } from '@/lib/clubs'
+import { UniversalMediaEmbed } from './universal-media-embed'
 
 export function ClubReportsDialog({
   club,
@@ -16,7 +17,7 @@ export function ClubReportsDialog({
 }) {
   const titleId = useId()
   const [copied, setCopied] = useState(false)
-  const [liveNews, setLiveNews] = useState<Array<{ id: string; title: string; created_at: string; author: string; image_url: string | null }>>([])
+  const [liveNews, setLiveNews] = useState<Array<{ id: string; title: string; created_at: string; author: string; image_url: string | null; embed_media_url?: string | null }>>([])
 
   useEffect(() => {
     if (!club) return
@@ -25,7 +26,6 @@ export function ClubReportsDialog({
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
 
-    // এই ক্লাবের সব প্রকাশিত খবর ডাটাবেস থেকে আনা
     getClubNewsPosts(club.id).then(setLiveNews)
 
     return () => {
@@ -42,7 +42,6 @@ export function ClubReportsDialog({
   const reportsHeading = rawClub?.reports_title || "Club Reports / ক্লাব প্রতিবেদন"
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/?club=${club.id}` : ''
 
-  // শেয়ার হ্যান্ডলার
   async function handleShare() {
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
@@ -102,7 +101,7 @@ export function ClubReportsDialog({
                 {club.name.charAt(0)}
               </div>
             )}
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <span className="rounded-full bg-gold/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-navy">
                 {club.tag}
               </span>
@@ -183,9 +182,9 @@ export function ClubReportsDialog({
             </div>
           </div>
 
-          {/* পরিচিতি ও কার্যক্রম */}
-          {(club.activity || club.activityBn) && (
-            <div className="rounded-2xl border p-4 bg-white space-y-1">
+          {/* ১. পরিচিতি ও কার্যক্রম (লেখা ওপরে থাকবে) */}
+          {(club.activity || club.activityBn || rawClub?.embed_media_url) && (
+            <div className="rounded-2xl border p-4 bg-white space-y-2">
               <p className="text-[11px] font-bold uppercase tracking-wider text-brand">পরিচিতি ও সাম্প্রতিক কার্যক্রম</p>
               {club.activity && <p className="text-sm text-navy leading-relaxed">{club.activity}</p>}
               {club.activityBn && <p className="text-xs text-muted-foreground leading-relaxed pt-1">{club.activityBn}</p>}
@@ -193,6 +192,11 @@ export function ClubReportsDialog({
                 <p className="pt-2 text-xs text-muted-foreground inline-flex items-center gap-1">
                   <CalendarDays className="size-3.5 text-gold" /> {club.date}
                 </p>
+              )}
+
+              {/* ⭐ ২. লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবির প্রিভিউ দেখাবে ⭐ */}
+              {rawClub?.embed_media_url && (
+                <UniversalMediaEmbed url={rawClub.embed_media_url} title={club.name} />
               )}
             </div>
           )}
@@ -229,7 +233,7 @@ export function ClubReportsDialog({
             </div>
           )}
 
-          {/* ==================== ক্লাব প্রতিবেদন / স্বয়ংক্রিয় লাইভ সংবাদ ==================== */}
+          {/* ক্লাব প্রতিবেদন / স্বয়ংক্রিয় লাইভ সংবাদ */}
           <div>
             <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-brand border-b pb-2">
               <Newspaper className="size-4" aria-hidden="true" />
@@ -237,7 +241,6 @@ export function ClubReportsDialog({
             </h3>
 
             <ul className="mt-3 space-y-3">
-              {/* এই ক্লাবের নামে পোস্ট করা সব লাইভ সংবাদ */}
               {liveNews.map((p) => (
                 <li key={p.id} className="rounded-2xl border border-border p-4 transition-all hover:border-brand bg-white shadow-sm hover:shadow-md">
                   <a href={`/post/${p.id}`} className="block group">
@@ -263,7 +266,6 @@ export function ClubReportsDialog({
                 </li>
               ))}
 
-              {/* অ্যাডমিন থেকে যুক্ত করা ম্যানুয়াল প্রতিবেদন (যদি থাকে) */}
               {club.reports.map((r, i) => (
                 <li key={`manual-${i}`} className="rounded-2xl border border-border p-4 transition-colors hover:border-brand bg-white shadow-sm">
                   <p className="font-serif font-bold leading-snug text-navy text-sm sm:text-base">{r.title}</p>
