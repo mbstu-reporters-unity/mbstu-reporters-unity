@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import type { HeroSlide, SubMediaItem, IndependentTextItem } from '@/lib/hero'
+import type { HeroSlide, SubMediaItem } from '@/lib/hero'
 import { parseVideoUrl } from '@/lib/hero'
 import { Volume2, VolumeX, Play, Pause, Calendar, User, ExternalLink } from 'lucide-react'
 
@@ -10,9 +10,10 @@ interface HeroMediaRendererProps {
   item?: SubMediaItem | null
   fitMode?: 'contain' | 'cover'
   isActive: boolean
+  onVideoStateChange?: (isPlaying: boolean) => void
+  onVideoEnd?: () => void
 }
 
-// ব্যানার গ্রেডিয়েন্ট ও সলিড কালার জেনারেটর
 function getBannerBackground(slide?: HeroSlide | null, item?: SubMediaItem | null) {
   if (slide?.banner_config) {
     const cfg = slide.banner_config
@@ -45,6 +46,8 @@ export function HeroMediaRenderer({
   item,
   fitMode = 'contain',
   isActive,
+  onVideoStateChange,
+  onVideoEnd,
 }: HeroMediaRendererProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [muted, setMuted] = useState(true)
@@ -55,38 +58,49 @@ export function HeroMediaRenderer({
   const parsedVideo = parseVideoUrl(videoUrl)
   const imageUrl = item?.url || (slide?.media_items?.[0] as any)?.url || ''
 
-  // ব্যানার প্রস্থ ও উচ্চতা
   const bannerWidth = slide?.banner_config?.width_pct ?? 100
   const bannerHeight = slide?.banner_config?.height_px ?? 480
 
-  // স্লাইড সরে গেলে স্বয়ংক্রিয়ভাবে ভিডিও পজ ও মিউট হবে
   useEffect(() => {
     const v = videoRef.current
     if (!v) return
     if (isActive) {
-      v.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false))
+      v.play()
+        .then(() => {
+          setIsPlaying(true)
+          onVideoStateChange?.(true)
+        })
+        .catch(() => {
+          setIsPlaying(false)
+          onVideoStateChange?.(false)
+        })
     } else {
       v.pause()
       v.muted = true
       setMuted(true)
       setIsPlaying(false)
+      onVideoStateChange?.(false)
     }
-  }, [isActive])
+  }, [isActive, onVideoStateChange])
 
-  // হোমপেজ থেকেই ভিডিও প্লে/পজ টগল
   const togglePlayPause = (e: React.MouseEvent) => {
     e.stopPropagation()
     const v = videoRef.current
     if (!v) return
     if (v.paused) {
-      v.play().then(() => setIsPlaying(true)).catch(() => {})
+      v.play()
+        .then(() => {
+          setIsPlaying(true)
+          onVideoStateChange?.(true)
+        })
+        .catch(() => {})
     } else {
       v.pause()
       setIsPlaying(false)
+      onVideoStateChange?.(false)
     }
   }
 
-  // সাউন্ড অন/অফ টগল
   const toggleSound = (e: React.MouseEvent) => {
     e.stopPropagation()
     const v = videoRef.current
@@ -98,7 +112,6 @@ export function HeroMediaRenderer({
 
   return (
     <div className="relative w-full h-full flex items-center justify-center overflow-hidden select-none bg-slate-950">
-      {/* ব্যানার কন্টেইনার (দৈর্ঘ্য ও প্রস্থ উভয়ের নিয়ন্ত্রণ সহ) */}
       <div
         className="relative h-full transition-all duration-500 overflow-hidden"
         style={{
@@ -107,7 +120,7 @@ export function HeroMediaRenderer({
           maxHeight: `${bannerHeight}px`,
         }}
       >
-        {/* ================= ১. কালার ব্যানার ================= */}
+        {/* ১. কালার ব্যানার */}
         {type === 'color' && (
           <div
             className="w-full h-full transition-all duration-700"
@@ -115,7 +128,7 @@ export function HeroMediaRenderer({
           />
         )}
 
-        {/* ================= ২. ছবি ব্যানার ================= */}
+        {/* ২. ছবি ব্যানার */}
         {type === 'image' && (
           <div className="relative w-full h-full flex items-center justify-center bg-black/90">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -131,11 +144,10 @@ export function HeroMediaRenderer({
           </div>
         )}
 
-        {/* ================= ৩. ভিডিও ও ভিডিও লিংক ================= */}
+        {/* ৩. ভিডিও ব্যানার */}
         {type === 'video' && (
           <div className="relative w-full h-full flex items-center justify-center bg-black">
             {parsedVideo.isEmbed ? (
-              // ইউটিউব বা ফেসবুক এম্বেড প্লেয়ার
               isActive ? (
                 <iframe
                   src={`${parsedVideo.embedSrc}&autoplay=1&mute=1`}
@@ -150,18 +162,21 @@ export function HeroMediaRenderer({
                 </div>
               )
             ) : (
-              // সরাসরি MP4 ভিডিও
               <>
                 <video
                   ref={videoRef}
                   src={videoUrl}
                   playsInline
-                  loop
+                  loop={false}
                   muted={muted}
+                  onEnded={() => {
+                    setIsPlaying(false)
+                    onVideoStateChange?.(false)
+                    onVideoEnd?.()
+                  }}
                   className="w-full h-full object-contain pointer-events-auto"
                   onClick={togglePlayPause}
                 />
-                {/* সরাসরি হোমপেজ থেকেই প্লে/পজ করার ভাসমান বাটন */}
                 <div className="absolute top-4 left-4 z-30 flex items-center gap-2">
                   <button
                     type="button"
@@ -185,26 +200,11 @@ export function HeroMediaRenderer({
           </div>
         )}
 
-        {/* ================= ৪. লিঙ্ক প্রিভিউ ================= */}
-        {type === 'link_preview' && (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-black p-6">
-            <div className="max-w-md w-full bg-slate-900/90 border border-slate-700 rounded-2xl p-5 shadow-2xl text-center space-y-2">
-              <span className="text-xs text-green-400 font-bold px-3 py-1 bg-green-950/60 rounded-full border border-green-800">
-                🔗 লিঙ্ক প্রিভিউ
-              </span>
-              <p className="text-sm font-bold text-white truncate">{item?.external_url || slide?.link_url || 'ওয়েব লিঙ্ক'}</p>
-            </div>
-          </div>
-        )}
-
-        {/* ================= ৫. প্রতিটি স্বাধীন টেক্সট বক্স রেন্ডারিং ================= */}
+        {/* ৪. স্বাধীন টেক্সট লেয়ারসমূহ (পূর্বের মতোই অক্ষত) */}
         {slide?.text_layers && slide.text_layers.length > 0 ? (
           <div className="absolute inset-0 pointer-events-none">
             {slide.text_layers.map((layer: any, idx: number) => {
-              // যদি বক্সটি নিষ্ক্রিয় থাকে বা কোনো লেখা না থাকে তবে রেন্ডার হবে না
               if (layer.enabled === false) return null
-
-              // নতুন ফরম্যাট (স্বাধীন টেক্সট আইটেম) অথবা পুরোনো ফরম্যাট উভয়ই সাপোর্ট করবে
               const displayText = layer.text || layer.title || ''
               if (!displayText && !layer.subtitle && !layer.description) return null
 
@@ -242,7 +242,6 @@ export function HeroMediaRenderer({
                         textAlign: align,
                       }}
                     >
-                      {/* ১. নতুন স্বাধীন টেক্সট রেন্ডারার */}
                       {layer.text && (
                         <div
                           className={`leading-tight drop-shadow-lg ${
@@ -258,22 +257,10 @@ export function HeroMediaRenderer({
                           {layer.text}
                         </div>
                       )}
-
-                      {/* ২. পুরোনো পোস্টের ব্যাকওয়ার্ড কম্প্যাটিবিলিটি */}
                       {!layer.text && layer.title && (
                         <h2 className="font-bold text-lg sm:text-2xl drop-shadow-lg leading-tight">
                           {layer.title}
                         </h2>
-                      )}
-                      {!layer.text && layer.subtitle && (
-                        <h3 className="text-xs sm:text-sm opacity-90 mt-1 drop-shadow">
-                          {layer.subtitle}
-                        </h3>
-                      )}
-                      {!layer.text && layer.description && (
-                        <p className="text-[11px] sm:text-xs opacity-80 mt-1 line-clamp-3 drop-shadow">
-                          {layer.description}
-                        </p>
                       )}
                     </div>
                   </div>
@@ -283,7 +270,7 @@ export function HeroMediaRenderer({
           </div>
         ) : null}
 
-        {/* ক্লিক লিঙ্ক বাটন (যদি দেওয়া থাকে) */}
+        {/* লিঙ্ক বোতাম */}
         {slide?.link_url && (
           <a
             href={slide.link_url}
