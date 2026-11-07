@@ -11,6 +11,7 @@ import { getImagesMetaForMany, getLayoutsForMany } from "../../lib/sb"
 import RichGallery from "../../components/portal/rich-gallery"
 import type { GalleryItem } from "../../components/portal/rich-gallery"
 import { FormattedText } from "../../components/portal/formatted-text"
+import { UniversalMediaEmbed } from "../../components/portal/universal-media-embed"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const safeUrl = (u: string | null) => !!u && /^https?:\/\//i.test(u)
@@ -97,7 +98,6 @@ function NoticeCard({
     } catch {}
   }
 
-  // একাধিক ছবি (image_urls বা items উভয় থেকেই নেওয়া)
   const allImages = items.length > 0 ? items : (n.image_urls || []).map((u) => ({ url: u }))
 
   return (
@@ -112,11 +112,13 @@ function NoticeCard({
         {n.ref_number && <span className="text-gray-500">Ref: {n.ref_number}</span>}
       </div>
 
+      {/* ১. প্রধান শিরোনাম ও উপশিরোনাম */}
       <div>
         <h2 className="text-lg font-bold">{n.title}</h2>
         {n.heading && <p className="text-gray-600">{n.heading}</p>}
       </div>
 
+      {/* ২. বিস্তারিত লেখা */}
       {n.body && (
         <div>
           <div className={long && !more ? "line-clamp-5" : ""}>
@@ -128,6 +130,11 @@ function NoticeCard({
             </button>
           )}
         </div>
+      )}
+
+      {/* ⭐ ৩. লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবির প্রিভিউ দেখাবে ⭐ */}
+      {n.embed_media_url && (
+        <UniversalMediaEmbed url={n.embed_media_url} title={n.title} />
       )}
 
       {/* একাধিক ছবির গ্যালারি */}
