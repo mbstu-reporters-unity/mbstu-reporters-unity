@@ -6,6 +6,7 @@ import { getPost, getApprovedComments, getImagesMeta, getLayout } from '@/lib/sb
 import { CommentForm } from '@/components/portal/comment-form'
 import RichGallery from '@/components/portal/rich-gallery'
 import { FormattedText } from '@/components/portal/formatted-text'
+import { UniversalMediaEmbed } from '@/components/portal/universal-media-embed'
 
 export const dynamic = 'force-dynamic'
 
@@ -87,18 +88,32 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       <article className="mx-auto max-w-2xl space-y-4">
         <a href="/" className="text-sm underline">← হোম</a>
         <p className="text-xs font-bold text-green-700">{post.category}</p>
-        <h1 className="font-serif text-2xl font-bold">{post.title}</h1>
+        
+        {/* ১. প্রধান শিরোনাম */}
+        <h1 className="font-serif text-2xl font-bold text-navy">{post.title}</h1>
+        
+        {/* ২. উপশিরোনাম (হেডিং) */}
         {post.heading && <p className="text-lg text-gray-600">{post.heading}</p>}
+        
         <p className="text-xs text-gray-500">
           {post.author} · {new Date(post.created_at).toLocaleDateString('bn-BD')}
         </p>
+
+        {/* আপলোড করা ফটো গ্যালারি বা কভার ফটো */}
         <RichGallery items={items} layout={layout} />
+
+        {/* আপলোড করা নিজস্ব এমপি৪ ভিডিও (যদি থাকে) */}
         {post.video_url && (
           <video src={post.video_url} controls playsInline className="w-full rounded-xl bg-black" />
         )}
         
-        {/* ⭐ এখানে FormattedText যুক্ত করা হয়েছে যাতে টেক্সট স্টুডিওর গ্রেডিয়েন্ট ও ফরম্যাটিং নিখুঁতভাবে প্রদর্শিত হয় ⭐ */}
+        {/* ৩. বিস্তারিত লেখা */}
         <FormattedText text={post.body} className="text-base text-navy/90" />
+
+        {/* ⭐ ৪. নতুন: লেখার ঠিক নিচে স্বয়ংক্রিয় ইউটিউব, ফেসবুক বা সরাসরি ভিডিও/ছবির প্লেয়ার ⭐ */}
+        {post.embed_media_url && (
+          <UniversalMediaEmbed url={post.embed_media_url} title={post.title} />
+        )}
         
         <ReactionBar postId={id} title={post.title} />
 
