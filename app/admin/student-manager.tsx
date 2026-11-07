@@ -31,6 +31,7 @@ export default function StudentManager({
   const [dept, setDept] = useState("")
   const [batch, setBatch] = useState("")
   const [link, setLink] = useState("")
+  const [embedMediaUrl, setEmbedMediaUrl] = useState("")
   const [featured, setFeatured] = useState(false)
   const [order, setOrder] = useState("0")
   const [oldImage, setOldImage] = useState<string | null>(null)
@@ -60,7 +61,7 @@ export default function StudentManager({
 
   function reset() {
     setEditId(null); setKind(kinds[0] || DEFAULT_KINDS[0]); setTitle(""); setExcerpt(""); setAuthor("")
-    setDept(""); setBatch(""); setLink(""); setFeatured(false); setOrder("0")
+    setDept(""); setBatch(""); setLink(""); setEmbedMediaUrl(""); setFeatured(false); setOrder("0")
     setOldImage(null)
     imgs.reset()
   }
@@ -68,7 +69,8 @@ export default function StudentManager({
   async function edit(it: StudentItem) {
     setEditId(it.id); setKind(it.kind); setTitle(it.title); setExcerpt(it.excerpt || "")
     setAuthor(it.author || ""); setDept(it.dept || ""); setBatch(it.batch || "")
-    setLink(it.link_url || ""); setFeatured(it.featured); setOrder(String(it.sort_order))
+    setLink(it.link_url || ""); setEmbedMediaUrl(it.embed_media_url || "")
+    setFeatured(it.featured); setOrder(String(it.sort_order))
     setOldImage(it.image_url)
     window.scrollTo({ top: 0, behavior: "smooth" })
     const rows = await imgs.load(it.id)
@@ -142,6 +144,10 @@ export default function StudentManager({
       setMsg("শিরোনাম লিখুন")
       return
     }
+    if (embedMediaUrl.trim() && !/^https?:\/\//i.test(embedMediaUrl.trim())) {
+      setMsg("❌ ভিডিও/ছবির লিংক http:// বা https:// দিয়ে শুরু হতে হবে")
+      return
+    }
     setBusy(true)
     setMsg("")
     try {
@@ -157,6 +163,7 @@ export default function StudentManager({
         batch: batch.trim() || null,
         image_url: cover,
         link_url: link.trim() || null,
+        embed_media_url: embedMediaUrl.trim() || null,
         featured,
         sort_order: Number(order) || 0,
       })
@@ -213,7 +220,6 @@ export default function StudentManager({
             {kinds.map((k) => <option key={k} value={k}>{k}</option>)}
           </select>
 
-          {/* ক্যাটাগরি ম্যানেজ করার ছোট প্যানেল */}
           {showKindManager && (
             <div className="bg-gray-50 border border-green-200 rounded-xl p-3 space-y-2 text-sm">
               <div className="flex justify-between items-center pb-1 border-b">
@@ -254,10 +260,27 @@ export default function StudentManager({
         </div>
 
         <input className={inp} placeholder="শিরোনাম *" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <textarea className={inp} rows={3} placeholder="সংক্ষিপ্ত বিবরণ (বড় কার্ডে দেখাবে)" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} />
+        <textarea className={inp} rows={3} placeholder="সংক্ষিপ্ত বিবরণ বা মূল লেখা" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} />
         <input className={inp} placeholder="লেখকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
         <input className={inp} placeholder="বিভাগ (যেমন: Pharmacy)" value={dept} onChange={(e) => setDept(e.target.value)} />
         <input className={inp} placeholder="ব্যাচ (যেমন: 18th Batch)" value={batch} onChange={(e) => setBatch(e.target.value)} />
+
+        {/* ⭐ নতুন: ইউটিউব, ফেসবুক বা ছবির লিংক দেওয়ার ঐচ্ছিক বক্স ⭐ */}
+        <div className="space-y-1 rounded-xl border border-emerald-300 bg-emerald-50/60 p-3">
+          <label className="text-xs font-bold text-emerald-900 block">
+            🎥 ভিডিও / ছবির লিংক (YouTube, Facebook ভিডিও বা ছবির সরাসরি লিংক - ঐচ্ছিক):
+          </label>
+          <input
+            className={inp}
+            placeholder="যেমন: https://youtube.com/watch?v=... বা ফেসবুক ভিডিও লিংক"
+            value={embedMediaUrl}
+            onChange={(e) => setEmbedMediaUrl(e.target.value)}
+          />
+          <p className="text-[11px] text-emerald-700">
+            💡 লিংক দিলে স্টুডেন্ট কর্নারে লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবি দেখাবে।
+          </p>
+        </div>
+
         <input className={inp} placeholder="লিংক (ঐচ্ছিক): /post/... অথবা https://..." value={link} onChange={(e) => setLink(e.target.value)} />
 
         {oldImage && (
@@ -291,8 +314,12 @@ export default function StudentManager({
       <div className="space-y-3">
         {items.map((it) => (
           <div key={it.id} className="bg-white rounded-2xl shadow p-3 text-sm">
-            <p className="text-xs font-bold text-red-700">{it.kind}{it.featured ? " · ⭐ বড় কার্ড" : ""}</p>
-            <p className="font-semibold">{it.hidden ? "🙈 " : ""}{it.title}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-red-700">{it.kind}</span>
+              {it.featured && <span className="text-xs bg-yellow-100 text-yellow-800 rounded-full px-2 py-0.5">⭐ বড় কার্ড</span>}
+              {it.embed_media_url && <span className="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-0.5">🎥 মিডিয়া</span>}
+            </div>
+            <p className="font-semibold mt-1">{it.hidden ? "🙈 " : ""}{it.title}</p>
             <p className="text-xs text-gray-500">{it.author} {it.dept ? "· " + it.dept : ""}</p>
             <div className="flex gap-4 mt-2">
               <button onClick={() => edit(it)} className="text-green-700">এডিট</button>
