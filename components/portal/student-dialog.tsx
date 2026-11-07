@@ -5,6 +5,7 @@ import { X, Share2, Check, GraduationCap, CalendarDays, MessageSquareQuote, Feat
 import type { StudentItem } from '@/lib/sb'
 import { getImages } from '@/lib/sb'
 import { ReactionBar } from './reaction-bar'
+import { UniversalMediaEmbed } from './universal-media-embed'
 
 const kindIcons: Record<string, any> = {
   Opinion: MessageSquareQuote,
@@ -126,12 +127,12 @@ export function StudentDialog({
         </div>
 
         <div className="p-5 sm:p-6 space-y-4">
-          {/* শিরোনাম */}
+          {/* ১. প্রধান শিরোনাম */}
           <h2 className="font-serif text-xl sm:text-2xl font-bold leading-snug text-navy">
             {item.title}
           </h2>
 
-          {/* লেখক পরিচিতি */}
+          {/* লেখক পরিচিতি ও তারিখ */}
           <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 pb-3 text-xs text-muted-foreground">
             {item.author && <span className="font-bold text-navy text-sm">{item.author}</span>}
             {item.dept && (
@@ -150,7 +151,7 @@ export function StudentDialog({
             </span>
           </div>
 
-          {/* ছবি / ছবির গ্যালারি */}
+          {/* আপলোড করা ছবিসমূহ */}
           {images.length > 0 && (
             <div className="space-y-2">
               {images.map((src, i) => (
@@ -165,11 +166,16 @@ export function StudentDialog({
             </div>
           )}
 
-          {/* মূল লেখা / বিবরণ */}
+          {/* ২. বিস্তারিত লেখা */}
           {item.excerpt && (
             <div className="whitespace-pre-line text-sm sm:text-base leading-relaxed text-navy/90 py-2">
               {item.excerpt}
             </div>
+          )}
+
+          {/* ⭐ ৩. লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবির প্রিভিউ দেখাবে ⭐ */}
+          {item.embed_media_url && (
+            <UniversalMediaEmbed url={item.embed_media_url} title={item.title} />
           )}
 
           {/* বহিঃস্থ লিংক (যদি থাকে) */}
