@@ -11,6 +11,7 @@ export type ClubReportItem = {
   date: string
   reporter: string
   link_url?: string | null
+  embed_media_url?: string | null
 }
 
 export type ClubItem = {
@@ -26,6 +27,7 @@ export type ClubItem = {
   fb_url: string | null
   yt_url: string | null
   web_url: string | null
+  embed_media_url?: string | null
   committee_term?: string | null
   committee_members?: CommitteeMember[] | null
   reports_title?: string | null
@@ -101,7 +103,7 @@ export async function deleteCampusClub(token: string, id: string) {
 export async function getClubNewsPosts(clubId: string) {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/posts?select=id,title,created_at,author,image_url&or=(hidden.is.null,hidden.eq.false)&club_id=eq.${encodeURIComponent(clubId)}&order=created_at.desc&limit=50`,
+      `${SB_URL}/rest/v1/posts?select=id,title,created_at,author,image_url,embed_media_url&or=(hidden.is.null,hidden.eq.false)&club_id=eq.${encodeURIComponent(clubId)}&order=created_at.desc&limit=50`,
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
