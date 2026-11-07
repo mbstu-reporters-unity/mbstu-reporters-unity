@@ -10,7 +10,7 @@ interface HeroMediaRendererProps {
   item?: SubMediaItem | null
   fitMode?: 'contain' | 'cover'
   isActive: boolean
-  isCompact?: boolean // ছোট ৫০% স্প্লিটের জন্য বিশেষ ফ্ল্যাগ
+  isCompact?: boolean
   onVideoStateChange?: (isPlaying: boolean) => void
   onVideoEnd?: () => void
 }
@@ -52,6 +52,7 @@ export function HeroMediaRenderer({
   onVideoEnd,
 }: HeroMediaRendererProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
   const [muted, setMuted] = useState(true)
   const [isPlaying, setIsPlaying] = useState(true)
 
@@ -63,28 +64,41 @@ export function HeroMediaRenderer({
   const bannerWidth = slide?.banner_config?.width_pct ?? 100
   const bannerHeight = slide?.banner_config?.height_px ?? 480
 
+  // স্লাইড সক্রিয় বা নিষ্ক্রিয় হলে ভিডিও নিয়ন্ত্রণ
   useEffect(() => {
-    const v = videoRef.current
-    if (!v) return
     if (isActive) {
-      v.play()
-        .then(() => {
-          setIsPlaying(true)
-          onVideoStateChange?.(true)
-        })
-        .catch(() => {
-          setIsPlaying(false)
-          onVideoStateChange?.(false)
-        })
+      if (videoRef.current) {
+        videoRef.current
+          .play()
+          .then(() => {
+            setIsPlaying(true)
+            onVideoStateChange?.(true)
+          })
+          .catch(() => {
+            setIsPlaying(false)
+            onVideoStateChange?.(false)
+          })
+      }
     } else {
-      v.pause()
-      v.muted = true
-      setMuted(true)
-      setIsPlaying(false)
+      // স্লাইড সরে গেলে ভিডিও পজ হবে
+      if (videoRef.current) {
+        videoRef.current.pause()
+        videoRef.current.muted = true
+        setMuted(true)
+        setIsPlaying(false)
+      }
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
+          '*'
+        )
+        setIsPlaying(false)
+      }
       onVideoStateChange?.(false)
     }
   }, [isActive, onVideoStateChange])
 
+  // সরাসরি ভিডিও ফাইল (MP4) প্লে/পজ
   const togglePlayPause = (e: React.MouseEvent) => {
     e.stopPropagation()
     const v = videoRef.current
@@ -103,6 +117,7 @@ export function HeroMediaRenderer({
     }
   }
 
+  // সরাসরি ভিডিও সাউন্ড মিউট/আনমিউট
   const toggleSound = (e: React.MouseEvent) => {
     e.stopPropagation()
     const v = videoRef.current
@@ -112,7 +127,50 @@ export function HeroMediaRenderer({
     }
   }
 
-  // টেক্সট লেয়ারগুলো আলাদা করা
+  // ইউটিউব/ফেসবুক এম্বেড ভিডিওর জন্য প্লে/পজ টগল
+  const toggleEmbedPlayPause = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const iframe = iframeRef.current
+    if (!iframe?.contentWindow) return
+
+    if (isPlaying) {
+      iframe.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
+        '*'
+      )
+      setIsPlaying(false)
+      onVideoStateChange?.(false)
+    } else {
+      iframe.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
+        '*'
+      )
+      setIsPlaying(true)
+      onVideoStateChange?.(true)
+    }
+  }
+
+  // ইউটিউব এম্বেড ভিডিওর সাউন্ড টগল
+  const toggleEmbedSound = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const iframe = iframeRef.current
+    if (!iframe?.contentWindow) return
+
+    if (muted) {
+      iframe.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'unMute', args: [] }),
+        '*'
+      )
+      setMuted(false)
+    } else {
+      iframe.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'mute', args: [] }),
+        '*'
+      )
+      setMuted(true)
+    }
+  }
+
   const layers = slide?.text_layers || []
   const titleLayer = layers.find((l: any) => l.enabled && (l.id === 'txt_title' || l.label?.includes('শিরোনাম'))) || layers[0]
   const subtitleLayer = layers.find((l: any) => l.enabled && (l.id === 'txt_subtitle' || l.label?.includes('সাব-হেডিং')))
@@ -154,18 +212,39 @@ export function HeroMediaRenderer({
           </div>
         )}
 
-        {/* ৩. ভিডিও ব্যানার */}
+        {/* ৩. ভিডিও ব্যানার (ইউটিউব ও ডিরেক্ট ভিডিও) */}
         {type === 'video' && (
           <div className="relative w-full h-full flex items-center justify-center bg-black">
             {parsedVideo.isEmbed ? (
               isActive ? (
-                <iframe
-                  src={`${parsedVideo.embedSrc}&autoplay=1&mute=1`}
-                  className="w-full h-full aspect-video border-0 pointer-events-auto"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Video Player"
-                />
+                <>
+                  <iframe
+                    ref={iframeRef}
+                    src={`${parsedVideo.embedSrc}&autoplay=1&mute=1`}
+                    className="w-full h-full aspect-video border-0 pointer-events-auto z-10"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="Video Player"
+                  />
+                  {/* ইউটিউব প্লেয়ারের নিজস্ব কন্ট্রোল ছাড়াও সরাসরি টগল করার বোতাম */}
+                  <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5 pointer-events-auto">
+                    <button
+                      type="button"
+                      onClick={toggleEmbedPlayPause}
+                      className="px-2.5 py-1 rounded-full bg-black/75 hover:bg-black text-white transition-all border border-white/20 shadow-lg flex items-center gap-1 text-[11px] font-semibold cursor-pointer active:scale-95"
+                    >
+                      {isPlaying ? <Pause className="size-3 text-yellow-400" /> : <Play className="size-3 text-green-400" />}
+                      <span>{isPlaying ? 'পজ' : 'চালান'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleEmbedSound}
+                      className="p-1.5 rounded-full bg-black/75 hover:bg-black text-white transition-all border border-white/20 shadow-lg cursor-pointer active:scale-95"
+                    >
+                      {muted ? <VolumeX className="size-3 text-red-400" /> : <Volume2 className="size-3 text-green-400" />}
+                    </button>
+                  </div>
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-slate-950 text-white/40 text-xs">
                   ভিডিও পজ করা
@@ -184,23 +263,24 @@ export function HeroMediaRenderer({
                     onVideoStateChange?.(false)
                     onVideoEnd?.()
                   }}
-                  className="w-full h-full object-contain pointer-events-auto"
+                  className="w-full h-full object-contain pointer-events-auto z-10"
                   onClick={togglePlayPause}
                 />
-                <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5">
+                <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5 pointer-events-auto">
                   <button
                     type="button"
                     onClick={togglePlayPause}
-                    className="p-1.5 rounded-full bg-black/60 text-white hover:bg-black/90 transition-all border border-white/20 shadow cursor-pointer"
+                    className="px-2.5 py-1 rounded-full bg-black/75 hover:bg-black text-white transition-all border border-white/20 shadow-lg flex items-center gap-1 text-[11px] font-semibold cursor-pointer active:scale-95"
                   >
-                    {isPlaying ? <Pause className="size-3.5 text-yellow-400" /> : <Play className="size-3.5 text-green-400" />}
+                    {isPlaying ? <Pause className="size-3 text-yellow-400" /> : <Play className="size-3 text-green-400" />}
+                    <span>{isPlaying ? 'পজ' : 'চালান'}</span>
                   </button>
                   <button
                     type="button"
                     onClick={toggleSound}
-                    className="p-1.5 rounded-full bg-black/60 text-white hover:bg-black/90 transition-all border border-white/20 shadow cursor-pointer"
+                    className="p-1.5 rounded-full bg-black/75 hover:bg-black text-white transition-all border border-white/20 shadow-lg cursor-pointer active:scale-95"
                   >
-                    {muted ? <VolumeX className="size-3.5 text-red-400" /> : <Volume2 className="size-3.5 text-green-400" />}
+                    {muted ? <VolumeX className="size-3 text-red-400" /> : <Volume2 className="size-3 text-green-400" />}
                   </button>
                 </div>
               </>
@@ -208,11 +288,9 @@ export function HeroMediaRenderer({
           </div>
         )}
 
-        {/* ================= ৪. টেক্সট রেন্ডারিং ================= */}
+        {/* ================= ৪. টেক্সট লেয়ার (সম্পূর্ণ pointer-events-none যাতে ভিডিওতে কোনো বাধা না দেয়) ================= */}
         {isCompact ? (
-          /* ⭐ ছোট (৫০%) স্প্লিটে ওভারল্যাপিং ছাড়া স্বয়ংক্রিয় ক্লিন লেআউট ⭐ */
           <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between z-20 pointer-events-none bg-gradient-to-t from-black/80 via-black/30 to-black/40">
-            {/* মাঝের মূল লেখা */}
             <div className="my-auto text-center space-y-1.5 px-1">
               {titleLayer && (titleLayer.text || titleLayer.title) && (
                 <h3
@@ -230,17 +308,8 @@ export function HeroMediaRenderer({
                   {subtitleLayer.text || subtitleLayer.subtitle}
                 </p>
               )}
-              {descLayer && (descLayer.text || descLayer.description) && (
-                <p
-                  className="text-[9px] sm:text-[10px] opacity-75 line-clamp-2 leading-tight drop-shadow hidden sm:block"
-                  style={{ color: descLayer.color || '#CBD5E1' }}
-                >
-                  {descLayer.text || descLayer.description}
-                </p>
-              )}
             </div>
 
-            {/* নিচের তথ্য ও বাটন (ওভারল্যাপ ছাড়া সুন্দর এক সারিতে) */}
             <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-white/15 pointer-events-auto text-[10px]">
               {slide?.link_url ? (
                 <a
@@ -258,9 +327,8 @@ export function HeroMediaRenderer({
             </div>
           </div>
         ) : (
-          /* বড় (১০০%) স্প্লিটের পূর্ণাঙ্গ ডিজাইন */
           layers.length > 0 && (
-            <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 pointer-events-none z-20">
               {layers.map((layer: any, idx: number) => {
                 if (layer.enabled === false) return null
                 const displayText = layer.text || layer.title || ''
@@ -273,12 +341,12 @@ export function HeroMediaRenderer({
                 return (
                   <div
                     key={layer.id || idx}
-                    className="absolute pointer-events-auto transition-all duration-300"
+                    /* ⭐ এখানে pointer-events-none নিশ্চিত করা হয়েছে যাতে ভিডিও টাচ আটকানো না যায় ⭐ */
+                    className="absolute pointer-events-none transition-all duration-300"
                     style={{
                       left: `${layer.x ?? 50}%`,
                       top: `${layer.y ?? 50}%`,
                       transform: 'translate(-50%, -50%)',
-                      zIndex: 25,
                       maxWidth: '92%',
                       textAlign: align,
                     }}
@@ -329,7 +397,7 @@ export function HeroMediaRenderer({
           )
         )}
 
-        {/* বড় ব্যানারে বিস্তারিত বাটন */}
+        {/* বিস্তারিত বোতাম */}
         {!isCompact && slide?.link_url && (
           <a
             href={slide.link_url}
