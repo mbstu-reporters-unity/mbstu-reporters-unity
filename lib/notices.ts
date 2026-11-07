@@ -17,6 +17,7 @@ export type Notice = {
   body: string | null
   ref_number: string | null
   link_url: string | null
+  embed_media_url?: string | null
   file_url: string | null
   file_name: string | null
   file_type: string | null
@@ -32,7 +33,7 @@ export type Notice = {
 export type NoticeInput = Pick<
   Notice,
   | "branch" | "department_id" | "title" | "heading" | "body" | "ref_number" | "link_url"
-  | "file_url" | "file_name" | "file_type" | "image_urls" | "show_name" | "is_pinned" | "expires_at"
+  | "embed_media_url" | "file_url" | "file_name" | "file_type" | "image_urls" | "show_name" | "is_pinned" | "expires_at"
 >
 
 export type NoticeOwner = {
