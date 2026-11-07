@@ -22,6 +22,7 @@ import { getCampusClubs, type ClubItem } from '@/lib/clubs'
 import { cn } from '@/lib/utils'
 import { SectionHeading } from './section-heading'
 import { ClubReportsDialog } from './club-reports-dialog'
+import { UniversalMediaEmbed } from './universal-media-embed'
 
 export const clubIcons: Record<string, LucideIcon> = {
   megaphone: Megaphone,
@@ -70,7 +71,6 @@ export function ClubNews() {
   const [filter, setFilter] = useState('All')
   const [selected, setSelected] = useState<Club | null>(null)
   
-  // ক্লাবের তালিকা নিরাপদে সংরক্ষণ
   const clubsRef = useRef<Club[]>(fallbackClubs)
 
   useEffect(() => {
@@ -85,7 +85,6 @@ export function ClubNews() {
       }
       setDbMap(map)
 
-      // ইউআরএলে ?club=ID থাকলে তাৎক্ষণিক পপ-আপ খোলা
       if (typeof window !== 'undefined') {
         const clubId = new URLSearchParams(window.location.search).get('club')
         if (clubId) {
@@ -99,7 +98,6 @@ export function ClubNews() {
       }
     })
 
-    // মেনুবার থেকে ক্লিকের নির্ভরযোগ্য লিসেনার
     const handleOpenModal = (e: Event) => {
       const customEvent = e as CustomEvent<string>
       const targetId = customEvent.detail
@@ -187,9 +185,12 @@ export function ClubNews() {
                     {club.tag}
                   </span>
                 </div>
+                
+                {/* ক্লাবের নাম */}
                 <h3 className="mt-4 text-pretty font-serif text-base font-bold leading-snug text-white">{club.name}</h3>
                 <p className="text-sm text-white/60">{club.nameBn}</p>
 
+                {/* ক্লাবের সাম্প্রতিক কার্যক্রম ও বিবরণ */}
                 <div className="mt-4 flex-1 rounded-xl border border-white/10 bg-navy/40 p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-soft/80">Latest Activity</p>
                   <p className="mt-1 text-sm leading-relaxed text-white/85">{club.activity}</p>
@@ -201,6 +202,11 @@ export function ClubNews() {
                       <CalendarDays className="size-3.5" aria-hidden="true" />
                       {club.date}
                     </p>
+                  )}
+
+                  {/* ⭐ লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবির প্রিভিউ দেখাবে ⭐ */}
+                  {raw?.embed_media_url && (
+                    <UniversalMediaEmbed url={raw.embed_media_url} title={club.name} />
                   )}
                 </div>
 
