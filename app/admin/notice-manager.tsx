@@ -63,6 +63,7 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
   const [ref, setRef] = useState("")
   const [body, setBody] = useState("")
   const [link, setLink] = useState("")
+  const [embedMediaUrl, setEmbedMediaUrl] = useState("")
   const [showName, setShowName] = useState(true)
   const [pinned, setPinned] = useState(false)
   const [expiry, setExpiry] = useState("")
@@ -93,7 +94,7 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
 
   function reset() {
     setEditId(null); setBranch(BRANCHES[0].key); setDeptId(""); setTitle(""); setHeading(""); setRef("")
-    setBody(""); setLink(""); setShowName(true); setPinned(false); setExpiry("")
+    setBody(""); setLink(""); setEmbedMediaUrl(""); setShowName(true); setPinned(false); setExpiry("")
     setFile(null); setOld(null)
     imgs.reset()
   }
@@ -101,6 +102,7 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
   async function startEdit(n: Notice) {
     setEditId(n.id); setBranch(n.branch); setDeptId(n.department_id || ""); setTitle(n.title); setHeading(n.heading || "")
     setRef(n.ref_number || ""); setBody(n.body || ""); setLink(n.link_url || "")
+    setEmbedMediaUrl(n.embed_media_url || "")
     setShowName(n.show_name); setPinned(n.is_pinned)
     setExpiry(n.expires_at ? new Date(n.expires_at).toLocaleDateString("en-CA", { timeZone: "Asia/Dhaka" }) : "")
     setFile(null)
@@ -127,8 +129,12 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
       setMsg("❌ লিংক http:// বা https:// দিয়ে শুরু হতে হবে")
       return
     }
-    if (!body.trim() && !link.trim() && !file && !old && !hasImages) {
-      setMsg("❌ লেখা, লিংক, ছবি বা ফাইল— অন্তত একটি দিন")
+    if (embedMediaUrl.trim() && !/^https?:\/\//i.test(embedMediaUrl.trim())) {
+      setMsg("❌ ভিডিও/ছবির লিংক http:// বা https:// দিয়ে শুরু হতে হবে")
+      return
+    }
+    if (!body.trim() && !link.trim() && !embedMediaUrl.trim() && !file && !old && !hasImages) {
+      setMsg("❌ লেখা, লিংক, ভিডিও, ছবি বা ফাইল— অন্তত একটি দিন")
       return
     }
     setBusy(true)
@@ -151,6 +157,7 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
         body: body.trim() || null,
         ref_number: ref.trim() || null,
         link_url: link.trim() || null,
+        embed_media_url: embedMediaUrl.trim() || null,
         file_url: f ? f.url : null,
         file_name: f ? f.name : null,
         file_type: f ? f.type : null,
@@ -197,7 +204,6 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
           {BRANCHES.map((b) => <option key={b.key} value={b.key}>{b.bn}</option>)}
         </select>
 
-        {/* ⭐ ডিপার্টমেন্ট ব্রাঞ্চ সিলেক্ট করলে কোন ডিপার্টমেন্টের নোটিশ তা বাছাইয়ের ড্রপডাউন ⭐ */}
         {branch === "department" && (
           <div className="space-y-1.5 rounded-xl border border-green-600 bg-green-50/60 p-3 animate-in fade-in">
             <label className="text-xs font-bold text-green-900 block">
@@ -222,6 +228,23 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
         <input className={inp} placeholder="হেডিং (উপশিরোনাম)" value={heading} onChange={(e) => setHeading(e.target.value)} />
         <input className={inp} placeholder="রেফ নম্বর (ঐচ্ছিক, যেমন MBSTU-RU/2026/015)" value={ref} onChange={(e) => setRef(e.target.value)} />
         <textarea className={inp} rows={6} placeholder="নোটিশের লেখা" value={body} onChange={(e) => setBody(e.target.value)} />
+
+        {/* ⭐ নতুন: ইউটিউব, ফেসবুক বা ছবির লিংক দেওয়ার ঐচ্ছিক বক্স ⭐ */}
+        <div className="space-y-1 rounded-xl border border-emerald-300 bg-emerald-50/60 p-3">
+          <label className="text-xs font-bold text-emerald-900 block">
+            🎥 ভিডিও / ছবির লিংক (YouTube, Facebook ভিডিও বা ছবির সরাসরি লিংক - ঐচ্ছিক):
+          </label>
+          <input
+            className={inp}
+            placeholder="যেমন: https://youtube.com/watch?v=... বা ফেসবুক ভিডিও লিংক"
+            value={embedMediaUrl}
+            onChange={(e) => setEmbedMediaUrl(e.target.value)}
+          />
+          <p className="text-[11px] text-emerald-700">
+            💡 লিংক দিলে নোটিশে শিরোনাম ও লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবি দেখাবে।
+          </p>
+        </div>
+
         <input className={inp} type="url" placeholder="অন্য ওয়েবসাইটের লিংক (https://...)" value={link} onChange={(e) => setLink(e.target.value)} />
 
         <ImageSection s={imgs} />
@@ -285,6 +308,7 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
                   {dept ? `🎓 ${dept.name}` : bn(n.branch)}
                 </span>
                 {n.is_pinned && <span className="bg-yellow-100 text-yellow-800 rounded-full px-2 py-0.5">📌 পিন</span>}
+                {n.embed_media_url && <span className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5">🎥 মিডিয়া</span>}
                 {expired && <span className="bg-gray-200 rounded-full px-2 py-0.5">মেয়াদ শেষ</span>}
                 {!n.show_name && <span className="bg-gray-100 rounded-full px-2 py-0.5">নাম লুকানো</span>}
               </div>
