@@ -11,22 +11,27 @@ export type Post = {
   author: string | null
   image_url: string | null
   video_url: string | null
+  embed_media_url?: string | null
   user_id: string | null
   created_at: string
   hidden?: boolean | null
   link_url?: string | null
 }
+
 export type PostInput = Omit<Post, "id" | "created_at" | "user_id">
+
 export type PublicComment = {
   id: string
   name: string | null
   message: string
   created_at: string
 }
+
 export type PendingComment = PublicComment & {
   post_id: string
   posts: { title: string } | null
 }
+
 export type Profile = {
   id: string
   full_name: string
@@ -42,6 +47,7 @@ export type Profile = {
   director_visible?: boolean | null
   created_at: string
 }
+
 export type SignupInfo = {
   full_name: string
   department: string
@@ -51,7 +57,6 @@ export type SignupInfo = {
   newspaper_name?: string
 }
 
-// সঠিক সমাধান কোড:
 function hdr(token?: string, json = false): Record<string, string> {
   const h: Record<string, string> = { apikey: SB_KEY }
   h.Authorization = `Bearer ${token || SB_KEY}`
@@ -182,6 +187,7 @@ export async function setDirectorVisible(token: string, id: string, visible: boo
     })
   )
 }
+
 /* ---------- সংবাদ পোস্ট ও এডিট ---------- */
 
 export async function getPosts(limit = 50): Promise<Post[]> {
@@ -347,6 +353,7 @@ export async function updatePassword(token: string, password: string) {
     })
   )
 }
+
 /* ---------- নেতৃত্ব বোর্ড ---------- */
 
 export const POSITIONS = [
@@ -454,6 +461,7 @@ export async function setPostHidden(token: string, id: string, hidden: boolean) 
     })
   )
 }
+
 /* ---------- ক্যাটাগরি ও হোম সেটিং ---------- */
 
 export async function getCategoryNames(): Promise<string[]> {
@@ -610,11 +618,13 @@ export type StudentItem = {
   batch: string | null
   image_url: string | null
   link_url: string | null
+  embed_media_url?: string | null
   featured: boolean
   hidden: boolean
   sort_order: number
   created_at: string
 }
+
 export type StudentInput = Omit<StudentItem, "id" | "created_at">
 
 export async function getStudentItems(includeHidden = false): Promise<StudentItem[]> {
@@ -661,6 +671,7 @@ export async function deleteStudentItem(token: string, id: string) {
     })
   )
 }
+
 /* ---------- একাধিক ছবি (সংবাদ, নোটিশ, স্টুডেন্ট কর্নার) ---------- */
 
 export type ParentType = "post" | "notice" | "student"
@@ -900,7 +911,7 @@ export async function saveStudentItemReturningId(
   const rows: { id: string }[] = await res.json()
   return rows[0]?.id ?? null
 }
-// সেকশনের যেকোনো টেক্সট (উপ-টাইটেল, মূল টাইটেল বা বিবরণ) পড়ার জন্য
+
 export async function getSectionText(key: string, defaultVal: string): Promise<string> {
   try {
     const res = await fetch(`${SB_URL}/rest/v1/app_config?select=value&key=eq.${encodeURIComponent(key)}`, {
@@ -915,7 +926,6 @@ export async function getSectionText(key: string, defaultVal: string): Promise<s
   }
 }
 
-// সেকশনের টেক্সট সেভ করার জন্য (শুধু অ্যাডমিন)
 export async function saveSectionText(token: string, key: string, value: string) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/app_config`, {
@@ -930,6 +940,7 @@ export async function saveSectionText(token: string, key: string, value: string)
     })
   )
 }
+
 /* ---------- স্টুডেন্ট কর্নার ক্যাটাগরি ব্যবস্থাপনা ---------- */
 
 const DEFAULT_STUDENT_KINDS = ["Opinion", "Creative Writing", "Achievement", "Research Highlight"]
@@ -959,7 +970,6 @@ export async function addStudentCategory(token: string, name: string) {
 }
 
 export async function updateStudentCategory(token: string, oldName: string, newName: string) {
-  // ১. ক্যাটাগরি নাম আপডেট
   await ok(
     await fetch(`${SB_URL}/rest/v1/student_corner_categories?name=eq.${encodeURIComponent(oldName)}`, {
       method: "PATCH",
@@ -967,7 +977,6 @@ export async function updateStudentCategory(token: string, oldName: string, newN
       body: JSON.stringify({ name: newName }),
     })
   )
-  // ২. পুরোনো পোস্টগুলোতে যাতে ক্যাটাগরি ঠিক থাকে সেজন্য অটো-আপডেট
   try {
     await fetch(`${SB_URL}/rest/v1/student_items?kind=eq.${encodeURIComponent(oldName)}`, {
       method: "PATCH",
