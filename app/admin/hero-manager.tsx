@@ -35,8 +35,6 @@ import {
   AlignJustify,
   Calendar,
   User,
-  Sliders,
-  Check,
 } from "lucide-react"
 
 const inp = "w-full border border-slate-700 rounded-xl px-3.5 py-2 text-xs bg-slate-950 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
@@ -139,7 +137,7 @@ export default function HeroManager({
   // পোস্টের ধরন
   const [slideType, setSlideType] = useState<HeroPostType>("color")
 
-  // কালার ব্যানার (দৈর্ঘ্য ও প্রস্থ উভয়ের নিয়ন্ত্রণ সহ)
+  // কালার ব্যানার
   const [bannerMode, setBannerMode] = useState<"solid" | "gradient">("gradient")
   const [bannerAngle, setBannerAngle] = useState(135)
   const [gradientStops, setGradientStops] = useState<GradientStop[]>([
@@ -147,22 +145,22 @@ export default function HeroManager({
     { color: "#0f172a", stop: 50 },
     { color: "#1e1b4b", stop: 100 },
   ])
-  const [bannerHeight, setBannerHeight] = useState(480) // দৈর্ঘ্য (উচ্চতা)
-  const [bannerWidth, setBannerWidth] = useState(100) // প্রস্থ (৫০% থেকে ১০০%)
+  const [bannerHeight, setBannerHeight] = useState(480)
+  const [bannerWidth, setBannerWidth] = useState(100)
 
   // ছবি ও ভিডিও
   const [imgUrl, setImgUrl] = useState("")
   const [imgFile, setImgFile] = useState<File | null>(null)
   const [videoUrl, setVideoUrl] = useState("")
   const [videoFile, setVideoFile] = useState<File | null>(null)
-  const [fitMode, setFitMode] = useState<"contain" | "cover">("contain")
+  const [fitMode] = useState<"contain" | "cover">("contain")
 
   // ৫টি সম্পূর্ণ স্বাধীন টেক্সট বক্স
   const [textItems, setTextItems] = useState<IndependentTextItem[]>(DEFAULT_TEXT_ITEMS)
 
-  // লিঙ্ক, ডিউরেশন ও স্প্লিট
+  // লিঙ্ক ও সেটিংস
   const [linkUrl, setLinkUrl] = useState("")
-  const [btnText, setBtnText] = useState("বিস্তারিত")
+  const [btnText] = useState("বিস্তারিত")
   const [slideDuration, setSlideDuration] = useState(5)
   const [transitionEffect, setTransitionEffect] = useState("slide-left")
   const [desktopSplits, setDesktopSplits] = useState(1)
@@ -186,7 +184,6 @@ export default function HeroManager({
     loadData()
   }, [token])
 
-  // কালার স্টপ যোগ/বিয়োগ
   const addColorStop = () => {
     if (gradientStops.length >= 5) return
     const nextStop = Math.min(100, gradientStops.length * 25)
@@ -204,14 +201,12 @@ export default function HeroManager({
     setGradientStops(updated)
   }
 
-  // স্বাধীন টেক্সট আইটেম আপডেট (একটি সরালে অন্যটি স্থির থাকবে)
   const updateTextItem = (idx: number, field: keyof IndependentTextItem, val: any) => {
     const updated = [...textItems]
     updated[idx] = { ...updated[idx], [field]: val }
     setTextItems(updated)
   }
 
-  // অতিরিক্ত নতুন টেক্সট বক্স যোগ করা
   const addNewCustomBox = () => {
     const newBox: IndependentTextItem = {
       id: `txt_custom_${Date.now()}`,
@@ -235,7 +230,6 @@ export default function HeroManager({
     setTextItems(textItems.filter((item) => item.id !== id))
   }
 
-  // ফর্ম রিসেট
   const resetForm = () => {
     setEditId(null)
     setSlideType("color")
@@ -257,7 +251,6 @@ export default function HeroManager({
     setSlideDuration(5)
   }
 
-  // এডিট শুরু
   const startEdit = (s: HeroSlide) => {
     setEditId(s.id)
     setSlideType(s.slide_type || "color")
@@ -270,11 +263,9 @@ export default function HeroManager({
     }
 
     if (s.text_layers && s.text_layers.length > 0) {
-      // যদি আগে থেকেই স্বাধীন আইটেম হিসেবে থাকে
       if (s.text_layers[0]?.label) {
         setTextItems(s.text_layers as IndependentTextItem[])
       } else {
-        // পুরোনো পোস্ট হলে তাকে নতুন ৫টি স্বাধীন বক্সে সুন্দরভাবে কনভার্ট করা
         const t1 = s.text_layers[0]?.title || s.title || ""
         const t2 = s.text_layers[0]?.subtitle || ""
         const t3 = s.text_layers[0]?.description || s.summary || ""
@@ -294,7 +285,7 @@ export default function HeroManager({
     window.scrollTo({ top: 300, behavior: "smooth" })
   }
 
-  // স্লাইড সংরক্ষণ (আজীবন নিরাপদ টাইমস্ট্যাম্প ও শতভাগ সফল সেভ)
+  // স্লাইড সংরক্ষণ (স্মার্ট সেশন হ্যান্ডলিং সহ)
   const handleSaveSlide = async () => {
     setBusy(true)
     setMsg("")
@@ -359,7 +350,13 @@ export default function HeroManager({
       resetForm()
       await loadData()
     } catch (e: any) {
-      setMsg("❌ " + (e?.message || "পোস্ট করতে সমস্যা হয়েছে"))
+      const errStr = e?.message || ""
+      // সেশনের মেয়াদ সংক্রান্ত এরর শনাক্তকরণ
+      if (/exp|claim|jwt|expired|token/i.test(errStr)) {
+        setMsg("⚠️ আপনার লগইন সেশনের মেয়াদ শেষ হয়েছে! অনুগ্রহ করে ড্যাশবোর্ডের উপরে 'লগআউট' করে আবার লগইন করুন।")
+      } else {
+        setMsg("❌ " + (errStr || "পোস্ট করতে সমস্যা হয়েছে"))
+      }
     }
     setBusy(false)
   }
@@ -369,13 +366,17 @@ export default function HeroManager({
     setDesktopSplits(splits)
     try {
       await saveHeroSettings(token, { desktop_splits: splits })
-      setMsg(`✅ হোমপেজে ${splits}টি স্প্লিট ভিউ সেট হয়েছে (সবগুলো পোস্ট চক্রাকারে ঘুরবে)`)
-    } catch {
-      setMsg("❌ স্প্লিট সেভ করা যায়নি")
+      setMsg(`✅ হোমপেজে ${splits}টি স্প্লিট ভিউ সেট হয়েছে`)
+    } catch (e: any) {
+      const errStr = e?.message || ""
+      if (/exp|claim|jwt|expired|token/i.test(errStr)) {
+        setMsg("⚠️ সেশনের মেয়াদ শেষ। অনুগ্রহ করে আবার লগইন করুন।")
+      } else {
+        setMsg("❌ স্প্লিট সেভ করা যায়নি")
+      }
     }
   }
 
-  // লাইভ প্রিভিউ ব্যাকগ্রাউন্ড
   const previewBg =
     bannerMode === "solid"
       ? gradientStops[0]?.color || "#064e3b"
@@ -392,7 +393,7 @@ export default function HeroManager({
         </div>
       )}
 
-      {/* ================= ১. রিয়েল-টাইম লাইভ প্রিভিউ বক্স ================= */}
+      {/* ১. লাইভ প্রিভিউ বক্স */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <span className="text-xs font-bold text-green-400 flex items-center gap-1.5">
@@ -487,7 +488,7 @@ export default function HeroManager({
         </div>
       </div>
 
-      {/* ================= ২. হিরো কন্ট্রোল ও ফর্ম ================= */}
+      {/* ২. হিরো কন্ট্রোল ও ফর্ম */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h2 className="font-bold text-sm sm:text-base text-gray-200">
@@ -540,7 +541,7 @@ export default function HeroManager({
           </div>
         </div>
 
-        {/* কালার ব্যানার সেটিংস (দৈর্ঘ্য ও প্রস্থ স্লাইডার সহ) */}
+        {/* কালার ব্যানার সেটিংস */}
         {slideType === "color" && (
           <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-3">
             <div className="flex items-center justify-between">
@@ -645,7 +646,7 @@ export default function HeroManager({
               </div>
             )}
 
-            {/* দৈর্ঘ্য ও প্রস্থ উভয়ের রেসপনসিভ স্লাইডার */}
+            {/* দৈর্ঘ্য ও প্রস্থ স্লাইডার */}
             <div className="pt-3 border-t border-slate-800 space-y-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-300 font-medium">↔️ ব্যানারের প্রস্থ (Width): {bannerWidth}%</span>
@@ -725,16 +726,13 @@ export default function HeroManager({
           </div>
         )}
 
-        {/* ================= ৫টি সম্পূর্ণ স্বাধীন টেক্সট বক্স কন্ট্রোল ================= */}
+        {/* ৫টি সম্পূর্ণ স্বাধীন টেক্সট বক্স */}
         <div className="p-3.5 bg-slate-950/90 border border-slate-800 rounded-xl space-y-4">
           <div className="flex items-center justify-between border-b border-slate-850 pb-2">
             <div>
               <span className="text-xs font-bold text-yellow-400 flex items-center gap-1.5">
-                <Type className="size-4" /> ২. লেখার স্বাধীন বক্সসমূহ (প্রতিটির আলাদা X/Y পজিশন ও সাইজ):
+                <Type className="size-4" /> ২. লেখার স্বাধীন বক্সসমূহ:
               </span>
-              <p className="text-[10px] text-gray-400 mt-0.5">
-                যেকোনো বক্স সরালে বা সাইজ বদলালে অন্য বক্সগুলো সম্পূর্ণ স্থির থাকবে।
-              </p>
             </div>
             <button
               type="button"
@@ -751,7 +749,6 @@ export default function HeroManager({
                 key={item.id}
                 className="p-3.5 bg-slate-900 border border-slate-800 rounded-xl space-y-3 transition-all"
               >
-                {/* বক্স হেডার ও অন/অফ সুইচ */}
                 <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-white">
@@ -763,9 +760,6 @@ export default function HeroManager({
                       />
                       <span>{item.label}</span>
                     </label>
-                    <span className="text-[10px] text-gray-500">
-                      {item.enabled ? "(চালু)" : "(বন্ধ - ফাঁকা থাকবে)"}
-                    </span>
                   </div>
                   {idx >= 5 && (
                     <button
@@ -780,7 +774,6 @@ export default function HeroManager({
 
                 {item.enabled && (
                   <div className="space-y-2.5 pt-1">
-                    {/* লেখার ইনপুট */}
                     <input
                       className={inp}
                       placeholder={`${item.label}-এর লেখা লিখুন...`}
@@ -788,7 +781,7 @@ export default function HeroManager({
                       onChange={(e) => updateTextItem(idx, "text", e.target.value)}
                     />
 
-                    {/* স্বাধীন X এবং Y পজিশন স্লাইডার */}
+                    {/* X ও Y পজিশন */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-2.5 bg-slate-950 rounded-xl border border-slate-850">
                       <div className="space-y-1">
                         <div className="flex justify-between text-[11px] text-gray-300">
@@ -821,7 +814,7 @@ export default function HeroManager({
                       </div>
                     </div>
 
-                    {/* স্বাধীন এলাইনমেন্ট বোতাম (বামে, মাঝে, ডানে, জাস্টিফাই) */}
+                    {/* এলাইনমেন্ট বোতাম */}
                     <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-950 rounded-xl border border-slate-850 text-xs">
                       <span className="text-[11px] text-gray-300 font-medium">📐 এলাইনমেন্ট:</span>
                       <div className="flex gap-1">
@@ -829,9 +822,7 @@ export default function HeroManager({
                           type="button"
                           onClick={() => updateTextItem(idx, "align", "left")}
                           className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 ${
-                            item.align === "left"
-                              ? "bg-emerald-700 border-emerald-500 text-white"
-                              : "border-slate-800 text-gray-400"
+                            item.align === "left" ? "bg-emerald-700 border-emerald-500 text-white" : "border-slate-800 text-gray-400"
                           }`}
                         >
                           <AlignLeft className="size-3" /> বামে
@@ -840,9 +831,7 @@ export default function HeroManager({
                           type="button"
                           onClick={() => updateTextItem(idx, "align", "center")}
                           className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 ${
-                            item.align === "center"
-                              ? "bg-emerald-700 border-emerald-500 text-white"
-                              : "border-slate-800 text-gray-400"
+                            item.align === "center" ? "bg-emerald-700 border-emerald-500 text-white" : "border-slate-800 text-gray-400"
                           }`}
                         >
                           <AlignCenter className="size-3" /> মাঝে
@@ -851,9 +840,7 @@ export default function HeroManager({
                           type="button"
                           onClick={() => updateTextItem(idx, "align", "right")}
                           className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 ${
-                            item.align === "right"
-                              ? "bg-emerald-700 border-emerald-500 text-white"
-                              : "border-slate-800 text-gray-400"
+                            item.align === "right" ? "bg-emerald-700 border-emerald-500 text-white" : "border-slate-800 text-gray-400"
                           }`}
                         >
                           <AlignRight className="size-3" /> ডানে
@@ -862,9 +849,7 @@ export default function HeroManager({
                           type="button"
                           onClick={() => updateTextItem(idx, "align", "justify")}
                           className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 ${
-                            item.align === "justify"
-                              ? "bg-emerald-700 border-emerald-500 text-white"
-                              : "border-slate-800 text-gray-400"
+                            item.align === "justify" ? "bg-emerald-700 border-emerald-500 text-white" : "border-slate-800 text-gray-400"
                           }`}
                         >
                           <AlignJustify className="size-3" /> জাস্টিফাই
@@ -872,7 +857,7 @@ export default function HeroManager({
                       </div>
                     </div>
 
-                    {/* স্বাধীন ফন্ট সাইজ স্কেল, বোল্ড, ইটালিক, রঙ ও অ্যানিমেশন */}
+                    {/* সাইজ স্কেল, বোল্ড, ইটালিক, রঙ ও অ্যানিমেশন */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
                       <div>
                         <span className="text-[10px] text-gray-400 block mb-1">সাইজ স্কেল: {item.size_scale}x</span>
@@ -958,7 +943,7 @@ export default function HeroManager({
               <input
                 type="range"
                 min="1"
-                max="100"
+                max="60"
                 value={slideDuration}
                 onChange={(e) => setSlideDuration(Number(e.target.value))}
                 className="w-full accent-emerald-500 cursor-pointer"
@@ -966,7 +951,7 @@ export default function HeroManager({
             </div>
 
             <div>
-              <span className="text-xs text-gray-400 block mb-1">ট্রানজিশন ইফেক্ট (হোমপেজে দৃশ্যমান):</span>
+              <span className="text-xs text-gray-400 block mb-1">ট্রানজিশন ইফেক্ট:</span>
               <select
                 className={selectInp}
                 value={transitionEffect}
@@ -997,17 +982,14 @@ export default function HeroManager({
         </button>
       </div>
 
-      {/* ================= ৩. হোমপেজ স্প্লিট লেআউট (চক্রাকারে ঘোরার পূর্ণ সহায়তা সহ) ================= */}
+      {/* ৩. হোমপেজ স্প্লিট লেআউট */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <span className="text-xs font-bold text-white flex items-center gap-1.5">
-            <Layers className="size-4 text-emerald-400" /> হোমপেজ স্প্লিট ভিউ (কম্পিউটার স্ক্রিন):
+            <Layers className="size-4 text-emerald-400" /> হোমপেজ স্প্লিট ভিউ:
           </span>
           <span className="text-[11px] text-emerald-400 font-bold">বর্তমান: {desktopSplits} স্প্লিট</span>
         </div>
-        <p className="text-xs text-gray-400">
-          💡 ২ বা ৩ স্প্লিট ভিউতে ১০টি পোস্ট থাকলেও সবগুলো পোস্ট চক্রাকারে একে একে ঘুরবে। কোনো পোস্ট আটকে থাকবে না।
-        </p>
         <div className="grid grid-cols-3 gap-2">
           {[1, 2, 3].map((num) => (
             <button
@@ -1020,13 +1002,13 @@ export default function HeroManager({
                   : "bg-slate-950 border-slate-800 text-gray-400 hover:text-white"
               }`}
             >
-              {num === 1 ? "১টি স্প্লিট" : `${num}টি স্প্লিট (চক্রাকার)`}
+              {num === 1 ? "১টি স্প্লিট" : `${num}টি স্প্লিট`}
             </button>
           ))}
         </div>
       </div>
 
-      {/* ================= ৪. বর্তমান পোস্টসমূহের তালিকা ================= */}
+      {/* ৪. বর্তমান পোস্টসমূহের তালিকা */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <h2 className="font-bold text-xs sm:text-sm text-gray-200">বর্তমান হিরো স্লাইডসমূহ ({list.length})</h2>
@@ -1075,9 +1057,6 @@ export default function HeroManager({
               </div>
             </div>
           ))}
-          {list.length === 0 && (
-            <p className="text-center text-xs text-gray-500 py-4">বর্তমানে কোনো হিরো পোস্ট নেই। উপরের ফর্ম দিয়ে তৈরি করুন।</p>
-          )}
         </div>
       </div>
     </div>
