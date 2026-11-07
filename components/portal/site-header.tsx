@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import {
   Bell,
   BookOpen,
+  Building2,
   ChevronDown,
   ChevronRight,
   Globe2,
@@ -26,6 +27,7 @@ import { getFacultiesWithDepartments, type FacultyWithDepartments } from '@/lib/
 import { getUniversityAssociations, type UniversityAssociation } from '@/lib/associations'
 import { getSocialSites, type SocialSite } from '@/lib/social-sites'
 import { getLeaders, POSITIONS, type Leader } from '@/lib/sb'
+import { getAdministrationOfficials, type AdministrationOfficial } from '@/lib/administration'
 import { SB_URL, SB_KEY } from '@/lib/sb'
 import { Logo } from './logo'
 import { Tx, useLang } from '@/lib/i18n'
@@ -38,6 +40,7 @@ export function SiteHeader() {
   const [associationsExpanded, setAssociationsExpanded] = useState(false)
   const [socialSitesExpanded, setSocialSitesExpanded] = useState(false)
   const [executiveExpanded, setExecutiveExpanded] = useState(false)
+  const [administrationExpanded, setAdministrationExpanded] = useState(false)
 
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
   const [categoriesList, setCategoriesList] = useState<string[]>([])
@@ -45,6 +48,8 @@ export function SiteHeader() {
   const [associationsList, setAssociationsList] = useState<UniversityAssociation[]>([])
   const [socialSitesList, setSocialSitesList] = useState<SocialSite[]>([])
   const [leadersList, setLeadersList] = useState<Leader[]>([])
+  const [adminOfficialsList, setAdminOfficialsList] = useState<AdministrationOfficial[]>([])
+  
   const { lang, pick } = useLang()
 
   // বিশ্ববিদ্যালয় লোগো, লিংক ও টেক্সট
@@ -53,7 +58,7 @@ export function SiteHeader() {
   const [univText, setUnivText] = useState('')
 
   useEffect(() => {
-    // বিশ্ববিদ্যালয় লোগো ও লিংক
+    // বিশ্ববিদ্যালয় লোগো ও লিংক লোড
     fetch(
       `${SB_URL}/rest/v1/app_config?select=key,value&key=in.(univ_logo_url,univ_link_url,univ_text)`,
       { headers: { apikey: SB_KEY }, cache: 'no-store' }
@@ -91,6 +96,13 @@ export function SiteHeader() {
     getLeaders().then((rows) => {
       if (Array.isArray(rows)) {
         setLeadersList(rows.filter((l) => l.is_visible))
+      }
+    })
+
+    // MBSTU Administration কর্মকর্তা তালিকা লোড
+    getAdministrationOfficials().then((rows) => {
+      if (Array.isArray(rows)) {
+        setAdminOfficialsList(rows)
       }
     })
   }, [])
@@ -223,6 +235,56 @@ export function SiteHeader() {
                     })}
                     {leadersList.length === 0 && (
                       <p className="text-xs text-gray-400 text-center py-2">কোনো সদস্য যুক্ত নেই।</p>
+                    )}
+                  </div>
+                </div>
+              </li>
+
+              {/* ⭐ নতুন: MBSTU Administration (মাভাবিপ্রবি প্রশাসন) ⭐ */}
+              <li className="relative group">
+                <a
+                  href="/administration"
+                  className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand"
+                >
+                  <Building2 className="size-4 text-brand" />
+                  <span>{pick('MBSTU Administration', 'MBSTU Administration')}</span>
+                  <ChevronDown className="size-3.5 opacity-60 transition-transform group-hover:rotate-180" />
+                </a>
+
+                <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-80 rounded-2xl border border-border bg-card p-3 shadow-2xl z-50 max-h-[85vh] overflow-y-auto">
+                  <div className="flex items-center justify-between border-b border-border/60 pb-2 px-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {pick('প্রশাসনিক দপ্তর ও কর্মকর্তা', 'Administration & Offices')}
+                    </p>
+                    <a href="/administration" className="text-[11px] font-bold text-brand hover:underline">
+                      {pick('সকল দপ্তর দেখুন →', 'View All →')}
+                    </a>
+                  </div>
+                  <div className="space-y-1 pt-2">
+                    {adminOfficialsList.slice(0, 7).map((item, i) => (
+                      <a
+                        key={item.id}
+                        href="/administration"
+                        className="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 hover:bg-brand-soft transition-colors"
+                      >
+                        {item.photo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={item.photo_url} alt="" className="size-7 rounded-full object-cover border shrink-0 bg-white" />
+                        ) : (
+                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand">
+                            👤
+                          </span>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-xs text-navy truncate">{item.name}</p>
+                          <p className="text-[10px] text-brand font-semibold truncate">{item.designation} · {item.office_name}</p>
+                        </div>
+                      </a>
+                    ))}
+                    {adminOfficialsList.length === 0 && (
+                      <a href="/administration" className="block text-center text-xs text-brand font-bold py-2 bg-brand-soft/60 rounded-xl">
+                        ➔ প্রশাসন পেজে যান
+                      </a>
                     )}
                   </div>
                 </div>
@@ -494,7 +556,7 @@ export function SiteHeader() {
         {menuOpen && (
           <nav className="border-t border-border bg-card xl:hidden max-h-[85vh] overflow-y-auto px-4 py-3 space-y-2">
             
-            {/* ১. "হোম" - সবার শীর্ষে */}
+            {/* ১. "হোম" */}
             <div className={mobileWrapperCls}>
               <a
                 href="/"
@@ -563,7 +625,58 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৩. অনুষদ ও বিভাগসমূহ */}
+            {/* ⭐ ৩. নতুন: MBSTU Administration (মোবাইল ড্রয়ার মেনু) ⭐ */}
+            <div className={mobileWrapperCls}>
+              <button
+                type="button"
+                onClick={() => setAdministrationExpanded(!administrationExpanded)}
+                className={mobileCardCls}
+              >
+                <span className="flex items-center gap-2.5">
+                  <Building2 className="size-4" />
+                  <span>{pick('MBSTU Administration', 'MBSTU Administration')}</span>
+                  <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] text-white">
+                    {adminOfficialsList.length} জন
+                  </span>
+                </span>
+                <ChevronDown className={`size-4 transition-transform ${administrationExpanded ? 'rotate-180' : ''}`} />
+              </button>
+
+              {administrationExpanded && (
+                <div className="border-t border-brand/20 bg-card p-3 space-y-2">
+                  <a
+                    href="/administration"
+                    onClick={() => setMenuOpen(false)}
+                    className="block text-xs font-bold text-brand bg-brand-soft/80 p-2 rounded-xl text-center"
+                  >
+                    ➔ সকল প্রশাসনিক কর্মকর্তা ও দপ্তর দেখুন
+                  </a>
+                  {adminOfficialsList.slice(0, 8).map((official) => (
+                    <a
+                      key={official.id}
+                      href="/administration"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 py-1.5 border-b border-border/40 text-xs"
+                    >
+                      {official.photo_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={official.photo_url} alt="" className="size-7 rounded-full object-cover border" />
+                      ) : (
+                        <span className="size-7 rounded-full bg-brand text-white font-bold text-[10px] flex items-center justify-center">
+                          👤
+                        </span>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-navy truncate">{official.name}</p>
+                        <p className="text-[10px] text-brand font-semibold truncate">{official.designation} · {official.office_name}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ৪. অনুষদ ও বিভাগসমূহ */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -594,7 +707,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৪. অন্যান্য সাংবাদিক সমিতি */}
+            {/* ৫. অন্যান্য সাংবাদিক সমিতি */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -621,7 +734,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৫. MBSTU Social Site */}
+            {/* ৬. MBSTU Social Site */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -648,7 +761,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৬. নিউজ ক্যাটাগরি */}
+            {/* ৭. নিউজ ক্যাটাগরি */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -677,7 +790,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ⭐ ৭. ক্যাম্পাস ক্লাবসমূহ (ক্রমিক নম্বর ১, ২, ৩ ও ছবি/লগো সহ পুনরুদ্ধার করা হয়েছে) ⭐ */}
+            {/* ৮. ক্যাম্পাস ক্লাবসমূহ */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -705,10 +818,6 @@ export function SiteHeader() {
                     <span>{pick('➔ সব ক্লাব একনজরে দেখুন', '➔ View All Clubs')}</span>
                   </a>
 
-                  <p className="px-1 pt-1 text-[11px] font-bold text-muted-foreground">
-                    {pick('ক্লাবসমূহের তালিকা:', 'List of Clubs:')}
-                  </p>
-
                   <div className="divide-y divide-border/40">
                     {clubsList.map((c, i) => (
                       <button
@@ -717,12 +826,9 @@ export function SiteHeader() {
                         onClick={() => openClubWindow(c.id)}
                         className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left hover:bg-brand-soft transition-colors active:scale-[0.99] cursor-pointer"
                       >
-                        {/* ক্রমিক নম্বর ১, ২, ৩... */}
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand">
                           {i + 1}
                         </span>
-
-                        {/* ক্লাবের লগো / ছবি (অ্যাডমিন থেকে যা দেওয়া আছে) */}
                         {c.logo_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -735,8 +841,6 @@ export function SiteHeader() {
                             {c.name.charAt(0)}
                           </span>
                         )}
-
-                        {/* ক্লাবের নাম ও বাংলা নাম */}
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-xs text-navy truncate">{c.name}</p>
                           {c.name_bn && (
@@ -750,7 +854,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৮. ডিরেক্টর প্যানেল */}
+            {/* ৯. ডিরেক্টর প্যানেল */}
             <div className={mobileWrapperCls}>
               <a
                 href="/council"
@@ -765,7 +869,7 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ৯. স্টুডেন্ট কর্নার */}
+            {/* ১০. স্টুডেন্ট কর্নার */}
             <div className={mobileWrapperCls}>
               <a
                 href="/student-corner"
@@ -780,7 +884,7 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ১০. নোটিশ */}
+            {/* ১১. নোটিশ */}
             <div className={mobileWrapperCls}>
               <a
                 href="/notices"
@@ -795,7 +899,7 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ১১. পরিচিতি - সবার নিচে */}
+            {/* ১২. পরিচিতি */}
             <div className={mobileWrapperCls}>
               <a
                 href="/#about"
@@ -810,7 +914,7 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ১২. সাংবাদিক লগইন বাটন */}
+            {/* ১৩. সাংবাদিক লগইন বাটন */}
             <a
               href="/admin"
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3 text-sm font-semibold text-white mt-3 shadow-md"
