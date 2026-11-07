@@ -50,6 +50,7 @@ export default function ClubManager({ token }: { token: string }) {
   const [fbUrl, setFbUrl] = useState("")
   const [ytUrl, setYtUrl] = useState("")
   const [webUrl, setWebUrl] = useState("")
+  const [embedMediaUrl, setEmbedMediaUrl] = useState("")
   const [contactInfo, setContactInfo] = useState("")
 
   // লগো
@@ -76,7 +77,7 @@ export default function ClubManager({ token }: { token: string }) {
   function reset() {
     setEditId(null); setName(""); setNameBn(""); setTag("Social"); setIcon("star")
     setActivity(""); setActivityBn(""); setDate(""); setFbUrl(""); setYtUrl("")
-    setWebUrl(""); setContactInfo("")
+    setWebUrl(""); setEmbedMediaUrl(""); setContactInfo("")
     setLogoUrl(null); setLogoFile(null)
     setCommitteeTerm(""); setMembers([])
     setReportsTitle("ক্লাব প্রতিবেদন / Club Reports"); setReports([])
@@ -94,6 +95,7 @@ export default function ClubManager({ token }: { token: string }) {
     setFbUrl(c.fb_url || "")
     setYtUrl(c.yt_url || "")
     setWebUrl(c.web_url || "")
+    setEmbedMediaUrl(c.embed_media_url || "")
     setContactInfo(c.contact_info || "")
     setLogoUrl(c.logo_url || null)
     setLogoFile(null)
@@ -146,7 +148,7 @@ export default function ClubManager({ token }: { token: string }) {
     if (j < 0 || j >= list.length) return
     const arr = [...list]
     ;[arr[i], arr[j]] = [arr[j], arr[i]]
-    setList(arr) // ইনস্ট্যান্ট UI আপডেট
+    setList(arr)
     try {
       await Promise.all(
         arr.map((c, k) => updateCampusClub(token, c.id, { sort_order: k * 10 }))
@@ -183,6 +185,7 @@ export default function ClubManager({ token }: { token: string }) {
         fb_url: fbUrl.trim() || null,
         yt_url: ytUrl.trim() || null,
         web_url: webUrl.trim() || null,
+        embed_media_url: embedMediaUrl.trim() || null,
         contact_info: contactInfo.trim() || null,
         committee_term: committeeTerm.trim() || null,
         committee_members: members.filter((m) => m.name.trim() || m.role.trim()),
@@ -224,7 +227,7 @@ export default function ClubManager({ token }: { token: string }) {
       {/* এডিট বা যোগ করার ফর্ম */}
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
         <h2 className="font-semibold text-lg">{editId ? "ক্লাব এডিট করুন" : "নতুন ক্লাব যুক্ত করুন"}</h2>
-        <p className="text-xs text-gray-500">সব তথ্য ঐচ্ছিক। লগো, কমিটি ও প্রতিবেদন আপনার পছন্দমতো যোগ/বিয়োগ করুন।</p>
+        <p className="text-xs text-gray-500">সব তথ্য ঐচ্ছিক। লগো, ভিডিও, কমিটি ও প্রতিবেদন আপনার পছন্দমতো যোগ/বিয়োগ করুন।</p>
 
         {/* নাম ও ট্যাগ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -274,6 +277,22 @@ export default function ClubManager({ token }: { token: string }) {
         <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ বা সাম্প্রতিক কার্যক্রম (English)" value={activity} onChange={(e) => setActivity(e.target.value)} />
         <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ বা সাম্প্রতিক কার্যক্রম (বাংলা)" value={activityBn} onChange={(e) => setActivityBn(e.target.value)} />
         <input className={inp} placeholder="কার্যক্রমের তারিখ (যেমন: 27 Oct 2026)" value={date} onChange={(e) => setDate(e.target.value)} />
+
+        {/* ⭐ নতুন: ইউটিউব, ফেসবুক বা ছবির লিংক দেওয়ার ঐচ্ছিক বক্স ⭐ */}
+        <div className="space-y-1 rounded-xl border border-emerald-300 bg-emerald-50/60 p-3">
+          <label className="text-xs font-bold text-emerald-900 block">
+            🎥 ক্লাবের ভিডিও / ছবির লিংক (YouTube, Facebook ভিডিও বা ছবির সরাসরি লিংক - ঐচ্ছিক):
+          </label>
+          <input
+            className={inp}
+            placeholder="যেমন: https://youtube.com/watch?v=... বা ফেসবুক ভিডিও লিংক"
+            value={embedMediaUrl}
+            onChange={(e) => setEmbedMediaUrl(e.target.value)}
+          />
+          <p className="text-[11px] text-emerald-700">
+            💡 লিংক দিলে ক্লাব পরিচিতি ও পপ-আপে লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবি দেখাবে।
+          </p>
+        </div>
 
         {/* সোশ্যাল লিংক */}
         <div className="space-y-2 border-t pt-2">
@@ -342,7 +361,7 @@ export default function ClubManager({ token }: { token: string }) {
           ))}
         </div>
 
-        {/* ==================== ক্লাব প্রতিবেদন ও কাস্টম শিরোনাম ==================== */}
+        {/* ক্লাব প্রতিবেদন */}
         <div className="rounded-xl border p-3 bg-gray-50 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-bold text-gray-800">ক্লাব প্রতিবেদন / Reports (ঐচ্ছিক):</p>
@@ -355,7 +374,6 @@ export default function ClubManager({ token }: { token: string }) {
             </button>
           </div>
 
-          {/* সেকশনের নিজস্ব শিরোনাম এডিট করার বক্স */}
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
               পপআপের প্রতিবেদনের শিরোনাম (প্রয়োজনে পরিবর্তন করুন):
@@ -407,7 +425,7 @@ export default function ClubManager({ token }: { token: string }) {
         {msg && <p className="text-sm font-semibold">{msg}</p>}
       </div>
 
-      {/* ==================== ক্লাব তালিকা (নম্বর ও তীর চিহ্নসহ) ==================== */}
+      {/* ক্লাব তালিকা */}
       <div className="space-y-3">
         <h2 className="font-semibold text-base">বর্তমান ক্লাবসমূহ ({list.length})</h2>
         <p className="text-xs text-gray-500">
@@ -418,7 +436,6 @@ export default function ClubManager({ token }: { token: string }) {
           <div key={c.id} className="bg-white rounded-2xl shadow p-3 text-sm space-y-2">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                {/* ক্রমিক নম্বর ব্যাজ */}
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-green-100 font-bold text-xs text-green-800">
                   {i + 1}
                 </span>
@@ -430,15 +447,15 @@ export default function ClubManager({ token }: { token: string }) {
                 <div className="min-w-0">
                   <p className="font-semibold text-base truncate">{c.name}</p>
                   <p className="text-xs text-gray-500 truncate">{c.name_bn || "বাংলা নাম নেই"} · ট্যাগ: {c.tag}</p>
-                  <p className="text-[11px] text-gray-400">
-                    {c.committee_members?.length ? `কমিটি: ${c.committee_members.length} জন · ` : ""}
-                    {c.reports?.length ? `প্রতিবেদন: ${c.reports.length} টি` : ""}
-                  </p>
+                  <div className="flex flex-wrap gap-2 text-[11px] text-gray-400 mt-0.5">
+                    {c.embed_media_url && <span className="text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">🎥 মিডিয়া যুক্ত</span>}
+                    {c.committee_members?.length ? <span>কমিটি: {c.committee_members.length} জন</span> : null}
+                    {c.reports?.length ? <span>প্রতিবেদন: {c.reports.length} টি</span> : null}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* অ্যাকশন বাটন: উপরে, নিচে, এডিট, মুছুন */}
             <div className="flex flex-wrap items-center gap-3 border-t pt-2 text-xs font-semibold">
               <button
                 type="button"
