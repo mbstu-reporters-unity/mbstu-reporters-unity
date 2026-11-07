@@ -64,7 +64,6 @@ export function HeroMediaRenderer({
   const bannerWidth = slide?.banner_config?.width_pct ?? 100
   const bannerHeight = slide?.banner_config?.height_px ?? 480
 
-  // স্লাইড সক্রিয় বা নিষ্ক্রিয় হলে ভিডিও নিয়ন্ত্রণ
   useEffect(() => {
     if (isActive) {
       if (videoRef.current) {
@@ -80,7 +79,6 @@ export function HeroMediaRenderer({
           })
       }
     } else {
-      // স্লাইড সরে গেলে ভিডিও পজ হবে
       if (videoRef.current) {
         videoRef.current.pause()
         videoRef.current.muted = true
@@ -98,7 +96,6 @@ export function HeroMediaRenderer({
     }
   }, [isActive, onVideoStateChange])
 
-  // সরাসরি ভিডিও ফাইল (MP4) প্লে/পজ
   const togglePlayPause = (e: React.MouseEvent) => {
     e.stopPropagation()
     const v = videoRef.current
@@ -117,7 +114,6 @@ export function HeroMediaRenderer({
     }
   }
 
-  // সরাসরি ভিডিও সাউন্ড মিউট/আনমিউট
   const toggleSound = (e: React.MouseEvent) => {
     e.stopPropagation()
     const v = videoRef.current
@@ -127,7 +123,6 @@ export function HeroMediaRenderer({
     }
   }
 
-  // ইউটিউব/ফেসবুক এম্বেড ভিডিওর জন্য প্লে/পজ টগল
   const toggleEmbedPlayPause = (e: React.MouseEvent) => {
     e.stopPropagation()
     const iframe = iframeRef.current
@@ -150,7 +145,6 @@ export function HeroMediaRenderer({
     }
   }
 
-  // ইউটিউব এম্বেড ভিডিওর সাউন্ড টগল
   const toggleEmbedSound = (e: React.MouseEvent) => {
     e.stopPropagation()
     const iframe = iframeRef.current
@@ -180,6 +174,149 @@ export function HeroMediaRenderer({
 
   return (
     <div className="relative w-full h-full flex items-center justify-center overflow-hidden select-none bg-slate-950">
+      {/* ================= ৩৫টি টেক্সট অ্যানিমেশনের সম্পূর্ণ সিএসএস ================= */}
+      <style>{`
+        /* ১. ফেড আপ ড্রপ */
+        @keyframes anim_fade-up { 0% { opacity: 0; transform: translateY(22px); } 100% { opacity: 1; transform: translateY(0); } }
+        .anim_fade-up { animation: anim_fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-block; }
+
+        /* ২. টাইপরাইটার */
+        @keyframes anim_typewriter { 0% { opacity: 0; clip-path: inset(0 100% 0 0); } 100% { opacity: 1; clip-path: inset(0 0 0 0); } }
+        .anim_typewriter { animation: anim_typewriter 1s ease-out forwards; display: inline-block; }
+
+        /* ৩. জুম ইন পপ */
+        @keyframes anim_zoom-pop { 0% { opacity: 0; transform: scale(0.6); } 100% { opacity: 1; transform: scale(1); } }
+        .anim_zoom-pop { animation: anim_zoom-pop 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; display: inline-block; }
+
+        /* ৪. নিয়ন পালস গ্লো */
+        @keyframes anim_neon-pulse { 0%, 100% { text-shadow: 0 0 4px #fff, 0 0 14px #38bdf8; } 50% { text-shadow: 0 0 2px #fff, 0 0 6px #0284c7; } }
+        .anim_neon-pulse { animation: anim_neon-pulse 1.4s ease-in-out infinite; display: inline-block; }
+
+        /* ৫. টেক্সট বাউন্স ইন */
+        @keyframes anim_bounce-in { 0% { opacity: 0; transform: translateY(-40px); } 60% { opacity: 1; transform: translateY(8px); } 80% { transform: translateY(-3px); } 100% { transform: translateY(0); } }
+        .anim_bounce-in { animation: anim_bounce-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards; display: inline-block; }
+
+        /* ৬. ৩ডি ফ্লিপ হরিজোন্টাল */
+        @keyframes anim_flip-x { 0% { opacity: 0; transform: perspective(400px) rotateX(90deg); } 100% { opacity: 1; transform: perspective(400px) rotateX(0deg); } }
+        .anim_flip-x { animation: anim_flip-x 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-block; }
+
+        /* ৭. ৩ডি ফ্লিপ ভার্টিকাল */
+        @keyframes anim_flip-y { 0% { opacity: 0; transform: perspective(400px) rotateY(90deg); } 100% { opacity: 1; transform: perspective(400px) rotateY(0deg); } }
+        .anim_flip-y { animation: anim_flip-y 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-block; }
+
+        /* ৮. সাইবার গ্লিচ */
+        @keyframes anim_cyber-glitch { 0%, 100% { transform: translate(0); } 20% { transform: translate(-3px, 2px); } 40% { transform: translate(3px, -2px); } 60% { transform: translate(-2px, -1px); } 80% { transform: translate(2px, 1px); } }
+        .anim_cyber-glitch { animation: anim_cyber-glitch 2s infinite; display: inline-block; }
+
+        /* ৯. স্মোক ফেড ব্লার */
+        @keyframes anim_smoke-fade { 0% { opacity: 0; filter: blur(14px); transform: scale(1.08); } 100% { opacity: 1; filter: blur(0); transform: scale(1); } }
+        .anim_smoke-fade { animation: anim_smoke-fade 0.9s ease-out forwards; display: inline-block; }
+
+        /* ১০. লেটার ওয়েভ */
+        @keyframes anim_letter-wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .anim_letter-wave { animation: anim_letter-wave 2s ease-in-out infinite; display: inline-block; }
+
+        /* ১১. স্লাইড বাম থেকে */
+        @keyframes anim_slide-left { 0% { opacity: 0; transform: translateX(60px); } 100% { opacity: 1; transform: translateX(0); } }
+        .anim_slide-left { animation: anim_slide-left 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-block; }
+
+        /* ১২. স্লাইড ডান থেকে */
+        @keyframes anim_slide-right { 0% { opacity: 0; transform: translateX(-60px); } 100% { opacity: 1; transform: translateX(0); } }
+        .anim_slide-right { animation: anim_slide-right 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-block; }
+
+        /* ১৩. রোটেট ৩ডি ড্রপ */
+        @keyframes anim_rotate-drop { 0% { opacity: 0; transform: rotate(-12deg) translateY(-30px); } 100% { opacity: 1; transform: rotate(0) translateY(0); } }
+        .anim_rotate-drop { animation: anim_rotate-drop 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-block; }
+
+        /* ১৪. ফ্ল্যাশ ব্লিঙ্ক */
+        @keyframes anim_flash-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+        .anim_flash-blink { animation: anim_flash-blink 0.8s 2 ease-in-out forwards; display: inline-block; }
+
+        /* ১৫. ভাইব্রেট শেইক */
+        @keyframes anim_shake-alert { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+        .anim_shake-alert { animation: anim_shake-alert 0.6s ease-in-out forwards; display: inline-block; }
+
+        /* ১৬. রেইনবো শিফট */
+        @keyframes anim_rainbow-shift { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+        .anim_rainbow-shift { animation: anim_rainbow-shift 4s linear infinite; display: inline-block; }
+
+        /* ১৭. ট্র্যাকিং এক্সপ্যান্ড */
+        @keyframes anim_tracking-expand { 0% { opacity: 0; letter-spacing: -4px; } 100% { opacity: 1; letter-spacing: normal; } }
+        .anim_tracking-expand { animation: anim_tracking-expand 0.9s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-block; }
+
+        /* ১৮. গোল্ডেন শাইন শিমার */
+        @keyframes anim_golden-shimmer { 0%, 100% { filter: drop-shadow(0 0 2px #eab308); } 50% { filter: drop-shadow(0 0 16px #facc15) brightness(1.25); } }
+        .anim_golden-shimmer { animation: anim_golden-shimmer 2s ease-in-out infinite; display: inline-block; }
+
+        /* ১৯. টুইস্ট ৩ডি */
+        @keyframes anim_twist-3d { 0% { opacity: 0; transform: rotate(-10deg) scale(0.85); } 100% { opacity: 1; transform: rotate(0) scale(1); } }
+        .anim_twist-3d { animation: anim_twist-3d 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-block; }
+
+        /* ২০. সুইং পেন্ডুলাম */
+        @keyframes anim_swing-in { 0% { opacity: 0; transform: rotateZ(-15deg); } 60% { transform: rotateZ(5deg); } 100% { opacity: 1; transform: rotateZ(0deg); } }
+        .anim_swing-in { animation: anim_swing-in 0.85s ease-out forwards; display: inline-block; transform-origin: top center; }
+
+        /* ২১. সিনেমাটিক ড্রিফট */
+        @keyframes anim_ken-burns { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08) translate(3px, -2px); } }
+        .anim_ken-burns { animation: anim_ken-burns 5s ease-in-out infinite; display: inline-block; }
+
+        /* ২২. স্পটলাইট রিভিল */
+        @keyframes anim_spotlight { 0% { opacity: 0; filter: brightness(2) contrast(1.5); } 100% { opacity: 1; filter: brightness(1) contrast(1); } }
+        .anim_spotlight { animation: anim_spotlight 0.8s ease-out forwards; display: inline-block; }
+
+        /* ২৩. রাবার ব্যান্ড পপ */
+        @keyframes anim_rubber-band { 0% { transform: scale(1); } 30% { transform: scaleX(1.25) scaleY(0.75); } 40% { transform: scaleX(0.75) scaleY(1.25); } 60% { transform: scaleX(1.15) scaleY(0.85); } 100% { transform: scale(1); } }
+        .anim_rubber-band { animation: anim_rubber-band 0.9s ease-out forwards; display: inline-block; }
+
+        /* ২৪. পালস রিং এক্সপ্যান্ড */
+        @keyframes anim_pulse-expand { 0% { transform: scale(0.92); opacity: 0; } 50% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
+        .anim_pulse-expand { animation: anim_pulse-expand 0.8s ease-out forwards; display: inline-block; }
+
+        /* ২৫. পার্সপেক্টিভ টিল্ট */
+        @keyframes anim_tilt-in { 0% { opacity: 0; transform: rotateY(30deg) rotateX(-20deg); } 100% { opacity: 1; transform: rotateY(0) rotateX(0); } }
+        .anim_tilt-in { animation: anim_tilt-in 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-block; }
+
+        /* ২৬. [অটো] স্মুথ ফ্লোটিং লুপ */
+        @keyframes anim_auto-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+        .anim_auto-float { animation: anim_auto-float 3s ease-in-out infinite; display: inline-block; }
+
+        /* ২৭. [অটো] হার্টবিট থাম্প লুপ */
+        @keyframes anim_auto-heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+        .anim_auto-heartbeat { animation: anim_auto-heartbeat 1.6s ease-in-out infinite; display: inline-block; }
+
+        /* ২৮. [অটো] নিয়ন গ্লো লুপ */
+        @keyframes anim_auto-neon { 0%, 100% { text-shadow: 0 0 3px #fff, 0 0 10px #22c55e; } 50% { text-shadow: 0 0 7px #fff, 0 0 20px #4ade80; } }
+        .anim_auto-neon { animation: anim_auto-neon 2s ease-in-out infinite; display: inline-block; }
+
+        /* ২৯. [অটো] জেলো ওয়েভল লুপ */
+        @keyframes anim_auto-jello { 0%, 100% { transform: scale(1); } 30% { transform: scaleX(1.15) scaleY(0.85); } 40% { transform: scaleX(0.85) scaleY(1.15); } }
+        .anim_auto-jello { animation: anim_auto-jello 2.2s ease-in-out infinite; display: inline-block; }
+
+        /* ৩০. [অটো] গোল্ডেন শিমার লুপ */
+        @keyframes anim_auto-golden { 0%, 100% { filter: drop-shadow(0 0 2px #eab308); } 50% { filter: drop-shadow(0 0 14px #facc15) brightness(1.2); } }
+        .anim_auto-golden { animation: anim_auto-golden 2s ease-in-out infinite; display: inline-block; }
+
+        /* ৩১. [অটো] গ্রেডিয়েন্ট ফ্লো টেক্সট লুপ */
+        @keyframes anim_auto-gradient { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+        .anim_auto-gradient { animation: anim_auto-gradient 5s linear infinite; display: inline-block; }
+
+        /* ৩২. [অটো] জেন্টল ব্রীথিং লুপ */
+        @keyframes anim_auto-breathe { 0%, 100% { opacity: 0.85; transform: scale(0.98); } 50% { opacity: 1; transform: scale(1.03); } }
+        .anim_auto-breathe { animation: anim_auto-breathe 3s ease-in-out infinite; display: inline-block; }
+
+        /* ৩৩. [অটো] সাবটল গ্লিচ লুপ */
+        @keyframes anim_auto-glitch { 0%, 100% { transform: translate(0); } 10% { transform: translate(-2px, 1px); } 20% { transform: translate(2px, -1px); } 30% { transform: translate(0); } }
+        .anim_auto-glitch { animation: anim_auto-glitch 3s infinite; display: inline-block; }
+
+        /* ৩৪. [অটো] পেন্ডুলাম সুইং লুপ */
+        @keyframes anim_auto-swing { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(3deg); } 75% { transform: rotate(-3deg); } }
+        .anim_auto-swing { animation: anim_auto-swing 3s ease-in-out infinite; display: inline-block; transform-origin: top center; }
+
+        /* ৩৫. [অটো] বাউন্স ড্রপ লুপ */
+        @keyframes anim_auto-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .anim_auto-bounce { animation: anim_auto-bounce 1.8s ease-in-out infinite; display: inline-block; }
+      `}</style>
+
       <div
         className="relative h-full w-full transition-all duration-500 overflow-hidden"
         style={{
@@ -212,7 +349,7 @@ export function HeroMediaRenderer({
           </div>
         )}
 
-        {/* ৩. ভিডিও ব্যানার (ইউটিউব ও ডিরেক্ট ভিডিও) */}
+        {/* ৩. ভিডিও ব্যানার */}
         {type === 'video' && (
           <div className="relative w-full h-full flex items-center justify-center bg-black">
             {parsedVideo.isEmbed ? (
@@ -226,7 +363,6 @@ export function HeroMediaRenderer({
                     allowFullScreen
                     title="Video Player"
                   />
-                  {/* ইউটিউব প্লেয়ারের নিজস্ব কন্ট্রোল ছাড়াও সরাসরি টগল করার বোতাম */}
                   <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5 pointer-events-auto">
                     <button
                       type="button"
@@ -288,25 +424,29 @@ export function HeroMediaRenderer({
           </div>
         )}
 
-        {/* ================= ৪. টেক্সট লেয়ার (সম্পূর্ণ pointer-events-none যাতে ভিডিওতে কোনো বাধা না দেয়) ================= */}
+        {/* ================= ৪. টেক্সট লেয়ারসমূহ ================= */}
         {isCompact ? (
           <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between z-20 pointer-events-none bg-gradient-to-t from-black/80 via-black/30 to-black/40">
             <div className="my-auto text-center space-y-1.5 px-1">
               {titleLayer && (titleLayer.text || titleLayer.title) && (
-                <h3
-                  className="font-bold text-xs sm:text-sm leading-snug line-clamp-2 drop-shadow-md"
-                  style={{ color: titleLayer.color || '#FFFFFF', fontFamily: titleLayer.font }}
-                >
-                  {titleLayer.text || titleLayer.title}
-                </h3>
+                <div key={`${slide?.id}_comp_title`} className={`anim_${titleLayer.animation || 'fade-up'}`}>
+                  <h3
+                    className="font-bold text-xs sm:text-sm leading-snug line-clamp-2 drop-shadow-md"
+                    style={{ color: titleLayer.color || '#FFFFFF', fontFamily: titleLayer.font }}
+                  >
+                    {titleLayer.text || titleLayer.title}
+                  </h3>
+                </div>
               )}
               {subtitleLayer && (subtitleLayer.text || subtitleLayer.subtitle) && (
-                <p
-                  className="text-[10px] sm:text-xs opacity-90 line-clamp-1 drop-shadow"
-                  style={{ color: subtitleLayer.color || '#E2E8F0' }}
-                >
-                  {subtitleLayer.text || subtitleLayer.subtitle}
-                </p>
+                <div key={`${slide?.id}_comp_sub`} className={`anim_${subtitleLayer.animation || 'fade-up'}`}>
+                  <p
+                    className="text-[10px] sm:text-xs opacity-90 line-clamp-1 drop-shadow"
+                    style={{ color: subtitleLayer.color || '#E2E8F0' }}
+                  >
+                    {subtitleLayer.text || subtitleLayer.subtitle}
+                  </p>
+                </div>
               )}
             </div>
 
@@ -340,8 +480,8 @@ export function HeroMediaRenderer({
 
                 return (
                   <div
-                    key={layer.id || idx}
-                    /* ⭐ এখানে pointer-events-none নিশ্চিত করা হয়েছে যাতে ভিডিও টাচ আটকানো না যায় ⭐ */
+                    /* ⭐ slide.id যুক্ত করায় প্রতি স্লাইডে অ্যানিমেশন ফ্রেশভাবে প্লে হবে ⭐ */
+                    key={`${slide?.id}_${layer.id || idx}`}
                     className="absolute pointer-events-none transition-all duration-300"
                     style={{
                       left: `${layer.x ?? 50}%`,
