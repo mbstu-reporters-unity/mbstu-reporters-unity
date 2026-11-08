@@ -62,7 +62,7 @@ export function ClubReportsDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 club-dialog-font">
       {/* ব্যাকড্রপ */}
       <button
         type="button"
@@ -75,7 +75,7 @@ export function ClubReportsDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="animate-in zoom-in-95 fade-in relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white shadow-2xl border border-border"
+        className="animate-in zoom-in-95 fade-in relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white shadow-2xl border border-border club-dialog-font"
       >
         {/* হেডার ব্যানার */}
         <div className="relative bg-gradient-to-r from-brand to-brand-dark px-6 py-6 text-white">
@@ -90,16 +90,16 @@ export function ClubReportsDialog({
           </button>
           
           <div className="flex items-center gap-4 pr-8">
-            {/* বড় ও স্পষ্ট লোগো */}
+            {/* বড় ও স্পষ্ট গোল লোগো */}
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logo}
                 alt=""
-                className="size-20 sm:size-24 rounded-2xl object-contain bg-white p-2 border-2 border-white/40 shadow-lg shrink-0"
+                className="size-20 sm:size-24 rounded-full object-cover shadow-lg shrink-0"
               />
             ) : (
-              <div className="size-20 sm:size-24 rounded-2xl bg-white/15 flex items-center justify-center font-bold text-3xl border border-white/25 shrink-0">
+              <div className="size-20 sm:size-24 rounded-full bg-white/15 flex items-center justify-center font-bold text-3xl border border-white/25 shrink-0">
                 {club.name.charAt(0)}
               </div>
             )}
@@ -110,7 +110,7 @@ export function ClubReportsDialog({
               <h2 id={titleId} className="mt-1 font-serif text-xl sm:text-2xl font-bold leading-tight">
                 {club.name}
               </h2>
-              {club.nameBn && <p className="text-sm text-white/90">{club.nameBn}</p>}
+              {club.nameBn && <p className="text-sm text-white/90 font-medium">{club.nameBn}</p>}
             </div>
           </div>
         </div>
