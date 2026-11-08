@@ -52,7 +52,15 @@ export type ClubItem = {
 
 export type ClubInput = Omit<ClubItem, "id" | "created_at">
 
-// একাধিক মিডিয়া পার্স ও কনভার্ট করার ফাংশন (বিদ্যমান সিঙ্গেল লিংকের সাথেও ১০০% সামঞ্জস্যপূর্ণ)
+// ✅ এক্সটার্নাল লিংকে https:// না থাকলে স্বয়ংক্রিয়ভাবে যোগ করার নিরাপদ ফাংশন
+export function safeExternalUrl(url?: string | null): string {
+  if (!url || !url.trim()) return ""
+  const trimmed = url.trim()
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
+
+// একাধিক মিডিয়া পার্স ও কনভার্ট করার ফাংশন
 export function parseActivityMedia(raw?: string | null): ClubMediaItem[] {
   if (!raw || !raw.trim()) return []
   const str = raw.trim()
