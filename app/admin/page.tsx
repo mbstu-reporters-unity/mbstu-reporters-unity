@@ -29,12 +29,23 @@ const TOKEN_KEY = "mbstu_admin_token"
 const MAX_VIDEO_MB = 50
 const CATS = ["ক্যাম্পাস সংবাদ", "ক্লাব", "একাডেমিক", "গবেষণা", "খেলাধুলা", "সংস্কৃতি", "পরিবেশ"]
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
+const smallInp = "w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none focus:border-green-600"
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
 
 type Tab =
   | "posts" | "comments" | "reporters" | "profile" | "leaders" | "notices"
   | "hero" | "ticker" | "students" | "limits" | "directors" | "categories" 
   | "clubs" | "faculties" | "associations" | "social_sites" | "administration"
+
+export type PostMediaItem = {
+  id?: string
+  title: string
+  subtitle: string
+  description: string
+  date: string
+  caption: string
+  url: string
+}
 
 async function shrink(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file)
@@ -80,7 +91,10 @@ export default function AdminPage() {
   const [oldImage, setOldImage] = useState<string | null>(null)
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [oldVideo, setOldVideo] = useState<string | null>(null)
-  const [embedMediaUrl, setEmbedMediaUrl] = useState("")
+
+  // ⭐ নতুন: প্রতিটি প্রতিবেদনের একাধিক ছবি, ভিডিও, লিংক, শিরোনাম, উপশিরোনাম, বিস্তারিত ও ক্যাপশন স্টেট ⭐
+  const [mediaItems, setMediaItems] = useState<PostMediaItem[]>([])
+
   const [busy, setBusy] = useState(false)
   const [cats, setCats] = useState<string[]>(CATS)
   const [linkUrl, setLinkUrl] = useState("")
@@ -246,9 +260,53 @@ export default function AdminPage() {
     setVideoFile(f)
   }
 
+  // একাধিক মিডিয়া হ্যান্ডলার
+  function addMediaItem() {
+    setMediaItems([
+      ...mediaItems,
+      {
+        id: `media_${Date.now()}`,
+        title: "",
+        subtitle: "",
+        description: "",
+        date: new Date().toLocaleDateString("bn-BD"),
+        caption: "",
+        url: "",
+      },
+    ])
+  }
+
+  function updateMediaItem(index: number, field: keyof PostMediaItem, val: string) {
+    const updated = [...mediaItems]
+    updated[index] = { ...updated[index], [field]: val }
+    setMediaItems(updated)
+  }
+
+  function removeMediaItem(index: number) {
+    setMediaItems(mediaItems.filter((_, i) => i !== index))
+  }
+
+  async function uploadMediaFile(index: number, file: File) {
+    setBusy(true)
+    setMsg("মিডিয়া ফাইল আপলোড হচ্ছে...")
+    try {
+      let uploadedUrl = ""
+      if (file.type.startsWith("video/")) {
+        uploadedUrl = await uploadVideo(token, file)
+      } else {
+        uploadedUrl = await uploadImage(token, await shrink(file))
+      }
+      updateMediaItem(index, "url", uploadedUrl)
+      setMsg("✅ ফাইল আপলোড সম্পন্ন হয়েছে")
+    } catch (e) {
+      setMsg("❌ ফাইল আপলোড ব্যর্থ হয়েছে: " + (e instanceof Error ? e.message : ""))
+    }
+    setBusy(false)
+  }
+
   function resetForm() {
     setLinkUrl("")
-    setEmbedMediaUrl("")
+    setMediaItems([])
     setEditId(null); setTitle(""); setHeading(""); setBody("")
     setCategory(CATS[0]); setSelectedClubId(""); setAuthor(me?.full_name || ""); setOldImage(null)
     setOldVideo(null); setVideoFile(null)
@@ -260,10 +318,7 @@ export default function AdminPage() {
       setMsg("শিরোনাম ও ক্যাপশন লিখুন")
       return
     }
-    if (embedMediaUrl.trim() && !/^https?:\/\//i.test(embedMediaUrl.trim())) {
-      setMsg("❌ ভিডিও/ছবির লিংক http:// বা https:// দিয়ে শুরু হতে হবে")
-      return
-    }
+
     setBusy(true)
     setMsg("")
     try {
@@ -279,6 +334,10 @@ export default function AdminPage() {
       const isClub = category.includes("ক্লাব") || category.includes("Club")
       const finalClubId = isClub && selectedClubId ? selectedClubId : null
 
+      // একাধিক মিডিয়া পার্স ও স্ট্রিং সংরক্ষণ
+      const validMedia = mediaItems.filter((m) => m.url.trim() || m.title.trim() || m.description.trim())
+      const finalEmbedMedia = validMedia.length > 0 ? JSON.stringify(validMedia) : null
+
       const data: any = {
         title: title.trim(),
         heading: heading.trim() || null,
@@ -289,7 +348,7 @@ export default function AdminPage() {
         image_url: cover,
         video_url: vurl,
         link_url: linkUrl.trim() || null,
-        embed_media_url: embedMediaUrl.trim() || null,
+        embed_media_url: finalEmbedMedia,
         hidden: false,
       }
 
@@ -324,7 +383,22 @@ export default function AdminPage() {
     setOldImage(p.image_url)
     setOldVideo(p.video_url || null)
     setLinkUrl(p.link_url || "")
-    setEmbedMediaUrl((p as any).embed_media_url || "")
+    
+    // মিডিয়া লোড (একাধিক মিডিয়া বা পুরোনো সিঙ্গেল লিংক উভয়ই সুন্দরভাবে লোড হবে)
+    const rawMedia = (p as any).embed_media_url || ""
+    if (rawMedia.trim().startsWith("[") || rawMedia.trim().startsWith("{")) {
+      try {
+        const parsed = JSON.parse(rawMedia)
+        setMediaItems(Array.isArray(parsed) ? parsed : [parsed])
+      } catch {
+        setMediaItems(rawMedia ? [{ title: "", subtitle: "", description: "", date: "", caption: "", url: rawMedia }] : [])
+      }
+    } else if (rawMedia.trim()) {
+      setMediaItems([{ title: "", subtitle: "", description: "", date: "", caption: "", url: rawMedia.trim() }])
+    } else {
+      setMediaItems([])
+    }
+
     setVideoFile(null)
     window.scrollTo({ top: 0, behavior: "smooth" })
     const rows = await imgs.load(p.id)
@@ -447,7 +521,7 @@ export default function AdminPage() {
           )}
         </div>
 
-        {msg && <p className="text-sm">{msg}</p>}
+        {msg && <p className="text-sm font-semibold p-2 bg-green-50 text-green-800 rounded-xl border border-green-200 text-center">{msg}</p>}
 
         {tab === "posts" && (
           <>
@@ -482,21 +556,104 @@ export default function AdminPage() {
               )}
 
               <input className={inp} placeholder="প্রতিবেদকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
-              
-              {/* ⭐ নতুন: সংবাদে ইউটিউব, ফেসবুক বা ছবির লিংক দেওয়ার ঐচ্ছিক বক্স ⭐ */}
-              <div className="space-y-1 rounded-xl border border-emerald-300 bg-emerald-50/60 p-3">
-                <label className="text-xs font-bold text-emerald-900 block">
-                  🎥 ভিডিও / ছবির লিংক (YouTube, Facebook ভিডিও বা ছবির সরাসরি লিংক - ঐচ্ছিক):
-                </label>
-                <input
-                  className={inp}
-                  placeholder="যেমন: https://youtube.com/watch?v=... বা ফেসবুক ভিডিও লিংক"
-                  value={embedMediaUrl}
-                  onChange={(e) => setEmbedMediaUrl(e.target.value)}
-                />
-                <p className="text-[11px] text-emerald-700">
-                  💡 লিংক দিলে সংবাদের বিস্তারিত পেজ ও কার্ডে লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবি দেখাবে।
-                </p>
+
+              {/* ⭐ নতুন: প্রতিবেদনে একাধিক ছবি, ভিডিও, ফেসবুক/ইউটিউব লিংক, শিরোনাম, উপশিরোনাম, বিস্তারিত, তারিখ ও ক্যাপশন বক্স ⭐ */}
+              <div className="space-y-3 rounded-2xl border-2 border-emerald-300 bg-emerald-50/60 p-3.5 shadow-sm">
+                <div className="flex items-center justify-between border-b border-emerald-200 pb-2">
+                  <div>
+                    <p className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                      🎥 সংবাদ/প্রতিবেদনে মিডিয়া সংযুক্তি (একাধিক ছবি, ভিডিও বা লিংক):
+                    </p>
+                    <p className="text-[11px] text-emerald-700">
+                      প্রতিটি মিডিয়ার সাথে আলাদা শিরোনাম, উপশিরোনাম, বিস্তারিত, তারিখ, ক্যাপশন, শেয়ার ও কমেন্ট থাকবে।
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addMediaItem}
+                    className="text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl px-3 py-1.5 shadow shrink-0 cursor-pointer"
+                  >
+                    + মিডিয়া যোগ
+                  </button>
+                </div>
+
+                {mediaItems.map((m, idx) => (
+                  <div key={idx} className="rounded-xl border border-emerald-200 bg-white p-3 space-y-2 text-xs shadow-sm">
+                    <div className="flex items-center justify-between border-b pb-1">
+                      <span className="font-bold text-emerald-900">মিডিয়া #{idx + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeMediaItem(idx)}
+                        className="text-red-600 font-semibold hover:underline cursor-pointer"
+                      >
+                        ✕ বাদ দিন
+                      </button>
+                    </div>
+
+                    <input
+                      className={smallInp}
+                      placeholder="মিডিয়ার প্রধান শিরোনাম (ঐচ্ছিক)"
+                      value={m.title}
+                      onChange={(e) => updateMediaItem(idx, "title", e.target.value)}
+                    />
+                    <input
+                      className={smallInp}
+                      placeholder="মিডিয়ার উপশিরোনাম (ঐচ্ছিক)"
+                      value={m.subtitle}
+                      onChange={(e) => updateMediaItem(idx, "subtitle", e.target.value)}
+                    />
+                    <textarea
+                      className={smallInp}
+                      rows={2}
+                      placeholder="মিডিয়া সম্পর্কে বিস্তারিত বিবরণ (ঐচ্ছিক)"
+                      value={m.description}
+                      onChange={(e) => updateMediaItem(idx, "description", e.target.value)}
+                    />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input
+                        className={smallInp}
+                        placeholder="তারিখ (যেমন: ২৮ অক্টোবর ২০২৬)"
+                        value={m.date}
+                        onChange={(e) => updateMediaItem(idx, "date", e.target.value)}
+                      />
+                      <input
+                        className={smallInp}
+                        placeholder="ক্যাপশন / ফটো ক্রেডিট (ঐচ্ছিক)"
+                        value={m.caption}
+                        onChange={(e) => updateMediaItem(idx, "caption", e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-1 pt-1 border-t border-gray-100">
+                      <label className="text-[11px] font-semibold text-gray-700 block">মিডিয়া লিংক অথবা ফাইল:</label>
+                      <input
+                        className={smallInp}
+                        placeholder="ফেসবুক ভিডিও, ইউটিউব বা ছবির লিংক (https://...)"
+                        value={m.url}
+                        onChange={(e) => updateMediaItem(idx, "url", e.target.value)}
+                      />
+                      <div className="flex items-center gap-2 pt-1">
+                        <span className="text-[10px] text-gray-500">অথবা মোবাইল/পিসি থেকে ফাইল দিন:</span>
+                        <input
+                          type="file"
+                          accept="image/*,video/*"
+                          className="text-xs"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            if (f) uploadMediaFile(idx, f)
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {mediaItems.length === 0 && (
+                  <p className="text-[11px] text-emerald-800 text-center py-2.5 bg-white/80 rounded-xl border border-dashed border-emerald-300">
+                    কোনো অতিরিক্ত মিডিয়া নেই। প্রয়োজন হলে উপরের &quot;+ মিডিয়া যোগ&quot; বাটনে চাপুন।
+                  </p>
+                )}
               </div>
 
               <input className={inp} placeholder="অন্য ওয়েবসাইটের লিঙ্ক (ঐচ্ছিক)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
