@@ -15,6 +15,8 @@ import {
 } from "../../lib/clubs"
 import { uploadImage, uploadVideo } from "../../lib/sb"
 
+const MAX_VIDEO_MB = 50
+
 const inp = "w-full border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-green-600"
 const smallInp = "w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none focus:border-green-600"
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold text-sm hover:bg-green-800 disabled:opacity-50 cursor-pointer shadow-md"
@@ -31,6 +33,13 @@ const ICON_OPTIONS = [
   { key: "baby", label: "👶 শিশু (শিশু কল্যাণ)" },
   { key: "footprints", label: "👣 পদচিহ্ন (পথশিশু / সেবা)" },
 ]
+
+function formatUrl(u?: string | null): string | null {
+  if (!u || !u.trim()) return null
+  const t = u.trim()
+  if (/^https?:\/\//i.test(t)) return t
+  return `https://${t}`
+}
 
 async function shrink(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file)
@@ -53,6 +62,7 @@ export default function ClubManager({ token }: { token: string }) {
   const [nameBn, setNameBn] = useState("")
   const [tag, setTag] = useState("Social")
   const [icon, setIcon] = useState("star")
+  const [isActive, setIsActive] = useState(true)
   const [activity, setActivity] = useState("")
   const [activityBn, setActivityBn] = useState("")
   const [date, setDate] = useState("")
@@ -86,7 +96,7 @@ export default function ClubManager({ token }: { token: string }) {
   useEffect(() => { load() }, [])
 
   function reset() {
-    setEditId(null); setName(""); setNameBn(""); setTag("Social"); setIcon("star")
+    setEditId(null); setName(""); setNameBn(""); setTag("Social"); setIcon("star"); setIsActive(true)
     setActivity(""); setActivityBn(""); setDate(""); setFbUrl(""); setYtUrl("")
     setWebUrl(""); setContactInfo("")
     setLogoUrl(null); setLogoFile(null)
@@ -101,6 +111,7 @@ export default function ClubManager({ token }: { token: string }) {
     setNameBn(c.name_bn || "")
     setTag(c.tag || "General")
     setIcon(c.icon || "star")
+    setIsActive(c.is_active ?? true)
     setActivity(c.activity || "")
     setActivityBn(c.activity_bn || "")
     setDate(c.date || "")
@@ -111,9 +122,7 @@ export default function ClubManager({ token }: { token: string }) {
     setLogoUrl(c.logo_url || null)
     setLogoFile(null)
 
-    // পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক মিডিয়া লোড
     setActivityMediaList(parseActivityMedia(c.embed_media_url))
-
     setCommitteeTerm(c.committee_term || "")
     setMembers(c.committee_members || [])
     setReportsTitle(c.reports_title || "ক্লাব প্রতিবেদন / Club Reports")
@@ -134,6 +143,10 @@ export default function ClubManager({ token }: { token: string }) {
     setActivityMediaList(activityMediaList.filter((_, i) => i !== index))
   }
   async function uploadActivityMediaFile(index: number, file: File) {
+    if (file.type.startsWith("video/") && file.size > MAX_VIDEO_MB * 1024 * 1024) {
+      setMsg(`❌ ভিডিও ${MAX_VIDEO_MB} MB-এর বেশি হতে পারবে না`)
+      return
+    }
     try {
       setMsg("মিডিয়া ফাইল আপলোড হচ্ছে...")
       let uploaded = ""
@@ -195,7 +208,6 @@ export default function ClubManager({ token }: { token: string }) {
     setReports(reports.filter((_, i) => i !== index))
   }
 
-  // প্রতিবেদনের ভেতর একাধিক মিডিয়া যোগ
   function addReportMedia(reportIdx: number) {
     const currentList = reports[reportIdx].media_items || []
     updateReport(reportIdx, "media_items", [
@@ -213,6 +225,10 @@ export default function ClubManager({ token }: { token: string }) {
     updateReport(reportIdx, "media_items", currentList)
   }
   async function uploadReportMediaFile(reportIdx: number, mediaIdx: number, file: File) {
+    if (file.type.startsWith("video/") && file.size > MAX_VIDEO_MB * 1024 * 1024) {
+      setMsg(`❌ ভিডিও ${MAX_VIDEO_MB} MB-এর বেশি হতে পারবে না`)
+      return
+    }
     try {
       setMsg("প্রতিবেদনের মিডিয়া আপলোড হচ্ছে...")
       let uploaded = ""
@@ -228,20 +244,43 @@ export default function ClubManager({ token }: { token: string }) {
     }
   }
 
+  // অপটিমাইজড ক্রম পরিবর্তন
   async function move(i: number, dir: -1 | 1) {
     const j = i + dir
     if (j < 0 || j >= list.length) return
     const arr = [...list]
-    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    const itemA = arr[i]
+    const itemB = arr[j]
+    arr[i] = itemB
+    arr[j] = itemA
     setList(arr)
+
     try {
-      await Promise.all(
-        arr.map((c, k) => updateCampusClub(token, c.id, { sort_order: k * 10 }))
-      )
+      const orderA = itemA.sort_order ?? i * 10
+      const orderB = itemB.sort_order ?? j * 10
+      const newOrderA = orderA === orderB ? j * 10 : orderB
+      const newOrderB = orderA === orderB ? i * 10 : orderA
+
+      await Promise.all([
+        updateCampusClub(token, itemA.id, { sort_order: newOrderA }),
+        updateCampusClub(token, itemB.id, { sort_order: newOrderB }),
+      ])
       await load()
     } catch (e) {
       setMsg("❌ ক্রম পরিবর্তন ব্যর্থ হয়েছে: " + (e instanceof Error ? e.message : ""))
     }
+  }
+
+  async function toggleActive(club: ClubItem) {
+    setBusy(true)
+    try {
+      await updateCampusClub(token, club.id, { is_active: !club.is_active })
+      await load()
+      setMsg(club.is_active ? "✅ ক্লাবটি লুকানো হয়েছে" : "✅ ক্লাবটি ওয়েবসাইটে দৃশ্যমান করা হয়েছে")
+    } catch {
+      setMsg("❌ স্ট্যাটাস পরিবর্তন ব্যর্থ হয়েছে")
+    }
+    setBusy(false)
   }
 
   async function save() {
@@ -258,7 +297,6 @@ export default function ClubManager({ token }: { token: string }) {
         finalLogo = await uploadImage(token, await shrink(logoFile))
       }
 
-      // একাধিক মিডিয়া সমন্বিত স্ট্রিং
       const finalEmbedMedia = stringifyActivityMedia(activityMediaList)
 
       const data = {
@@ -266,13 +304,14 @@ export default function ClubManager({ token }: { token: string }) {
         name_bn: nameBn.trim() || null,
         tag: tag.trim() || "General",
         icon,
+        is_active: isActive,
         logo_url: finalLogo,
         activity: activity.trim() || null,
         activity_bn: activityBn.trim() || null,
         date: date.trim() || null,
-        fb_url: fbUrl.trim() || null,
-        yt_url: ytUrl.trim() || null,
-        web_url: webUrl.trim() || null,
+        fb_url: formatUrl(fbUrl),
+        yt_url: formatUrl(ytUrl),
+        web_url: formatUrl(webUrl),
         embed_media_url: finalEmbedMedia,
         contact_info: contactInfo.trim() || null,
         committee_term: committeeTerm.trim() || null,
@@ -286,7 +325,7 @@ export default function ClubManager({ token }: { token: string }) {
         setMsg("✅ ক্লাবের তথ্য সফলভাবে আপডেট হয়েছে")
       } else {
         const nextOrder = list.length ? Math.max(...list.map((c) => c.sort_order || 0)) + 10 : 0
-        await createCampusClub(token, { ...data, sort_order: nextOrder, is_active: true })
+        await createCampusClub(token, { ...data, sort_order: nextOrder })
         setMsg("✅ নতুন ক্লাব যোগ করা হয়েছে")
       }
       reset()
@@ -333,10 +372,21 @@ export default function ClubManager({ token }: { token: string }) {
           </div>
         </div>
 
-        {/* লগো আপলোড - বড় প্রিভিউ সহ */}
+        {/* সক্রিয় রাখার চেকবক্স */}
+        <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer p-2 bg-gray-50 rounded-xl border">
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+            className="size-4 accent-green-700 rounded cursor-pointer"
+          />
+          <span>হোমপেজে এই ক্লাবটি সক্রিয় (Active) রাখুন</span>
+        </label>
+
+        {/* লগো আপলোড */}
         <div className="rounded-2xl border-2 border-emerald-200 p-3.5 bg-emerald-50/40 space-y-2">
           <label className="block text-xs font-bold text-emerald-950">
-            🖼️ ক্লাবের লগো / অফিসিয়াল ছবি (বড় ও স্পষ্ট দেখাবে):
+            🖼️ ক্লাবের লগো / অফিসিয়াল ছবি:
           </label>
           <input
             type="file"
@@ -350,15 +400,14 @@ export default function ClubManager({ token }: { token: string }) {
               <img
                 src={logoFile ? URL.createObjectURL(logoFile) : logoUrl || ""}
                 alt="Logo preview"
-                className="size-24 rounded-2xl object-contain bg-white border-2 border-emerald-500/40 p-1.5 shadow-md"
+                className="size-20 rounded-2xl object-contain bg-white border-2 border-emerald-500/40 p-1.5 shadow-md"
               />
               <div className="space-y-1">
-                <p className="text-xs font-bold text-gray-800">লগোর বড় প্রিভিউ</p>
-                <p className="text-[11px] text-gray-500">হোম পেজ ও পপআপে এটি বড় ও পরিষ্কারভাবে প্রদর্শিত হবে।</p>
+                <p className="text-xs font-bold text-gray-800">লগোর প্রিভিউ</p>
                 <button
                   type="button"
                   onClick={() => { setLogoFile(null); setLogoUrl(null) }}
-                  className="text-xs text-red-600 font-semibold underline hover:text-red-700"
+                  className="text-xs text-red-600 font-semibold underline hover:text-red-700 cursor-pointer"
                 >
                   ✕ লগো সরান
                 </button>
@@ -372,21 +421,19 @@ export default function ClubManager({ token }: { token: string }) {
         <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ বা সাম্প্রতিক কার্যক্রম (বাংলা)" value={activityBn} onChange={(e) => setActivityBn(e.target.value)} />
         <input className={inp} placeholder="কার্যক্রমের তারিখ (যেমন: 27 Oct 2026)" value={date} onChange={(e) => setDate(e.target.value)} />
 
-        {/* ⭐ পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক ছবি, ভিডিও ও লিঙ্ক বক্স ⭐ */}
+        {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া */}
         <div className="space-y-3 rounded-2xl border-2 border-blue-200 bg-blue-50/50 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-bold text-blue-950">
-                🎥 পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া (একাধিক ছবি, ভিডিও, ইউটিউব ও ফেসবুক লিংক):
+                🎥 পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া (ছবি, ভিডিও, লিঙ্ক):
               </p>
-              <p className="text-[11px] text-blue-800">
-                প্রতিটি মিডিয়ার উপরে পৃথক শিরোনাম, উপশিরোনাম ও বিস্তারিত লেখার বক্স থাকবে।
-              </p>
+              <p className="text-[11px] text-blue-800">ভিডিও সর্বোচ্চ ৫০ MB পর্যন্ত হতে পারবে।</p>
             </div>
             <button
               type="button"
               onClick={addActivityMedia}
-              className="text-xs bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-xl px-3 py-1.5 shadow shrink-0"
+              className="text-xs bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-xl px-3 py-1.5 shadow shrink-0 cursor-pointer"
             >
               + মিডিয়া যোগ করুন
             </button>
@@ -399,7 +446,7 @@ export default function ClubManager({ token }: { token: string }) {
                 <button
                   type="button"
                   onClick={() => removeActivityMedia(idx)}
-                  className="text-red-600 font-semibold hover:underline"
+                  className="text-red-600 font-semibold hover:underline cursor-pointer"
                 >
                   ✕ সরান
                 </button>
@@ -451,7 +498,7 @@ export default function ClubManager({ token }: { token: string }) {
 
           {activityMediaList.length === 0 && (
             <p className="text-[11px] text-gray-500 text-center py-2 italic bg-white/70 rounded-xl">
-              এখনো কোনো মিডিয়া যোগ করা হয়নি। উপরের &quot;+ মিডিয়া যোগ করুন&quot; বোতামে চাপুন।
+              এখনো কোনো মিডিয়া যোগ করা হয়নি।
             </p>
           )}
         </div>
@@ -471,7 +518,7 @@ export default function ClubManager({ token }: { token: string }) {
             <button
               type="button"
               onClick={addMember}
-              className="text-xs bg-green-700 text-white rounded-lg px-2.5 py-1 hover:bg-green-800"
+              className="text-xs bg-green-700 text-white rounded-lg px-2.5 py-1 hover:bg-green-800 cursor-pointer"
             >
               + সদস্য যোগ করুন
             </button>
@@ -487,7 +534,7 @@ export default function ClubManager({ token }: { token: string }) {
             <div key={idx} className="rounded-xl border bg-white p-2.5 space-y-2 text-sm">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold text-gray-500">সদস্য #{idx + 1}</span>
-                <button type="button" onClick={() => removeMember(idx)} className="text-xs text-red-600 font-semibold">✕ সদস্য সরান</button>
+                <button type="button" onClick={() => removeMember(idx)} className="text-xs text-red-600 font-semibold cursor-pointer">✕ সদস্য সরান</button>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <input
@@ -523,7 +570,7 @@ export default function ClubManager({ token }: { token: string }) {
           ))}
         </div>
 
-        {/* ⭐ ক্লাব প্রতিবেদন (প্রতিবেদনে একাধিক মিডিয়া, শিরোনাম ও বিস্তারিত সহ) ⭐ */}
+        {/* ক্লাব প্রতিবেদন */}
         <div className="rounded-2xl border p-3.5 bg-gray-50 space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -533,7 +580,7 @@ export default function ClubManager({ token }: { token: string }) {
             <button
               type="button"
               onClick={addReport}
-              className="text-xs bg-green-700 text-white rounded-lg px-2.5 py-1.5 hover:bg-green-800 shrink-0 shadow"
+              className="text-xs bg-green-700 text-white rounded-lg px-2.5 py-1.5 hover:bg-green-800 shrink-0 shadow cursor-pointer"
             >
               + প্রতিবেদন যোগ করুন
             </button>
@@ -555,7 +602,7 @@ export default function ClubManager({ token }: { token: string }) {
             <div key={idx} className="rounded-xl border bg-white p-3 space-y-2.5 text-xs shadow-sm">
               <div className="flex items-center justify-between gap-2 border-b pb-1">
                 <span className="font-bold text-gray-700">প্রতিবেদন #{idx + 1}</span>
-                <button type="button" onClick={() => removeReport(idx)} className="text-xs text-red-600 font-semibold hover:underline">✕ সরান</button>
+                <button type="button" onClick={() => removeReport(idx)} className="text-xs text-red-600 font-semibold hover:underline cursor-pointer">✕ সরান</button>
               </div>
 
               <input
@@ -593,7 +640,7 @@ export default function ClubManager({ token }: { token: string }) {
                 />
               </div>
 
-              {/* প্রতিবেদনের সাথে ছবি/ভিডিও/লিংক সেকশন */}
+              {/* প্রতিবেদনের সাথে ছবি/ভিডিও */}
               <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-2.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-gray-700">
@@ -602,7 +649,7 @@ export default function ClubManager({ token }: { token: string }) {
                   <button
                     type="button"
                     onClick={() => addReportMedia(idx)}
-                    className="text-[11px] bg-emerald-700 text-white px-2 py-0.5 rounded-lg font-semibold hover:bg-emerald-800"
+                    className="text-[11px] bg-emerald-700 text-white px-2 py-0.5 rounded-lg font-semibold hover:bg-emerald-800 cursor-pointer"
                   >
                     + মিডিয়া যোগ
                   </button>
@@ -615,7 +662,7 @@ export default function ClubManager({ token }: { token: string }) {
                       <button
                         type="button"
                         onClick={() => removeReportMedia(idx, rmi)}
-                        className="text-[10px] text-red-600 font-semibold"
+                        className="text-[10px] text-red-600 font-semibold cursor-pointer"
                       >
                         ✕ বাদ দিন
                       </button>
@@ -669,7 +716,7 @@ export default function ClubManager({ token }: { token: string }) {
         <button className={btn} onClick={save} disabled={busy}>
           {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "➕ ক্লাব সংরক্ষণ করুন"}
         </button>
-        {editId && <button onClick={reset} className="w-full text-xs underline text-gray-600">বাতিল</button>}
+        {editId && <button onClick={reset} className="w-full text-xs underline text-gray-600 cursor-pointer">বাতিল</button>}
         {msg && <p className="text-xs font-bold text-center text-green-800 bg-green-50 p-2.5 rounded-xl border border-green-200">{msg}</p>}
       </div>
 
@@ -685,7 +732,6 @@ export default function ClubManager({ token }: { token: string }) {
                   {i + 1}
                 </span>
 
-                {/* তালিকায় বড় লোগো */}
                 {c.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={c.logo_url} alt="" className="size-14 rounded-xl object-contain border p-1 shrink-0 bg-white shadow-sm" />
@@ -695,13 +741,13 @@ export default function ClubManager({ token }: { token: string }) {
                   </span>
                 )}
                 <div className="min-w-0">
-                  <p className="font-bold text-base text-gray-800 truncate">{c.name}</p>
-                  <p className="text-xs text-gray-500 truncate">{c.name_bn || "বাংলা নাম নেই"} · ট্যাগ: {c.tag}</p>
-                  <div className="flex flex-wrap gap-2 text-[11px] text-gray-400 mt-0.5">
-                    {c.embed_media_url && <span className="text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">🎥 মিডিয়া যুক্ত</span>}
-                    {c.committee_members?.length ? <span>কমিটি: {c.committee_members.length} জন</span> : null}
-                    {c.reports?.length ? <span>প্রতিবেদন: {c.reports.length} টি</span> : null}
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-base text-gray-800 truncate">{c.name}</p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${c.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}>
+                      {c.is_active ? "সক্রিয়" : "লুকানো"}
+                    </span>
                   </div>
+                  <p className="text-xs text-gray-500 truncate">{c.name_bn || "বাংলা নাম নেই"} · ট্যাগ: {c.tag}</p>
                 </div>
               </div>
             </div>
@@ -711,7 +757,7 @@ export default function ClubManager({ token }: { token: string }) {
                 type="button"
                 onClick={() => move(i, -1)}
                 disabled={i === 0}
-                className="rounded-lg border px-2.5 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none"
+                className="rounded-lg border px-2.5 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
               >
                 ⬆ উপরে
               </button>
@@ -719,21 +765,28 @@ export default function ClubManager({ token }: { token: string }) {
                 type="button"
                 onClick={() => move(i, 1)}
                 disabled={i === list.length - 1}
-                className="rounded-lg border px-2.5 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none"
+                className="rounded-lg border px-2.5 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
               >
                 ⬇ নিচে
               </button>
               <button
                 type="button"
+                onClick={() => toggleActive(c)}
+                className={`ml-auto ${c.is_active ? "text-amber-600" : "text-green-700"} hover:underline cursor-pointer`}
+              >
+                {c.is_active ? "লুকান" : "দেখান"}
+              </button>
+              <button
+                type="button"
                 onClick={() => startEdit(c)}
-                className="text-green-700 hover:underline ml-auto"
+                className="text-green-700 hover:underline cursor-pointer"
               >
                 এডিট
               </button>
               <button
                 type="button"
                 onClick={() => remove(c.id, c.name)}
-                className="text-red-600 hover:underline"
+                className="text-red-600 hover:underline cursor-pointer"
               >
                 মুছুন
               </button>
