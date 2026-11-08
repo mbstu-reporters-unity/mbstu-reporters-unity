@@ -1,13 +1,55 @@
 'use client'
 
 import React, { useEffect, useState, useRef, useCallback } from 'react'
-import { getHeroBannerSlides, DEFAULT_BANNER_SLIDE } from '@/lib/hero-banner'
+import { getHeroBannerSlides } from '@/lib/hero-banner'
 import type { HeroSlide, HeroSettings } from '@/lib/hero'
 import { parseVideoUrl } from '@/lib/hero'
-import { ArrowRight, ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  Siren,
+  Flame,
+  Zap,
+  Radio,
+  BellRing,
+  Sparkles,
+  Megaphone,
+  Newspaper,
+  TrendingUp,
+  AlertTriangle,
+  Star,
+  Award,
+  Clock,
+  Compass,
+  CheckCircle2,
+} from 'lucide-react'
 
 interface HeroBreakingBannerProps {
   settings?: HeroSettings | null
+}
+
+// ১৫টি আইকন হোমপেজে রেন্ডার করার ফাংশন
+function renderBadgeIcon(key?: string, className = "size-3.5 mr-1.5 inline-block") {
+  switch (key) {
+    case "siren": return <Siren className={className} />
+    case "flame": return <Flame className={className} />
+    case "zap": return <Zap className={className} />
+    case "radio": return <Radio className={className} />
+    case "bell-ring": return <BellRing className={className} />
+    case "sparkles": return <Sparkles className={className} />
+    case "megaphone": return <Megaphone className={className} />
+    case "newspaper": return <Newspaper className={className} />
+    case "trending-up": return <TrendingUp className={className} />
+    case "alert-triangle": return <AlertTriangle className={className} />
+    case "star": return <Star className={className} />
+    case "award": return <Award className={className} />
+    case "clock": return <Clock className={className} />
+    case "compass": return <Compass className={className} />
+    case "check-circle": return <CheckCircle2 className={className} />
+    default: return null
+  }
 }
 
 function getBannerBg(slide: HeroSlide) {
@@ -35,22 +77,28 @@ function getBannerBg(slide: HeroSlide) {
 }
 
 export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
-  const [slides, setSlides] = useState<HeroSlide[]>([DEFAULT_BANNER_SLIDE])
+  const [slides, setSlides] = useState<HeroSlide[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    getHeroBannerSlides().then((res) => {
-      if (res && res.length > 0) {
-        setSlides(res.filter((s) => s.is_active !== false))
-      }
-    })
+    getHeroBannerSlides()
+      .then((res) => {
+        if (res && res.length > 0) {
+          setSlides(res.filter((s) => s.is_active !== false))
+        } else {
+          setSlides([])
+        }
+        setLoaded(true)
+      })
+      .catch(() => setLoaded(true))
   }, [])
 
   const total = slides.length
-  const currentSlide = slides[currentIndex] || slides[0] || DEFAULT_BANNER_SLIDE
-  const duration = currentSlide.slide_duration || 5000
+  const currentSlide = slides[currentIndex] || slides[0]
+  const duration = currentSlide?.slide_duration || 5000
 
   const nextSlide = useCallback(() => {
     if (total <= 1) return
@@ -75,7 +123,8 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
     }
   }, [nextSlide, duration, isPaused, total, currentIndex])
 
-  if (!slides || slides.length === 0) return null
+  // ✅ অ্যাডমিন সব ডিলিট করে দিলে হোমপেজে এই সেকশনটি সম্পূর্ণ অদৃশ্য থাকবে
+  if (!loaded || !slides || slides.length === 0) return null
 
   const bannerHeight = currentSlide.banner_config?.height_px || 200
   const slideType = currentSlide.slide_type || 'color'
@@ -95,7 +144,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         background: slideType === 'color' ? getBannerBg(currentSlide) : '#000000',
       }}
     >
-      {/* ছবি ব্যানার */}
+      {/* ছবি ব্যাকগ্রাউন্ড */}
       {slideType === 'image' && (
         <div className="absolute inset-0 size-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -108,7 +157,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         </div>
       )}
 
-      {/* ভিডিও ব্যানার */}
+      {/* ভিডিও ব্যাকগ্রাউন্ড */}
       {slideType === 'video' && (
         <div className="absolute inset-0 size-full flex items-center justify-center bg-black">
           {parsedVideo.isEmbed ? (
@@ -135,7 +184,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
       {/* কনটেন্ট বক্স */}
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-5 relative z-20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ minHeight: `${bannerHeight}px` }}>
         
-        {/* টেক্সট লেয়ারসমূহ */}
+        {/* টেক্সট লেয়ার ও ১৫টি আইকন রেন্ডারিং */}
         <div className="relative w-full flex-1" style={{ minHeight: `${Math.max(120, bannerHeight - 40)}px` }}>
           {layers.map((layer: any, idx: number) => {
             if (layer.enabled === false) return null
@@ -145,6 +194,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
             const scale = layer.size_scale || 1
             const align = layer.align || 'left'
             const anim = layer.animation || 'fade-up'
+            const iconKey = layer.icon
 
             return (
               <div
@@ -168,10 +218,13 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
                       padding: layer.bg_color ? '4px 14px' : undefined,
                       borderRadius: layer.bg_color ? '9999px' : undefined,
                       textAlign: align,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
                     }}
                   >
                     <div
-                      className={`leading-tight drop-shadow-lg ${
+                      className={`leading-tight drop-shadow-lg flex items-center ${
                         layer.weight === 'bold'
                           ? 'font-bold'
                           : layer.weight === 'semibold'
@@ -179,8 +232,9 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
                           : 'font-normal'
                       } ${layer.italic ? 'italic' : ''} text-sm sm:text-lg lg:text-xl`}
                     >
-                      {layer.id === 'txt_date' && <Calendar className="inline-block size-3.5 mr-1.5 opacity-80" />}
-                      {displayText}
+                      {iconKey && renderBadgeIcon(iconKey, "size-4 mr-1.5 shrink-0")}
+                      {layer.id === 'txt_date' && !iconKey && <Calendar className="inline-block size-3.5 mr-1.5 opacity-80" />}
+                      <span>{displayText}</span>
                     </div>
                   </div>
                 </div>
@@ -189,7 +243,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
           })}
         </div>
 
-        {/* ডানদিকের অ্যাকশন বাটন */}
+        {/* অ্যাকশন বাটন */}
         {currentSlide.button_text && (
           <div className="z-30 shrink-0 self-end sm:self-center">
             <a
@@ -211,7 +265,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
           <button
             type="button"
             onClick={prevSlide}
-            className="text-white/70 hover:text-white p-0.5"
+            className="text-white/70 hover:text-white p-0.5 cursor-pointer"
             aria-label="Previous"
           >
             <ChevronLeft className="size-3.5" />
@@ -221,7 +275,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
               key={idx}
               type="button"
               onClick={() => setCurrentIndex(idx)}
-              className={`size-2 rounded-full transition-all ${
+              className={`size-2 rounded-full transition-all cursor-pointer ${
                 idx === currentIndex ? 'w-4 bg-white' : 'bg-white/40'
               }`}
               aria-label={`Slide ${idx + 1}`}
@@ -230,7 +284,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
           <button
             type="button"
             onClick={nextSlide}
-            className="text-white/70 hover:text-white p-0.5"
+            className="text-white/70 hover:text-white p-0.5 cursor-pointer"
             aria-label="Next"
           >
             <ChevronRight className="size-3.5" />
