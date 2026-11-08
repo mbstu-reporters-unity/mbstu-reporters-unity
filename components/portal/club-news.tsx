@@ -126,7 +126,7 @@ export function ClubNews() {
   const visible = filter === 'All' ? list : list.filter((c) => c.tag === filter)
 
   return (
-    <section id="club-news" className="bg-navy py-16 sm:py-20 overflow-hidden">
+    <section id="club-news" className="bg-navy py-16 sm:py-20 overflow-hidden font-sans">
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeading
           inverted
@@ -143,7 +143,7 @@ export function ClubNews() {
               onClick={() => setFilter(tag)}
               aria-pressed={filter === tag}
               className={cn(
-                'shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
+                'shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors font-sans',
                 filter === tag
                   ? 'border-gold bg-gold text-navy'
                   : 'border-white/20 text-white/80 hover:border-white/50 hover:text-white',
@@ -169,17 +169,17 @@ export function ClubNews() {
                 id={`club-${club.id}`}
                 className="scroll-mt-24 animate-in fade-in group flex flex-col rounded-3xl border border-white/10 bg-white/5 p-5 transition-all hover:-translate-y-1 hover:border-brand hover:bg-white/10 w-full min-w-0 overflow-hidden shadow-lg"
               >
-                {/* ক্লাবের লোগো - বড় এবং পরিষ্কার */}
+                {/* ক্লাবের লোগো - কোনো চারপাশের সাদা ফ্রেম বা কৃত্রিম বর্ডার ছাড়া সম্পূর্ণ লগো */}
                 <div className="flex items-start justify-between gap-3">
                   {raw?.logo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={raw.logo_url}
                       alt={club.name}
-                      className="size-20 sm:size-24 shrink-0 rounded-2xl object-contain bg-white p-2 border-2 border-brand/40 shadow-md"
+                      className="size-20 sm:size-24 shrink-0 rounded-2xl object-contain drop-shadow"
                     />
                   ) : (
-                    <span className="flex size-20 sm:size-24 shrink-0 items-center justify-center rounded-2xl bg-brand text-white border-2 border-white/20 shadow-md">
+                    <span className="flex size-20 sm:size-24 shrink-0 items-center justify-center rounded-2xl bg-brand text-white shadow-md">
                       <Icon className="size-8" aria-hidden="true" />
                     </span>
                   )}
@@ -189,15 +189,15 @@ export function ClubNews() {
                 </div>
                 
                 {/* ক্লাবের নাম */}
-                <h3 className="mt-4 text-pretty font-serif text-lg font-bold leading-snug text-white">{club.name}</h3>
-                <p className="text-sm text-white/70">{club.nameBn}</p>
+                <h3 className="mt-4 text-pretty font-sans text-lg font-bold leading-snug text-white">{club.name}</h3>
+                <p className="text-sm text-white/70 font-sans">{club.nameBn}</p>
 
                 {/* ক্লাবের সাম্প্রতিক কার্যক্রম ও বিবরণ */}
                 <div className="mt-4 flex-1 rounded-2xl border border-white/10 bg-navy/60 p-4 w-full min-w-0 overflow-hidden">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-brand-soft/90">Latest Activity</p>
-                  <p className="mt-1 text-sm leading-relaxed text-white/90">{club.activity}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-white/90 font-sans">{club.activity}</p>
                   {club.activityBn && (
-                    <p className="mt-1 text-xs leading-relaxed text-white/60">{club.activityBn}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-white/60 font-sans">{club.activityBn}</p>
                   )}
                   {club.date && (
                     <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-white/50">
@@ -206,15 +206,22 @@ export function ClubNews() {
                     </p>
                   )}
 
-                  {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক মিডিয়া (ভিডিও, ছবি, লিংক) */}
+                  {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক মিডিয়া (ভিডিও, ছবি, ফেসবুক, ইউটিউব) */}
                   {activityMediaList.length > 0 && (
                     <div className="mt-3 space-y-4">
                       {activityMediaList.map((m, idx) => (
                         <div key={idx} className="space-y-1.5 pt-2 border-t border-white/10">
-                          {m.title && <h4 className="font-bold text-sm text-white leading-snug">{m.title}</h4>}
-                          {m.subtitle && <p className="text-xs font-medium text-gold/90">{m.subtitle}</p>}
-                          {m.description && <p className="text-xs text-white/80 whitespace-pre-line leading-relaxed">{m.description}</p>}
-                          <UniversalMediaEmbed url={m.url} title={m.title || club.name} />
+                          {m.title && <h4 className="font-bold text-sm text-white leading-snug font-sans">{m.title}</h4>}
+                          {m.subtitle && <p className="text-xs font-medium text-gold/90 font-sans">{m.subtitle}</p>}
+                          {m.description && <p className="text-xs text-white/80 whitespace-pre-line leading-relaxed font-sans">{m.description}</p>}
+                          <UniversalMediaEmbed
+                            url={m.url}
+                            title={m.title || club.name}
+                            caption={m.caption}
+                            date={m.date}
+                            enableInteractions={true}
+                            itemId={`act_${club.id}_${idx}`}
+                          />
                         </div>
                       ))}
                     </div>
@@ -264,7 +271,7 @@ export function ClubNews() {
                 <button
                   type="button"
                   onClick={() => setSelected(club)}
-                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold cursor-pointer shadow-md"
+                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold cursor-pointer shadow-md font-sans"
                 >
                   <FileText className="size-4" aria-hidden="true" />
                   View Club Reports
