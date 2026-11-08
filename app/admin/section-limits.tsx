@@ -173,7 +173,7 @@ export default function SectionLimits({
           />
         </div>
 
-        {/* বর্তমান লোগোর লাইভ প্রিভিউ */}
+        {/* বর্তমান লোগোর লাইভ প্রিভিউ — বর্ডার ছাড়া সম্পূর্ণ গোল */}
         {previewUrl && (
           <div className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-green-200 shadow-sm">
             <div className="flex items-center gap-3">
@@ -181,7 +181,7 @@ export default function SectionLimits({
               <img
                 src={previewUrl}
                 alt="Logo preview"
-                className="size-11 object-contain rounded-full border p-1 bg-white shadow-sm"
+                className="size-12 object-cover rounded-full shadow-sm select-none"
                 onError={(e) => ((e.target as HTMLElement).style.display = "none")}
               />
               <div className="min-w-0">
