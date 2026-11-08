@@ -17,6 +17,7 @@ import {
   createHeroBannerSlide,
   updateHeroBannerSlide,
   deleteHeroBannerSlide,
+  BANNER_BADGE_ICONS,
 } from "@/lib/hero-banner"
 import {
   Palette,
@@ -33,6 +34,21 @@ import {
   AlignJustify,
   Calendar,
   ExternalLink,
+  Siren,
+  Flame,
+  Zap,
+  Radio,
+  BellRing,
+  Sparkles,
+  Megaphone,
+  Newspaper,
+  TrendingUp,
+  AlertTriangle,
+  Star,
+  Award,
+  Clock,
+  Compass,
+  CheckCircle2,
 } from "lucide-react"
 
 const inp = "w-full border border-slate-700 rounded-xl px-3.5 py-2 text-xs bg-slate-950 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
@@ -40,7 +56,28 @@ const selectInp = "w-full border border-slate-700 rounded-xl px-3 py-2 text-xs b
 const btnSave = "w-full bg-green-700 hover:bg-green-600 text-white rounded-xl py-3.5 font-bold text-sm transition-all disabled:opacity-50 shadow-lg cursor-pointer"
 const cardBox = "bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4"
 
-// ডিফল্ট টেক্সট আইটেম
+// ১৫টি আইকন সরাসরি রেন্ডার করার ফাংশন
+function renderBadgeIcon(key?: string, className = "size-3.5 mr-1.5 inline-block") {
+  switch (key) {
+    case "siren": return <Siren className={className} />
+    case "flame": return <Flame className={className} />
+    case "zap": return <Zap className={className} />
+    case "radio": return <Radio className={className} />
+    case "bell-ring": return <BellRing className={className} />
+    case "sparkles": return <Sparkles className={className} />
+    case "megaphone": return <Megaphone className={className} />
+    case "newspaper": return <Newspaper className={className} />
+    case "trending-up": return <TrendingUp className={className} />
+    case "alert-triangle": return <AlertTriangle className={className} />
+    case "star": return <Star className={className} />
+    case "award": return <Award className={className} />
+    case "clock": return <Clock className={className} />
+    case "compass": return <Compass className={className} />
+    case "check-circle": return <CheckCircle2 className={className} />
+    default: return null
+  }
+}
+
 const DEFAULT_BANNER_TEXT_ITEMS: IndependentTextItem[] = [
   {
     id: "txt_title",
@@ -74,7 +111,7 @@ const DEFAULT_BANNER_TEXT_ITEMS: IndependentTextItem[] = [
   },
   {
     id: "txt_badge",
-    label: "৩. ব্যাজ (Badge)",
+    label: "৩. ব্যাজ (Badge - ব্রেকিং, হট নিউজ, আপডেট ইত্যাদি)",
     text: "ব্রেকিং নিউজ",
     enabled: true,
     x: 18,
@@ -166,10 +203,26 @@ export default function HeroBannerManager({
     setGradientStops(updated)
   }
 
-  const updateTextItem = (idx: number, field: keyof IndependentTextItem, val: any) => {
+  const updateTextItem = (idx: number, field: keyof IndependentTextItem | "icon", val: any) => {
     const updated = [...textItems]
     updated[idx] = { ...updated[idx], [field]: val }
     setTextItems(updated)
+  }
+
+  // দ্রুত ব্যাজ প্রিসেট সেট করার ফাংশন
+  const setQuickBadgePreset = (text: string, iconKey: string, bgColor: string) => {
+    const badgeIdx = textItems.findIndex((t) => t.id === "txt_badge")
+    if (badgeIdx >= 0) {
+      const updated = [...textItems]
+      updated[badgeIdx] = {
+        ...updated[badgeIdx],
+        text,
+        bg_color: bgColor,
+        enabled: true,
+        ...({ icon: iconKey } as any),
+      }
+      setTextItems(updated)
+    }
   }
 
   const addNewCustomBox = () => {
@@ -371,6 +424,7 @@ export default function HeroBannerManager({
             <div className="absolute inset-0 pointer-events-none">
               {textItems.map((item) => {
                 if (!item.enabled || !item.text) return null
+                const iconKey = (item as any).icon
                 return (
                   <div
                     key={item.id}
@@ -390,13 +444,16 @@ export default function HeroBannerManager({
                           fontFamily: item.font,
                           color: item.color,
                           backgroundColor: item.bg_color || undefined,
-                          padding: item.bg_color ? "3px 10px" : undefined,
+                          padding: item.bg_color ? "4px 12px" : undefined,
                           borderRadius: item.bg_color ? "9999px" : undefined,
                           textAlign: item.align,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
                         }}
                       >
                         <div
-                          className={`leading-tight drop-shadow-md ${
+                          className={`leading-tight drop-shadow-md flex items-center ${
                             item.weight === "bold"
                               ? "font-bold"
                               : item.weight === "semibold"
@@ -404,8 +461,9 @@ export default function HeroBannerManager({
                               : "font-normal"
                           } ${item.italic ? "italic" : ""} text-xs sm:text-base`}
                         >
-                          {item.id === "txt_date" && <Calendar className="inline-block size-3.5 mr-1 opacity-80" />}
-                          {item.text}
+                          {iconKey && renderBadgeIcon(iconKey, "size-3.5 mr-1 shrink-0")}
+                          {item.id === "txt_date" && !iconKey && <Calendar className="inline-block size-3.5 mr-1 opacity-80" />}
+                          <span>{item.text}</span>
                         </div>
                       </div>
                     </div>
@@ -441,7 +499,7 @@ export default function HeroBannerManager({
 
         {/* পোস্টের ধরন */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-300 block">১. ব্যানারের ধরন বেছে নিন:</label>
+          <label className="text-xs font-bold text-gray-300 block">১. ব্যানারের ব্যাকগ্রাউন্ড ধরন:</label>
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
@@ -649,11 +707,60 @@ export default function HeroBannerManager({
           </div>
         )}
 
-        {/* টেক্সট বক্সসমূহ */}
+        {/* ⭐ দ্রুত ব্যাজ প্রিসেট বাটনসমূহ ⭐ */}
+        <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
+          <span className="text-xs font-bold text-yellow-400 block">⚡ দ্রুত ব্যাজ নির্বাচন (এক ক্লিকে পছন্দের ব্যাজ সেট করুন):</span>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => setQuickBadgePreset("ব্রেকিং নিউজ", "siren", "#DC2626")}
+              className="px-2.5 py-1 rounded-full bg-red-600/90 hover:bg-red-600 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+            >
+              <Siren className="size-3" /> ব্রেকিং নিউজ
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuickBadgePreset("হট নিউজ", "flame", "#EA580C")}
+              className="px-2.5 py-1 rounded-full bg-orange-600/90 hover:bg-orange-600 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+            >
+              <Flame className="size-3" /> হট নিউজ
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuickBadgePreset("ফ্ল্যাশ আপডেট", "zap", "#D97706")}
+              className="px-2.5 py-1 rounded-full bg-amber-600/90 hover:bg-amber-600 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+            >
+              <Zap className="size-3" /> ফ্ল্যাশ আপডেট
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuickBadgePreset("লাইভ আপডেট", "radio", "#2563EB")}
+              className="px-2.5 py-1 rounded-full bg-blue-600/90 hover:bg-blue-600 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+            >
+              <Radio className="size-3" /> লাইভ আপডেট
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuickBadgePreset("নতুন আপডেট", "sparkles", "#7C3AED")}
+              className="px-2.5 py-1 rounded-full bg-purple-600/90 hover:bg-purple-600 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+            >
+              <Sparkles className="size-3" /> নতুন আপডেট
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuickBadgePreset("বিশেষ বিজ্ঞপ্তি", "bell-ring", "#B91C1C")}
+              className="px-2.5 py-1 rounded-full bg-rose-700/90 hover:bg-rose-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+            >
+              <BellRing className="size-3" /> বিশেষ বিজ্ঞপ্তি
+            </button>
+          </div>
+        </div>
+
+        {/* টেক্সট বক্সসমূহ ও ১৫টি আইকন নির্বাচন */}
         <div className="p-3.5 bg-slate-950/90 border border-slate-800 rounded-xl space-y-4">
           <div className="flex items-center justify-between border-b border-slate-850 pb-2">
             <span className="text-xs font-bold text-yellow-400 flex items-center gap-1.5">
-              <Type className="size-4" /> ২. লেখার স্বাধীন বক্সসমূহ:
+              <Type className="size-4" /> ২. লেখার স্বাধীন বক্সসমূহ ও আইকন:
             </span>
             <button
               type="button"
@@ -693,12 +800,51 @@ export default function HeroBannerManager({
 
                 {item.enabled && (
                   <div className="space-y-2.5 pt-1">
-                    <input
-                      className={inp}
-                      placeholder={`${item.label}-এর লেখা লিখুন...`}
-                      value={item.text}
-                      onChange={(e) => updateTextItem(idx, "text", e.target.value)}
-                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="sm:col-span-2">
+                        <label className="text-[10px] text-gray-400 block mb-0.5">লেখার বিবরণ:</label>
+                        <input
+                          className={inp}
+                          placeholder={`${item.label}-এর লেখা লিখুন...`}
+                          value={item.text}
+                          onChange={(e) => updateTextItem(idx, "text", e.target.value)}
+                        />
+                      </div>
+
+                      {/* ⭐ ১৫টি আইকন সিলেক্টর ড্রপডাউন ⭐ */}
+                      <div>
+                        <label className="text-[10px] text-yellow-400 block mb-0.5 font-bold">
+                          আইকন (১৫টি আইকন):
+                        </label>
+                        <select
+                          className={selectInp}
+                          value={(item as any).icon || "none"}
+                          onChange={(e) =>
+                            updateTextItem(
+                              idx,
+                              "icon" as any,
+                              e.target.value === "none" ? undefined : e.target.value
+                            )
+                          }
+                        >
+                          <option value="none">— কোনো আইকন নেই —</option>
+                          <optgroup label="৫টি ব্রেকিং/হট নিউজ আইকন">
+                            {BANNER_BADGE_ICONS.slice(0, 5).map((ic) => (
+                              <option key={ic.key} value={ic.key}>
+                                {ic.label}
+                              </option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="১০টি অন্যান্য ব্যাজ আইকন">
+                            {BANNER_BADGE_ICONS.slice(5).map((ic) => (
+                              <option key={ic.key} value={ic.key}>
+                                {ic.label}
+                              </option>
+                            ))}
+                          </optgroup>
+                        </select>
+                      </div>
+                    </div>
 
                     {/* X ও Y অবস্থান */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-2.5 bg-slate-950 rounded-xl border border-slate-850">
@@ -792,12 +938,20 @@ export default function HeroBannerManager({
                       </div>
 
                       <div>
-                        <span className="text-[10px] text-gray-400 block mb-1">রঙ:</span>
+                        <span className="text-[10px] text-gray-400 block mb-1">রঙ ও ব্যাকগ্রাউন্ড:</span>
                         <div className="flex items-center gap-1.5">
                           <input
                             type="color"
+                            title="লেখার রঙ"
                             value={item.color}
                             onChange={(e) => updateTextItem(idx, "color", e.target.value)}
+                            className="size-7 rounded border border-slate-700 bg-transparent cursor-pointer"
+                          />
+                          <input
+                            type="color"
+                            title="ব্যাকগ্রাউন্ড ব্যাজ রঙ"
+                            value={item.bg_color || "#DC2626"}
+                            onChange={(e) => updateTextItem(idx, "bg_color", e.target.value)}
                             className="size-7 rounded border border-slate-700 bg-transparent cursor-pointer"
                           />
                           <button
@@ -912,11 +1066,11 @@ export default function HeroBannerManager({
         </button>
       </div>
 
-      {/* ৩. বর্তমান ব্যানার স্লাইডসমূহের তালিকা */}
+      {/* ৩. বর্তমান ব্যানার স্লাইডসমূহের তালিকা ও ডিলিট অপশন */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <h2 className="font-bold text-xs sm:text-sm text-gray-200">বর্তমান ব্যানার স্লাইডসমূহ ({list.length})</h2>
-          <span className="text-[10px] text-green-400 font-semibold">হোমপেজে পর্যায়ক্রমে চলবে</span>
+          <span className="text-[10px] text-green-400 font-semibold">সব মুছে ফেললে হোমপেজে ব্যানার থাকবে না</span>
         </div>
 
         <div className="space-y-2">
@@ -949,9 +1103,18 @@ export default function HeroBannerManager({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (confirm("এই ব্যানার স্লাইডটি মুছে ফেলতে চান?")) {
-                      deleteHeroBannerSlide(token, slide.id).then(loadData)
+                  onClick={async () => {
+                    if (confirm(`"${slide.title || 'এই ব্যানার স্লাইড'}" মুছে ফেলতে চান? এটি মুছে ফেললে হোমপেজ থেকেও সরে যাবে।`)) {
+                      setBusy(true)
+                      try {
+                        await deleteHeroBannerSlide(token, slide.id)
+                        await loadData()
+                        setMsg("✅ স্লাইড মুছে ফেলা হয়েছে")
+                        if (editId === slide.id) resetForm()
+                      } catch {
+                        setMsg("❌ মুছতে সমস্যা হয়েছে")
+                      }
+                      setBusy(false)
                     }
                   }}
                   className="px-2.5 py-1 bg-red-950 text-red-300 border border-red-800 rounded-lg hover:bg-red-900 cursor-pointer"
@@ -961,6 +1124,14 @@ export default function HeroBannerManager({
               </div>
             </div>
           ))}
+
+          {/* যখন কোনো স্লাইড থাকবে না তখন এই মেসেজ দেখাবে */}
+          {list.length === 0 && (
+            <div className="text-center py-6 border border-dashed border-slate-800 rounded-xl bg-slate-950/60 space-y-1">
+              <p className="text-sm font-bold text-gray-300">বর্তমানে কোনো ব্যানার স্লাইড নেই</p>
+              <p className="text-xs text-gray-500">হোমপেজে এই ব্যানারটি সম্পূর্ণ বন্ধ আছে। অ্যাডমিন চাইলে উপরের ফর্ম পূরণ করে নতুন স্লাইড সেভ করলে আবার লাইভ হবে।</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
