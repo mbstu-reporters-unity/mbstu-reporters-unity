@@ -169,17 +169,17 @@ export function ClubNews() {
                 id={`club-${club.id}`}
                 className="scroll-mt-24 animate-in fade-in group flex flex-col rounded-3xl border border-white/10 bg-white/5 p-5 transition-all hover:-translate-y-1 hover:border-brand hover:bg-white/10 w-full min-w-0 overflow-hidden shadow-lg"
               >
-                {/* ক্লাবের লোগো - বড় এবং পরিষ্কার */}
+                {/* ⭐ ক্লাবের লোগো — বর্ডার ও চারকোনা বক্স ছাড়া সম্পূর্ণ গোল ও পরিষ্কার ⭐ */}
                 <div className="flex items-start justify-between gap-3">
                   {raw?.logo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={raw.logo_url}
                       alt={club.name}
-                      className="size-20 sm:size-24 shrink-0 rounded-2xl object-contain bg-white p-2 border-2 border-brand/40 shadow-md"
+                      className="size-20 sm:size-24 shrink-0 rounded-full object-cover shadow-md select-none"
                     />
                   ) : (
-                    <span className="flex size-20 sm:size-24 shrink-0 items-center justify-center rounded-2xl bg-brand text-white border-2 border-white/20 shadow-md">
+                    <span className="flex size-20 sm:size-24 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-md">
                       <Icon className="size-8" aria-hidden="true" />
                     </span>
                   )}
