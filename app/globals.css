@@ -2,7 +2,7 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-/* ⭐ নন-ব্লকিং সোলাইমান লিপি ফন্ট (যাতে কোনো বাইরের সার্ভারের জন্য পেজ আটকে না থাকে) ⭐ */
+/* ⭐ নন-ব্লকিং সোলাইমান লিপি ফন্ট ⭐ */
 @font-face {
   font-family: 'SolaimanLipi';
   src: url('https://cdn.jsdelivr.net/gh/maateen/bangla-fonts@master/SolaimanLipi/SolaimanLipi.woff2') format('woff2'),
@@ -128,27 +128,13 @@
   }
 }
 
-/* ⭐ শুধুমাত্র ক্লাবগুলোর বাংলা লেখার বিশেষ ফন্ট রুলস ⭐ */
+/* ⭐ ক্লাবসমূহের টেক্সটের ফন্ট স্টাইল (ক্লিন ও শার্প রেন্ডারিং) ⭐ */
 #club-news,
 #club-latest,
 .club-font,
 .club-dialog-font,
 .club-bn-text {
-  font-family: 'SolaimanLipi', 'Ruposhi Bangla', 'Times New Roman', serif;
-}
-
-#club-news h2,
-#club-news h3,
-#club-news h4,
-#club-news p,
-#club-latest h3,
-#club-latest p,
-.club-dialog-font h2,
-.club-dialog-font h3,
-.club-dialog-font h4,
-.club-dialog-font p,
-.club-dialog-font span {
-  font-family: 'SolaimanLipi', 'Ruposhi Bangla', 'Times New Roman', serif;
+  font-family: 'SolaimanLipi', var(--font-sans), sans-serif;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -362,7 +348,7 @@ html[data-theme="night"] body { letter-spacing: 0.005em; }
 html[data-theme="contrast"] :focus-visible { outline: 3px solid #000; outline-offset: 2px; }
 html[data-theme="contrast"] main a { text-decoration: underline; }
 
-/* ==================== হিরো স্লাইডার ও টেক্সটের অ্যানিমেশন কিফ্রেম (১০০% অক্ষত) ==================== */
+/* ==================== হিরো স্লাইডার ও টেক্সটের অ্যানিমেশন কিফ্রেম ==================== */
 @keyframes heroProgressTimer { from { width: 0%; } to { width: 100%; } }
 @keyframes anim_fade-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
 @keyframes anim_zoom-pop { 0% { transform: scale(0.65); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
