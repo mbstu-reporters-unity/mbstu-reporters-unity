@@ -18,7 +18,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { clubs as fallbackClubs, type Club, type ClubIcon } from '@/lib/data'
-import { getCampusClubs, type ClubItem } from '@/lib/clubs'
+import { getCampusClubs, parseActivityMedia, type ClubItem } from '@/lib/clubs'
 import { cn } from '@/lib/utils'
 import { SectionHeading } from './section-heading'
 import { ClubReportsDialog } from './club-reports-dialog'
@@ -126,7 +126,7 @@ export function ClubNews() {
   const visible = filter === 'All' ? list : list.filter((c) => c.tag === filter)
 
   return (
-    <section id="club-news" className="bg-navy py-16 sm:py-20">
+    <section id="club-news" className="bg-navy py-16 sm:py-20 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeading
           inverted
@@ -161,41 +161,43 @@ export function ClubNews() {
           {visible.map((club) => {
             const Icon = clubIcons[club.icon] || Star
             const raw = dbMap[club.id]
+            const activityMediaList = parseActivityMedia(raw?.embed_media_url)
 
             return (
               <li
                 key={club.id}
                 id={`club-${club.id}`}
-                className="scroll-mt-24 animate-in fade-in group flex flex-col rounded-2xl border border-white/10 bg-white/5 p-5 transition-all hover:-translate-y-1 hover:border-brand hover:bg-white/10"
+                className="scroll-mt-24 animate-in fade-in group flex flex-col rounded-3xl border border-white/10 bg-white/5 p-5 transition-all hover:-translate-y-1 hover:border-brand hover:bg-white/10 w-full min-w-0 overflow-hidden shadow-lg"
               >
+                {/* ক্লাবের লোগো - বড় এবং পরিষ্কার */}
                 <div className="flex items-start justify-between gap-3">
                   {raw?.logo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={raw.logo_url}
                       alt={club.name}
-                      className="size-12 shrink-0 rounded-xl object-contain bg-white p-1 border border-white/20 shadow-sm"
+                      className="size-20 sm:size-24 shrink-0 rounded-2xl object-contain bg-white p-2 border-2 border-brand/40 shadow-md"
                     />
                   ) : (
-                    <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand text-white">
-                      <Icon className="size-5" aria-hidden="true" />
+                    <span className="flex size-20 sm:size-24 shrink-0 items-center justify-center rounded-2xl bg-brand text-white border-2 border-white/20 shadow-md">
+                      <Icon className="size-8" aria-hidden="true" />
                     </span>
                   )}
-                  <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-gold">
+                  <span className="rounded-full bg-gold/15 px-3 py-1 text-xs font-bold uppercase tracking-wide text-gold border border-gold/30">
                     {club.tag}
                   </span>
                 </div>
                 
                 {/* ক্লাবের নাম */}
-                <h3 className="mt-4 text-pretty font-serif text-base font-bold leading-snug text-white">{club.name}</h3>
-                <p className="text-sm text-white/60">{club.nameBn}</p>
+                <h3 className="mt-4 text-pretty font-serif text-lg font-bold leading-snug text-white">{club.name}</h3>
+                <p className="text-sm text-white/70">{club.nameBn}</p>
 
                 {/* ক্লাবের সাম্প্রতিক কার্যক্রম ও বিবরণ */}
-                <div className="mt-4 flex-1 rounded-xl border border-white/10 bg-navy/40 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-soft/80">Latest Activity</p>
-                  <p className="mt-1 text-sm leading-relaxed text-white/85">{club.activity}</p>
+                <div className="mt-4 flex-1 rounded-2xl border border-white/10 bg-navy/60 p-4 w-full min-w-0 overflow-hidden">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-brand-soft/90">Latest Activity</p>
+                  <p className="mt-1 text-sm leading-relaxed text-white/90">{club.activity}</p>
                   {club.activityBn && (
-                    <p className="mt-1 text-xs leading-relaxed text-white/55">{club.activityBn}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-white/60">{club.activityBn}</p>
                   )}
                   {club.date && (
                     <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-white/50">
@@ -204,9 +206,18 @@ export function ClubNews() {
                     </p>
                   )}
 
-                  {/* ⭐ লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবির প্রিভিউ দেখাবে ⭐ */}
-                  {raw?.embed_media_url && (
-                    <UniversalMediaEmbed url={raw.embed_media_url} title={club.name} />
+                  {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক মিডিয়া (ভিডিও, ছবি, লিংক) */}
+                  {activityMediaList.length > 0 && (
+                    <div className="mt-3 space-y-4">
+                      {activityMediaList.map((m, idx) => (
+                        <div key={idx} className="space-y-1.5 pt-2 border-t border-white/10">
+                          {m.title && <h4 className="font-bold text-sm text-white leading-snug">{m.title}</h4>}
+                          {m.subtitle && <p className="text-xs font-medium text-gold/90">{m.subtitle}</p>}
+                          {m.description && <p className="text-xs text-white/80 whitespace-pre-line leading-relaxed">{m.description}</p>}
+                          <UniversalMediaEmbed url={m.url} title={m.title || club.name} />
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
 
@@ -218,7 +229,7 @@ export function ClubNews() {
                         href={raw.fb_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-lg bg-white/10 px-2 py-1 text-xs font-semibold text-white transition hover:bg-blue-600"
+                        className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-blue-600"
                         title="Facebook Page"
                       >
                         Facebook
@@ -229,7 +240,7 @@ export function ClubNews() {
                         href={raw.yt_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-lg bg-white/10 px-2 py-1 text-xs font-semibold text-white transition hover:bg-red-600"
+                        className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-600"
                         title="YouTube Channel"
                       >
                         YouTube
@@ -240,7 +251,7 @@ export function ClubNews() {
                         href={raw.web_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 text-xs font-semibold text-white transition hover:bg-brand"
+                        className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-brand"
                         title="Official Website"
                       >
                         <Globe className="size-3" />
@@ -253,7 +264,7 @@ export function ClubNews() {
                 <button
                   type="button"
                   onClick={() => setSelected(club)}
-                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold cursor-pointer"
+                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold cursor-pointer shadow-md"
                 >
                   <FileText className="size-4" aria-hidden="true" />
                   View Club Reports
