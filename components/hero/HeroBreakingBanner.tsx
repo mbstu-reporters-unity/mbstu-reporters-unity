@@ -1,62 +1,242 @@
 'use client'
 
-import React from 'react'
-import type { HeroSettings } from '@/lib/hero'
-import { ArrowRight } from 'lucide-react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
+import { getHeroBannerSlides, DEFAULT_BANNER_SLIDE } from '@/lib/hero-banner'
+import type { HeroSlide, HeroSettings } from '@/lib/hero'
+import { parseVideoUrl } from '@/lib/hero'
+import { ArrowRight, ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 
 interface HeroBreakingBannerProps {
-  settings: HeroSettings | null
+  settings?: HeroSettings | null
+}
+
+function getBannerBg(slide: HeroSlide) {
+  if (slide.banner_config) {
+    const cfg = slide.banner_config
+    if (cfg.mode === 'solid') {
+      return cfg.stops?.[0]?.color || '#1e1b4b'
+    }
+    const angle = cfg.angle ?? 135
+    const stops = cfg.stops && cfg.stops.length > 0
+      ? cfg.stops
+      : [
+          { color: '#1e1b4b', stop: 0 },
+          { color: '#1e3a8a', stop: 50 },
+          { color: '#0f172a', stop: 100 },
+        ]
+    const stopString = [...stops]
+      .sort((a, b) => a.stop - b.stop)
+      .map((s) => `${s.color} ${s.stop}%`)
+      .join(', ')
+
+    return `linear-gradient(${angle}deg, ${stopString})`
+  }
+  return 'linear-gradient(135deg, #1e1b4b 0%, #1e3a8a 50%, #0f172a 100%)'
 }
 
 export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
-  // যদি এডমিন ব্রেকিং মোড বন্ধ রাখে, তবে এই কম্পোনেন্ট কোনো জায়গা নেবে না (০ হাইট)
-  // ফলে নিচের স্লাইডার স্বয়ংক্রিয়ভাবে সরাসরি উপরে উঠে আসবে
-  if (!settings?.breaking_on) {
-    return null
-  }
+  const [slides, setSlides] = useState<HeroSlide[]>([DEFAULT_BANNER_SLIDE])
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const bgStyle = {
-    background: `linear-gradient(135deg, ${settings.breaking_bg_color || '#881337'}, ${settings.breaking_bg_gradient || '#0f172a'})`,
-  }
+  useEffect(() => {
+    getHeroBannerSlides().then((res) => {
+      if (res && res.length > 0) {
+        setSlides(res.filter((s) => s.is_active !== false))
+      }
+    })
+  }, [])
+
+  const total = slides.length
+  const currentSlide = slides[currentIndex] || slides[0] || DEFAULT_BANNER_SLIDE
+  const duration = currentSlide.slide_duration || 5000
+
+  const nextSlide = useCallback(() => {
+    if (total <= 1) return
+    setCurrentIndex((prev) => (prev + 1) % total)
+  }, [total])
+
+  const prevSlide = useCallback(() => {
+    if (total <= 1) return
+    setCurrentIndex((prev) => (prev - 1 + total) % total)
+  }, [total])
+
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    if (isPaused || total <= 1 || duration <= 0) return
+
+    timerRef.current = setTimeout(() => {
+      nextSlide()
+    }, duration)
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [nextSlide, duration, isPaused, total, currentIndex])
+
+  if (!slides || slides.length === 0) return null
+
+  const bannerHeight = currentSlide.banner_config?.height_px || 200
+  const slideType = currentSlide.slide_type || 'color'
+  const videoUrl = currentSlide.video_config?.url || ''
+  const parsedVideo = parseVideoUrl(videoUrl)
+  const imageUrl = currentSlide.media_items?.[0]?.url || ''
+  const layers = currentSlide.text_layers || []
 
   return (
     <section
-      style={bgStyle}
-      aria-label="জরুরি ব্রেকিং নিউজ"
-      className="relative w-full py-4 sm:py-5 px-4 sm:px-8 border-b border-red-900/60 shadow-xl transition-all duration-300 overflow-hidden"
+      aria-label="Hero Banner"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      className="relative w-full overflow-hidden select-none border-b border-indigo-950/60 shadow-xl transition-all duration-300"
+      style={{
+        minHeight: `${bannerHeight}px`,
+        background: slideType === 'color' ? getBannerBg(currentSlide) : '#000000',
+      }}
     >
-      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-        <div className="space-y-1.5 flex-1 min-w-0">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/95 text-white text-xs font-bold tracking-wider shadow-md">
-            <span className="size-2 rounded-full bg-white animate-ping" />
-            <span>ব্রেকিং নিউজ</span>
-          </div>
+      {/* ছবি ব্যানার */}
+      {slideType === 'image' && (
+        <div className="absolute inset-0 size-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl || '/images/hero-1.png'}
+            alt=""
+            className="size-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/60" />
+        </div>
+      )}
 
-          {settings.breaking_title && (
-            <h2 className="text-base sm:text-lg lg:text-xl font-bold text-white drop-shadow leading-snug">
-              {settings.breaking_title}
-            </h2>
+      {/* ভিডিও ব্যানার */}
+      {slideType === 'video' && (
+        <div className="absolute inset-0 size-full flex items-center justify-center bg-black">
+          {parsedVideo.isEmbed ? (
+            <iframe
+              src={`${parsedVideo.embedSrc}&autoplay=1&mute=1`}
+              className="size-full aspect-video border-0 pointer-events-auto"
+              allow="autoplay; encrypted-media"
+              title="Banner Video"
+            />
+          ) : (
+            <video
+              src={videoUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="size-full object-cover"
+            />
           )}
+          <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+        </div>
+      )}
 
-          {settings.breaking_text && (
-            <p className="text-xs sm:text-sm text-slate-200 line-clamp-2 leading-relaxed">
-              {settings.breaking_text}
-            </p>
-          )}
+      {/* কনটেন্ট বক্স */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-5 relative z-20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ minHeight: `${bannerHeight}px` }}>
+        
+        {/* টেক্সট লেয়ারসমূহ */}
+        <div className="relative w-full flex-1" style={{ minHeight: `${Math.max(120, bannerHeight - 40)}px` }}>
+          {layers.map((layer: any, idx: number) => {
+            if (layer.enabled === false) return null
+            const displayText = layer.text || layer.title || ''
+            if (!displayText) return null
+
+            const scale = layer.size_scale || 1
+            const align = layer.align || 'left'
+            const anim = layer.animation || 'fade-up'
+
+            return (
+              <div
+                key={`${currentSlide.id}_${layer.id || idx}`}
+                className="absolute transition-all duration-300"
+                style={{
+                  left: `${layer.x ?? 30}%`,
+                  top: `${layer.y ?? 50}%`,
+                  transform: 'translate(-50%, -50%)',
+                  maxWidth: '92%',
+                  textAlign: align,
+                }}
+              >
+                <div style={{ transform: `scale(${scale})` }}>
+                  <div
+                    className={`anim_${anim}`}
+                    style={{
+                      fontFamily: layer.font || undefined,
+                      color: layer.color || '#FFFFFF',
+                      backgroundColor: layer.bg_color || undefined,
+                      padding: layer.bg_color ? '4px 14px' : undefined,
+                      borderRadius: layer.bg_color ? '9999px' : undefined,
+                      textAlign: align,
+                    }}
+                  >
+                    <div
+                      className={`leading-tight drop-shadow-lg ${
+                        layer.weight === 'bold'
+                          ? 'font-bold'
+                          : layer.weight === 'semibold'
+                          ? 'font-semibold'
+                          : 'font-normal'
+                      } ${layer.italic ? 'italic' : ''} text-sm sm:text-lg lg:text-xl`}
+                    >
+                      {layer.id === 'txt_date' && <Calendar className="inline-block size-3.5 mr-1.5 opacity-80" />}
+                      {displayText}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
 
-        {settings.breaking_link && (
-          <a
-            href={settings.breaking_link}
-            target={settings.breaking_link.startsWith('http') ? '_blank' : '_self'}
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white hover:bg-red-50 text-red-700 font-semibold text-xs transition-all shadow-lg shrink-0 cursor-pointer"
-          >
-            <span>{settings.breaking_btn_text || 'বিস্তারিত'}</span>
-            <ArrowRight className="size-3.5" />
-          </a>
+        {/* ডানদিকের অ্যাকশন বাটন */}
+        {currentSlide.button_text && (
+          <div className="z-30 shrink-0 self-end sm:self-center">
+            <a
+              href={currentSlide.link_url || '#'}
+              target={currentSlide.link_url?.startsWith('http') ? '_blank' : '_self'}
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-slate-100 text-red-700 font-bold text-xs transition-all shadow-xl active:scale-95 cursor-pointer"
+            >
+              <span>{currentSlide.button_text}</span>
+              <ArrowRight className="size-3.5" />
+            </a>
+          </div>
         )}
       </div>
+
+      {/* একাধিক স্লাইড থাকলে কন্ট্রোল বোতাম ও ডটস */}
+      {total > 1 && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-black/40 backdrop-blur px-2.5 py-1 rounded-full border border-white/10">
+          <button
+            type="button"
+            onClick={prevSlide}
+            className="text-white/70 hover:text-white p-0.5"
+            aria-label="Previous"
+          >
+            <ChevronLeft className="size-3.5" />
+          </button>
+          {slides.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setCurrentIndex(idx)}
+              className={`size-2 rounded-full transition-all ${
+                idx === currentIndex ? 'w-4 bg-white' : 'bg-white/40'
+              }`}
+              aria-label={`Slide ${idx + 1}`}
+            />
+          ))}
+          <button
+            type="button"
+            onClick={nextSlide}
+            className="text-white/70 hover:text-white p-0.5"
+            aria-label="Next"
+          >
+            <ChevronRight className="size-3.5" />
+          </button>
+        </div>
+      )}
     </section>
   )
 }
