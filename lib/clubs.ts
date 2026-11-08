@@ -6,15 +6,18 @@ export type CommitteeMember = {
   photo_url?: string | null
 }
 
-// প্রতিটি মিডিয়া আইটেম (শিরোনাম, উপশিরোনাম, বিস্তারিত ও লিংক)
+// প্রতিটি মিডিয়া আইটেম (শিরোনাম, উপশিরোনাম, বিস্তারিত বিবরণ, ক্যাপশন, তারিখ ও লিংক)
 export type ClubMediaItem = {
   id?: string
   title?: string
   subtitle?: string
   description?: string
+  caption?: string
+  date?: string
   url: string
 }
 
+// প্রতিটি ক্লাব প্রতিবেদন (একাধিক মিডিয়া আইটেম সাপোর্ট সহ)
 export type ClubReportItem = {
   title: string
   date: string
@@ -23,7 +26,8 @@ export type ClubReportItem = {
   embed_media_url?: string | null
   subtitle?: string | null
   description?: string | null
-  media_items?: ClubMediaItem[] | null // একাধিক ছবি/ভিডিও/লিংক
+  caption?: string | null
+  media_items?: ClubMediaItem[] | null
 }
 
 export type ClubItem = {
@@ -52,7 +56,7 @@ export type ClubItem = {
 
 export type ClubInput = Omit<ClubItem, "id" | "created_at">
 
-// একাধিক মিডিয়া পার্স ও কনভার্ট করার ফাংশন (বিদ্যমান সিঙ্গেল লিংকের সাথেও ১০০% সামঞ্জস্যপূর্ণ)
+// একক বা একাধিক মিডিয়া নিরাপদে পড়ার হেল্পার ফাংশন
 export function parseActivityMedia(raw?: string | null): ClubMediaItem[] {
   if (!raw || !raw.trim()) return []
   const str = raw.trim()
@@ -63,9 +67,11 @@ export function parseActivityMedia(raw?: string | null): ClubMediaItem[] {
       if (parsed && typeof parsed === "object") return [parsed]
     } catch {}
   }
+  // পূর্বের সাধারণ একক লিংক থাকলে সেটিকেও অবিকৃত রাখবে
   return [{ url: str }]
 }
 
+// একাধিক মিডিয়া নিরাপদে টেক্সটে রূপান্তর করে সেভ করার হেল্পার ফাংশন
 export function stringifyActivityMedia(items: ClubMediaItem[]): string | null {
   const valid = items.filter((i) => i.url?.trim() || i.title?.trim() || i.description?.trim())
   if (valid.length === 0) return null
@@ -131,6 +137,7 @@ export async function deleteCampusClub(token: string, id: string) {
   )
 }
 
+// কোনো নির্দিষ্ট ক্লাবের সকল প্রকাশিত সংবাদ লোড করা
 export async function getClubNewsPosts(clubId: string) {
   try {
     const res = await fetch(
