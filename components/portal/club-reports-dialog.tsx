@@ -62,7 +62,7 @@ export function ClubReportsDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 font-sans">
       {/* ব্যাকড্রপ */}
       <button
         type="button"
@@ -90,16 +90,16 @@ export function ClubReportsDialog({
           </button>
           
           <div className="flex items-center gap-4 pr-8">
-            {/* বড় ও স্পষ্ট লোগো */}
+            {/* বর্ডার ছাড়া সম্পূর্ণ আসল লগো */}
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logo}
                 alt=""
-                className="size-20 sm:size-24 rounded-2xl object-contain bg-white p-2 border-2 border-white/40 shadow-lg shrink-0"
+                className="size-20 sm:size-24 rounded-2xl object-contain drop-shadow-md shrink-0"
               />
             ) : (
-              <div className="size-20 sm:size-24 rounded-2xl bg-white/15 flex items-center justify-center font-bold text-3xl border border-white/25 shrink-0">
+              <div className="size-20 sm:size-24 rounded-2xl bg-white/15 flex items-center justify-center font-bold text-3xl shrink-0">
                 {club.name.charAt(0)}
               </div>
             )}
@@ -107,10 +107,10 @@ export function ClubReportsDialog({
               <span className="rounded-full bg-gold px-3 py-0.5 text-xs font-bold uppercase tracking-wider text-navy">
                 {club.tag}
               </span>
-              <h2 id={titleId} className="mt-1 font-serif text-xl sm:text-2xl font-bold leading-tight">
+              <h2 id={titleId} className="mt-1 font-sans text-xl sm:text-2xl font-bold leading-tight">
                 {club.name}
               </h2>
-              {club.nameBn && <p className="text-sm text-white/90">{club.nameBn}</p>}
+              {club.nameBn && <p className="text-sm text-white/90 font-sans">{club.nameBn}</p>}
             </div>
           </div>
         </div>
@@ -185,8 +185,8 @@ export function ClubReportsDialog({
           {(club.activity || club.activityBn || activityMediaList.length > 0) && (
             <div className="rounded-2xl border p-4 bg-white space-y-2">
               <p className="text-xs font-bold uppercase tracking-wider text-brand">পরিচিতি ও সাম্প্রতিক কার্যক্রম</p>
-              {club.activity && <p className="text-sm text-navy leading-relaxed">{club.activity}</p>}
-              {club.activityBn && <p className="text-xs text-muted-foreground leading-relaxed pt-1">{club.activityBn}</p>}
+              {club.activity && <p className="text-sm text-navy leading-relaxed font-sans">{club.activity}</p>}
+              {club.activityBn && <p className="text-xs text-muted-foreground leading-relaxed pt-1 font-sans">{club.activityBn}</p>}
               {club.date && (
                 <p className="pt-2 text-xs text-muted-foreground inline-flex items-center gap-1">
                   <CalendarDays className="size-3.5 text-gold" /> {club.date}
@@ -198,10 +198,17 @@ export function ClubReportsDialog({
                 <div className="mt-3 space-y-4">
                   {activityMediaList.map((m, idx) => (
                     <div key={idx} className="space-y-1.5 pt-2 border-t border-border/80">
-                      {m.title && <h4 className="font-bold text-sm text-navy leading-snug">{m.title}</h4>}
-                      {m.subtitle && <p className="text-xs font-semibold text-brand">{m.subtitle}</p>}
-                      {m.description && <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{m.description}</p>}
-                      <UniversalMediaEmbed url={m.url} title={m.title || club.name} />
+                      {m.title && <h4 className="font-bold text-sm text-navy leading-snug font-sans">{m.title}</h4>}
+                      {m.subtitle && <p className="text-xs font-semibold text-brand font-sans">{m.subtitle}</p>}
+                      {m.description && <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed font-sans">{m.description}</p>}
+                      <UniversalMediaEmbed
+                        url={m.url}
+                        title={m.title || club.name}
+                        caption={m.caption}
+                        date={m.date}
+                        enableInteractions={true}
+                        itemId={`act_diag_${club.id}_${idx}`}
+                      />
                     </div>
                   ))}
                 </div>
@@ -232,8 +239,8 @@ export function ClubReportsDialog({
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="font-semibold text-xs text-navy truncate">{m.name}</p>
-                      <p className="text-[11px] text-gray-500 truncate">{m.role}</p>
+                      <p className="font-semibold text-xs text-navy truncate font-sans">{m.name}</p>
+                      <p className="text-[11px] text-gray-500 truncate font-sans">{m.role}</p>
                     </div>
                   </div>
                 ))}
@@ -241,7 +248,7 @@ export function ClubReportsDialog({
             </div>
           )}
 
-          {/* ক্লাব প্রতিবেদন (প্রতিটিতে একাধিক মিডিয়া, শিরোনাম, উপশিরোনাম ও বিস্তারিত সহ) */}
+          {/* ক্লাব প্রতিবেদন (একাধিক মিডিয়া সহ) */}
           <div>
             <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-brand border-b pb-2">
               <Newspaper className="size-4" aria-hidden="true" />
@@ -253,7 +260,7 @@ export function ClubReportsDialog({
                 <li key={p.id} className="rounded-2xl border border-border p-4 transition-all hover:border-brand bg-white shadow-sm hover:shadow-md">
                   <a href={`/post/${p.id}`} className="block group">
                     <div className="flex items-start justify-between gap-3">
-                      <p className="font-serif font-bold leading-snug text-navy text-sm sm:text-base group-hover:text-brand transition-colors">
+                      <p className="font-sans font-bold leading-snug text-navy text-sm sm:text-base group-hover:text-brand transition-colors">
                         {p.title}
                       </p>
                       <ArrowRight className="size-4 text-brand opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1" />
@@ -276,23 +283,38 @@ export function ClubReportsDialog({
 
               {rawClub?.reports?.map((r, i) => (
                 <li key={`manual-${i}`} className="rounded-2xl border border-border p-4.5 bg-white shadow-sm space-y-2">
-                  <p className="font-serif font-bold leading-snug text-navy text-base">{r.title}</p>
-                  {r.subtitle && <p className="text-xs font-semibold text-brand">{r.subtitle}</p>}
-                  {r.description && <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{r.description}</p>}
+                  <p className="font-sans font-bold leading-snug text-navy text-base">{r.title}</p>
+                  {r.subtitle && <p className="text-xs font-semibold text-brand font-sans">{r.subtitle}</p>}
+                  {r.description && <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed font-sans">{r.description}</p>}
 
-                  {/* একক বা একাধিক মিডিয়া প্রদর্শন */}
+                  {/* একক মিডিয়া থাকলে */}
                   {r.embed_media_url && (
-                    <UniversalMediaEmbed url={r.embed_media_url} title={r.title} />
+                    <UniversalMediaEmbed
+                      url={r.embed_media_url}
+                      title={r.title}
+                      caption={r.caption || ''}
+                      date={r.date}
+                      enableInteractions={true}
+                      itemId={`rep_single_${club.id}_${i}`}
+                    />
                   )}
 
+                  {/* একাধিক মিডিয়া থাকলে */}
                   {r.media_items && r.media_items.length > 0 && (
                     <div className="space-y-3 pt-2">
                       {r.media_items.map((m, mi) => (
                         <div key={mi} className="rounded-xl bg-gray-50 p-2.5 border border-border/70 space-y-1">
-                          {m.title && <h5 className="font-bold text-xs text-navy">{m.title}</h5>}
-                          {m.subtitle && <p className="text-[11px] font-semibold text-brand">{m.subtitle}</p>}
-                          {m.description && <p className="text-[11px] text-gray-600 whitespace-pre-line">{m.description}</p>}
-                          <UniversalMediaEmbed url={m.url} title={m.title || r.title} />
+                          {m.title && <h5 className="font-bold text-xs text-navy font-sans">{m.title}</h5>}
+                          {m.subtitle && <p className="text-[11px] font-semibold text-brand font-sans">{m.subtitle}</p>}
+                          {m.description && <p className="text-[11px] text-gray-600 whitespace-pre-line font-sans">{m.description}</p>}
+                          <UniversalMediaEmbed
+                            url={m.url}
+                            title={m.title || r.title}
+                            caption={m.caption}
+                            date={m.date}
+                            enableInteractions={true}
+                            itemId={`rep_multi_${club.id}_${i}_${mi}`}
+                          />
                         </div>
                       ))}
                     </div>
@@ -312,7 +334,7 @@ export function ClubReportsDialog({
               ))}
 
               {liveNews.length === 0 && (!rawClub?.reports || rawClub.reports.length === 0) && (
-                <p className="text-xs text-muted-foreground text-center py-4 italic">
+                <p className="text-xs text-muted-foreground text-center py-4 italic font-sans">
                   এই ক্লাবের কোনো প্রতিবেদন এখনো প্রকাশিত হয়নি।
                 </p>
               )}
