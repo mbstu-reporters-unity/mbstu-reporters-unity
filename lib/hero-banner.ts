@@ -3,7 +3,28 @@ import type { HeroSlide } from "./hero"
 
 const CONFIG_KEY = "hero_banner_slides_v2"
 
-// স্ক্রিনশটের মতো প্রাথমিক ডিফল্ট ব্যানার
+// ⭐ ১৫টি কাস্টম ব্যাজ আইকন (৫টি ব্রেকিং নিউজ সম্পর্কিত + ১০টি অন্যান্য) ⭐
+export const BANNER_BADGE_ICONS = [
+  // ৫টি ব্রেকিং নিউজ সম্পর্কিত
+  { key: "siren", label: "🚨 সাইরেন (ব্রেকিং অ্যালার্ট)" },
+  { key: "flame", label: "🔥 আগুন (হট নিউজ / তাজা খবর)" },
+  { key: "zap", label: "⚡ বিদ্যুৎ / ফ্ল্যাশ (তাৎক্ষণিক ব্রেকিং)" },
+  { key: "radio", label: "📡 লাইভ / রেডিও (সরাসরি আপডেট)" },
+  { key: "bell-ring", label: "🔔 বেল অ্যালার্ট (জরুরি বিজ্ঞপ্তি)" },
+  // ১০টি অন্যান্য প্রয়োজনীয় আইকন
+  { key: "sparkles", label: "✨ স্পেশাল (বিশেষ খবর / নতুন আপডেট)" },
+  { key: "megaphone", label: "📢 মেগাফোন (ঘোষণা / প্রচার)" },
+  { key: "newspaper", label: "📰 পত্রিকা (ক্যাম্পাস সংবাদ)" },
+  { key: "trending-up", label: "📈 ট্রেন্ডিং (আলোচিত বিষয়)" },
+  { key: "alert-triangle", label: "⚠️ সতর্কতা (সতর্কবার্তা)" },
+  { key: "star", label: "⭐ তারা (শীর্ষ খবর / হাইলাইট)" },
+  { key: "award", label: "🏆 ট্রফি (সাফল্য / অর্জন)" },
+  { key: "clock", label: "⏱️ ঘড়ি (সর্বশেষ সময় / আপডেট)" },
+  { key: "compass", label: "🧭 কম্পাস (অনুসন্ধানী প্রতিবেদন)" },
+  { key: "check-circle", label: "✅ ভেরিফাইড (যাচাইকৃত তথ্য)" },
+] as const
+
+// প্রাথমিক ডিফল্ট ব্যানার
 export const DEFAULT_BANNER_SLIDE: HeroSlide = {
   id: "banner_slide_1",
   title: "আসসালামু আলাইকুম ভাই 🫂",
@@ -45,9 +66,9 @@ export const DEFAULT_BANNER_SLIDE: HeroSlide = {
       text: "আপনার জন্যই অপেক্ষা করছিলাম 😉",
       enabled: true,
       x: 35,
-      y: 65,
+      y: 68,
       size_scale: 0.9,
-      color: "#E2E8F0",
+      color: "#CBD5E1",
       weight: "normal",
       italic: false,
       align: "left",
@@ -58,8 +79,9 @@ export const DEFAULT_BANNER_SLIDE: HeroSlide = {
       id: "txt_badge",
       label: "৩. ব্যাজ (Badge)",
       text: "ব্রেকিং নিউজ",
+      icon: "siren",
       enabled: true,
-      x: 20,
+      x: 18,
       y: 20,
       size_scale: 0.8,
       color: "#FFFFFF",
@@ -85,26 +107,26 @@ function hdr(token?: string, json = false): Record<string, string> {
   return h
 }
 
-// ব্যানার স্লাইডগুলো নিয়ে আসা
+// ব্যানার স্লাইডগুলো নিয়ে আসা (খালি থাকলে খালি অ্যারে [] দেবে)
 export async function getHeroBannerSlides(): Promise<HeroSlide[]> {
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/app_config?select=value&key=eq.${CONFIG_KEY}`,
       { headers: hdr(), cache: "no-store" }
     )
-    if (!res.ok) return [DEFAULT_BANNER_SLIDE]
+    if (!res.ok) return []
     const rows: { value: string }[] = await res.json()
-    if (!rows || rows.length === 0 || !rows[0]?.value) {
+    if (!rows || rows.length === 0 || rows[0]?.value === undefined) {
       return [DEFAULT_BANNER_SLIDE]
     }
     const parsed = JSON.parse(rows[0].value)
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : [DEFAULT_BANNER_SLIDE]
+    return Array.isArray(parsed) ? parsed : []
   } catch {
-    return [DEFAULT_BANNER_SLIDE]
+    return []
   }
 }
 
-// সকল ব্যানার স্লাইড সংরক্ষণ করা
+// সকল ব্যানার স্লাইড সংরক্ষণ করা (খালি অ্যারে [] ও সংরক্ষণ করতে পারবে)
 export async function saveAllHeroBannerSlides(token: string, slides: HeroSlide[]) {
   const res = await fetch(`${SB_URL}/rest/v1/app_config`, {
     method: "POST",
@@ -143,9 +165,9 @@ export async function updateHeroBannerSlide(token: string, id: string, data: Par
   await saveAllHeroBannerSlides(token, updated)
 }
 
-// স্লাইড ডিলিট করা
+// ✅ সম্পূর্ণ ডিলিট মেথড (এডমিন ডিলিট করলে চিরতরে ডিলিট হবে, জোর করে ফিরে আসবে না)
 export async function deleteHeroBannerSlide(token: string, id: string) {
   const current = await getHeroBannerSlides()
   const updated = current.filter((s) => s.id !== id)
-  await saveAllHeroBannerSlides(token, updated.length > 0 ? updated : [DEFAULT_BANNER_SLIDE])
+  await saveAllHeroBannerSlides(token, updated)
 }
