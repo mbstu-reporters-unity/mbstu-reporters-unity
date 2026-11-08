@@ -8,6 +8,7 @@ export type Post = {
   heading: string | null
   body: string | null
   category: string | null
+  club_id?: string | null // ✅ ক্লাব আইডি যুক্ত করা হয়েছে
   author: string | null
   image_url: string | null
   video_url: string | null
