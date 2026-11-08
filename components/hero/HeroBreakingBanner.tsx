@@ -80,12 +80,13 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
   const [loaded, setLoaded] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // মোবাইলে হাত দিয়ে টেনে (Swipe/Push) স্লাইড সরানোর জন্য রেফারেন্স
+  // টাচ ট্র্যাকিং রেফারেন্স
+  const isTouchingRef = useRef(false)
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
   const mouseStartX = useRef<number | null>(null)
+  const mouseStartY = useRef<number | null>(null)
 
   useEffect(() => {
     getHeroBannerSlides()
@@ -102,7 +103,6 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
 
   const total = slides.length
   const currentSlide = slides[currentIndex] || slides[0]
-  const duration = currentSlide?.slide_duration || 5000
 
   const nextSlide = useCallback(() => {
     if (total <= 1) return
@@ -114,63 +114,98 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
     setCurrentIndex((prev) => (prev - 1 + total) % total)
   }, [total])
 
-  // অটো স্লাইডার টাইমার
+  // ⭐ শতভাগ নির্ভরযোগ্য অটো-প্লে টাইমার ইঞ্জিন (২ বা ততোধিক স্লাইড থাকলে নিজে নিজেই চলবে) ⭐
   useEffect(() => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-    if (isPaused || total <= 1 || duration <= 0 || currentSlide?.slide_type === 'video') return
+    if (total <= 1) return
 
-    timerRef.current = setTimeout(() => {
-      nextSlide()
-    }, duration)
+    const rawDur = Number(currentSlide?.slide_duration) || 5000
+    const safeDuration = rawDur < 100 ? rawDur * 1000 : rawDur
 
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [nextSlide, duration, isPaused, total, currentIndex, currentSlide])
+    const interval = setInterval(() => {
+      // যদি ইউজার হাত দিয়ে চেপে ধরে না রাখে তবে স্বয়ংক্রিয় স্লাইড চলবে
+      if (!isPaused && !isTouchingRef.current) {
+        setCurrentIndex((prev) => (prev + 1) % total)
+      }
+    }, safeDuration)
 
-  // ⭐ মোবাইলে টাচ/পুশ জেস্টার হ্যান্ডলার (আঙুল দিয়ে টেনে স্লাইড সরানো) ⭐
+    return () => clearInterval(interval)
+  }, [total, currentSlide?.id, currentSlide?.slide_duration, isPaused])
+
+  // ⭐ ৪ দিকেই (ডানে, বামে, উপরে, নিচে) হাত দিয়ে টেনে নেওয়ার টাচ লজিক ⭐
   const handleTouchStart = (e: React.TouchEvent) => {
+    isTouchingRef.current = true
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
-    setIsPaused(true)
   }
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    isTouchingRef.current = false
     if (touchStartX.current === null || touchStartY.current === null || total <= 1) {
-      setIsPaused(false)
+      touchStartX.current = null
+      touchStartY.current = null
       return
     }
 
     const diffX = e.changedTouches[0].clientX - touchStartX.current
     const diffY = e.changedTouches[0].clientY - touchStartY.current
 
-    // শুধুমাত্র অনুভূমিকভাবে আঙুল দিয়ে ঠেললে স্লাইড পরিবর্তন হবে (উল্লম্ব স্ক্রলে সমস্যা হবে না)
-    if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
-      if (diffX < 0) {
-        nextSlide() // বামে ঠেললে -> পরের স্লাইড
+    const absX = Math.abs(diffX)
+    const absY = Math.abs(diffY)
+    const THRESHOLD = 30 // ৩০ পিক্সেল মুভ করলেই কাজ করবে
+
+    if (absX > THRESHOLD || absY > THRESHOLD) {
+      if (absX >= absY) {
+        // ডানে-বামে সোয়াইপ
+        if (diffX < 0) {
+          nextSlide() // ⬅️ বামে টানলে -> পরের স্লাইড
+        } else {
+          prevSlide() // ➡️ ডানে টানলে -> আগের স্লাইড
+        }
       } else {
-        prevSlide() // ডানে ঠেললে -> আগের স্লাইড
+        // উপরে-নিচে সোয়াইপ
+        if (diffY < 0) {
+          nextSlide() // ⬆️ উপরে টানলে -> পরের স্লাইড
+        } else {
+          prevSlide() // ⬇️ নিচে টানলে -> আগের স্লাইড
+        }
       }
     }
 
     touchStartX.current = null
     touchStartY.current = null
-    setIsPaused(false)
   }
 
-  // মাউস দিয়ে টেনে সরানোর হ্যান্ডলার (পিসির জন্য)
+  // পিসির জন্য মাউস দিয়ে ৪ দিকে ড্র্যাগ লজিক
   const handleMouseDown = (e: React.MouseEvent) => {
     mouseStartX.current = e.clientX
+    mouseStartY.current = e.clientY
   }
 
   const handleMouseUp = (e: React.MouseEvent) => {
-    if (mouseStartX.current === null || total <= 1) return
-    const diffX = e.clientX - mouseStartX.current
-    if (Math.abs(diffX) > 50) {
-      if (diffX < 0) nextSlide()
-      else prevSlide()
+    if (mouseStartX.current === null || mouseStartY.current === null || total <= 1) {
+      mouseStartX.current = null
+      mouseStartY.current = null
+      return
     }
+
+    const diffX = e.clientX - mouseStartX.current
+    const diffY = e.clientY - mouseStartY.current
+    const absX = Math.abs(diffX)
+    const absY = Math.abs(diffY)
+    const THRESHOLD = 35
+
+    if (absX > THRESHOLD || absY > THRESHOLD) {
+      if (absX >= absY) {
+        if (diffX < 0) nextSlide()
+        else prevSlide()
+      } else {
+        if (diffY < 0) nextSlide()
+        else prevSlide()
+      }
+    }
+
     mouseStartX.current = null
+    mouseStartY.current = null
   }
 
   if (!loaded || !slides || slides.length === 0) return null
@@ -186,26 +221,32 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
   return (
     <section
       aria-label="Hero Banner"
-      onMouseEnter={() => setIsPaused(true)}
+      onMouseEnter={() => {
+        // শুধু পিসিতে মাউস হোভার করলে থামবে, মোবাইলে অটো-স্লাইড সচল থাকবে
+        if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+          setIsPaused(true)
+        }
+      }}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
-      className="relative w-full overflow-hidden select-none border-b border-indigo-950/60 shadow-xl transition-all duration-300 touch-pan-y cursor-grab active:cursor-grabbing"
+      className="relative w-full overflow-hidden select-none border-b border-indigo-950/60 shadow-xl transition-all duration-300 cursor-grab active:cursor-grabbing"
       style={{
         minHeight: `${bannerHeight}px`,
         background: slideType === 'color' ? getBannerBg(currentSlide) : '#000000',
       }}
     >
-      {/* ⭐ ছবি ব্যাকগ্রাউন্ড — কোনো ব্লার বা কালো ছায়া ছাড়াই ১০০% স্পষ্ট ও উজ্জ্বল ⭐ */}
+      {/* ছবি ব্যাকগ্রাউন্ড — কোনো ব্লার বা ছায়া ছাড়াই ১০০% স্পষ্ট */}
       {slideType === 'image' && (
         <div className="absolute inset-0 size-full pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            key={imageUrl}
             src={imageUrl || '/images/hero-1.png'}
             alt="Banner Image"
-            className="size-full object-cover"
+            className="size-full object-cover transition-opacity duration-500"
             loading="eager"
           />
         </div>
@@ -233,12 +274,11 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         </div>
       )}
 
-      {/* কনটেন্ট বক্স */}
+      {/* কনটেন্ট ও লেখার বক্স */}
       <div
         className="max-w-7xl mx-auto px-4 sm:px-8 py-5 relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pointer-events-none"
         style={{ minHeight: `${bannerHeight}px` }}
       >
-        {/* টেক্সট লেয়ারসমূহ */}
         <div className="relative w-full flex-1 pointer-events-none" style={{ minHeight: `${Math.max(120, bannerHeight - 40)}px` }}>
           {layers.map((layer: any, idx: number) => {
             if (layer.enabled === false) return null
@@ -297,7 +337,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
           })}
         </div>
 
-        {/* বিস্তারিত বাটন (যদি চালু থাকে) */}
+        {/* ঐচ্ছিক বাটন */}
         {hasButton && (
           <div className="z-30 shrink-0 self-end sm:self-center pointer-events-auto">
             <a
@@ -313,33 +353,37 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         )}
       </div>
 
-      {/* স্লাইড নেভিগেশন ডটস */}
+      {/* ২ বা এর বেশি স্লাইড থাকলে কন্ট্রোল ও ইনডিকেটর ডটস */}
       {total > 1 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-black/50 backdrop-blur px-2.5 py-1 rounded-full border border-white/10 pointer-events-auto">
+        <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-black/50 backdrop-blur px-3 py-1 rounded-full border border-white/10 pointer-events-auto">
           <button
             type="button"
             onClick={prevSlide}
-            className="text-white/70 hover:text-white p-0.5 cursor-pointer"
-            aria-label="Previous"
+            className="text-white/80 hover:text-white p-0.5 cursor-pointer"
+            aria-label="Previous Slide"
           >
             <ChevronLeft className="size-3.5" />
           </button>
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => setCurrentIndex(idx)}
-              className={`size-2 rounded-full transition-all cursor-pointer ${
-                idx === currentIndex ? 'w-4 bg-white' : 'bg-white/40'
-              }`}
-              aria-label={`Slide ${idx + 1}`}
-            />
-          ))}
+          
+          <div className="flex items-center gap-1.5">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setCurrentIndex(idx)}
+                className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                  idx === currentIndex ? 'w-5 bg-white shadow-sm' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                }`}
+                aria-label={`Slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+
           <button
             type="button"
             onClick={nextSlide}
-            className="text-white/70 hover:text-white p-0.5 cursor-pointer"
-            aria-label="Next"
+            className="text-white/80 hover:text-white p-0.5 cursor-pointer"
+            aria-label="Next Slide"
           >
             <ChevronRight className="size-3.5" />
           </button>
