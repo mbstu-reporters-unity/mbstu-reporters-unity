@@ -56,7 +56,6 @@ const selectInp = "w-full border border-slate-700 rounded-xl px-3 py-2 text-xs b
 const btnSave = "w-full bg-green-700 hover:bg-green-600 text-white rounded-xl py-3.5 font-bold text-sm transition-all disabled:opacity-50 shadow-lg cursor-pointer"
 const cardBox = "bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4"
 
-// ১৫টি আইকন সরাসরি রেন্ডার করার ফাংশন
 function renderBadgeIcon(key?: string, className = "size-3.5 mr-1.5 inline-block") {
   switch (key) {
     case "siren": return <Siren className={className} />
@@ -82,7 +81,7 @@ const DEFAULT_BANNER_TEXT_ITEMS: IndependentTextItem[] = [
   {
     id: "txt_title",
     label: "১. প্রধান শিরোনাম (Title)",
-    text: "আসসালামু আলাইকুম ভাই 🫂",
+    text: "ব্যানার শিরোনাম লিখুন",
     enabled: true,
     x: 35,
     y: 42,
@@ -97,7 +96,7 @@ const DEFAULT_BANNER_TEXT_ITEMS: IndependentTextItem[] = [
   {
     id: "txt_desc",
     label: "২. সাব-হেডিং / বর্ণনা (Text)",
-    text: "আপনার জন্যই অপেক্ষা করছিলাম 😉",
+    text: "এখানে বিস্তারিত বা বিবরণ লিখুন",
     enabled: true,
     x: 35,
     y: 68,
@@ -170,8 +169,12 @@ export default function HeroBannerManager({
   const [videoFile, setVideoFile] = useState<File | null>(null)
 
   const [textItems, setTextItems] = useState<IndependentTextItem[]>(DEFAULT_BANNER_TEXT_ITEMS)
+  
+  // ⭐ বাটন সম্পূর্ণ ঐচ্ছিক করার স্টেট ⭐
+  const [showBtn, setShowBtn] = useState(true)
   const [linkUrl, setLinkUrl] = useState("")
   const [btnText, setBtnText] = useState("বিস্তারিত --")
+
   const [slideDuration, setSlideDuration] = useState(5)
   const [transitionEffect, setTransitionEffect] = useState("slide-left")
 
@@ -209,7 +212,6 @@ export default function HeroBannerManager({
     setTextItems(updated)
   }
 
-  // দ্রুত ব্যাজ প্রিসেট সেট করার ফাংশন
   const setQuickBadgePreset = (text: string, iconKey: string, bgColor: string) => {
     const badgeIdx = textItems.findIndex((t) => t.id === "txt_badge")
     if (badgeIdx >= 0) {
@@ -264,6 +266,7 @@ export default function HeroBannerManager({
     setVideoUrl("")
     setVideoFile(null)
     setTextItems(DEFAULT_BANNER_TEXT_ITEMS)
+    setShowBtn(true)
     setLinkUrl("")
     setBtnText("বিস্তারিত --")
     setSlideDuration(5)
@@ -286,8 +289,9 @@ export default function HeroBannerManager({
 
     setImgUrl(s.media_items?.[0]?.url || "")
     setVideoUrl(s.video_config?.url || "")
+    setShowBtn(Boolean(s.button_text && s.button_text.trim()))
+    setBtnText(s.button_text || "")
     setLinkUrl(s.link_url || "")
-    setBtnText(s.button_text || "বিস্তারিত --")
     setSlideDuration(s.slide_duration ? Math.round(s.slide_duration / 1000) : 5)
     setTransitionEffect(s.transition_effect || "slide-left")
     window.scrollTo({ top: 300, behavior: "smooth" })
@@ -316,8 +320,8 @@ export default function HeroBannerManager({
         title: primaryTitle,
         summary: primarySummary,
         category: "ব্রেকিং ব্যানার",
-        button_text: btnText.trim() || "বিস্তারিত --",
-        link_url: linkUrl.trim() || null,
+        button_text: showBtn && btnText.trim() ? btnText.trim() : null,
+        link_url: showBtn && linkUrl.trim() ? linkUrl.trim() : null,
         slide_type: slideType,
         banner_config: {
           mode: bannerMode,
@@ -377,13 +381,13 @@ export default function HeroBannerManager({
         </div>
       )}
 
-      {/* ১. লাইভ প্রিভিউ বক্স */}
+      {/* ১. লাইভ প্রিভিউ */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <span className="text-xs font-bold text-green-400 flex items-center gap-1.5">
-            <Eye className="size-4" /> 👁️ লাইভ প্রিভিউ (হোমপেজের ব্যানারে হুবহু যেমন দেখাবে):
+            <Eye className="size-4" /> 👁️ লাইভ প্রিভিউ:
           </span>
-          <span className="text-[10px] text-gray-400">উচ্চতা ও লেখার অবস্থান সরাসরি দেখুন</span>
+          <span className="text-[10px] text-gray-400">হোমপেজে হুবহু যেমন দেখাবে</span>
         </div>
 
         <div className="w-full flex items-center justify-center p-2 bg-slate-950 rounded-2xl border border-slate-800">
@@ -407,15 +411,19 @@ export default function HeroBannerManager({
               <div className="w-full h-full flex items-center justify-center bg-black">
                 {parseVideoUrl(videoUrl).isEmbed ? (
                   <iframe
-                    src={parseVideoUrl(videoUrl).embedSrc}
-                    className="w-full h-full aspect-video border-0"
+                    src={`${parseVideoUrl(videoUrl).embedSrc}&playsinline=1`}
+                    className="w-full h-full aspect-video border-0 pointer-events-auto"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                    allowFullScreen
                     title="Preview"
                   />
                 ) : (
-                  <div className="text-xs text-red-400 flex items-center gap-2">
-                    <Video className="size-5" />
-                    <span>ভিডিও প্রিভিউ সক্রিয়</span>
-                  </div>
+                  <video
+                    src={videoUrl}
+                    controls
+                    playsInline
+                    className="w-full h-full object-contain pointer-events-auto"
+                  />
                 )}
               </div>
             )}
@@ -472,8 +480,8 @@ export default function HeroBannerManager({
               })}
             </div>
 
-            {/* বাটন প্রিভিউ */}
-            {btnText && (
+            {/* বাটন প্রিভিউ (যদি চালু থাকে) */}
+            {showBtn && btnText.trim() && (
               <div className="absolute bottom-4 left-6 pointer-events-none">
                 <span className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-white text-red-700 font-bold text-xs shadow-lg">
                   {btnText} <ExternalLink className="size-3" />
@@ -497,9 +505,9 @@ export default function HeroBannerManager({
           )}
         </div>
 
-        {/* পোস্টের ধরন */}
+        {/* ব্যাকগ্রাউন্ড ধরন */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-300 block">১. ব্যানারের ব্যাকগ্রাউন্ড ধরন:</label>
+          <label className="text-xs font-bold text-gray-300 block">১. ব্যাকগ্রাউন্ড ধরন:</label>
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
@@ -510,7 +518,7 @@ export default function HeroBannerManager({
                   : "bg-slate-950 border-slate-800 text-gray-400 hover:text-white"
               }`}
             >
-              <Palette className="size-3.5" /> ১. কালার ব্যানার
+              <Palette className="size-3.5" /> ১. কালার
             </button>
             <button
               type="button"
@@ -642,7 +650,7 @@ export default function HeroBannerManager({
             )}
 
             <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-              <span className="text-gray-300 font-medium">↕️ ব্যানারের উচ্চতা (Height): {bannerHeight}px</span>
+              <span className="text-gray-300 font-medium">↕️ ব্যানারের উচ্চতা: {bannerHeight}px</span>
               <input
                 type="range"
                 min="140"
@@ -655,7 +663,7 @@ export default function HeroBannerManager({
           </div>
         )}
 
-        {/* ছবি আপলোড */}
+        {/* ছবি */}
         {slideType === "image" && (
           <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
             <label className="text-xs font-bold text-blue-400 block">🖼️ ছবি আপলোড বা লিংক:</label>
@@ -672,7 +680,7 @@ export default function HeroBannerManager({
               </label>
               <input
                 className={inp}
-                placeholder="ছবির লিংক পেস্ট করুন (https://...)"
+                placeholder="ছবির সরাসরি লিংক (https://...)"
                 value={imgUrl}
                 onChange={(e) => setImgUrl(e.target.value)}
               />
@@ -687,14 +695,14 @@ export default function HeroBannerManager({
             <label className="text-xs font-bold text-red-400 block">🎥 ভিডিও ফাইল বা ইউটিউব লিংক:</label>
             <input
               className={inp}
-              placeholder="ইউটিউব বা সরাসরি MP4 লিংক (https://...)"
+              placeholder="ইউটিউব ভিডিওর লিংক পেস্ট করুন (https://youtube.com/watch?v=...)"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
             />
             <div className="flex items-center gap-2">
               <label className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-gray-300 hover:bg-slate-800 cursor-pointer">
                 <Upload className="size-3 text-red-400" />
-                <span>ভিডিও ফাইল আপলোড</span>
+                <span>ভিডিও ফাইল আপলোড (সর্বোচ্চ ৫০ MB)</span>
                 <input
                   type="file"
                   accept="video/*"
@@ -707,9 +715,9 @@ export default function HeroBannerManager({
           </div>
         )}
 
-        {/* ⭐ দ্রুত ব্যাজ প্রিসেট বাটনসমূহ ⭐ */}
+        {/* দ্রুত ব্যাজ প্রিসেট */}
         <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
-          <span className="text-xs font-bold text-yellow-400 block">⚡ দ্রুত ব্যাজ নির্বাচন (এক ক্লিকে পছন্দের ব্যাজ সেট করুন):</span>
+          <span className="text-xs font-bold text-yellow-400 block">⚡ দ্রুত ব্যাজ নির্বাচন:</span>
           <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
@@ -748,10 +756,10 @@ export default function HeroBannerManager({
             </button>
             <button
               type="button"
-              onClick={() => setQuickBadgePreset("বিশেষ বিজ্ঞপ্তি", "bell-ring", "#B91C1C")}
+              onClick={() => setQuickBadgePreset("জরুরি বিজ্ঞপ্তি", "bell-ring", "#B91C1C")}
               className="px-2.5 py-1 rounded-full bg-rose-700/90 hover:bg-rose-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
             >
-              <BellRing className="size-3" /> বিশেষ বিজ্ঞপ্তি
+              <BellRing className="size-3" /> জরুরি বিজ্ঞপ্তি
             </button>
           </div>
         </div>
@@ -760,7 +768,7 @@ export default function HeroBannerManager({
         <div className="p-3.5 bg-slate-950/90 border border-slate-800 rounded-xl space-y-4">
           <div className="flex items-center justify-between border-b border-slate-850 pb-2">
             <span className="text-xs font-bold text-yellow-400 flex items-center gap-1.5">
-              <Type className="size-4" /> ২. লেখার স্বাধীন বক্সসমূহ ও আইকন:
+              <Type className="size-4" /> ২. লেখার স্বাধীন বক্সসমূহ:
             </span>
             <button
               type="button"
@@ -811,7 +819,7 @@ export default function HeroBannerManager({
                         />
                       </div>
 
-                      {/* ⭐ ১৫টি আইকন সিলেক্টর ড্রপডাউন ⭐ */}
+                      {/* ১৫টি আইকন সিলেক্টর */}
                       <div>
                         <label className="text-[10px] text-yellow-400 block mb-0.5 font-bold">
                           আইকন (১৫টি আইকন):
@@ -1038,26 +1046,45 @@ export default function HeroBannerManager({
           </div>
         </div>
 
-        {/* বাটন টেক্সট ও লিংক */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-bold text-gray-400 block mb-1">বাটন টেক্সট (Button Text):</label>
-            <input
-              className={inp}
-              placeholder="যেমন: বিস্তারিত --"
-              value={btnText}
-              onChange={(e) => setBtnText(e.target.value)}
-            />
+        {/* ⭐ বিস্তারিত বাটন — সম্পূর্ণ ঐচ্ছিক অন/অফ সুইচ ⭐ */}
+        <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-xs font-bold text-gray-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showBtn}
+                onChange={(e) => setShowBtn(e.target.checked)}
+                className="accent-indigo-500 rounded size-4 cursor-pointer"
+              />
+              <span>৪. বিস্তারিত অ্যাকশন বাটন দেখান (ঐচ্ছিক):</span>
+            </label>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${showBtn ? 'bg-indigo-900/60 text-indigo-300 border border-indigo-700' : 'bg-gray-800 text-gray-400'}`}>
+              {showBtn ? 'বাটন চালু আছে' : 'বাটন বন্ধ'}
+            </span>
           </div>
-          <div>
-            <label className="text-xs font-bold text-gray-400 block mb-1">ক্লিক লিংক (Link URL):</label>
-            <input
-              className={inp}
-              placeholder="https://... অথবা /post/..."
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-            />
-          </div>
+
+          {showBtn && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label className="text-xs font-bold text-gray-400 block mb-1">বাটন টেক্সট (ফাঁকা রাখলে বাটন থাকবে না):</label>
+                <input
+                  className={inp}
+                  placeholder="যেমন: বিস্তারিত --"
+                  value={btnText}
+                  onChange={(e) => setBtnText(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-400 block mb-1">ক্লিক লিংক (Link URL):</label>
+                <input
+                  className={inp}
+                  placeholder="https://... অথবা /post/..."
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* সেভ বাটন */}
@@ -1066,7 +1093,7 @@ export default function HeroBannerManager({
         </button>
       </div>
 
-      {/* ৩. বর্তমান ব্যানার স্লাইডসমূহের তালিকা ও ডিলিট অপশন */}
+      {/* ৩. বর্তমান ব্যানার স্লাইডসমূহের তালিকা */}
       <div className={cardBox}>
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <h2 className="font-bold text-xs sm:text-sm text-gray-200">বর্তমান ব্যানার স্লাইডসমূহ ({list.length})</h2>
@@ -1088,7 +1115,8 @@ export default function HeroBannerManager({
                     {slide.title || "শিরোনামহীন ব্যানার"}
                   </p>
                   <p className="text-[10px] text-gray-500">
-                    ধরণ: {slide.slide_type === "color" ? "কালার" : slide.slide_type === "image" ? "ছবি" : "ভিডিও"} · সময়: {Math.round((slide.slide_duration || 5000) / 1000)}s
+                    ধরণ: {slide.slide_type === "color" ? "কালার" : slide.slide_type === "image" ? "ছবি" : "ভিডিও"}
+                    {slide.button_text ? ` · বাটন: "${slide.button_text}"` : " · কোনো বাটন নেই"}
                   </p>
                 </div>
               </div>
@@ -1125,11 +1153,10 @@ export default function HeroBannerManager({
             </div>
           ))}
 
-          {/* যখন কোনো স্লাইড থাকবে না তখন এই মেসেজ দেখাবে */}
           {list.length === 0 && (
             <div className="text-center py-6 border border-dashed border-slate-800 rounded-xl bg-slate-950/60 space-y-1">
               <p className="text-sm font-bold text-gray-300">বর্তমানে কোনো ব্যানার স্লাইড নেই</p>
-              <p className="text-xs text-gray-500">হোমপেজে এই ব্যানারটি সম্পূর্ণ বন্ধ আছে। অ্যাডমিন চাইলে উপরের ফর্ম পূরণ করে নতুন স্লাইড সেভ করলে আবার লাইভ হবে।</p>
+              <p className="text-xs text-gray-500">হোমপেজে এই ব্যানারটি সম্পূর্ণ বন্ধ আছে। অ্যাডমিন চাইলে নতুন স্লাইড সেভ করলে আবার লাইভ হবে।</p>
             </div>
           )}
         </div>
