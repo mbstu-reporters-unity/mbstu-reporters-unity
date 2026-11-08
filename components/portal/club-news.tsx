@@ -73,7 +73,6 @@ export function ClubNews() {
   
   const clubsRef = useRef<Club[]>(fallbackClubs)
 
-  // ডায়ালগ বন্ধ করার স্থিতিশীল মেথড
   const handleCloseDialog = useCallback(() => {
     setSelected(null)
     if (typeof window !== 'undefined') {
@@ -85,7 +84,6 @@ export function ClubNews() {
     }
   }, [])
 
-  // ডায়ালগ খোলার সময় হিস্ট্রিতে পুশ করা
   const handleOpenClub = useCallback((club: Club) => {
     setSelected(club)
     if (typeof window !== 'undefined') {
@@ -122,7 +120,6 @@ export function ClubNews() {
       }
     })
 
-    // হেডার ড্রপডাউন থেকে ক্লাব খোলার কাস্টম ইভেন্ট
     const handleOpenModal = (e: Event) => {
       const customEvent = e as CustomEvent<string>
       const targetId = customEvent.detail
@@ -134,7 +131,6 @@ export function ClubNews() {
       }
     }
 
-    // ✅ ব্রাউজারের ব্যাক বাটন চাপলে ডায়ালগ বন্ধ হওয়ার নিরাপদ লিসেনার (popstate)
     const handlePopState = () => {
       const clubId = new URLSearchParams(window.location.search).get('club')
       if (clubId) {
@@ -201,15 +197,15 @@ export function ClubNews() {
                 id={`club-${club.id}`}
                 className="scroll-mt-24 animate-in fade-in group flex flex-col rounded-3xl border border-white/10 bg-white/5 p-5 transition-all hover:-translate-y-1 hover:border-brand hover:bg-white/10 w-full min-w-0 overflow-hidden shadow-lg"
               >
-                {/* ক্লাবের লোগো — স্পষ্ট ও অবিকৃত (object-contain) */}
+                {/* ⭐ ক্লাবের লোগো — ১০০% নিখুঁত গোল এবং বৃত্তের পুরো জায়গা জুড়ে দৃশ্যমান ⭐ */}
                 <div className="flex items-start justify-between gap-3">
                   {raw?.logo_url ? (
-                    <div className="size-20 sm:size-24 shrink-0 rounded-full bg-white p-1 border border-white/20 flex items-center justify-center shadow-md overflow-hidden">
+                    <div className="size-20 sm:size-24 shrink-0 rounded-full overflow-hidden shadow-lg border-2 border-white/30 flex items-center justify-center bg-white">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={raw.logo_url}
                         alt={club.name}
-                        className="size-full rounded-full object-contain select-none"
+                        className="size-full object-cover select-none"
                         onError={(e) => {
                           (e.target as HTMLElement).style.display = 'none'
                         }}
@@ -243,7 +239,7 @@ export function ClubNews() {
                     </p>
                   )}
 
-                  {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক মিডিয়া */}
+                  {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া */}
                   {activityMediaList.length > 0 && (
                     <div className="mt-3 space-y-4">
                       {activityMediaList.map((m, idx) => (
@@ -258,7 +254,7 @@ export function ClubNews() {
                   )}
                 </div>
 
-                {/* সোশ্যাল লিঙ্কসমূহ (safeExternalUrl দিয়ে সুরক্ষিত) */}
+                {/* সোশ্যাল লিঙ্কসমূহ */}
                 {raw && (raw.fb_url || raw.yt_url || raw.web_url) && (
                   <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
                     <span className="text-[11px] text-white/50">সোশ্যাল:</span>
