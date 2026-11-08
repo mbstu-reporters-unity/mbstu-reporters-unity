@@ -15,9 +15,9 @@ import {
 } from "../../lib/clubs"
 import { uploadImage, uploadVideo } from "../../lib/sb"
 
-const inp = "w-full border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-green-600"
-const smallInp = "w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none focus:border-green-600"
-const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold text-sm hover:bg-green-800 disabled:opacity-50 cursor-pointer shadow-md"
+const inp = "w-full border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-green-600 font-sans"
+const smallInp = "w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none focus:border-green-600 font-sans"
+const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold text-sm hover:bg-green-800 disabled:opacity-50 cursor-pointer shadow-md font-sans"
 
 const ICON_OPTIONS = [
   { key: "star", label: "⭐ তারা (ধ্রুবতারা / সাধারণ)" },
@@ -65,7 +65,7 @@ export default function ClubManager({ token }: { token: string }) {
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
 
-  // পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক মিডিয়া আইটেম
+  // পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক মিডিয়া তালিকা
   const [activityMediaList, setActivityMediaList] = useState<ClubMediaItem[]>([])
 
   // কমিটি
@@ -111,7 +111,7 @@ export default function ClubManager({ token }: { token: string }) {
     setLogoUrl(c.logo_url || null)
     setLogoFile(null)
 
-    // পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক মিডিয়া লোড
+    // একাধিক মিডিয়া পার্স করে লোড
     setActivityMediaList(parseActivityMedia(c.embed_media_url))
 
     setCommitteeTerm(c.committee_term || "")
@@ -123,7 +123,10 @@ export default function ClubManager({ token }: { token: string }) {
 
   // কার্যক্রমের মিডিয়া হ্যান্ডলার
   function addActivityMedia() {
-    setActivityMediaList([...activityMediaList, { title: "", subtitle: "", description: "", url: "" }])
+    setActivityMediaList([
+      ...activityMediaList,
+      { title: "", subtitle: "", description: "", caption: "", date: "", url: "" },
+    ])
   }
   function updateActivityMedia(index: number, field: keyof ClubMediaItem, val: string) {
     const updated = [...activityMediaList]
@@ -180,6 +183,7 @@ export default function ClubManager({ token }: { token: string }) {
         title: "",
         subtitle: "",
         description: "",
+        caption: "",
         date: "Recent",
         reporter: "MBSTU Reporters Unity",
         media_items: [],
@@ -195,12 +199,12 @@ export default function ClubManager({ token }: { token: string }) {
     setReports(reports.filter((_, i) => i !== index))
   }
 
-  // প্রতিবেদনের ভেতর একাধিক মিডিয়া যোগ
+  // প্রতিবেদনের ভেতর একাধিক মিডিয়া হ্যান্ডলার
   function addReportMedia(reportIdx: number) {
     const currentList = reports[reportIdx].media_items || []
     updateReport(reportIdx, "media_items", [
       ...currentList,
-      { title: "", subtitle: "", description: "", url: "" },
+      { title: "", subtitle: "", description: "", caption: "", date: "", url: "" },
     ])
   }
   function updateReportMedia(reportIdx: number, mediaIdx: number, field: keyof ClubMediaItem, val: string) {
@@ -258,7 +262,6 @@ export default function ClubManager({ token }: { token: string }) {
         finalLogo = await uploadImage(token, await shrink(logoFile))
       }
 
-      // একাধিক মিডিয়া সমন্বিত স্ট্রিং
       const finalEmbedMedia = stringifyActivityMedia(activityMediaList)
 
       const data = {
@@ -311,8 +314,7 @@ export default function ClubManager({ token }: { token: string }) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* ফর্ম */}
+    <div className="space-y-4 font-sans">
       <div className="bg-white rounded-2xl shadow p-4 space-y-4">
         <h2 className="font-bold text-lg text-gray-800">{editId ? "✏️ ক্লাব এডিট করুন" : "➕ নতুন ক্লাব যুক্ত করুন"}</h2>
         <p className="text-xs text-gray-500">সব তথ্য ঐচ্ছিক। লগো, ভিডিও, কমিটি ও প্রতিবেদন আপনার পছন্দমতো যোগ/বিয়োগ করুন।</p>
@@ -333,10 +335,10 @@ export default function ClubManager({ token }: { token: string }) {
           </div>
         </div>
 
-        {/* লগো আপলোড - বড় প্রিভিউ সহ */}
+        {/* লগো আপলোড - কোনো অতিরিক্ত বর্ডার ছাড়া */}
         <div className="rounded-2xl border-2 border-emerald-200 p-3.5 bg-emerald-50/40 space-y-2">
           <label className="block text-xs font-bold text-emerald-950">
-            🖼️ ক্লাবের লগো / অফিসিয়াল ছবি (বড় ও স্পষ্ট দেখাবে):
+            🖼️ ক্লাবের লগো / অফিসিয়াল ছবি (বর্ডারহীন ও পরিষ্কার):
           </label>
           <input
             type="file"
@@ -345,16 +347,16 @@ export default function ClubManager({ token }: { token: string }) {
             onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
           />
           {(logoFile || logoUrl) && (
-            <div className="flex items-center gap-4 pt-2 bg-white p-3 rounded-xl border border-emerald-200">
+            <div className="flex items-center gap-4 pt-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={logoFile ? URL.createObjectURL(logoFile) : logoUrl || ""}
                 alt="Logo preview"
-                className="size-24 rounded-2xl object-contain bg-white border-2 border-emerald-500/40 p-1.5 shadow-md"
+                className="size-24 rounded-2xl object-contain drop-shadow"
               />
               <div className="space-y-1">
-                <p className="text-xs font-bold text-gray-800">লগোর বড় প্রিভিউ</p>
-                <p className="text-[11px] text-gray-500">হোম পেজ ও পপআপে এটি বড় ও পরিষ্কারভাবে প্রদর্শিত হবে।</p>
+                <p className="text-xs font-bold text-gray-800">লগোর প্রিভিউ</p>
+                <p className="text-[11px] text-gray-500">হোম পেজ ও পপআপে এটি চারপাশের বর্ডার ছাড়াই পুরো জায়গা জুড়ে নিখুঁত দেখাবে।</p>
                 <button
                   type="button"
                   onClick={() => { setLogoFile(null); setLogoUrl(null) }}
@@ -372,15 +374,15 @@ export default function ClubManager({ token }: { token: string }) {
         <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ বা সাম্প্রতিক কার্যক্রম (বাংলা)" value={activityBn} onChange={(e) => setActivityBn(e.target.value)} />
         <input className={inp} placeholder="কার্যক্রমের তারিখ (যেমন: 27 Oct 2026)" value={date} onChange={(e) => setDate(e.target.value)} />
 
-        {/* ⭐ পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক ছবি, ভিডিও ও লিঙ্ক বক্স ⭐ */}
+        {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক ছবি, ভিডিও, ফেসবুক ও ইউটিউব লিঙ্ক বক্স */}
         <div className="space-y-3 rounded-2xl border-2 border-blue-200 bg-blue-50/50 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-bold text-blue-950">
-                🎥 পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া (একাধিক ছবি, ভিডিও, ইউটিউব ও ফেসবুক লিংক):
+                🎥 পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া (একাধিক ছবি, ভিডিও, ফেসবুক ও ইউটিউব লিংক):
               </p>
               <p className="text-[11px] text-blue-800">
-                প্রতিটি মিডিয়ার উপরে পৃথক শিরোনাম, উপশিরোনাম ও বিস্তারিত লেখার বক্স থাকবে।
+                প্রতিটি মিডিয়ার উপরে পৃথক শিরোনাম, উপশিরোনাম, বিস্তারিত, তারিখ ও ক্যাপশন দেওয়ার ব্যবস্থা।
               </p>
             </div>
             <button
@@ -413,23 +415,38 @@ export default function ClubManager({ token }: { token: string }) {
               />
               <input
                 className={smallInp}
-                placeholder="মিডিয়ার উপশিরোনাম (ঐচ্ছিক)"
+                placeholder="উপশিরোনাম (ঐচ্ছিক)"
                 value={m.subtitle || ""}
                 onChange={(e) => updateActivityMedia(idx, "subtitle", e.target.value)}
               />
               <textarea
                 className={smallInp}
                 rows={2}
-                placeholder="মিডিয়া সম্পর্কে বিস্তারিত বিবরণ (ঐচ্ছিক)"
+                placeholder="বিস্তারিত বিবরণ (ঐচ্ছিক)"
                 value={m.description || ""}
                 onChange={(e) => updateActivityMedia(idx, "description", e.target.value)}
               />
+
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  className={smallInp}
+                  placeholder="ক্যাপশন (ঐচ্ছিক)"
+                  value={m.caption || ""}
+                  onChange={(e) => updateActivityMedia(idx, "caption", e.target.value)}
+                />
+                <input
+                  className={smallInp}
+                  placeholder="তারিখ (যেমন: 28 Oct 2026)"
+                  value={m.date || ""}
+                  onChange={(e) => updateActivityMedia(idx, "date", e.target.value)}
+                />
+              </div>
 
               <div className="space-y-1">
                 <label className="text-[11px] font-semibold text-gray-700 block">মিডিয়া লিঙ্ক বা সরাসরি ফাইল:</label>
                 <input
                   className={smallInp}
-                  placeholder="ইউটিউব, ফেসবুক ভিডিও বা ছবির সরাসরি লিংক (https://...)"
+                  placeholder="ইউটিউব, ফেসবুক ভিডিও, রিল বা ছবির সরাসরি লিংক (https://...)"
                   value={m.url || ""}
                   onChange={(e) => updateActivityMedia(idx, "url", e.target.value)}
                 />
@@ -523,12 +540,12 @@ export default function ClubManager({ token }: { token: string }) {
           ))}
         </div>
 
-        {/* ⭐ ক্লাব প্রতিবেদন (প্রতিবেদনে একাধিক মিডিয়া, শিরোনাম ও বিস্তারিত সহ) ⭐ */}
+        {/* ক্লাব প্রতিবেদন */}
         <div className="rounded-2xl border p-3.5 bg-gray-50 space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-gray-800">ক্লাব প্রতিবেদন / Reports (ঐচ্ছিক):</p>
-              <p className="text-[11px] text-gray-500">প্রতিবেদনে শিরোনাম, বিস্তারিত এবং ছবি/ভিডিও লিংক দেওয়া যাবে।</p>
+              <p className="text-[11px] text-gray-500">প্রতিবেদনে একাধিক ছবি/ভিডিও, ক্যাপশন, তারিখ ও শিরোনাম যোগ করতে পারবেন।</p>
             </div>
             <button
               type="button"
@@ -593,11 +610,11 @@ export default function ClubManager({ token }: { token: string }) {
                 />
               </div>
 
-              {/* প্রতিবেদনের সাথে ছবি/ভিডিও/লিংক সেকশন */}
+              {/* প্রতিবেদনের সাথে একাধিক মিডিয়া সেকশন */}
               <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-2.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-gray-700">
-                    📷 এই প্রতিবেদনের ছবি/ভিডিও/লিংক ({r.media_items?.length || 0}):
+                    📷 এই প্রতিবেদনের মিডিয়া তালিকা ({r.media_items?.length || 0}):
                   </span>
                   <button
                     type="button"
@@ -609,7 +626,7 @@ export default function ClubManager({ token }: { token: string }) {
                 </div>
 
                 {r.media_items?.map((rm, rmi) => (
-                  <div key={rmi} className="rounded-lg border bg-white p-2 space-y-1.5 text-xs">
+                  <div key={rmi} className="rounded-lg border bg-white p-2.5 space-y-1.5 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-semibold text-gray-500">মিডিয়া #{rmi + 1}</span>
                       <button
@@ -639,6 +656,20 @@ export default function ClubManager({ token }: { token: string }) {
                       value={rm.description || ""}
                       onChange={(e) => updateReportMedia(idx, rmi, "description", e.target.value)}
                     />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        className={smallInp}
+                        placeholder="ক্যাপশন (ঐচ্ছিক)"
+                        value={rm.caption || ""}
+                        onChange={(e) => updateReportMedia(idx, rmi, "caption", e.target.value)}
+                      />
+                      <input
+                        className={smallInp}
+                        placeholder="তারিখ (ঐচ্ছিক)"
+                        value={rm.date || ""}
+                        onChange={(e) => updateReportMedia(idx, rmi, "date", e.target.value)}
+                      />
+                    </div>
                     <input
                       className={smallInp}
                       placeholder="ভিডিও/ছবি/ইউটিউব/ফেসবুক লিংক (https://...)"
@@ -685,10 +716,10 @@ export default function ClubManager({ token }: { token: string }) {
                   {i + 1}
                 </span>
 
-                {/* তালিকায় বড় লোগো */}
+                {/* তালিকায় বর্ডার ছাড়া বড় লোগো */}
                 {c.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={c.logo_url} alt="" className="size-14 rounded-xl object-contain border p-1 shrink-0 bg-white shadow-sm" />
+                  <img src={c.logo_url} alt="" className="size-14 rounded-xl object-contain shrink-0 drop-shadow" />
                 ) : (
                   <span className="size-14 rounded-xl bg-gray-100 text-gray-600 font-bold flex items-center justify-center shrink-0 text-xl">
                     ⭐
