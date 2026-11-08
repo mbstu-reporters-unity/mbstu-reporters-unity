@@ -2,6 +2,9 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
+/* সোলাইমান লিপি ফন্ট সিডিএন (যাতে যেকোনো মোবাইলেই ফন্টটি সরাসরি লোড হয়) */
+@import url('https://fonts.maateen.me/solaiman-lipi/font.css');
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -116,6 +119,29 @@
   .text-left, .text-left * {
     text-align: left !important;
   }
+}
+
+/* ⭐ শুধুমাত্র ক্লাবগুলোর বাংলা লেখার বিশেষ ফন্ট রুলস (রূপসী বাংলা / সোলাইমান লিপি / টাইমস নিউ রোমান) ⭐ */
+#club-news,
+#club-latest,
+.club-font,
+.club-dialog-font,
+.club-bn-text {
+  font-family: 'SolaimanLipi', 'Ruposhi Bangla', 'Times New Roman', serif;
+}
+
+#club-news h2,
+#club-news h3,
+#club-news h4,
+#club-news p,
+#club-latest h3,
+#club-latest p,
+.club-dialog-font h2,
+.club-dialog-font h3,
+.club-dialog-font h4,
+.club-dialog-font p,
+.club-dialog-font span {
+  font-family: 'SolaimanLipi', 'Ruposhi Bangla', 'Times New Roman', serif;
 }
 
 @media (prefers-reduced-motion: reduce) {
