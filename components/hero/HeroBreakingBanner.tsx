@@ -82,6 +82,11 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
   const [isPaused, setIsPaused] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
+  // মোবাইলে হাত দিয়ে টেনে (Swipe/Push) স্লাইড সরানোর জন্য রেফারেন্স
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
+  const mouseStartX = useRef<number | null>(null)
+
   useEffect(() => {
     getHeroBannerSlides()
       .then((res) => {
@@ -109,9 +114,9 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
     setCurrentIndex((prev) => (prev - 1 + total) % total)
   }, [total])
 
+  // অটো স্লাইডার টাইমার
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
-    // ভিডিও চললে অথবা ১টি স্লাইড থাকলে অটো-স্লাইড বন্ধ থাকবে যাতে ভিডিও দেখতে অসুবিধা না হয়
     if (isPaused || total <= 1 || duration <= 0 || currentSlide?.slide_type === 'video') return
 
     timerRef.current = setTimeout(() => {
@@ -122,6 +127,51 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [nextSlide, duration, isPaused, total, currentIndex, currentSlide])
+
+  // ⭐ মোবাইলে টাচ/পুশ জেস্টার হ্যান্ডলার (আঙুল দিয়ে টেনে স্লাইড সরানো) ⭐
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+    setIsPaused(true)
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null || total <= 1) {
+      setIsPaused(false)
+      return
+    }
+
+    const diffX = e.changedTouches[0].clientX - touchStartX.current
+    const diffY = e.changedTouches[0].clientY - touchStartY.current
+
+    // শুধুমাত্র অনুভূমিকভাবে আঙুল দিয়ে ঠেললে স্লাইড পরিবর্তন হবে (উল্লম্ব স্ক্রলে সমস্যা হবে না)
+    if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+      if (diffX < 0) {
+        nextSlide() // বামে ঠেললে -> পরের স্লাইড
+      } else {
+        prevSlide() // ডানে ঠেললে -> আগের স্লাইড
+      }
+    }
+
+    touchStartX.current = null
+    touchStartY.current = null
+    setIsPaused(false)
+  }
+
+  // মাউস দিয়ে টেনে সরানোর হ্যান্ডলার (পিসির জন্য)
+  const handleMouseDown = (e: React.MouseEvent) => {
+    mouseStartX.current = e.clientX
+  }
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (mouseStartX.current === null || total <= 1) return
+    const diffX = e.clientX - mouseStartX.current
+    if (Math.abs(diffX) > 50) {
+      if (diffX < 0) nextSlide()
+      else prevSlide()
+    }
+    mouseStartX.current = null
+  }
 
   if (!loaded || !slides || slides.length === 0) return null
 
@@ -138,26 +188,30 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
       aria-label="Hero Banner"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className="relative w-full overflow-hidden select-none border-b border-indigo-950/60 shadow-xl transition-all duration-300"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      className="relative w-full overflow-hidden select-none border-b border-indigo-950/60 shadow-xl transition-all duration-300 touch-pan-y cursor-grab active:cursor-grabbing"
       style={{
         minHeight: `${bannerHeight}px`,
         background: slideType === 'color' ? getBannerBg(currentSlide) : '#000000',
       }}
     >
-      {/* ছবি ব্যাকগ্রাউন্ড */}
+      {/* ⭐ ছবি ব্যাকগ্রাউন্ড — কোনো ব্লার বা কালো ছায়া ছাড়াই ১০০% স্পষ্ট ও উজ্জ্বল ⭐ */}
       {slideType === 'image' && (
         <div className="absolute inset-0 size-full pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl || '/images/hero-1.png'}
-            alt=""
+            alt="Banner Image"
             className="size-full object-cover"
+            loading="eager"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/60" />
         </div>
       )}
 
-      {/* ⭐ ইউটিউব ও ভিডিও প্লেয়ার — সম্পূর্ণ নিয়ন্ত্রণযোগ্য (pointer-events-auto) ⭐ */}
+      {/* ভিডিও ব্যাকগ্রাউন্ড */}
       {slideType === 'video' && (
         <div className="absolute inset-0 size-full flex items-center justify-center bg-black z-0 pointer-events-auto">
           {parsedVideo.isEmbed ? (
@@ -179,7 +233,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         </div>
       )}
 
-      {/* কনটেন্ট বক্স — pointer-events-none দিয়ে নিশ্চিত করা হয়েছে যাতে ভিডিও নিয়ন্ত্রণে কোনো বাধা না আসে */}
+      {/* কনটেন্ট বক্স */}
       <div
         className="max-w-7xl mx-auto px-4 sm:px-8 py-5 relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pointer-events-none"
         style={{ minHeight: `${bannerHeight}px` }}
@@ -243,7 +297,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
           })}
         </div>
 
-        {/* ⭐ বিস্তারিত অ্যাকশন বাটন — সম্পূর্ণ ঐচ্ছিক (না চাইলে থাকবে না) ⭐ */}
+        {/* বিস্তারিত বাটন (যদি চালু থাকে) */}
         {hasButton && (
           <div className="z-30 shrink-0 self-end sm:self-center pointer-events-auto">
             <a
@@ -259,7 +313,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         )}
       </div>
 
-      {/* স্লাইড নেভিগেশন কন্ট্রোল */}
+      {/* স্লাইড নেভিগেশন ডটস */}
       {total > 1 && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-black/50 backdrop-blur px-2.5 py-1 rounded-full border border-white/10 pointer-events-auto">
           <button
