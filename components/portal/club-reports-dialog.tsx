@@ -3,7 +3,7 @@
 import { useEffect, useId, useState } from 'react'
 import { ArrowRight, CalendarDays, Check, Globe, Mail, Newspaper, Share2, UserRound, Users, X } from 'lucide-react'
 import type { Club } from '@/lib/data'
-import { getClubNewsPosts, parseActivityMedia, type ClubItem } from '@/lib/clubs'
+import { getClubNewsPosts, parseActivityMedia, safeExternalUrl, type ClubItem } from '@/lib/clubs'
 import { UniversalMediaEmbed } from './universal-media-embed'
 
 export function ClubReportsDialog({
@@ -19,14 +19,19 @@ export function ClubReportsDialog({
   const [copied, setCopied] = useState(false)
   const [liveNews, setLiveNews] = useState<Array<{ id: string; title: string; created_at: string; author: string; image_url: string | null; embed_media_url?: string | null }>>([])
 
+  // ১. শুধুমাত্র ক্লাবের আইডি পরিবর্তন হলেই নিউজ লোড হবে (অপ্রয়োজনীয় রি-ফেচ বন্ধ)
+  useEffect(() => {
+    if (!club?.id) return
+    getClubNewsPosts(club.id).then(setLiveNews)
+  }, [club?.id])
+
+  // ২. বডি স্ক্রল ও কীবোর্ডের Escape বাটন হ্যান্ডলার
   useEffect(() => {
     if (!club) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
-
-    getClubNewsPosts(club.id).then(setLiveNews)
 
     return () => {
       document.body.style.overflow = prev
@@ -42,6 +47,13 @@ export function ClubReportsDialog({
   const reportsHeading = rawClub?.reports_title || "Club Reports / ক্লাব প্রতিবেদন"
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/?club=${club.id}` : ''
   const activityMediaList = parseActivityMedia(rawClub?.embed_media_url)
+
+  // ✅ ডাটাবেজের রিপোর্ট থাকলে সেটা দেখাবে, না থাকলে ফলব্যাক ক্লাবের রিপোর্ট দেখাবে
+  const manualReports = (rawClub?.reports && rawClub.reports.length > 0)
+    ? rawClub.reports
+    : (club.reports && club.reports.length > 0)
+      ? club.reports
+      : []
 
   async function handleShare() {
     if (typeof navigator !== 'undefined' && navigator.share) {
@@ -83,20 +95,23 @@ export function ClubReportsDialog({
             type="button"
             onClick={onClose}
             autoFocus
-            className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+            className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors cursor-pointer"
           >
             <X className="size-4" aria-hidden="true" />
             <span className="sr-only">Close</span>
           </button>
           
           <div className="flex items-center gap-4 pr-8">
-            {/* বড় ও স্পষ্ট গোল লোগো */}
+            {/* স্পষ্ট গোল লোগো — object-contain দিয়ে যাতে চারপাশ কেটে না যায় */}
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logo}
-                alt=""
-                className="size-20 sm:size-24 rounded-full object-cover shadow-lg shrink-0"
+                alt={club.name}
+                className="size-20 sm:size-24 rounded-full object-contain p-1 bg-white shadow-lg shrink-0"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none'
+                }}
               />
             ) : (
               <div className="size-20 sm:size-24 rounded-full bg-white/15 flex items-center justify-center font-bold text-3xl border border-white/25 shrink-0">
@@ -121,7 +136,7 @@ export function ClubReportsDialog({
             <div className="flex items-center gap-1.5 text-xs font-semibold">
               {rawClub?.fb_url && (
                 <a
-                  href={rawClub.fb_url}
+                  href={safeExternalUrl(rawClub.fb_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-lg bg-blue-600 text-white px-2.5 py-1 hover:bg-blue-700 transition"
@@ -131,7 +146,7 @@ export function ClubReportsDialog({
               )}
               {rawClub?.yt_url && (
                 <a
-                  href={rawClub.yt_url}
+                  href={safeExternalUrl(rawClub.yt_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-lg bg-red-600 text-white px-2.5 py-1 hover:bg-red-700 transition"
@@ -141,7 +156,7 @@ export function ClubReportsDialog({
               )}
               {rawClub?.web_url && (
                 <a
-                  href={rawClub.web_url}
+                  href={safeExternalUrl(rawClub.web_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 rounded-lg bg-brand text-white px-2.5 py-1 hover:bg-brand-dark transition"
@@ -155,7 +170,7 @@ export function ClubReportsDialog({
               <button
                 type="button"
                 onClick={handleShare}
-                className="inline-flex items-center gap-1 rounded-lg bg-white border px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-soft transition"
+                className="inline-flex items-center gap-1 rounded-lg bg-white border px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-soft transition cursor-pointer"
               >
                 {copied ? <Check className="size-3 text-green-600" /> : <Share2 className="size-3" />}
                 {copied ? "কপি হয়েছে!" : "শেয়ার"}
@@ -181,7 +196,7 @@ export function ClubReportsDialog({
             </div>
           </div>
 
-          {/* পরিচিতি ও কার্যক্রম (একাধিক মিডিয়া সহ) */}
+          {/* পরিচিতি ও কার্যক্রম */}
           {(club.activity || club.activityBn || activityMediaList.length > 0) && (
             <div className="rounded-2xl border p-4 bg-white space-y-2">
               <p className="text-xs font-bold uppercase tracking-wider text-brand">পরিচিতি ও সাম্প্রতিক কার্যক্রম</p>
@@ -225,7 +240,14 @@ export function ClubReportsDialog({
                   <div key={idx} className="flex items-center gap-2.5 rounded-xl border p-2 bg-gray-50/70">
                     {m.photo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.photo_url} alt="" className="size-11 rounded-full object-cover shrink-0 border bg-white" />
+                      <img
+                        src={m.photo_url}
+                        alt={m.name}
+                        className="size-11 rounded-full object-cover shrink-0 border bg-white"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none'
+                        }}
+                      />
                     ) : (
                       <div className="size-11 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm shrink-0">
                         {m.name.charAt(0) || "স"}
@@ -241,7 +263,7 @@ export function ClubReportsDialog({
             </div>
           )}
 
-          {/* ক্লাব প্রতিবেদন (প্রতিটিতে একাধিক মিডিয়া, শিরোনাম, উপশিরোনাম ও বিস্তারিত সহ) */}
+          {/* ক্লাব প্রতিবেদন সেকশন */}
           <div>
             <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-brand border-b pb-2">
               <Newspaper className="size-4" aria-hidden="true" />
@@ -274,20 +296,21 @@ export function ClubReportsDialog({
                 </li>
               ))}
 
-              {rawClub?.reports?.map((r, i) => (
+              {manualReports.map((r: any, i: number) => (
                 <li key={`manual-${i}`} className="rounded-2xl border border-border p-4.5 bg-white shadow-sm space-y-2">
                   <p className="font-serif font-bold leading-snug text-navy text-base">{r.title}</p>
                   {r.subtitle && <p className="text-xs font-semibold text-brand">{r.subtitle}</p>}
                   {r.description && <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{r.description}</p>}
 
-                  {/* একক বা একাধিক মিডিয়া প্রদর্শন */}
+                  {/* একক মিডিয়া */}
                   {r.embed_media_url && (
                     <UniversalMediaEmbed url={r.embed_media_url} title={r.title} />
                   )}
 
+                  {/* একাধিক মিডিয়া */}
                   {r.media_items && r.media_items.length > 0 && (
                     <div className="space-y-3 pt-2">
-                      {r.media_items.map((m, mi) => (
+                      {r.media_items.map((m: any, mi: number) => (
                         <div key={mi} className="rounded-xl bg-gray-50 p-2.5 border border-border/70 space-y-1">
                           {m.title && <h5 className="font-bold text-xs text-navy">{m.title}</h5>}
                           {m.subtitle && <p className="text-[11px] font-semibold text-brand">{m.subtitle}</p>}
@@ -311,7 +334,7 @@ export function ClubReportsDialog({
                 </li>
               ))}
 
-              {liveNews.length === 0 && (!rawClub?.reports || rawClub.reports.length === 0) && (
+              {liveNews.length === 0 && manualReports.length === 0 && (
                 <p className="text-xs text-muted-foreground text-center py-4 italic">
                   এই ক্লাবের কোনো প্রতিবেদন এখনো প্রকাশিত হয়নি।
                 </p>
