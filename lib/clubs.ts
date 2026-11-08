@@ -6,12 +6,24 @@ export type CommitteeMember = {
   photo_url?: string | null
 }
 
+// প্রতিটি মিডিয়া আইটেম (শিরোনাম, উপশিরোনাম, বিস্তারিত ও লিংক)
+export type ClubMediaItem = {
+  id?: string
+  title?: string
+  subtitle?: string
+  description?: string
+  url: string
+}
+
 export type ClubReportItem = {
   title: string
   date: string
   reporter: string
   link_url?: string | null
   embed_media_url?: string | null
+  subtitle?: string | null
+  description?: string | null
+  media_items?: ClubMediaItem[] | null // একাধিক ছবি/ভিডিও/লিংক
 }
 
 export type ClubItem = {
@@ -39,6 +51,26 @@ export type ClubItem = {
 }
 
 export type ClubInput = Omit<ClubItem, "id" | "created_at">
+
+// একাধিক মিডিয়া পার্স ও কনভার্ট করার ফাংশন (বিদ্যমান সিঙ্গেল লিংকের সাথেও ১০০% সামঞ্জস্যপূর্ণ)
+export function parseActivityMedia(raw?: string | null): ClubMediaItem[] {
+  if (!raw || !raw.trim()) return []
+  const str = raw.trim()
+  if (str.startsWith("[") || str.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(str)
+      if (Array.isArray(parsed)) return parsed.filter((item) => item && (item.url || item.title))
+      if (parsed && typeof parsed === "object") return [parsed]
+    } catch {}
+  }
+  return [{ url: str }]
+}
+
+export function stringifyActivityMedia(items: ClubMediaItem[]): string | null {
+  const valid = items.filter((i) => i.url?.trim() || i.title?.trim() || i.description?.trim())
+  if (valid.length === 0) return null
+  return JSON.stringify(valid)
+}
 
 function hdr(token?: string, json = false): Record<string, string> {
   const h: Record<string, string> = { apikey: SB_KEY }
@@ -99,7 +131,6 @@ export async function deleteCampusClub(token: string, id: string) {
   )
 }
 
-// কোনো নির্দিষ্ট ক্লাবের সকল প্রকাশিত সংবাদ লোড করা
 export async function getClubNewsPosts(clubId: string) {
   try {
     const res = await fetch(
