@@ -13,6 +13,7 @@ import { getCampusClubs, type ClubItem } from "../../lib/clubs"
 import LeadershipManager from "./leadership-manager"
 import NoticeManager from "./notice-manager"
 import HeroManager from "./hero-manager"
+import HeroBannerManager from "./hero-banner-manager"
 import TickerManager from "./ticker-manager"
 import StudentManager from "./student-manager"
 import SectionLimits from "./section-limits"
@@ -34,7 +35,7 @@ const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabl
 
 type Tab =
   | "posts" | "comments" | "reporters" | "profile" | "leaders" | "notices"
-  | "hero" | "ticker" | "students" | "limits" | "directors" | "categories" 
+  | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "directors" | "categories" 
   | "clubs" | "faculties" | "associations" | "social_sites" | "administration"
 
 export type PostMediaItem = {
@@ -92,7 +93,6 @@ export default function AdminPage() {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [oldVideo, setOldVideo] = useState<string | null>(null)
 
-  // ⭐ নতুন: প্রতিটি প্রতিবেদনের একাধিক ছবি, ভিডিও, লিংক, শিরোনাম, উপশিরোনাম, বিস্তারিত ও ক্যাপশন স্টেট ⭐
   const [mediaItems, setMediaItems] = useState<PostMediaItem[]>([])
 
   const [busy, setBusy] = useState(false)
@@ -260,7 +260,6 @@ export default function AdminPage() {
     setVideoFile(f)
   }
 
-  // একাধিক মিডিয়া হ্যান্ডলার
   function addMediaItem() {
     setMediaItems([
       ...mediaItems,
@@ -334,7 +333,6 @@ export default function AdminPage() {
       const isClub = category.includes("ক্লাব") || category.includes("Club")
       const finalClubId = isClub && selectedClubId ? selectedClubId : null
 
-      // একাধিক মিডিয়া পার্স ও স্ট্রিং সংরক্ষণ
       const validMedia = mediaItems.filter((m) => m.url.trim() || m.title.trim() || m.description.trim())
       const finalEmbedMedia = validMedia.length > 0 ? JSON.stringify(validMedia) : null
 
@@ -384,7 +382,6 @@ export default function AdminPage() {
     setOldVideo(p.video_url || null)
     setLinkUrl(p.link_url || "")
     
-    // মিডিয়া লোড (একাধিক মিডিয়া বা পুরোনো সিঙ্গেল লিংক উভয়ই সুন্দরভাবে লোড হবে)
     const rawMedia = (p as any).embed_media_url || ""
     if (rawMedia.trim().startsWith("[") || rawMedia.trim().startsWith("{")) {
       try {
@@ -439,7 +436,7 @@ export default function AdminPage() {
           </button>
 
           <button
-            className="w-full text-sm underline text-green-800"
+            className="w-full text-sm underline text-green-800 cursor-pointer"
             onClick={() => { setMode(mode === "login" ? "signup" : "login"); setMsg("") }}
           >
             {mode === "login" ? "নতুন সাংবাদিক? নিবন্ধন করুন" : "আগে নিবন্ধন করেছেন? লগইন করুন"}
@@ -462,7 +459,7 @@ export default function AdminPage() {
           <h1 className="text-xl font-bold text-green-800">অনুমোদনের অপেক্ষায়</h1>
           <p>{me.full_name}, আপনার নিবন্ধন সম্পন্ন হয়েছে। অ্যাডমিন যাচাই করে অনুমোদন দিলে আপনি পোস্ট করতে পারবেন।</p>
           <button onClick={() => loadMe(token)} className={btn}>আবার দেখুন</button>
-          <button onClick={logout} className="text-sm text-red-600 underline">লগআউট</button>
+          <button onClick={logout} className="text-sm text-red-600 underline cursor-pointer">লগআউট</button>
         </div>
       </main>
     )
@@ -472,7 +469,7 @@ export default function AdminPage() {
 
   const canManage = (p: Post) => me.role === "admin" || me.role === "moderator" || p.user_id === me.id
   const tabCls = (name: string) =>
-    `flex-1 rounded-xl py-2 text-sm ${tab === name ? "bg-green-700 text-white" : "bg-white border"}`
+    `flex-1 rounded-xl py-2 text-sm font-semibold cursor-pointer ${tab === name ? "bg-green-700 text-white shadow" : "bg-white border text-gray-700 hover:bg-gray-50"}`
 
   const isClubCategory = category.includes("ক্লাব") || category.includes("Club")
 
@@ -492,7 +489,7 @@ export default function AdminPage() {
           </div>
           <div className="flex gap-3 text-sm">
             <a href="/" className="underline">সাইট</a>
-            <button onClick={logout} className="text-red-600">লগআউট</button>
+            <button onClick={logout} className="text-red-600 cursor-pointer">লগআউট</button>
           </div>
         </div>
 
@@ -504,6 +501,8 @@ export default function AdminPage() {
           {isAdmin && (
             <>
               <button onClick={() => setTab("hero")} className={tabCls("hero")}>হিরো</button>
+              {/* ⭐ নতুন হিরো ব্যানার ট্যাব ⭐ */}
+              <button onClick={() => setTab("hero_banner")} className={tabCls("hero_banner")}>হিরো ব্যানার</button>
               <button onClick={() => setTab("ticker")} className={tabCls("ticker")}>টিকার</button>
               <button onClick={() => setTab("comments")} className={tabCls("comments")}>কমেন্ট ({pending.length})</button>
               <button onClick={() => setTab("reporters")} className={tabCls("reporters")}>সাংবাদিক ({waiting.length})</button>
@@ -557,15 +556,12 @@ export default function AdminPage() {
 
               <input className={inp} placeholder="প্রতিবেদকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
 
-              {/* ⭐ নতুন: প্রতিবেদনে একাধিক ছবি, ভিডিও, ফেসবুক/ইউটিউব লিংক, শিরোনাম, উপশিরোনাম, বিস্তারিত, তারিখ ও ক্যাপশন বক্স ⭐ */}
+              {/* সংবাদে মিডিয়া সংযুক্তি */}
               <div className="space-y-3 rounded-2xl border-2 border-emerald-300 bg-emerald-50/60 p-3.5 shadow-sm">
                 <div className="flex items-center justify-between border-b border-emerald-200 pb-2">
                   <div>
                     <p className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
-                      🎥 সংবাদ/প্রতিবেদনে মিডিয়া সংযুক্তি (একাধিক ছবি, ভিডিও বা লিংক):
-                    </p>
-                    <p className="text-[11px] text-emerald-700">
-                      প্রতিটি মিডিয়ার সাথে আলাদা শিরোনাম, উপশিরোনাম, বিস্তারিত, তারিখ, ক্যাপশন, শেয়ার ও কমেন্ট থাকবে।
+                      🎥 সংবাদ/প্রতিবেদনে মিডিয়া সংযুক্তি (ছবি, ভিডিও বা লিংক):
                     </p>
                   </div>
                   <button
@@ -634,7 +630,7 @@ export default function AdminPage() {
                         onChange={(e) => updateMediaItem(idx, "url", e.target.value)}
                       />
                       <div className="flex items-center gap-2 pt-1">
-                        <span className="text-[10px] text-gray-500">অথবা মোবাইল/পিসি থেকে ফাইল দিন:</span>
+                        <span className="text-[10px] text-gray-500">অথবা ফাইল দিন:</span>
                         <input
                           type="file"
                           accept="image/*,video/*"
@@ -648,12 +644,6 @@ export default function AdminPage() {
                     </div>
                   </div>
                 ))}
-
-                {mediaItems.length === 0 && (
-                  <p className="text-[11px] text-emerald-800 text-center py-2.5 bg-white/80 rounded-xl border border-dashed border-emerald-300">
-                    কোনো অতিরিক্ত মিডিয়া নেই। প্রয়োজন হলে উপরের &quot;+ মিডিয়া যোগ&quot; বাটনে চাপুন।
-                  </p>
-                )}
               </div>
 
               <input className={inp} placeholder="অন্য ওয়েবসাইটের লিঙ্ক (ঐচ্ছিক)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
@@ -665,7 +655,7 @@ export default function AdminPage() {
                   <button
                     type="button"
                     onClick={() => setOldImage(null)}
-                    className="absolute top-2 right-2 bg-red-600 text-white rounded-full px-3 py-1 text-xs"
+                    className="absolute top-2 right-2 bg-red-600 text-white rounded-full px-3 py-1 text-xs cursor-pointer"
                   >
                     ✕ ছবি সরান
                   </button>
@@ -684,14 +674,14 @@ export default function AdminPage() {
               {!videoFile && oldVideo && (
                 <div className="space-y-1">
                   <video src={oldVideo} controls className="w-full max-h-60 rounded-xl" />
-                  <button type="button" onClick={() => setOldVideo(null)} className="text-sm text-red-600">ভিডিও সরান</button>
+                  <button type="button" onClick={() => setOldVideo(null)} className="text-sm text-red-600 cursor-pointer">ভিডিও সরান</button>
                 </div>
               )}
 
               <button className={btn} onClick={submit} disabled={busy}>
                 {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "প্রকাশ করুন"}
               </button>
-              {editId && <button onClick={resetForm} className="w-full text-sm underline">বাতিল</button>}
+              {editId && <button onClick={resetForm} className="w-full text-sm underline cursor-pointer">বাতিল</button>}
             </div>
 
             <div className="space-y-3">
@@ -715,8 +705,8 @@ export default function AdminPage() {
                     </div>
                     {canManage(p) && (
                       <div className="flex gap-4 mt-2 text-sm">
-                        <button onClick={() => startEdit(p)} className="text-green-700">এডিট</button>
-                        <button onClick={() => act(() => setPostHidden(token, p.id, !p.hidden))} className="text-amber-600">{p.hidden ? "দেখান" : "হাইড"}</button>
+                        <button onClick={() => startEdit(p)} className="text-green-700 cursor-pointer">এডিট</button>
+                        <button onClick={() => act(() => setPostHidden(token, p.id, !p.hidden))} className="text-amber-600 cursor-pointer">{p.hidden ? "দেখান" : "হাইড"}</button>
                         <button
                           onClick={() =>
                             act(async () => {
@@ -724,7 +714,7 @@ export default function AdminPage() {
                               await deletePost(token, p.id)
                             }, "সত্যিই মুছে ফেলবেন?")
                           }
-                          className="text-red-600"
+                          className="text-red-600 cursor-pointer"
                         >
                           ডিলিট
                         </button>
@@ -739,6 +729,10 @@ export default function AdminPage() {
 
         {tab === "notices" && <NoticeManager token={token} isAdmin={!!isAdmin} />}
         {tab === "hero" && isAdmin && <HeroManager token={token} shrink={shrink} />}
+        
+        {/* ⭐ নতুন হিরো ব্যানার ম্যানেজার ভিউ ⭐ */}
+        {tab === "hero_banner" && isAdmin && <HeroBannerManager token={token} shrink={shrink} />}
+
         {tab === "ticker" && isAdmin && <TickerManager token={token} author={me.full_name} />}
         {tab === "students" && isAdmin && <StudentManager token={token} shrink={shrink} />}
         {tab === "clubs" && isAdmin && <ClubManager token={token} />}
@@ -778,8 +772,8 @@ export default function AdminPage() {
                 <p className="font-semibold">{c.name || "নামহীন"}</p>
                 <p className="whitespace-pre-line">{c.message}</p>
                 <div className="flex gap-4 text-sm">
-                  <button onClick={() => act(() => approveComment(token, c.id))} className="text-green-700">অনুমোদন</button>
-                  <button onClick={() => act(() => deleteComment(token, c.id), "কমেন্ট মুছবেন?")} className="text-red-600">মুছুন</button>
+                  <button onClick={() => act(() => approveComment(token, c.id))} className="text-green-700 cursor-pointer">অনুমোদন</button>
+                  <button onClick={() => act(() => deleteComment(token, c.id), "কমেন্ট মুছবেন?")} className="text-red-600 cursor-pointer">মুছুন</button>
                 </div>
               </div>
             ))}
@@ -797,8 +791,8 @@ export default function AdminPage() {
                   <p className="font-semibold text-base">{r.full_name}</p>
                   <p>বিভাগ: {r.department} · ব্যাচ: {r.batch}</p>
                   <div className="flex gap-4 pt-2">
-                    <button onClick={() => act(() => approveReporter(token, r.id))} className="text-green-700">অনুমোদন</button>
-                    <button onClick={() => act(() => removeReporter(token, r.id), "বাতিল করবেন?")} className="text-red-600">বাতিল</button>
+                    <button onClick={() => act(() => approveReporter(token, r.id))} className="text-green-700 cursor-pointer">অনুমোদন</button>
+                    <button onClick={() => act(() => removeReporter(token, r.id), "বাতিল করবেন?")} className="text-red-600 cursor-pointer">বাতিল</button>
                   </div>
                 </div>
               ))}
@@ -810,7 +804,7 @@ export default function AdminPage() {
                 <div key={r.id} className="bg-white rounded-2xl shadow p-3 text-sm flex justify-between items-center gap-3">
                   <p className="font-semibold">{r.full_name}</p>
                   {r.id !== me.id && (
-                    <button onClick={() => act(() => removeReporter(token, r.id), "সরবেন?")} className="text-red-600">সরান</button>
+                    <button onClick={() => act(() => removeReporter(token, r.id), "সরবেন?")} className="text-red-600 cursor-pointer">সরান</button>
                   )}
                 </div>
               ))}
