@@ -30,7 +30,6 @@ interface HeroBreakingBannerProps {
   settings?: HeroSettings | null
 }
 
-// ১৫টি আইকন হোমপেজে রেন্ডার করার ফাংশন
 function renderBadgeIcon(key?: string, className = "size-3.5 mr-1.5 inline-block") {
   switch (key) {
     case "siren": return <Siren className={className} />
@@ -112,7 +111,8 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
-    if (isPaused || total <= 1 || duration <= 0) return
+    // ভিডিও চললে অথবা ১টি স্লাইড থাকলে অটো-স্লাইড বন্ধ থাকবে যাতে ভিডিও দেখতে অসুবিধা না হয়
+    if (isPaused || total <= 1 || duration <= 0 || currentSlide?.slide_type === 'video') return
 
     timerRef.current = setTimeout(() => {
       nextSlide()
@@ -121,9 +121,8 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [nextSlide, duration, isPaused, total, currentIndex])
+  }, [nextSlide, duration, isPaused, total, currentIndex, currentSlide])
 
-  // ✅ অ্যাডমিন সব ডিলিট করে দিলে হোমপেজে এই সেকশনটি সম্পূর্ণ অদৃশ্য থাকবে
   if (!loaded || !slides || slides.length === 0) return null
 
   const bannerHeight = currentSlide.banner_config?.height_px || 200
@@ -132,6 +131,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
   const parsedVideo = parseVideoUrl(videoUrl)
   const imageUrl = currentSlide.media_items?.[0]?.url || ''
   const layers = currentSlide.text_layers || []
+  const hasButton = Boolean(currentSlide.button_text && currentSlide.button_text.trim())
 
   return (
     <section
@@ -146,7 +146,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
     >
       {/* ছবি ব্যাকগ্রাউন্ড */}
       {slideType === 'image' && (
-        <div className="absolute inset-0 size-full">
+        <div className="absolute inset-0 size-full pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl || '/images/hero-1.png'}
@@ -157,35 +157,35 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         </div>
       )}
 
-      {/* ভিডিও ব্যাকগ্রাউন্ড */}
+      {/* ⭐ ইউটিউব ও ভিডিও প্লেয়ার — সম্পূর্ণ নিয়ন্ত্রণযোগ্য (pointer-events-auto) ⭐ */}
       {slideType === 'video' && (
-        <div className="absolute inset-0 size-full flex items-center justify-center bg-black">
+        <div className="absolute inset-0 size-full flex items-center justify-center bg-black z-0 pointer-events-auto">
           {parsedVideo.isEmbed ? (
             <iframe
-              src={`${parsedVideo.embedSrc}&autoplay=1&mute=1`}
+              src={`${parsedVideo.embedSrc}&playsinline=1&controls=1`}
               className="size-full aspect-video border-0 pointer-events-auto"
-              allow="autoplay; encrypted-media"
-              title="Banner Video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+              allowFullScreen
+              title="Banner YouTube Video"
             />
           ) : (
             <video
               src={videoUrl}
-              autoPlay
-              muted
-              loop
+              controls
               playsInline
-              className="size-full object-cover"
+              className="size-full object-contain pointer-events-auto"
             />
           )}
-          <div className="absolute inset-0 bg-black/40 pointer-events-none" />
         </div>
       )}
 
-      {/* কনটেন্ট বক্স */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-5 relative z-20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ minHeight: `${bannerHeight}px` }}>
-        
-        {/* টেক্সট লেয়ার ও ১৫টি আইকন রেন্ডারিং */}
-        <div className="relative w-full flex-1" style={{ minHeight: `${Math.max(120, bannerHeight - 40)}px` }}>
+      {/* কনটেন্ট বক্স — pointer-events-none দিয়ে নিশ্চিত করা হয়েছে যাতে ভিডিও নিয়ন্ত্রণে কোনো বাধা না আসে */}
+      <div
+        className="max-w-7xl mx-auto px-4 sm:px-8 py-5 relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pointer-events-none"
+        style={{ minHeight: `${bannerHeight}px` }}
+      >
+        {/* টেক্সট লেয়ারসমূহ */}
+        <div className="relative w-full flex-1 pointer-events-none" style={{ minHeight: `${Math.max(120, bannerHeight - 40)}px` }}>
           {layers.map((layer: any, idx: number) => {
             if (layer.enabled === false) return null
             const displayText = layer.text || layer.title || ''
@@ -199,7 +199,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
             return (
               <div
                 key={`${currentSlide.id}_${layer.id || idx}`}
-                className="absolute transition-all duration-300"
+                className="absolute transition-all duration-300 pointer-events-none"
                 style={{
                   left: `${layer.x ?? 30}%`,
                   top: `${layer.y ?? 50}%`,
@@ -243,9 +243,9 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
           })}
         </div>
 
-        {/* অ্যাকশন বাটন */}
-        {currentSlide.button_text && (
-          <div className="z-30 shrink-0 self-end sm:self-center">
+        {/* ⭐ বিস্তারিত অ্যাকশন বাটন — সম্পূর্ণ ঐচ্ছিক (না চাইলে থাকবে না) ⭐ */}
+        {hasButton && (
+          <div className="z-30 shrink-0 self-end sm:self-center pointer-events-auto">
             <a
               href={currentSlide.link_url || '#'}
               target={currentSlide.link_url?.startsWith('http') ? '_blank' : '_self'}
@@ -259,9 +259,9 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         )}
       </div>
 
-      {/* একাধিক স্লাইড থাকলে কন্ট্রোল বোতাম ও ডটস */}
+      {/* স্লাইড নেভিগেশন কন্ট্রোল */}
       {total > 1 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-black/40 backdrop-blur px-2.5 py-1 rounded-full border border-white/10">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-black/50 backdrop-blur px-2.5 py-1 rounded-full border border-white/10 pointer-events-auto">
           <button
             type="button"
             onClick={prevSlide}
