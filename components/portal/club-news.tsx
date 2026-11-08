@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Baby,
   BookOpen,
@@ -18,7 +18,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { clubs as fallbackClubs, type Club, type ClubIcon } from '@/lib/data'
-import { getCampusClubs, parseActivityMedia, type ClubItem } from '@/lib/clubs'
+import { getCampusClubs, parseActivityMedia, safeExternalUrl, type ClubItem } from '@/lib/clubs'
 import { cn } from '@/lib/utils'
 import { SectionHeading } from './section-heading'
 import { ClubReportsDialog } from './club-reports-dialog'
@@ -73,6 +73,30 @@ export function ClubNews() {
   
   const clubsRef = useRef<Club[]>(fallbackClubs)
 
+  // ডায়ালগ বন্ধ করার স্থিতিশীল মেথড
+  const handleCloseDialog = useCallback(() => {
+    setSelected(null)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      if (url.searchParams.has('club')) {
+        url.searchParams.delete('club')
+        window.history.replaceState({}, '', url.pathname + (url.hash || ''))
+      }
+    }
+  }, [])
+
+  // ডায়ালগ খোলার সময় হিস্ট্রিতে পুশ করা
+  const handleOpenClub = useCallback((club: Club) => {
+    setSelected(club)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      if (url.searchParams.get('club') !== club.id) {
+        url.searchParams.set('club', club.id)
+        window.history.pushState({}, '', url.toString())
+      }
+    }
+  }, [])
+
   useEffect(() => {
     getCampusClubs().then((items) => {
       const formatted = items && items.length > 0 ? items.map(formatClub) : fallbackClubs
@@ -98,29 +122,37 @@ export function ClubNews() {
       }
     })
 
+    // হেডার ড্রপডাউন থেকে ক্লাব খোলার কাস্টম ইভেন্ট
     const handleOpenModal = (e: Event) => {
       const customEvent = e as CustomEvent<string>
       const targetId = customEvent.detail
       const targetClub = clubsRef.current.find((c) => c.id === targetId)
       if (targetClub) {
-        setSelected(targetClub)
+        handleOpenClub(targetClub)
         const el = document.getElementById(`club-${targetId}`)
         if (el) el.scrollIntoView({ behavior: 'smooth' })
       }
     }
 
-    window.addEventListener('open-club-modal', handleOpenModal)
-    return () => window.removeEventListener('open-club-modal', handleOpenModal)
-  }, [])
-
-  function handleCloseDialog() {
-    setSelected(null)
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href)
-      url.searchParams.delete('club')
-      window.history.replaceState({}, '', url.pathname + (url.hash || ''))
+    // ✅ ব্রাউজারের ব্যাক বাটন চাপলে ডায়ালগ বন্ধ হওয়ার নিরাপদ লিসেনার (popstate)
+    const handlePopState = () => {
+      const clubId = new URLSearchParams(window.location.search).get('club')
+      if (clubId) {
+        const found = clubsRef.current.find((c) => c.id === clubId)
+        setSelected(found || null)
+      } else {
+        setSelected(null)
+      }
     }
-  }
+
+    window.addEventListener('open-club-modal', handleOpenModal)
+    window.addEventListener('popstate', handlePopState)
+
+    return () => {
+      window.removeEventListener('open-club-modal', handleOpenModal)
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [handleOpenClub])
 
   const tags = ['All', ...Array.from(new Set(list.map((c) => c.tag)))]
   const visible = filter === 'All' ? list : list.filter((c) => c.tag === filter)
@@ -143,7 +175,7 @@ export function ClubNews() {
               onClick={() => setFilter(tag)}
               aria-pressed={filter === tag}
               className={cn(
-                'shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
+                'shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer',
                 filter === tag
                   ? 'border-gold bg-gold text-navy'
                   : 'border-white/20 text-white/80 hover:border-white/50 hover:text-white',
@@ -169,15 +201,20 @@ export function ClubNews() {
                 id={`club-${club.id}`}
                 className="scroll-mt-24 animate-in fade-in group flex flex-col rounded-3xl border border-white/10 bg-white/5 p-5 transition-all hover:-translate-y-1 hover:border-brand hover:bg-white/10 w-full min-w-0 overflow-hidden shadow-lg"
               >
-                {/* ⭐ ক্লাবের লোগো — বর্ডার ও চারকোনা বক্স ছাড়া সম্পূর্ণ গোল ও পরিষ্কার ⭐ */}
+                {/* ক্লাবের লোগো — স্পষ্ট ও অবিকৃত (object-contain) */}
                 <div className="flex items-start justify-between gap-3">
                   {raw?.logo_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={raw.logo_url}
-                      alt={club.name}
-                      className="size-20 sm:size-24 shrink-0 rounded-full object-cover shadow-md select-none"
-                    />
+                    <div className="size-20 sm:size-24 shrink-0 rounded-full bg-white p-1 border border-white/20 flex items-center justify-center shadow-md overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={raw.logo_url}
+                        alt={club.name}
+                        className="size-full rounded-full object-contain select-none"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none'
+                        }}
+                      />
+                    </div>
                   ) : (
                     <span className="flex size-20 sm:size-24 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-md">
                       <Icon className="size-8" aria-hidden="true" />
@@ -206,7 +243,7 @@ export function ClubNews() {
                     </p>
                   )}
 
-                  {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক মিডিয়া (ভিডিও, ছবি, লিংক) */}
+                  {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের একাধিক মিডিয়া */}
                   {activityMediaList.length > 0 && (
                     <div className="mt-3 space-y-4">
                       {activityMediaList.map((m, idx) => (
@@ -221,12 +258,13 @@ export function ClubNews() {
                   )}
                 </div>
 
+                {/* সোশ্যাল লিঙ্কসমূহ (safeExternalUrl দিয়ে সুরক্ষিত) */}
                 {raw && (raw.fb_url || raw.yt_url || raw.web_url) && (
                   <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
                     <span className="text-[11px] text-white/50">সোশ্যাল:</span>
                     {raw.fb_url && (
                       <a
-                        href={raw.fb_url}
+                        href={safeExternalUrl(raw.fb_url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-blue-600"
@@ -237,7 +275,7 @@ export function ClubNews() {
                     )}
                     {raw.yt_url && (
                       <a
-                        href={raw.yt_url}
+                        href={safeExternalUrl(raw.yt_url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-600"
@@ -248,7 +286,7 @@ export function ClubNews() {
                     )}
                     {raw.web_url && (
                       <a
-                        href={raw.web_url}
+                        href={safeExternalUrl(raw.web_url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-brand"
@@ -263,7 +301,7 @@ export function ClubNews() {
 
                 <button
                   type="button"
-                  onClick={() => setSelected(club)}
+                  onClick={() => handleOpenClub(club)}
                   className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold cursor-pointer shadow-md"
                 >
                   <FileText className="size-4" aria-hidden="true" />
