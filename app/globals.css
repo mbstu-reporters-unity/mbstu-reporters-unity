@@ -1,3 +1,4 @@
+@import url('https://fonts.maateen.me/kalpurush/font.css');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
@@ -5,8 +6,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-hind), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-noto-serif), Georgia, serif;
+  --font-sans: 'Kalpurush', var(--font-hind), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Kalpurush', var(--font-noto-serif), Georgia, serif;
 
   --color-brand: var(--brand);
   --color-brand-dark: var(--brand-dark);
@@ -90,9 +91,11 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 6rem;
+    font-family: 'Kalpurush', sans-serif;
   }
   body {
     @apply bg-background text-foreground font-sans;
+    font-family: 'Kalpurush', sans-serif;
   }
 
   /* দীর্ঘ আর্টিকেলের লেখা জাস্টিফাই হবে */
@@ -104,6 +107,7 @@
   /* সব হেডিং ও টাইটেল স্বাভাবিক বামে থাকবে */
   h1, h2, h3, h4, h5, h6, article h1, article h2, article h3 {
     text-align: left;
+    font-family: 'Kalpurush', sans-serif;
   }
 
   /* সেন্টার ও রাইটের জন্য নিরাপত্তা */
@@ -328,6 +332,7 @@ html[data-theme="night"] body { letter-spacing: 0.005em; }
 
 html[data-theme="contrast"] :focus-visible { outline: 3px solid #000; outline-offset: 2px; }
 html[data-theme="contrast"] main a { text-decoration: underline; }
+
 /* ==================== হিরো স্লাইডার ও টেক্সটের অ্যানিমেশন কিফ্রেম ==================== */
 @keyframes heroProgressTimer { from { width: 0%; } to { width: 100%; } }
 @keyframes anim_fade-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
