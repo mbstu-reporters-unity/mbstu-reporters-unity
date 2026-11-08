@@ -2,8 +2,15 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-/* সোলাইমান লিপি ফন্ট সিডিএন (যাতে যেকোনো মোবাইলেই ফন্টটি সরাসরি লোড হয়) */
-@import url('https://fonts.maateen.me/solaiman-lipi/font.css');
+/* ⭐ নন-ব্লকিং সোলাইমান লিপি ফন্ট (যাতে কোনো বাইরের সার্ভারের জন্য পেজ আটকে না থাকে) ⭐ */
+@font-face {
+  font-family: 'SolaimanLipi';
+  src: url('https://cdn.jsdelivr.net/gh/maateen/bangla-fonts@master/SolaimanLipi/SolaimanLipi.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/maateen/bangla-fonts@master/SolaimanLipi/SolaimanLipi.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -121,7 +128,7 @@
   }
 }
 
-/* ⭐ শুধুমাত্র ক্লাবগুলোর বাংলা লেখার বিশেষ ফন্ট রুলস (রূপসী বাংলা / সোলাইমান লিপি / টাইমস নিউ রোমান) ⭐ */
+/* ⭐ শুধুমাত্র ক্লাবগুলোর বাংলা লেখার বিশেষ ফন্ট রুলস ⭐ */
 #club-news,
 #club-latest,
 .club-font,
@@ -354,7 +361,8 @@ html[data-theme="night"] body { letter-spacing: 0.005em; }
 
 html[data-theme="contrast"] :focus-visible { outline: 3px solid #000; outline-offset: 2px; }
 html[data-theme="contrast"] main a { text-decoration: underline; }
-/* ==================== হিরো স্লাইডার ও টেক্সটের অ্যানিমেশন কিফ্রেম ==================== */
+
+/* ==================== হিরো স্লাইডার ও টেক্সটের অ্যানিমেশন কিফ্রেম (১০০% অক্ষত) ==================== */
 @keyframes heroProgressTimer { from { width: 0%; } to { width: 100%; } }
 @keyframes anim_fade-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
 @keyframes anim_zoom-pop { 0% { transform: scale(0.65); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
