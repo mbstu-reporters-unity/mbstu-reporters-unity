@@ -82,7 +82,6 @@ function SingleMediaCard({
   const media = parseMedia(item.url)
   const displayTitle = item.title || (total > 1 ? `মিডিয়া #${index + 1}` : defaultTitle)
 
-  // ব্রাউজারের নেটিভ ফুলস্ক্রিন হ্যান্ডলার (মোবাইল ও পিসির জন্য ১০০% নিরাপদ)
   useEffect(() => {
     const onFsChange = () => {
       setIsFs(!!document.fullscreenElement)
@@ -140,18 +139,20 @@ function SingleMediaCard({
         </div>
       )}
 
-      {/* ⭐ পারফেক্ট ১৬:৯ ভিডিও প্লেয়ার (কখনোই লম্বা হবে না) ⭐ */}
+      {/* ⭐ ছবি ও ভিডিও প্লেয়ার — ছবি যাতে না কাটে সেজন্য object-contain নিশ্চিত করা হয়েছে ⭐ */}
       {item.url && (
         <div
           ref={playerBoxRef}
-          className="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner flex items-center justify-center"
+          className={`relative w-full rounded-xl overflow-hidden bg-black shadow-inner flex items-center justify-center ${
+            media.type === 'image' ? 'min-h-[180px] max-h-[500px]' : 'aspect-video'
+          }`}
         >
-          {/* স্ক্রিন ফুলস্ক্রিন বাটন */}
+          {/* ফুলস্ক্রিন বাটন */}
           <button
             type="button"
             onClick={toggleNativeFullscreen}
             title={isFs ? "ছোট করুন" : "বড় পর্দা"}
-            className="absolute top-2 right-2 z-30 flex items-center gap-1 rounded-lg bg-black/70 hover:bg-black/90 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur border border-white/20 active:scale-95"
+            className="absolute top-2 right-2 z-30 flex items-center gap-1 rounded-lg bg-black/70 hover:bg-black/90 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur border border-white/20 active:scale-95 cursor-pointer"
           >
             {isFs ? <Minimize2 className="size-3.5 text-yellow-400" /> : <Maximize2 className="size-3.5 text-emerald-400" />}
             <span className="hidden sm:inline">{isFs ? "ছোট করুন" : "বড় পর্দা"}</span>
@@ -189,13 +190,13 @@ function SingleMediaCard({
             />
           )}
 
-          {/* ৪. ছবি */}
+          {/* ৪. ছবি — পুরো ছবি সম্পূর্ণ অক্ষতভাবে দেখাবে (কখনোই কাটবে না) */}
           {media.type === 'image' && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={media.src}
               alt={displayTitle}
-              className="size-full object-cover"
+              className="w-full max-h-[500px] object-contain select-none bg-black/90"
               onError={(e) => {
                 (e.target as HTMLElement).style.display = 'none'
               }}
@@ -252,7 +253,7 @@ function SingleMediaCard({
           <button
             type="button"
             onClick={handleCopyLink}
-            className="rounded-lg border bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 transition inline-flex items-center gap-1"
+            className="rounded-lg border bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 transition inline-flex items-center gap-1 cursor-pointer"
           >
             {copied ? <Check className="size-3 text-green-600" /> : null}
             <span>{copied ? 'কপি হয়েছে' : 'লিংক'}</span>
