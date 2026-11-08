@@ -2,13 +2,8 @@
 
 import React, { useRef, useState, useEffect } from 'react'
 import {
-  Volume2,
-  VolumeX,
-  Play,
-  Pause,
-  ExternalLink,
   Maximize2,
-  X,
+  Minimize2,
   Share2,
   MessageSquare,
   Calendar,
@@ -54,7 +49,6 @@ function parseMedia(rawUrl: string) {
   return { type: 'image' as const, src: url }
 }
 
-// একক স্ট্রিং বা একাধিক মিডিয়ার JSON পার্স করার নিরাপদ ফাংশন
 function parseMediaList(raw?: string | null): SingleMediaItem[] {
   if (!raw || !raw.trim()) return []
   const str = raw.trim()
@@ -81,38 +75,33 @@ function SingleMediaCard({
   total: number
   defaultTitle?: string
 }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [muted, setMuted] = useState(true)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
+  const playerBoxRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
+  const [isFs, setIsFs] = useState(false)
 
   const media = parseMedia(item.url)
   const displayTitle = item.title || (total > 1 ? `মিডিয়া #${index + 1}` : defaultTitle)
 
+  // ব্রাউজারের নেটিভ ফুলস্ক্রিন হ্যান্ডলার (মোবাইল ও পিসির জন্য ১০০% নিরাপদ)
   useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false)
+    const onFsChange = () => {
+      setIsFs(!!document.fullscreenElement)
     }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isFullscreen])
+    document.addEventListener('fullscreenchange', onFsChange)
+    return () => document.removeEventListener('fullscreenchange', onFsChange)
+  }, [])
 
-  useEffect(() => {
-    if (isFullscreen) {
-      document.body.style.overflow = 'hidden'
+  const toggleNativeFullscreen = () => {
+    if (!playerBoxRef.current) return
+    if (!document.fullscreenElement) {
+      if (playerBoxRef.current.requestFullscreen) {
+        playerBoxRef.current.requestFullscreen().catch(() => {})
+      }
     } else {
-      document.body.style.overflow = ''
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {})
+      }
     }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isFullscreen])
-
-  const toggleScreenSize = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setIsFullscreen((prev) => !prev)
   }
 
   const handleCopyLink = async () => {
@@ -126,125 +115,98 @@ function SingleMediaCard({
 
   const handleScrollToComments = () => {
     const el = document.getElementById('comments-section') || document.querySelector('section:has(form)')
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' })
-    }
+    if (el) el.scrollIntoView({ behavior: 'smooth' })
   }
 
   const currentUrl = typeof window !== 'undefined' ? window.location.href : item.url
-  const shareText = encodeURIComponent(`${item.title || defaultTitle || 'সংবাদ প্রতিবেদন'} - ${currentUrl}`)
+  const shareText = encodeURIComponent(`${item.title || defaultTitle || 'প্রতিবেদন'} - ${currentUrl}`)
 
   return (
-    <div className="rounded-2xl border border-border/80 bg-white shadow-sm hover:shadow-md transition-all overflow-hidden space-y-3 p-3.5 sm:p-4.5">
-      {/* ১. মিডিয়ার শিরোনাম ও উপশিরোনাম */}
+    <div className="w-full rounded-2xl border border-border/80 bg-white p-3 sm:p-4 shadow-sm hover:shadow-md transition-all space-y-3 overflow-hidden">
+      
+      {/* শিরোনাম ও উপশিরোনাম */}
       {(item.title || item.subtitle) && (
-        <div className="space-y-1 border-b border-gray-100 pb-2.5">
+        <div className="space-y-1 border-b border-gray-100 pb-2">
           {item.title && (
-            <h4 className="font-serif text-base sm:text-lg font-bold text-navy leading-snug">
+            <h4 className="font-serif text-sm sm:text-base font-bold text-navy leading-snug">
               {item.title}
             </h4>
           )}
           {item.subtitle && (
-            <p className="text-xs sm:text-sm font-semibold text-brand">
+            <p className="text-xs font-semibold text-brand">
               {item.subtitle}
             </p>
           )}
         </div>
       )}
 
-      {/* ২. মিডিয়া প্লেয়ার (ফেসবুক, ইউটিউব, ভিডিও বা ছবি) */}
+      {/* ⭐ পারফেক্ট ১৬:৯ ভিডিও প্লেয়ার (কখনোই লম্বা হবে না) ⭐ */}
       {item.url && (
         <div
-          ref={containerRef}
-          className={`relative w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-slate-950 shadow-inner ${
-            isFullscreen
-              ? 'fixed inset-0 z-50 flex h-screen w-screen flex-col justify-center rounded-none border-none bg-black/95 p-2 sm:p-6'
-              : ''
-          }`}
+          ref={playerBoxRef}
+          className="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner flex items-center justify-center"
         >
-          {isFullscreen && (
-            <div className="absolute top-3 right-3 z-50">
-              <button
-                type="button"
-                onClick={toggleScreenSize}
-                className="flex items-center gap-1.5 rounded-full bg-red-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-lg active:scale-95 transition"
-              >
-                <X className="size-4" />
-                <span>ছোট করুন</span>
-              </button>
-            </div>
-          )}
+          {/* স্ক্রিন ফুলস্ক্রিন বাটন */}
+          <button
+            type="button"
+            onClick={toggleNativeFullscreen}
+            title={isFs ? "ছোট করুন" : "বড় পর্দা"}
+            className="absolute top-2 right-2 z-30 flex items-center gap-1 rounded-lg bg-black/70 hover:bg-black/90 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur border border-white/20 active:scale-95"
+          >
+            {isFs ? <Minimize2 className="size-3.5 text-yellow-400" /> : <Maximize2 className="size-3.5 text-emerald-400" />}
+            <span className="hidden sm:inline">{isFs ? "ছোট করুন" : "বড় পর্দা"}</span>
+          </button>
 
-          {!isFullscreen && (
-            <div className="absolute top-2 right-2 z-30">
-              <button
-                type="button"
-                onClick={toggleScreenSize}
-                title="বড় পর্দা / সম্পূর্ণ স্ক্রিনে দেখুন"
-                className="flex items-center gap-1 rounded-lg bg-black/75 hover:bg-black px-2.5 py-1 text-[11px] font-semibold text-white shadow backdrop-blur-md border border-white/20 active:scale-95"
-              >
-                <Maximize2 className="size-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">বড় পর্দা</span>
-              </button>
-            </div>
-          )}
-
+          {/* ১. ইউটিউব প্লেয়ার */}
           {media.type === 'youtube' && (
-            <div className={`relative w-full overflow-hidden bg-black ${isFullscreen ? 'h-full max-h-[88vh] aspect-video mx-auto' : 'aspect-video'}`}>
-              <iframe
-                src={media.embedSrc}
-                className="absolute inset-0 size-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                allowFullScreen
-                title={displayTitle}
-              />
-            </div>
+            <iframe
+              src={media.embedSrc}
+              className="absolute inset-0 size-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allowFullScreen
+              title={displayTitle}
+            />
           )}
 
+          {/* ২. ফেসবুক ভিডিও প্লেয়ার */}
           {media.type === 'facebook' && (
-            <div className={`relative w-full overflow-hidden bg-black ${isFullscreen ? 'h-full max-h-[88vh] aspect-video mx-auto' : 'aspect-video'}`}>
-              <iframe
-                src={media.embedSrc}
-                className="absolute inset-0 size-full border-0"
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen"
-                allowFullScreen
-                title={displayTitle}
-              />
-            </div>
+            <iframe
+              src={media.embedSrc}
+              className="absolute inset-0 size-full border-0"
+              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen"
+              allowFullScreen
+              title={displayTitle}
+            />
           )}
 
+          {/* ৩. সরাসরি ভিডিও ফাইল */}
           {media.type === 'video' && (
-            <div className={`relative w-full overflow-hidden bg-black ${isFullscreen ? 'h-full max-h-[88vh] aspect-video mx-auto' : 'aspect-video'}`}>
-              <video
-                ref={videoRef}
-                src={media.src}
-                controls
-                playsInline
-                muted={muted}
-                className="size-full object-contain"
-              />
-            </div>
+            <video
+              src={media.src}
+              controls
+              playsInline
+              className="size-full object-contain"
+            />
           )}
 
+          {/* ৪. ছবি */}
           {media.type === 'image' && (
-            <div className={`relative w-full overflow-hidden bg-black/90 flex items-center justify-center ${isFullscreen ? 'h-full max-h-[90vh]' : 'max-h-96'}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={media.src}
-                alt={displayTitle}
-                className={`h-auto w-full object-contain ${isFullscreen ? 'max-h-[90vh]' : 'max-h-96 hover:scale-[1.01]'} transition-all`}
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none'
-                }}
-              />
-            </div>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={media.src}
+              alt={displayTitle}
+              className="size-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none'
+              }}
+            />
           )}
         </div>
       )}
 
-      {/* ৩. ক্যাপশন ও তারিখ */}
+      {/* ক্যাপশন ও তারিখ */}
       {(item.caption || item.date) && (
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500 bg-gray-50 p-2 rounded-xl border border-gray-100">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500 bg-gray-50 px-2.5 py-1.5 rounded-xl border border-gray-100">
           {item.caption && (
             <span className="flex items-center gap-1 font-medium text-gray-700">
               <Camera className="size-3.5 text-brand" /> {item.caption}
@@ -258,15 +220,15 @@ function SingleMediaCard({
         </div>
       )}
 
-      {/* ৪. বিস্তারিত বিবরণ */}
+      {/* বিস্তারিত বিবরণ */}
       {item.description && (
-        <p className="whitespace-pre-line text-xs sm:text-sm text-gray-700 leading-relaxed pt-1">
+        <p className="whitespace-pre-line text-xs sm:text-sm text-gray-700 leading-relaxed">
           {item.description}
         </p>
       )}
 
-      {/* ৫. শেয়ার ও মন্তব্য বাটনসমূহ */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-gray-100 text-xs">
+      {/* শেয়ার ও মন্তব্য বাটন */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100 text-xs">
         <div className="flex items-center gap-1.5">
           <span className="text-[11px] font-semibold text-gray-500 flex items-center gap-1">
             <Share2 className="size-3" /> শেয়ার:
@@ -275,7 +237,7 @@ function SingleMediaCard({
             href={`https://wa.me/?text=${shareText}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-lg bg-emerald-600 text-white px-2.5 py-1 text-[11px] font-semibold hover:bg-emerald-700 transition"
+            className="rounded-lg bg-emerald-600 text-white px-2 py-0.5 text-[11px] font-semibold hover:bg-emerald-700 transition"
           >
             WhatsApp
           </a>
@@ -283,21 +245,20 @@ function SingleMediaCard({
             href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-lg bg-blue-600 text-white px-2.5 py-1 text-[11px] font-semibold hover:bg-blue-700 transition"
+            className="rounded-lg bg-blue-600 text-white px-2 py-0.5 text-[11px] font-semibold hover:bg-blue-700 transition"
           >
             Facebook
           </a>
           <button
             type="button"
             onClick={handleCopyLink}
-            className="rounded-lg border bg-white px-2.5 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 transition inline-flex items-center gap-1"
+            className="rounded-lg border bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 transition inline-flex items-center gap-1"
           >
             {copied ? <Check className="size-3 text-green-600" /> : null}
-            <span>{copied ? 'কপি হয়েছে!' : 'লিংক'}</span>
+            <span>{copied ? 'কপি হয়েছে' : 'লিংক'}</span>
           </button>
         </div>
 
-        {/* মন্তব্য বাটন */}
         <button
           type="button"
           onClick={handleScrollToComments}
@@ -326,7 +287,7 @@ export function UniversalMediaEmbed({
   if (items.length === 0) return null
 
   return (
-    <div className={`space-y-4 my-3 w-full ${className}`}>
+    <div className={`space-y-3.5 my-2.5 w-full ${className}`}>
       {items.map((item, idx) => (
         <SingleMediaCard
           key={item.id || idx}
