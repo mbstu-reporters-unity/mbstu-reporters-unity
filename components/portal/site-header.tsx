@@ -58,7 +58,6 @@ export function SiteHeader() {
   const [univText, setUnivText] = useState('')
 
   useEffect(() => {
-    // বিশ্ববিদ্যালয় লোগো ও লিংক লোড
     fetch(
       `${SB_URL}/rest/v1/app_config?select=key,value&key=in.(univ_logo_url,univ_link_url,univ_text)`,
       { headers: { apikey: SB_KEY }, cache: 'no-store' }
@@ -75,31 +74,21 @@ export function SiteHeader() {
       })
       .catch(() => {})
 
-    // ক্লাবসমূহ লোড
     getCampusClubs().then((res) => {
       if (res && res.length > 0) setClubsList(res)
     })
 
-    // ক্যাটাগরি লোড
     getVisibleCategoryNames().then(setCategoriesList)
-
-    // অনুষদ ও বিভাগসমূহ লোড
     getFacultiesWithDepartments().then(setFacultiesList)
-
-    // অন্যান্য সাংবাদিক সমিতি লোড
     getUniversityAssociations().then(setAssociationsList)
-
-    // MBSTU Social Site লোড
     getSocialSites().then(setSocialSitesList)
 
-    // কার্যনির্বাহী পরিষদ সদস্যবৃন্দ লোড
     getLeaders().then((rows) => {
       if (Array.isArray(rows)) {
         setLeadersList(rows.filter((l) => l.is_visible))
       }
     })
 
-    // MBSTU Administration কর্মকর্তা তালিকা লোড
     getAdministrationOfficials().then((rows) => {
       if (Array.isArray(rows)) {
         setAdminOfficialsList(rows)
@@ -150,7 +139,7 @@ export function SiteHeader() {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-card/75 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-card/65">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 sm:gap-4 px-4 py-3">
           
-          {/* লোগো ও বিশ্ববিদ্যালয়ের তথ্য */}
+          {/* লোগো ও বিশ্ববিদ্যালয়ের তথ্য — বর্ডার ছাড়া সম্পূর্ণ গোল */}
           <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
             <Logo />
             <span className="h-6 w-px bg-border/80 shrink-0" aria-hidden="true" />
@@ -166,7 +155,7 @@ export function SiteHeader() {
                 <img
                   src={univLogo}
                   alt="MBSTU University Official Logo"
-                  className="size-8 sm:size-9 rounded-full object-contain bg-white p-0.5 border border-border/80 shadow-sm"
+                  className="size-9 sm:size-10 rounded-full object-cover shrink-0 select-none"
                 />
               )}
               {univText && univText.trim() !== '' && (
@@ -181,7 +170,6 @@ export function SiteHeader() {
           <nav aria-label="Main navigation" className="hidden xl:block">
             <ul className="flex items-center gap-1">
               
-              {/* হোম */}
               <li>
                 <a href="/" className="rounded-md px-3 py-2 text-sm font-medium text-navy/80 hover:bg-brand-soft hover:text-brand">
                   {pick('হোম', 'Home')}
@@ -220,7 +208,7 @@ export function SiteHeader() {
                         >
                           {leader.photo_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={leader.photo_url} alt="" className="size-8 rounded-full object-cover border shrink-0 bg-white" />
+                            <img src={leader.photo_url} alt="" className="size-8 rounded-full object-cover shrink-0" />
                           ) : (
                             <span className="size-8 rounded-full bg-brand text-white font-bold text-xs flex items-center justify-center shrink-0">
                               {leader.display_name.charAt(0)}
@@ -240,7 +228,7 @@ export function SiteHeader() {
                 </div>
               </li>
 
-              {/* ⭐ নতুন: MBSTU Administration (মাভাবিপ্রবি প্রশাসন) ⭐ */}
+              {/* MBSTU Administration */}
               <li className="relative group">
                 <a
                   href="/administration"
@@ -261,7 +249,7 @@ export function SiteHeader() {
                     </a>
                   </div>
                   <div className="space-y-1 pt-2">
-                    {adminOfficialsList.slice(0, 7).map((item, i) => (
+                    {adminOfficialsList.slice(0, 7).map((item) => (
                       <a
                         key={item.id}
                         href="/administration"
@@ -269,9 +257,9 @@ export function SiteHeader() {
                       >
                         {item.photo_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={item.photo_url} alt="" className="size-7 rounded-full object-cover border shrink-0 bg-white" />
+                          <img src={item.photo_url} alt="" className="size-8 rounded-full object-cover shrink-0" />
                         ) : (
-                          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand">
+                          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand">
                             👤
                           </span>
                         )}
@@ -375,7 +363,7 @@ export function SiteHeader() {
                           </span>
                           {assoc.logo_url && (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={assoc.logo_url} alt="" className="size-7 rounded-lg object-contain bg-white border p-0.5 shrink-0" />
+                            <img src={assoc.logo_url} alt="" className="size-8 rounded-full object-cover shrink-0" />
                           )}
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-xs text-navy truncate">{assoc.name}</p>
@@ -423,7 +411,7 @@ export function SiteHeader() {
                           </span>
                           {site.logo_url && (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={site.logo_url} alt="" className="size-7 rounded-lg object-contain bg-white border p-0.5 shrink-0" />
+                            <img src={site.logo_url} alt="" className="size-8 rounded-full object-cover shrink-0" />
                           )}
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-xs text-navy truncate">{site.name}</p>
@@ -435,7 +423,7 @@ export function SiteHeader() {
                 </div>
               </li>
 
-              {/* নিউজ ক্যাটাগরি ও ক্লাবসমূহ (ডেস্কটপ) */}
+              {/* নিউজ ক্যাটাগরি ও ক্লাবসমূহ */}
               <li className="flex items-center gap-1">
                 <div className="relative group">
                   <button
@@ -447,7 +435,7 @@ export function SiteHeader() {
                   </button>
                   <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full mt-1 w-60 rounded-2xl border border-border bg-card p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
                     <div className="space-y-0.5 pt-1">
-                      {categoriesList.map((cat, i) => (
+                      {categoriesList.map((cat) => (
                         <a
                           key={cat}
                           href={`/category/${encodeURIComponent(cat)}`}
@@ -485,10 +473,10 @@ export function SiteHeader() {
                             <img
                               src={c.logo_url}
                               alt=""
-                              className="size-7 shrink-0 rounded-lg object-contain bg-white p-0.5 border border-border"
+                              className="size-8 shrink-0 rounded-full object-cover"
                             />
                           ) : (
-                            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand text-white text-xs font-bold">
+                            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-white text-xs font-bold">
                               {c.name.charAt(0)}
                             </span>
                           )}
@@ -556,7 +544,6 @@ export function SiteHeader() {
         {menuOpen && (
           <nav className="border-t border-border bg-card xl:hidden max-h-[85vh] overflow-y-auto px-4 py-3 space-y-2">
             
-            {/* ১. "হোম" */}
             <div className={mobileWrapperCls}>
               <a
                 href="/"
@@ -571,7 +558,7 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ২. কার্যনির্বাহী পরিষদ */}
+            {/* কার্যনির্বাহী পরিষদ */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -608,7 +595,7 @@ export function SiteHeader() {
                       >
                         {leader.photo_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={leader.photo_url} alt="" className="size-7 rounded-full object-cover border" />
+                          <img src={leader.photo_url} alt="" className="size-7 rounded-full object-cover shrink-0" />
                         ) : (
                           <span className="size-7 rounded-full bg-brand text-white font-bold text-[10px] flex items-center justify-center">
                             {leader.display_name.charAt(0)}
@@ -625,7 +612,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ⭐ ৩. নতুন: MBSTU Administration (মোবাইল ড্রয়ার মেনু) ⭐ */}
+            {/* MBSTU Administration */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -660,9 +647,9 @@ export function SiteHeader() {
                     >
                       {official.photo_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={official.photo_url} alt="" className="size-7 rounded-full object-cover border" />
+                        <img src={official.photo_url} alt="" className="size-8 rounded-full object-cover shrink-0" />
                       ) : (
-                        <span className="size-7 rounded-full bg-brand text-white font-bold text-[10px] flex items-center justify-center">
+                        <span className="size-8 rounded-full bg-brand text-white font-bold text-[10px] flex items-center justify-center">
                           👤
                         </span>
                       )}
@@ -676,7 +663,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৪. অনুষদ ও বিভাগসমূহ */}
+            {/* অনুষদ ও বিভাগসমূহ */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -707,7 +694,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৫. অন্যান্য সাংবাদিক সমিতি */}
+            {/* অন্যান্য সাংবাদিক সমিতি */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -734,7 +721,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৬. MBSTU Social Site */}
+            {/* MBSTU Social Site */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -761,7 +748,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৭. নিউজ ক্যাটাগরি */}
+            {/* নিউজ ক্যাটাগরি */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -790,7 +777,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৮. ক্যাম্পাস ক্লাবসমূহ */}
+            {/* ক্যাম্পাস ক্লাবসমূহ */}
             <div className={mobileWrapperCls}>
               <button
                 type="button"
@@ -834,10 +821,10 @@ export function SiteHeader() {
                           <img
                             src={c.logo_url}
                             alt=""
-                            className="size-8 shrink-0 rounded-lg object-contain bg-white p-0.5 border border-border shadow-sm"
+                            className="size-8 shrink-0 rounded-full object-cover"
                           />
                         ) : (
-                          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand text-white text-xs font-bold">
+                          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-white text-xs font-bold">
                             {c.name.charAt(0)}
                           </span>
                         )}
@@ -854,7 +841,7 @@ export function SiteHeader() {
               )}
             </div>
 
-            {/* ৯. ডিরেক্টর প্যানেল */}
+            {/* ডিরেক্টর প্যানেল */}
             <div className={mobileWrapperCls}>
               <a
                 href="/council"
@@ -869,7 +856,7 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ১০. স্টুডেন্ট কর্নার */}
+            {/* স্টুডেন্ট কর্নার */}
             <div className={mobileWrapperCls}>
               <a
                 href="/student-corner"
@@ -884,7 +871,7 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ১১. নোটিশ */}
+            {/* নোটিশ */}
             <div className={mobileWrapperCls}>
               <a
                 href="/notices"
@@ -899,7 +886,7 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ১২. পরিচিতি */}
+            {/* পরিচিতি */}
             <div className={mobileWrapperCls}>
               <a
                 href="/#about"
@@ -914,7 +901,6 @@ export function SiteHeader() {
               </a>
             </div>
 
-            {/* ১৩. সাংবাদিক লগইন বাটন */}
             <a
               href="/admin"
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3 text-sm font-semibold text-white mt-3 shadow-md"
