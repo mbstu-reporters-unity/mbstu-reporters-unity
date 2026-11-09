@@ -3,7 +3,6 @@
 import React, { useRef, useState, useEffect } from 'react'
 import {
   Maximize2,
-  Minimize2,
   Share2,
   MessageSquare,
   Calendar,
@@ -33,7 +32,8 @@ function parseMedia(rawUrl: string) {
   if (ytMatch && ytMatch[2]?.length === 11) {
     return {
       type: 'youtube' as const,
-      embedSrc: `https://www.youtube.com/embed/${ytMatch[2]}?enablejsapi=1&autoplay=0&mute=1&loop=1&playlist=${ytMatch[2]}&controls=1&modestbranding=1&rel=0`,
+      // ⭐ fs=1 এবং playsinline=1 যোগ করা হয়েছে যাতে ফুলস্ক্রিন বোতাম সক্রিয় থাকে ⭐
+      embedSrc: `https://www.youtube.com/embed/${ytMatch[2]}?enablejsapi=1&autoplay=0&mute=1&loop=1&playlist=${ytMatch[2]}&controls=1&modestbranding=1&rel=0&fs=1&playsinline=1`,
     }
   }
 
@@ -79,16 +79,15 @@ function SingleMediaCard({
   defaultTitle?: string
   compact?: boolean
 }) {
-  const playerBoxRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false)
+  const [isTheaterOpen, setIsTheaterOpen] = useState(false)
 
   const media = parseMedia(item.url)
   const displayTitle = item.title || (total > 1 ? `মিডিয়া #${index + 1}` : defaultTitle)
 
-  // বডি স্ক্রল লক (লাইটবক্স চলাকালীন)
+  // ফুলস্ক্রিন থিয়েটার চলাকালীন ব্যাকগ্রাউন্ড স্ক্রল লক
   useEffect(() => {
-    if (isLightboxOpen) {
+    if (isTheaterOpen) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
@@ -96,7 +95,7 @@ function SingleMediaCard({
     return () => {
       document.body.style.overflow = ''
     }
-  }, [isLightboxOpen])
+  }, [isTheaterOpen])
 
   const handleCopyLink = async () => {
     try {
@@ -135,20 +134,31 @@ function SingleMediaCard({
           </div>
         )}
 
-        {/* ⭐ আন্তর্জাতিক ১৬:৯ স্ট্যান্ডার্ড মিডিয়া ফ্রেম (কখনোই কার্ড নষ্ট হবে না) ⭐ */}
+        {/* ⭐ আন্তর্জাতিক ১৬:৯ স্ট্যান্ডার্ড মিডিয়া ফ্রেম ⭐ */}
         {item.url && (
-          <div
-            ref={playerBoxRef}
-            className="relative w-full aspect-[16/9] rounded-xl overflow-hidden bg-slate-950 shadow-inner flex items-center justify-center group/player cursor-pointer"
-            onClick={() => media.type === 'image' && setIsLightboxOpen(true)}
-          >
+          <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden bg-slate-950 shadow-inner flex items-center justify-center group/player">
+            
+            {/* ⭐ যেকোনো ভিডিওর জন্য নিশ্চিত কাজ করা বড় পর্দা/ফুলস্ক্রিন বাটন ⭐ */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsTheaterOpen(true)
+              }}
+              title="বড় পর্দায় দেখুন"
+              className="absolute top-2 right-2 z-30 flex items-center gap-1 rounded-lg bg-black/80 hover:bg-black px-2 py-1 text-[11px] font-bold text-white backdrop-blur border border-white/20 active:scale-95 cursor-pointer shadow-md"
+            >
+              <Maximize2 className="size-3 text-gold" />
+              <span>বড় পর্দা</span>
+            </button>
+
             {/* ১. ইউটিউব প্লেয়ার */}
             {media.type === 'youtube' && (
               <iframe
                 src={media.embedSrc}
                 className="absolute inset-0 size-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                allowFullScreen={true}
                 title={displayTitle}
               />
             )}
@@ -159,12 +169,12 @@ function SingleMediaCard({
                 src={media.embedSrc}
                 className="absolute inset-0 size-full border-0"
                 allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen"
-                allowFullScreen
+                allowFullScreen={true}
                 title={displayTitle}
               />
             )}
 
-            {/* ৩. সরাসরি ভিডিও */}
+            {/* ৩. সরাসরি ভিডিও ফাইল */}
             {media.type === 'video' && (
               <video
                 src={media.src}
@@ -174,30 +184,32 @@ function SingleMediaCard({
               />
             )}
 
-            {/* ৪. ছবি — আন্তর্জাতিক স্ট্যান্ডার্ড ১৬:৯ ক্রপ ও ট্যাপ-টু-জুম ব্যানার */}
+            {/* ৪. ছবি — ১৬:৯ ফ্রেমিং ও ট্যাপ-টু-জুম */}
             {media.type === 'image' && (
-              <>
+              <div
+                className="size-full cursor-pointer relative"
+                onClick={() => setIsTheaterOpen(true)}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={media.src}
                   alt={displayTitle}
                   className="size-full object-cover select-none transition-transform duration-300 group-hover/player:scale-105"
                   onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none'
+                    ;(e.target as HTMLElement).style.display = 'none'
                   }}
                 />
-                {/* সূক্ষ্ম ওভারলে ও জুম ব্যাজ */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur border border-white/20 transition-transform group-hover/player:scale-105">
+                <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur border border-white/20">
                   <ZoomIn className="size-3 text-gold" />
                   <span>জুম করুন</span>
                 </span>
-              </>
+              </div>
             )}
           </div>
         )}
 
-        {/* ক্যাপশন ও তারিখ (নন-কমপ্যাক্ট মোডে) */}
+        {/* ক্যাপশন ও তারিখ */}
         {!compact && (item.caption || item.date) && (
           <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-gray-500 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100">
             {item.caption && (
@@ -213,14 +225,14 @@ function SingleMediaCard({
           </div>
         )}
 
-        {/* বিবরণ (নন-কমপ্যাক্ট মোডে) */}
+        {/* বিবরণ */}
         {!compact && item.description && (
           <p className="whitespace-pre-line text-xs text-gray-700 leading-relaxed line-clamp-3">
             {item.description}
           </p>
         )}
 
-        {/* শেয়ার ও মন্তব্য বার (শুধুমাত্র ফুল আর্টিকেলে দেখাবে, হোমপেজ কার্ডে নয়) */}
+        {/* শেয়ার বার */}
         {!compact && (
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-gray-100 text-xs">
             <div className="flex items-center gap-1.5">
@@ -265,31 +277,77 @@ function SingleMediaCard({
         )}
       </div>
 
-      {/* ⭐ আন্তর্জাতিক লাইটবক্স / ফুলস্ক্রিন ভিউয়ার (ছবিতে চাপ দিলে সম্পূর্ণ লম্বা ছবি ভেসে উঠবে) ⭐ */}
-      {isLightboxOpen && media.type === 'image' && (
+      {/* ⭐ ১০০% কার্যকর আন্তর্জাতিক থিয়েটার / ফুলস্ক্রিন মোডাল (ভিডিও ও ছবির জন্য) ⭐ */}
+      {isTheaterOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-2 sm:p-4 animate-in fade-in"
-          onClick={() => setIsLightboxOpen(false)}
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-md p-2 sm:p-6 animate-in fade-in"
+          onClick={() => setIsTheaterOpen(false)}
         >
+          {/* ফুলস্ক্রিন বন্ধ করার বোতাম */}
           <button
             type="button"
-            onClick={() => setIsLightboxOpen(false)}
-            className="absolute top-4 right-4 z-50 flex size-10 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 backdrop-blur transition-colors cursor-pointer"
+            onClick={() => setIsTheaterOpen(false)}
+            className="absolute top-4 right-4 z-[110] flex size-11 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 backdrop-blur transition-all cursor-pointer shadow-lg active:scale-95"
             aria-label="বন্ধ করুন"
           >
-            <X className="size-5" />
+            <X className="size-6" />
           </button>
 
           <div
-            className="relative max-w-4xl max-h-[92vh] w-full flex flex-col items-center justify-center overflow-auto p-2"
+            className="relative w-full max-w-5xl flex flex-col items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={media.src}
-              alt={displayTitle}
-              className="max-h-[85vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl bg-black"
-            />
+            {/* ইউটিউব বড় পর্দা */}
+            {media.type === 'youtube' && (
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black">
+                <iframe
+                  src={`${media.embedSrc}&autoplay=1`}
+                  className="absolute inset-0 size-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                  allowFullScreen={true}
+                  title={displayTitle}
+                />
+              </div>
+            )}
+
+            {/* ফেসবুক ভিডিও বড় পর্দা */}
+            {media.type === 'facebook' && (
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black">
+                <iframe
+                  src={`${media.embedSrc}&autoplay=true`}
+                  className="absolute inset-0 size-full border-0"
+                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen"
+                  allowFullScreen={true}
+                  title={displayTitle}
+                />
+              </div>
+            )}
+
+            {/* সরাসরি ভিডিও বড় পর্দা */}
+            {media.type === 'video' && (
+              <div className="relative w-full max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black flex items-center justify-center">
+                <video
+                  src={media.src}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="max-h-[85vh] w-auto max-w-full"
+                />
+              </div>
+            )}
+
+            {/* ছবি বড় পর্দা */}
+            {media.type === 'image' && (
+              <div className="relative w-full max-h-[85vh] flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={media.src}
+                  alt={displayTitle}
+                  className="max-h-[85vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl bg-black"
+                />
+              </div>
+            )}
+
             {displayTitle && (
               <p className="mt-3 text-center text-xs sm:text-sm text-white/90 font-medium">
                 {displayTitle}
