@@ -1,9 +1,25 @@
 'use client'
 
 import { useEffect, useId, useState } from 'react'
-import { ArrowRight, CalendarDays, Check, Globe, Mail, Newspaper, Share2, UserRound, Users, X } from 'lucide-react'
+import {
+  ArrowRight,
+  CalendarDays,
+  Check,
+  Globe,
+  Mail,
+  Newspaper,
+  Share2,
+  UserRound,
+  Users,
+  X,
+} from 'lucide-react'
 import type { Club } from '@/lib/data'
-import { getClubNewsPosts, parseActivityMedia, safeExternalUrl, type ClubItem } from '@/lib/clubs'
+import {
+  getClubNewsPosts,
+  parseActivityMedia,
+  safeExternalUrl,
+  type ClubItem,
+} from '@/lib/clubs'
 import { UniversalMediaEmbed } from './universal-media-embed'
 
 export function ClubReportsDialog({
@@ -17,9 +33,18 @@ export function ClubReportsDialog({
 }) {
   const titleId = useId()
   const [copied, setCopied] = useState(false)
-  const [liveNews, setLiveNews] = useState<Array<{ id: string; title: string; created_at: string; author: string; image_url: string | null; embed_media_url?: string | null }>>([])
+  const [liveNews, setLiveNews] = useState<
+    Array<{
+      id: string
+      title: string
+      created_at: string
+      author: string
+      image_url: string | null
+      embed_media_url?: string | null
+    }>
+  >([])
 
-  // ১. শুধুমাত্র ক্লাবের আইডি পরিবর্তন হলেই নিউজ লোড হবে (অপ্রয়োজনীয় রি-ফেচ বন্ধ)
+  // ১. শুধুমাত্র ক্লাবের আইডি পরিবর্তন হলেই সংশ্লিষ্ট নিউজ লোড হবে
   useEffect(() => {
     if (!club?.id) return
     getClubNewsPosts(club.id).then(setLiveNews)
@@ -44,14 +69,16 @@ export function ClubReportsDialog({
   const members = rawClub?.committee_members || []
   const term = rawClub?.committee_term
   const logo = rawClub?.logo_url
-  const reportsHeading = rawClub?.reports_title || "Club Reports / ক্লাব প্রতিবেদন"
-  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/?club=${club.id}` : ''
+  const reportsHeading = rawClub?.reports_title || 'Club Reports / ক্লাব প্রতিবেদন'
+  const shareUrl =
+    typeof window !== 'undefined' ? `${window.location.origin}/?club=${club.id}` : ''
   const activityMediaList = parseActivityMedia(rawClub?.embed_media_url)
 
-  // ✅ ডাটাবেজের রিপোর্ট থাকলে সেটা দেখাবে, না থাকলে ফলব্যাক ক্লাবের রিপোর্ট দেখাবে
-  const manualReports = (rawClub?.reports && rawClub.reports.length > 0)
-    ? rawClub.reports
-    : (club.reports && club.reports.length > 0)
+  // ডাটাবেজের রিপোর্ট থাকলে সেটা দেখাবে, না থাকলে ফলব্যাক ক্লাবের রিপোর্ট দেখাবে
+  const manualReports =
+    rawClub?.reports && rawClub.reports.length > 0
+      ? rawClub.reports
+      : club.reports && club.reports.length > 0
       ? club.reports
       : []
 
@@ -100,17 +127,17 @@ export function ClubReportsDialog({
             <X className="size-4" aria-hidden="true" />
             <span className="sr-only">Close</span>
           </button>
-          
+
           <div className="flex items-center gap-4 pr-8">
-            {/* স্পষ্ট গোল লোগো — object-contain দিয়ে যাতে চারপাশ কেটে না যায় */}
+            {/* স্পষ্ট গোল লোগো */}
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logo}
                 alt={club.name}
-                className="size-20 sm:size-24 rounded-full object-contain p-1 bg-white shadow-lg shrink-0"
+                className="size-20 sm:size-24 rounded-full object-cover p-0.5 bg-white shadow-lg shrink-0"
                 onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none'
+                  ;(e.target as HTMLElement).style.display = 'none'
                 }}
               />
             ) : (
@@ -173,7 +200,7 @@ export function ClubReportsDialog({
                 className="inline-flex items-center gap-1 rounded-lg bg-white border px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-soft transition cursor-pointer"
               >
                 {copied ? <Check className="size-3 text-green-600" /> : <Share2 className="size-3" />}
-                {copied ? "কপি হয়েছে!" : "শেয়ার"}
+                {copied ? 'কপি হয়েছে!' : 'শেয়ার'}
               </button>
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(club.name + ' ' + shareUrl)}`}
@@ -199,24 +226,32 @@ export function ClubReportsDialog({
           {/* পরিচিতি ও কার্যক্রম */}
           {(club.activity || club.activityBn || activityMediaList.length > 0) && (
             <div className="rounded-2xl border p-4 bg-white space-y-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-brand">পরিচিতি ও সাম্প্রতিক কার্যক্রম</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-brand">
+                পরিচিতি ও সাম্প্রতিক কার্যক্রম
+              </p>
               {club.activity && <p className="text-sm text-navy leading-relaxed">{club.activity}</p>}
-              {club.activityBn && <p className="text-xs text-muted-foreground leading-relaxed pt-1">{club.activityBn}</p>}
+              {club.activityBn && (
+                <p className="text-xs text-muted-foreground leading-relaxed pt-1">{club.activityBn}</p>
+              )}
               {club.date && (
                 <p className="pt-2 text-xs text-muted-foreground inline-flex items-center gap-1">
                   <CalendarDays className="size-3.5 text-gold" /> {club.date}
                 </p>
               )}
 
-              {/* একাধিক মিডিয়া প্রদর্শন */}
+              {/* ⭐ একাধিক মিডিয়া প্রদর্শন — কমপ্যাক্ট ১৬:৯ আন্তর্জাতিক মোড ⭐ */}
               {activityMediaList.length > 0 && (
-                <div className="mt-3 space-y-4">
+                <div className="mt-3 space-y-3">
                   {activityMediaList.map((m, idx) => (
                     <div key={idx} className="space-y-1.5 pt-2 border-t border-border/80">
                       {m.title && <h4 className="font-bold text-sm text-navy leading-snug">{m.title}</h4>}
                       {m.subtitle && <p className="text-xs font-semibold text-brand">{m.subtitle}</p>}
-                      {m.description && <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{m.description}</p>}
-                      <UniversalMediaEmbed url={m.url} title={m.title || club.name} />
+                      {m.description && (
+                        <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">
+                          {m.description}
+                        </p>
+                      )}
+                      <UniversalMediaEmbed url={m.url} title={m.title || club.name} compact />
                     </div>
                   ))}
                 </div>
@@ -232,7 +267,11 @@ export function ClubReportsDialog({
                   <Users className="size-4" aria-hidden="true" />
                   কার্যনির্বাহী পরিষদ / Committee
                 </h3>
-                {term && <span className="text-xs bg-brand-soft text-brand font-semibold px-2.5 py-0.5 rounded-full">{term}</span>}
+                {term && (
+                  <span className="text-xs bg-brand-soft text-brand font-semibold px-2.5 py-0.5 rounded-full">
+                    {term}
+                  </span>
+                )}
               </div>
 
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -245,12 +284,12 @@ export function ClubReportsDialog({
                         alt={m.name}
                         className="size-11 rounded-full object-cover shrink-0 border bg-white"
                         onError={(e) => {
-                          (e.target as HTMLElement).style.display = 'none'
+                          ;(e.target as HTMLElement).style.display = 'none'
                         }}
                       />
                     ) : (
                       <div className="size-11 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm shrink-0">
-                        {m.name.charAt(0) || "স"}
+                        {m.name.charAt(0) || 'স'}
                       </div>
                     )}
                     <div className="min-w-0">
@@ -271,8 +310,12 @@ export function ClubReportsDialog({
             </h3>
 
             <ul className="mt-3 space-y-4">
+              {/* লাইভ নিউজ তালিকা */}
               {liveNews.map((p) => (
-                <li key={p.id} className="rounded-2xl border border-border p-4 transition-all hover:border-brand bg-white shadow-sm hover:shadow-md">
+                <li
+                  key={p.id}
+                  className="rounded-2xl border border-border p-4 transition-all hover:border-brand bg-white shadow-sm hover:shadow-md"
+                >
                   <a href={`/post/${p.id}`} className="block group">
                     <div className="flex items-start justify-between gap-3">
                       <p className="font-serif font-bold leading-snug text-navy text-sm sm:text-base group-hover:text-brand transition-colors">
@@ -296,26 +339,38 @@ export function ClubReportsDialog({
                 </li>
               ))}
 
+              {/* ম্যানুয়াল রিপোর্টসমূহ */}
               {manualReports.map((r: any, i: number) => (
-                <li key={`manual-${i}`} className="rounded-2xl border border-border p-4.5 bg-white shadow-sm space-y-2">
+                <li
+                  key={`manual-${i}`}
+                  className="rounded-2xl border border-border p-4 bg-white shadow-sm space-y-2.5"
+                >
                   <p className="font-serif font-bold leading-snug text-navy text-base">{r.title}</p>
                   {r.subtitle && <p className="text-xs font-semibold text-brand">{r.subtitle}</p>}
-                  {r.description && <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{r.description}</p>}
-
-                  {/* একক মিডিয়া */}
-                  {r.embed_media_url && (
-                    <UniversalMediaEmbed url={r.embed_media_url} title={r.title} />
+                  {r.description && (
+                    <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">
+                      {r.description}
+                    </p>
                   )}
 
-                  {/* একাধিক মিডিয়া */}
+                  {/* ⭐ একক মিডিয়া — ১৬:৯ কমপ্যাক্ট মোড ⭐ */}
+                  {r.embed_media_url && (
+                    <UniversalMediaEmbed url={r.embed_media_url} title={r.title} compact />
+                  )}
+
+                  {/* ⭐ একাধিক মিডিয়া — ১৬:৯ কমপ্যাক্ট মোড ⭐ */}
                   {r.media_items && r.media_items.length > 0 && (
                     <div className="space-y-3 pt-2">
                       {r.media_items.map((m: any, mi: number) => (
                         <div key={mi} className="rounded-xl bg-gray-50 p-2.5 border border-border/70 space-y-1">
                           {m.title && <h5 className="font-bold text-xs text-navy">{m.title}</h5>}
                           {m.subtitle && <p className="text-[11px] font-semibold text-brand">{m.subtitle}</p>}
-                          {m.description && <p className="text-[11px] text-gray-600 whitespace-pre-line">{m.description}</p>}
-                          <UniversalMediaEmbed url={m.url} title={m.title || r.title} />
+                          {m.description && (
+                            <p className="text-[11px] text-gray-600 whitespace-pre-line">
+                              {m.description}
+                            </p>
+                          )}
+                          <UniversalMediaEmbed url={m.url} title={m.title || r.title} compact />
                         </div>
                       ))}
                     </div>
