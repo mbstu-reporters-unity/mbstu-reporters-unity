@@ -2,12 +2,21 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-/* ⭐ নন-ব্লকিং সোলাইমান লিপি ফন্ট ⭐ */
+/* ⭐ প্রিমিয়াম সোলাইমান লিপি ফন্ট (নরমাল ও বোল্ড ফেস) ⭐ */
 @font-face {
   font-family: 'SolaimanLipi';
   src: url('https://cdn.jsdelivr.net/gh/maateen/bangla-fonts@master/SolaimanLipi/SolaimanLipi.woff2') format('woff2'),
        url('https://cdn.jsdelivr.net/gh/maateen/bangla-fonts@master/SolaimanLipi/SolaimanLipi.woff') format('woff');
-  font-weight: normal;
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SolaimanLipi';
+  src: url('https://cdn.jsdelivr.net/gh/maateen/bangla-fonts@master/SolaimanLipi/SolaimanLipi_Bold.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/maateen/bangla-fonts@master/SolaimanLipi/SolaimanLipi_Bold.woff') format('woff');
+  font-weight: 600 700 800;
   font-style: normal;
   font-display: swap;
 }
@@ -15,7 +24,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-hind), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'SolaimanLipi', var(--font-hind), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-noto-serif), Georgia, serif;
 
   --color-brand: var(--brand);
@@ -83,12 +92,12 @@
   --secondary: #f1f5f4;
   --secondary-foreground: #0f172a;
   --muted: #f4f6f5;
-  --muted-foreground: #5b6474;
+  --muted-foreground: #334155; /* একটু গাঢ় করা হয়েছে যাতে হালকা বা ঝাপসা না লাগে */
   --accent: #e7f3ec;
   --accent-foreground: #034d29;
   --destructive: #c8102e;
-  --border: #e3e8e6;
-  --input: #dbe2df;
+  --border: #e2e8e5;
+  --input: #cbd5e1;
   --ring: #046a38;
   --radius: 0.625rem;
 }
@@ -100,20 +109,42 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 6rem;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+  
+  /* ⭐ পুরো ওয়েবসাইটের বেস ফন্ট এখন থেকে ভরাট, স্পষ্ট ও মিডিয়াম (500) থাকবে ⭐ */
   body {
     @apply bg-background text-foreground font-sans;
+    font-weight: 500;
+    letter-spacing: 0.012em;
+    line-height: 1.65;
   }
 
-  /* দীর্ঘ আর্টিকেলের লেখা জাস্টিফাই হবে */
+  /* প্যারাগ্রাফ ও আর্টিকেলের বাংলা টাইপোগ্রাফি স্পষ্ট ও দৃষ্টিনন্দন করা */
+  p, span, li, a {
+    text-rendering: optimizeLegibility;
+  }
+
+  p {
+    font-weight: 500;
+    color: #1e293b;
+  }
+
+  /* দীর্ঘ আর্টিকেলের লেখা জাস্টিফাই ও স্পষ্ট রিডিং */
   article p, .prose p, .article-body, .whitespace-pre-line {
     text-align: justify;
     text-justify: inter-word;
+    line-height: 1.75;
+    font-weight: 500;
   }
 
-  /* সব হেডিং ও টাইটেল স্বাভাবিক বামে থাকবে */
+  /* সব হেডিং ও টাইটেল স্বাভাবিক বোল্ড ও আকর্ষণীয় থাকবে */
   h1, h2, h3, h4, h5, h6, article h1, article h2, article h3 {
     text-align: left;
+    font-family: var(--font-serif), 'SolaimanLipi', sans-serif;
+    letter-spacing: -0.01em;
   }
 
   /* সেন্টার ও রাইটের জন্য নিরাপত্তা */
@@ -128,7 +159,7 @@
   }
 }
 
-/* ⭐ ক্লাবসমূহের টেক্সটের ফন্ট স্টাইল (ক্লিন ও শার্প রেন্ডারিং) ⭐ */
+/* ক্লাব ও অন্যান্য অংশের জন্য স্পষ্ট ফন্ট */
 #club-news,
 #club-latest,
 .club-font,
@@ -152,16 +183,16 @@ body { transition: background-color .25s ease, color .25s ease; }
 html[data-theme="dark"] {
   color-scheme: dark;
   --background: #0c1311;
-  --foreground: #e7eeeb;
-  --navy: #e7eeeb;
+  --foreground: #f1f5f3;
+  --navy: #f1f5f3;
   --card: #131d1a;
-  --card-foreground: #e7eeeb;
+  --card-foreground: #f1f5f3;
   --popover: #131d1a;
-  --popover-foreground: #e7eeeb;
+  --popover-foreground: #f1f5f3;
   --secondary: #17231f;
-  --secondary-foreground: #e7eeeb;
+  --secondary-foreground: #f1f5f3;
   --muted: #17231f;
-  --muted-foreground: #9db0a9;
+  --muted-foreground: #a7b9b3;
   --accent: #163128;
   --accent-foreground: #8fe0b5;
   --border: #26362f;
@@ -176,10 +207,10 @@ html[data-theme="dark"] {
   --chrome: #060b09;
   --g50: #131d1a;
   --g100: #1a2823;
-  --g400: #7d908a;
-  --g500: #9db0a9;
-  --g600: #b3c3bd;
-  --g700: #c8d5d0;
+  --g400: #8c9e99;
+  --g500: #a7b9b3;
+  --g600: #c1cfca;
+  --g700: #d8e3df;
   --green100: #17332a;
   --greentext: #6fd6a0;
 }
@@ -187,16 +218,16 @@ html[data-theme="dark"] {
 html[data-theme="sepia"] {
   color-scheme: light;
   --background: #f3ead3;
-  --foreground: #3e3122;
-  --navy: #3e3122;
+  --foreground: #34281a;
+  --navy: #34281a;
   --card: #fbf4e1;
-  --card-foreground: #3e3122;
+  --card-foreground: #34281a;
   --popover: #fbf4e1;
-  --popover-foreground: #3e3122;
+  --popover-foreground: #34281a;
   --secondary: #eadfc2;
-  --secondary-foreground: #3e3122;
+  --secondary-foreground: #34281a;
   --muted: #eadfc2;
-  --muted-foreground: #75654c;
+  --muted-foreground: #63533c;
   --accent: #e4dfbd;
   --accent-foreground: #2c5a34;
   --border: #d9ccaa;
@@ -211,10 +242,10 @@ html[data-theme="sepia"] {
   --chrome: #3a2e1f;
   --g50: #f7efdb;
   --g100: #ece1c5;
-  --g400: #a39378;
-  --g500: #85755b;
-  --g600: #6c5d46;
-  --g700: #54463a;
+  --g400: #948366;
+  --g500: #736248;
+  --g600: #5c4e38;
+  --g700: #463b2a;
   --green100: #e3e2bf;
   --greentext: #2f5a2d;
 }
@@ -222,16 +253,16 @@ html[data-theme="sepia"] {
 html[data-theme="mint"] {
   color-scheme: light;
   --background: #d5ead8;
-  --foreground: #17331f;
-  --navy: #17331f;
+  --foreground: #102617;
+  --navy: #102617;
   --card: #e6f4e8;
-  --card-foreground: #17331f;
+  --card-foreground: #102617;
   --popover: #e6f4e8;
-  --popover-foreground: #17331f;
+  --popover-foreground: #102617;
   --secondary: #c8e0cc;
-  --secondary-foreground: #17331f;
+  --secondary-foreground: #102617;
   --muted: #c8e0cc;
-  --muted-foreground: #456350;
+  --muted-foreground: #334d3d;
   --accent: #bfdcc5;
   --accent-foreground: #0f4a26;
   --border: #aacdb1;
@@ -246,10 +277,10 @@ html[data-theme="mint"] {
   --chrome: #143b27;
   --g50: #e0f0e3;
   --g100: #cfe5d3;
-  --g400: #7ea089;
-  --g500: #5b7d67;
-  --g600: #476552;
-  --g700: #345041;
+  --g400: #6d8f78;
+  --g500: #4d6d58;
+  --g600: #385542;
+  --g700: #263e2f;
   --green100: #bfdcc5;
   --greentext: #0f4a26;
 }
@@ -257,16 +288,16 @@ html[data-theme="mint"] {
 html[data-theme="night"] {
   color-scheme: dark;
   --background: #15100c;
-  --foreground: #e9d8c0;
-  --navy: #e9d8c0;
+  --foreground: #faebd7;
+  --navy: #faebd7;
   --card: #1e1712;
-  --card-foreground: #e9d8c0;
+  --card-foreground: #faebd7;
   --popover: #1e1712;
-  --popover-foreground: #e9d8c0;
+  --popover-foreground: #faebd7;
   --secondary: #251d16;
-  --secondary-foreground: #e9d8c0;
+  --secondary-foreground: #faebd7;
   --muted: #251d16;
-  --muted-foreground: #ad9c83;
+  --muted-foreground: #bda78c;
   --accent: #2c2218;
   --accent-foreground: #f0c27a;
   --border: #382c20;
@@ -281,10 +312,10 @@ html[data-theme="night"] {
   --chrome: #0b0805;
   --g50: #1e1712;
   --g100: #2a2018;
-  --g400: #8a7a64;
-  --g500: #ad9c83;
-  --g600: #c1b19a;
-  --g700: #d4c5ae;
+  --g400: #9e8d75;
+  --g500: #bda78c;
+  --g600: #d1beaa;
+  --g700: #e6d5c2;
   --green100: #2e2314;
   --greentext: #f0c27a;
 }
@@ -301,7 +332,7 @@ html[data-theme="contrast"] {
   --secondary: #f2f2f2;
   --secondary-foreground: #000000;
   --muted: #f2f2f2;
-  --muted-foreground: #1f1f1f;
+  --muted-foreground: #000000;
   --accent: #e6f2ea;
   --accent-foreground: #00331a;
   --border: #000000;
@@ -316,9 +347,9 @@ html[data-theme="contrast"] {
   --chrome: #000000;
   --g50: #f2f2f2;
   --g100: #e6e6e6;
-  --g400: #333333;
-  --g500: #1f1f1f;
-  --g600: #111111;
+  --g400: #000000;
+  --g500: #000000;
+  --g600: #000000;
   --g700: #000000;
   --green100: #e6f2ea;
   --greentext: #00331a;
@@ -343,7 +374,7 @@ html[data-theme]:not([data-theme="light"]) .border-gray-300 { border-color: var(
 
 html[data-theme="dark"] img { filter: brightness(0.9); }
 html[data-theme="night"] img { filter: brightness(0.88) sepia(0.12); }
-html[data-theme="night"] body { letter-spacing: 0.005em; }
+html[data-theme="night"] body { letter-spacing: 0.015em; }
 
 html[data-theme="contrast"] :focus-visible { outline: 3px solid #000; outline-offset: 2px; }
 html[data-theme="contrast"] main a { text-decoration: underline; }
