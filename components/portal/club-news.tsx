@@ -89,8 +89,10 @@ export function ClubNews() {
   const [isPaused, setIsPaused] = useState(false)
   const [animKey, setAnimKey] = useState(0)
 
+  // টাচ ও সোয়াইপ ট্র্যাক রেফারেন্স
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
+  const touchResumeTimer = useRef<NodeJS.Timeout | null>(null)
   const clubsRef = useRef<Club[]>(fallbackClubs)
 
   const handleCloseDialog = useCallback(() => {
@@ -198,29 +200,46 @@ export function ClubNews() {
     return () => clearInterval(timer)
   }, [config.enabled, config.duration_sec, total, isPaused, nextSlide])
 
-  // মোবাইল টাচ ও সোয়াইপ হ্যান্ডলার
+  // ⭐ শুধুমাত্র লম্বা পুশ (Deliberate Long Push) এ পরিবর্তন হওয়ার হ্যান্ডলার ⭐
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (config.pause_on_hover) setIsPaused(true)
+    // পড়ার জন্য টাচ করার সাথে সাথে অটো-স্লাইড থামিয়ে রাখা
+    setIsPaused(true)
+    if (touchResumeTimer.current) clearTimeout(touchResumeTimer.current)
+
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
   }
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (config.pause_on_hover) setTimeout(() => setIsPaused(false), 2000)
-    if (touchStartX.current === null || touchStartY.current === null || total <= 1) return
+    // টাচ ছেড়ে দেওয়ার পর পাঠক যাতে নিশ্চিন্তে পুরো লেখা পড়তে পারেন, সেজন্য অন্তত ৮ সেকেন্ড থেমে থাকবে
+    if (config.pause_on_hover) {
+      if (touchResumeTimer.current) clearTimeout(touchResumeTimer.current)
+      touchResumeTimer.current = setTimeout(() => {
+        setIsPaused(false)
+      }, 8000)
+    }
+
+    if (touchStartX.current === null || touchStartY.current === null || total <= 1) {
+      touchStartX.current = null
+      touchStartY.current = null
+      return
+    }
 
     const diffX = e.changedTouches[0].clientX - touchStartX.current
     const diffY = e.changedTouches[0].clientY - touchStartY.current
     const absX = Math.abs(diffX)
     const absY = Math.abs(diffY)
 
-    if (absX > 35 || absY > 35) {
-      if (absX >= absY) {
-        if (diffX < 0) nextSlide()
-        else prevSlide()
+    // ⭐ সমাধান: সাধারণ স্পর্শ বা অল্প নড়াচড়ায় কখনোই স্লাইড চেঞ্জ হবে না ⭐
+    // ১. কমপক্ষে ৮৫ পিক্সেল লম্বা পুশ (Long Push) করতে হবে
+    // ২. উপর-নিচে স্ক্রল করার সময় (absY > absX) স্লাইড বদলাবে না, যাতে সাধারণ পেজ স্ক্রলিং অক্ষত থাকে
+    const LONG_PUSH_THRESHOLD = 85
+
+    if (absX >= LONG_PUSH_THRESHOLD && absX > absY * 1.5) {
+      if (diffX < 0) {
+        nextSlide() // লম্বা পুশ করে বামে ঠেললে পরের ক্লাব
       } else {
-        if (diffY < 0) nextSlide()
-        else prevSlide()
+        prevSlide() // লম্বা পুশ করে ডানে ঠেললে আগের ক্লাব
       }
     }
 
@@ -235,7 +254,7 @@ export function ClubNews() {
     setAnimKey((k) => k + 1)
   }
 
-  // দৃশ্যমান কার্ডসমূহ নির্ধারণ (ডেস্কটপে অ্যাডমিনের চয়েস অনুযায়ী ১, ২, ৩ বা ৪টি এবং মোবাইলে ১টি)
+  // দৃশ্যমান কার্ডসমূহ নির্ধারণ
   const cardsCount = Math.min(config.cards_desktop || 3, total || 1)
   const displayedClubs: Club[] = []
   if (total > 0) {
@@ -247,33 +266,33 @@ export function ClubNews() {
   const animDuration = `${config.anim_speed_ms || 600}ms`
 
   return (
-    <section id="club-news" className="bg-navy py-14 sm:py-20 overflow-hidden relative select-none">
-      {/* ⭐ অ্যাডমিন নিয়ন্ত্রিত ট্রানজিশন সিএসএস কীফ্রেমসমূহ ⭐ */}
+    <section id="club-news" className="bg-navy py-14 sm:py-20 overflow-hidden relative">
+      {/* ট্রানজিশন সিএসএস কীফ্রেমসমূহ */}
       <style>{`
-        /* ১. ডান থেকে বামে */
+        /* ডান থেকে বামে */
         @keyframes tr_right_to_left {
-          0% { transform: translateX(60px); opacity: 0; }
+          0% { transform: translateX(50px); opacity: 0; }
           100% { transform: translateX(0); opacity: 1; }
         }
         .anim_right-to-left { animation: tr_right_to_left ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-        /* ২. বাম থেকে ডানে */
+        /* বাম থেকে ডানে */
         @keyframes tr_left_to_right {
-          0% { transform: translateX(-60px); opacity: 0; }
+          0% { transform: translateX(-50px); opacity: 0; }
           100% { transform: translateX(0); opacity: 1; }
         }
         .anim_left-to-right { animation: tr_left_to_right ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-        /* ৩. নিচ থেকে উপরে */
+        /* নিচ থেকে উপরে */
         @keyframes tr_bottom_to_top {
-          0% { transform: translateY(50px); opacity: 0; }
+          0% { transform: translateY(40px); opacity: 0; }
           100% { transform: translateY(0); opacity: 1; }
         }
         .anim_bottom-to-top { animation: tr_bottom_to_top ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-        /* ৪. উপর থেকে নিচে */
+        /* উপর থেকে নিচে */
         @keyframes tr_top_to_bottom {
-          0% { transform: translateY(-50px); opacity: 0; }
+          0% { transform: translateY(-40px); opacity: 0; }
           100% { transform: translateY(0); opacity: 1; }
         }
         .anim_top-to-bottom { animation: tr_top_to_bottom ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
@@ -282,10 +301,10 @@ export function ClubNews() {
         @keyframes tr_fade { 0% { opacity: 0; } 100% { opacity: 1; } }
         .anim_effect_fade { animation: tr_fade ${animDuration} ease-in-out both; }
 
-        @keyframes tr_zoom { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes tr_zoom { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .anim_effect_zoom { animation: tr_zoom ${animDuration} cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
-        @keyframes tr_flip { 0% { transform: perspective(600px) rotateY(40deg); opacity: 0; } 100% { transform: perspective(600px) rotateY(0deg); opacity: 1; } }
+        @keyframes tr_flip { 0% { transform: perspective(600px) rotateY(35deg); opacity: 0; } 100% { transform: perspective(600px) rotateY(0deg); opacity: 1; } }
         .anim_effect_flip { animation: tr_flip ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
       `}</style>
 
@@ -396,7 +415,7 @@ export function ClubNews() {
                           </p>
                         )}
 
-                        {/* মিডিয়া থাকলে প্রথমটি দেখানো */}
+                        {/* মিডিয়া থাকলে প্রথমটি প্রদর্শন */}
                         {activityMediaList.length > 0 && (
                           <div className="mt-2 pt-2 border-t border-white/10">
                             <UniversalMediaEmbed url={activityMediaList[0].url} title={club.name} />
@@ -478,6 +497,7 @@ export function ClubNews() {
                   onClick={() => setIsPaused(!isPaused)}
                   aria-label={isPaused ? "Play" : "Pause"}
                   className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition border border-white/15 cursor-pointer"
+                  title={isPaused ? "চালান" : "থামান (পড়ার জন্য)"}
                 >
                   {isPaused ? <Play className="size-3 text-green-400" /> : <Pause className="size-3 text-yellow-400" />}
                 </button>
