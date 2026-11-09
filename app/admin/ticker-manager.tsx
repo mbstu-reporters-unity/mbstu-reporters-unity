@@ -22,6 +22,7 @@ import {
   type TickerBadgeConfig,
 } from "../../lib/ticker"
 import { renderTickerBadgeIcon } from "../../components/portal/news-ticker"
+import { refreshAuthToken, isJwtExpired, login } from "../../lib/sb"
 import {
   Palette,
   Sparkles,
@@ -33,6 +34,9 @@ import {
   ArrowUp,
   ArrowDown,
   Edit3,
+  Lock,
+  PlusCircle,
+  CheckCircle,
 } from "lucide-react"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-green-600 transition"
@@ -54,7 +58,8 @@ function formatTimeLeft(iso: string, now: number) {
   return `${bn(s)} সেকেন্ড`
 }
 
-export default function TickerManager({ token, author }: { token: string; author: string }) {
+export default function TickerManager({ token: initialToken, author }: { token: string; author: string }) {
+  const [token, setToken] = useState(initialToken)
   const [activeTab, setActiveTab] = useState<"items" | "badge">("items")
 
   const [list, setList] = useState<TickerItem[]>([])
@@ -62,6 +67,12 @@ export default function TickerManager({ token, author }: { token: string; author
   const [msg, setMsg] = useState("")
   const [busy, setBusy] = useState(false)
   const [now, setNow] = useState(() => Date.now())
+
+  // রি-লগইন মোডাল স্টেট (যাতে টাইপ করা লেখা নষ্ট না হয়)
+  const [showReLogin, setShowReLogin] = useState(false)
+  const [reLoginEmail, setReLoginEmail] = useState("")
+  const [reLoginPassword, setReLoginPassword] = useState("")
+  const [reLoginBusy, setReLoginBusy] = useState(false)
 
   // টিকার আইটেম স্টেট (আনলিমিটেড টেক্সট)
   const [editId, setEditId] = useState<string | null>(null)
@@ -73,33 +84,55 @@ export default function TickerManager({ token, author }: { token: string; author
   const [speed, setSpeed] = useState(DEFAULT_SPEED)
   const [sound, setSound] = useState(false)
 
-  // কাস্টম সময় স্টেট
-  const [expiryMode, setExpiryMode] = useState<string>("preset")
-  const [presetDuration, setPresetDuration] = useState("60")
-  const [customUnit, setCustomUnit] = useState<"min" | "hour" | "day">("hour")
-  const [customValue, setCustomValue] = useState("3")
+  // ⭐ ডিফল্ট মেয়াদ স্থায়ী (মেয়াদের কোনো বাধা থাকবে না) ⭐
+  const [expiryMode, setExpiryMode] = useState<string>("none")
+  const [presetDuration, setPresetDuration] = useState("1440")
+  const [customUnit, setCustomUnit] = useState<"min" | "hour" | "day">("day")
+  const [customValue, setCustomValue] = useState("7")
   const [customDateTime, setCustomDateTime] = useState("")
-  const [oldExpires, setOldExpires] = useState<string | null>(null)
 
-  const fail = (e: unknown) => setMsg("❌ " + (e instanceof Error ? e.message : "কিছু ভুল হয়েছে"))
-
-  async function load() {
+  useEffect(() => {
+    setToken(initialToken)
     try {
-      const [data, cfg] = await Promise.all([
-        getAllTicker(token),
-        getTickerBadgeConfig(),
-      ])
-      setList(data)
-      if (cfg) setBadgeCfg(cfg)
-    } catch (e) { fail(e) }
-  }
-
-  useEffect(() => { load() }, [token])
+      const savedEmail = localStorage.getItem("mbstu_admin_email")
+      if (savedEmail) setReLoginEmail(savedEmail)
+    } catch {}
+  }, [initialToken])
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  // ভ্যালিড টোকেন পাওয়ার অটো ফাংশন
+  async function getActiveToken(): Promise<string> {
+    if (!token || isJwtExpired(token)) {
+      const fresh = await refreshAuthToken()
+      if (fresh) {
+        setToken(fresh)
+        return fresh
+      }
+    }
+    return token
+  }
+
+  async function load() {
+    try {
+      const currentTok = await getActiveToken()
+      const [data, cfg] = await Promise.all([
+        getAllTicker(currentTok),
+        getTickerBadgeConfig(),
+      ])
+      setList(data)
+      if (cfg) setBadgeCfg(cfg)
+    } catch (e: any) {
+      if (/jwt|expired|token/i.test(e?.message || "")) {
+        setShowReLogin(true)
+      }
+    }
+  }
+
+  useEffect(() => { load() }, [token])
 
   function resetForm() {
     setEditId(null)
@@ -109,11 +142,10 @@ export default function TickerManager({ token, author }: { token: string; author
     setTextColor(null)
     setBgColor(null)
     setSpeed(DEFAULT_SPEED)
-    setExpiryMode("preset")
-    setPresetDuration("60")
-    setCustomValue("3")
+    setExpiryMode("none") // ডিফল্ট সবসময় স্থায়ী
+    setPresetDuration("1440")
+    setCustomValue("7")
     setCustomDateTime("")
-    setOldExpires(null)
     setSound(false)
   }
 
@@ -137,16 +169,15 @@ export default function TickerManager({ token, author }: { token: string; author
     setBgColor(s.bg_color)
     setSpeed(s.speed || DEFAULT_SPEED)
     setSound(s.sound_alert)
-    setOldExpires(s.expires_at)
-    setExpiryMode("keep")
+    setExpiryMode(s.expires_at ? "datetime" : "none")
+    setCustomDateTime(s.expires_at ? s.expires_at.slice(0, 16) : "")
     setMsg("")
     setActiveTab("items")
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   function calculateExpiry(): string | null {
-    if (expiryMode === "keep") return oldExpires
-    if (expiryMode === "none") return null
+    if (expiryMode === "none") return null // স্থায়ী
     if (expiryMode === "datetime") {
       return customDateTime ? new Date(customDateTime).toISOString() : null
     }
@@ -157,10 +188,14 @@ export default function TickerManager({ token, author }: { token: string; author
       if (customUnit === "day") multiplier = 24 * 60 * 60 * 1000
       return new Date(Date.now() + val * multiplier).toISOString()
     }
-    const minutes = Number(presetDuration) || 60
-    return new Date(Date.now() + minutes * 60000).toISOString()
+    if (expiryMode === "preset") {
+      const minutes = Number(presetDuration) || 1440
+      return new Date(Date.now() + minutes * 60000).toISOString()
+    }
+    return null
   }
 
+  // ⭐ ব্রেকিং সংরক্ষণ (একের পর এক যত খুশি টিকার যোগ করা যাবে) ⭐
   async function handleSaveItem() {
     const t = title.trim()
     if (!t) { setMsg("❌ শিরোনাম লিখুন"); return }
@@ -185,48 +220,104 @@ export default function TickerManager({ token, author }: { token: string; author
         expires_at: expires,
       }
 
-      if (editId) {
-        await updateTickerItem(token, editId, base)
-        setMsg("✅ ব্রেকিং শিরোনাম সফলভাবে আপডেট হয়েছে")
-      } else {
-        const first = list.length ? Math.min(...list.map((s) => s.sort_order)) - 10 : 0
-        await createTickerItem(token, {
-          ...base,
-          is_active: true,
-          sort_order: first,
-          author_name: author || null,
-        })
-        setMsg("🚀 নতুন ব্রেকিং লাইভ হয়েছে")
+      let activeTok = await getActiveToken()
+
+      const saveOperation = async (currentAuthToken: string) => {
+        if (editId) {
+          await updateTickerItem(currentAuthToken, editId, base)
+        } else {
+          // নতুন টিকার ক্রমানুসারে সিরিয়ালে যুক্ত হবে
+          const nextOrder = list.length ? Math.max(...list.map((s) => s.sort_order)) + 10 : 0
+          await createTickerItem(currentAuthToken, {
+            ...base,
+            is_active: true,
+            sort_order: nextOrder,
+            author_name: author || null,
+          })
+        }
       }
+
+      try {
+        await saveOperation(activeTok)
+      } catch (err: any) {
+        if (/jwt|expired|token/i.test(err?.message || "")) {
+          const fresh = await refreshAuthToken()
+          if (fresh) {
+            setToken(fresh)
+            await saveOperation(fresh)
+          } else {
+            setShowReLogin(true)
+            setBusy(false)
+            return
+          }
+        } else {
+          throw err
+        }
+      }
+
+      setMsg("🚀 ব্রেকিং সফলভাবে যুক্ত হয়েছে! এটি সাইটে যুক্ত হয়ে গেছে এবং একটার পর একটা ধারাবাহিকভাবে চলবে।")
       resetForm()
       await load()
-    } catch (e) { fail(e) }
+    } catch (e: any) {
+      setMsg("❌ " + (e?.message || "পোস্ট করতে সমস্যা হয়েছে"))
+    }
     setBusy(false)
   }
 
+  // ব্রেকিং বেজ সেটিংস সংরক্ষণ
   async function handleSaveBadgeConfig() {
     setBusy(true)
     setMsg("")
     try {
-      await saveTickerBadgeConfig(token, badgeCfg)
+      let activeTok = await getActiveToken()
+      try {
+        await saveTickerBadgeConfig(activeTok, badgeCfg)
+      } catch (err: any) {
+        if (/jwt|expired|token/i.test(err?.message || "")) {
+          const fresh = await refreshAuthToken()
+          if (fresh) {
+            await saveTickerBadgeConfig(fresh, badgeCfg)
+          } else {
+            setShowReLogin(true)
+            setBusy(false)
+            return
+          }
+        } else {
+          throw err
+        }
+      }
       setMsg("✅ ব্রেকিং বেজ ও [সংক্ষেপ] ডিজাইন সফলভাবে সেভ হয়েছে")
-    } catch (e) { fail(e) }
+    } catch (e: any) {
+      setMsg("❌ " + (e?.message || "সেভ করা যায়নি"))
+    }
     setBusy(false)
   }
 
   async function patchItem(id: string, data: Partial<TickerInput>) {
     const prev = list
     setList((l) => l.map((s) => (s.id === id ? { ...s, ...data } : s)))
-    try { await updateTickerItem(token, id, data) } catch (e) { setList(prev); fail(e) }
+    try {
+      const activeTok = await getActiveToken()
+      await updateTickerItem(activeTok, id, data)
+    } catch (e: any) {
+      if (/jwt|expired|token/i.test(e?.message || "")) {
+        const fresh = await refreshAuthToken()
+        if (fresh) {
+          setToken(fresh)
+          try {
+            await updateTickerItem(fresh, id, data)
+            return
+          } catch {}
+        }
+        setShowReLogin(true)
+      }
+      setList(prev)
+    }
   }
 
+  // সুইচ অন/অফ লজিক (অন করলেই মেয়াদের বাধা ছাড়া সরাসরি একটার পর একটা ঘুরবে)
   function toggleActive(s: TickerItem) {
-    const expired = !!s.expires_at && new Date(s.expires_at).getTime() <= now
-    if (!s.is_active && expired) {
-      patchItem(s.id, { is_active: true, expires_at: new Date(Date.now() + 3600 * 1000).toISOString() })
-    } else {
-      patchItem(s.id, { is_active: !s.is_active })
-    }
+    patchItem(s.id, { is_active: !s.is_active, expires_at: null })
   }
 
   async function moveItem(i: number, d: -1 | 1) {
@@ -238,12 +329,16 @@ export default function TickerManager({ token, author }: { token: string; author
     const prev = list
     setList(next)
     try {
+      const activeTok = await getActiveToken()
       await Promise.all(
         next
           .filter((s) => prev.find((p) => p.id === s.id)?.sort_order !== s.sort_order)
-          .map((s) => updateTickerItem(token, s.id, { sort_order: s.sort_order }))
+          .map((s) => updateTickerItem(activeTok, s.id, { sort_order: s.sort_order }))
       )
-    } catch (e) { setList(prev); fail(e) }
+    } catch (e: any) {
+      setList(prev)
+      if (/jwt|expired|token/i.test(e?.message || "")) setShowReLogin(true)
+    }
   }
 
   async function removeItem(id: string) {
@@ -251,25 +346,78 @@ export default function TickerManager({ token, author }: { token: string; author
     const prev = list
     setList((l) => l.filter((s) => s.id !== id))
     if (editId === id) resetForm()
-    try { await deleteTickerItem(token, id) } catch (e) { setList(prev); fail(e) }
+    try {
+      const activeTok = await getActiveToken()
+      await deleteTickerItem(activeTok, id)
+    } catch (e: any) {
+      setList(prev)
+      if (/jwt|expired|token/i.test(e?.message || "")) setShowReLogin(true)
+    }
   }
 
-  const alive = (s: TickerItem) => s.is_active && (!s.expires_at || new Date(s.expires_at).getTime() > now)
-  const liveList = list.filter(alive)
-
-  function getStatusBadge(s: TickerItem) {
-    if (!s.is_active) return <span className="text-gray-400">বন্ধ</span>
-    if (s.expires_at && new Date(s.expires_at).getTime() <= now) return <span className="text-red-500 font-bold">মেয়াদ শেষ</span>
-    const idx = liveList.findIndex((x) => x.id === s.id)
-    return idx < MAX_LIVE_TICKER ? (
-      <span className="text-green-600 font-bold">লাইভ ({bn(idx + 1)})</span>
-    ) : (
-      <span className="text-amber-600 font-semibold">অপেক্ষায়</span>
-    )
+  // পাসওয়ার্ড দিয়ে তাৎক্ষণিক রি-লগইন (টাইপ করা লেখা হারাবে না)
+  async function handleQuickReLogin() {
+    if (!reLoginEmail.trim() || !reLoginPassword) {
+      alert("ইমেইল ও পাসওয়ার্ড লিখুন")
+      return
+    }
+    setReLoginBusy(true)
+    try {
+      const newTok = await login(reLoginEmail.trim(), reLoginPassword)
+      setToken(newTok)
+      setShowReLogin(false)
+      setReLoginPassword("")
+      setMsg("✅ সেশন সফলভাবে রিনিউ হয়েছে! এবার নিচের বাটনে চাপ দিন।")
+      await load()
+    } catch (err: any) {
+      alert("লগইন ব্যর্থ: " + (err?.message || "ইমেইল বা পাসওয়ার্ড ভুল"))
+    }
+    setReLoginBusy(false)
   }
+
+  const liveCount = list.filter((t) => t.is_active !== false).length
 
   return (
     <div className="space-y-4">
+      {/* দ্রুত রি-লগইন পপআপ */}
+      {showReLogin && (
+        <div className="p-4 bg-red-100 border-2 border-red-500 rounded-2xl space-y-2.5 text-xs text-red-950 animate-in fade-in shadow-lg">
+          <div className="flex items-center justify-between">
+            <span className="font-bold flex items-center gap-1.5 text-sm text-red-800">
+              <Lock className="size-4" /> সেশনের মেয়াদ শেষ — ঝটপট রি-লগইন করুন
+            </span>
+            <button type="button" onClick={() => setShowReLogin(false)} className="text-gray-500 underline font-bold">বন্ধ</button>
+          </div>
+          <p className="text-[11px] text-gray-700">
+            💡 আপনার টাইপ করা শিরোনামটি সুরক্ষিত আছে, মুছে যায়নি। শুধু পাসওয়ার্ড দিয়ে রি-লগইন করুন:
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input
+              className={inp}
+              placeholder="আপনার জিমেইল"
+              type="email"
+              value={reLoginEmail}
+              onChange={(e) => setReLoginEmail(e.target.value)}
+            />
+            <input
+              className={inp}
+              placeholder="পাসওয়ার্ড"
+              type="password"
+              value={reLoginPassword}
+              onChange={(e) => setReLoginPassword(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleQuickReLogin}
+            disabled={reLoginBusy}
+            className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2 rounded-xl transition cursor-pointer"
+          >
+            {reLoginBusy ? "লগইন হচ্ছে..." : "✓ রি-লগইন করে সাথে সাথে পোস্ট করুন"}
+          </button>
+        </div>
+      )}
+
       {/* ট্যাব সুইচ */}
       <div className="flex bg-white rounded-2xl p-1.5 shadow-sm border gap-1 text-xs font-bold">
         <button
@@ -280,7 +428,7 @@ export default function TickerManager({ token, author }: { token: string; author
           }`}
         >
           <Radio className="size-4" />
-          <span>১. ব্রেকিং সংবাদ প্রকাশ ({list.length})</span>
+          <span>১. ব্রেকিং প্রকাশ ({list.length})</span>
         </button>
         <button
           type="button"
@@ -295,18 +443,22 @@ export default function TickerManager({ token, author }: { token: string; author
       </div>
 
       {msg && (
-        <p className="text-xs sm:text-sm font-bold text-center text-green-900 bg-green-50 p-2.5 rounded-xl border border-green-200">
+        <div className={`text-xs sm:text-sm font-bold text-center p-3 rounded-xl border ${
+          msg.includes("❌") ? "text-red-800 bg-red-50 border-red-200" : "text-green-900 bg-green-50 border-green-200"
+        }`}>
           {msg}
-        </p>
+        </div>
       )}
 
       {/* লাইভ প্রিভিউ বার */}
       <div className="bg-slate-900 text-white p-3.5 rounded-2xl border border-slate-800 space-y-2 shadow-lg">
         <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 text-xs">
           <span className="text-green-400 font-bold flex items-center gap-1.5">
-            <Eye className="size-3.5" /> 👁️ লাইভ প্রিভিউ (হোমপেজে যেভাবে চলবে):
+            <Eye className="size-3.5" /> 👁️ লাইভ প্রিভিউ:
           </span>
-          <span className="text-[10px] text-gray-400">রিয়েল-টাইম লুক</span>
+          <span className="text-[10px] text-amber-400 font-semibold">
+            {liveCount}টি ব্রেকিং ধারাবাহিকভাবে একটার পর একটা চলবে
+          </span>
         </div>
 
         <div className="rounded-xl overflow-hidden border border-slate-800 flex items-center bg-white text-navy text-xs sm:text-sm">
@@ -323,11 +475,6 @@ export default function TickerManager({ token, author }: { token: string; author
             <span style={{ color: badgeCfg.text_color || "#ffffff" }}>
               {badgeCfg.badge_text || "সর্বশেষ"}
             </span>
-            {badgeCfg.show_subtext && badgeCfg.badge_subtext && (
-              <span className="hidden sm:inline text-[10px] opacity-90">
-                / {badgeCfg.badge_subtext}
-              </span>
-            )}
           </div>
 
           <div
@@ -353,23 +500,36 @@ export default function TickerManager({ token, author }: { token: string; author
       {/* ট্যাব ১: ব্রেকিং প্রকাশ ও সময় নিয়ন্ত্রণ */}
       {activeTab === "items" && (
         <div className="bg-white rounded-2xl shadow p-4 sm:p-5 space-y-4">
-          <h2 className="font-bold text-base text-gray-800 flex items-center gap-2 border-b pb-2">
-            <span>{editId ? "✏️ ব্রেকিং শিরোনাম এডিট করুন" : "⚡ দ্রুত ব্রেকিং প্রকাশ"}</span>
-          </h2>
+          <div className="flex items-center justify-between border-b pb-2">
+            <h2 className="font-bold text-base text-gray-800 flex items-center gap-2">
+              <span>{editId ? "✏️ ব্রেকিং শিরোনাম এডিট করুন" : "⚡ নতুন ব্রেকিং যুক্ত করুন"}</span>
+            </h2>
+
+            {/* নতুন টিকার লেখার বাটন */}
+            {editId && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="text-xs bg-emerald-700 text-white px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <PlusCircle className="size-3.5" /> + নতুন আরেকটি লিখুন
+              </button>
+            )}
+          </div>
 
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="text-xs font-bold text-gray-700">
-                ব্রেকিং শিরোনাম * (আনলিমিটেড অক্ষর):
+                ব্রেকিং শিরোনাম * (সীমাহীন অক্ষর):
               </label>
               <span className="text-[11px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
-                মোট {bn(title.length)} টি অক্ষর (সীমাহীন)
+                মোট {bn(title.length)} টি অক্ষর (আনলিমিটেড)
               </span>
             </div>
             <textarea
               className={inp}
               rows={3}
-              placeholder="যেকোনো দৈর্ঘ্য বা আনলিমিটেড অক্ষরের ব্রেকিং সংবাদ এখানে লিখুন বা পেস্ট করুন..."
+              placeholder="আপনার ইচ্ছামতো যেকোনো দৈর্ঘ্যের ব্রেকিং সংবাদ এখানে লিখুন বা পেস্ট করুন..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
@@ -384,7 +544,7 @@ export default function TickerManager({ token, author }: { token: string; author
               onChange={(e) => setUrl(e.target.value)}
             />
             <p className="text-[11px] text-gray-500 mt-1">
-              💡 লিংক না দিলে সংবাদের আগে স্বয়ংক্রিয়ভাবে <span className="font-bold text-red-600">{badgeCfg.brief_text || "[সংক্ষেপ]"}</span> দেখাবে।
+              💡 লিংক না দিলে শিরোনামের আগে স্বয়ংক্রিয়ভাবে <span className="font-bold text-red-600">{badgeCfg.brief_text || "[সংক্ষেপ]"}</span> দেখাবে।
             </p>
           </div>
 
@@ -458,30 +618,31 @@ export default function TickerManager({ token, author }: { token: string; author
             </select>
           </div>
 
-          {/* কাস্টম সময় ও মেয়াদ কন্ট্রোল */}
+          {/* মেয়াদের অপশন */}
           <div className="p-3.5 bg-red-50/60 rounded-xl border border-red-200 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-red-950 flex items-center gap-1.5">
-                <Clock className="size-4 text-red-600" /> কতক্ষণ টিকারে চলবে (এডমিন কাস্টম টাইম):
+                <Clock className="size-4 text-red-600" /> কতক্ষণ টিকারে চলবে:
+              </span>
+              <span className="text-[11px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                {expiryMode === "none" ? "✓ সবসময় চলবে (স্থায়ী)" : "নির্দিষ্ট সময় পর থামবে"}
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-xs">
-              {editId && (
-                <button
-                  type="button"
-                  onClick={() => setExpiryMode("keep")}
-                  className={`py-1.5 px-2 rounded-lg border font-semibold cursor-pointer ${
-                    expiryMode === "keep" ? "bg-red-600 text-white border-red-600" : "bg-white text-gray-700"
-                  }`}
-                >
-                  আগের মেয়াদ
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setExpiryMode("none")}
+                className={`py-2 px-2 rounded-lg border font-bold cursor-pointer transition ${
+                  expiryMode === "none" ? "bg-red-600 text-white border-red-600 shadow" : "bg-white text-gray-700"
+                }`}
+              >
+                ♾️ স্থায়ী (অফ/ডিলিট না করা পর্যন্ত)
+              </button>
               <button
                 type="button"
                 onClick={() => setExpiryMode("preset")}
-                className={`py-1.5 px-2 rounded-lg border font-semibold cursor-pointer ${
+                className={`py-2 px-2 rounded-lg border font-semibold cursor-pointer transition ${
                   expiryMode === "preset" ? "bg-red-600 text-white border-red-600" : "bg-white text-gray-700"
                 }`}
               >
@@ -490,7 +651,7 @@ export default function TickerManager({ token, author }: { token: string; author
               <button
                 type="button"
                 onClick={() => setExpiryMode("custom")}
-                className={`py-1.5 px-2 rounded-lg border font-semibold cursor-pointer ${
+                className={`py-2 px-2 rounded-lg border font-semibold cursor-pointer transition ${
                   expiryMode === "custom" ? "bg-red-600 text-white border-red-600" : "bg-white text-gray-700"
                 }`}
               >
@@ -499,20 +660,11 @@ export default function TickerManager({ token, author }: { token: string; author
               <button
                 type="button"
                 onClick={() => setExpiryMode("datetime")}
-                className={`py-1.5 px-2 rounded-lg border font-semibold cursor-pointer ${
+                className={`py-2 px-2 rounded-lg border font-semibold cursor-pointer transition ${
                   expiryMode === "datetime" ? "bg-red-600 text-white border-red-600" : "bg-white text-gray-700"
                 }`}
               >
-                📅 তারিখ ও ঘড়ি
-              </button>
-              <button
-                type="button"
-                onClick={() => setExpiryMode("none")}
-                className={`py-1.5 px-2 rounded-lg border font-semibold cursor-pointer ${
-                  expiryMode === "none" ? "bg-red-600 text-white border-red-600" : "bg-white text-gray-700"
-                }`}
-              >
-                স্থায়ী (অফ না করা পর্যন্ত)
+                📅 ক্যালেন্ডার নির্বাচন
               </button>
             </div>
 
@@ -522,7 +674,6 @@ export default function TickerManager({ token, author }: { token: string; author
                 value={presetDuration}
                 onChange={(e) => setPresetDuration(e.target.value)}
               >
-                <option value="30">৩০ মিনিট</option>
                 <option value="60">১ ঘণ্টা</option>
                 <option value="120">২ ঘণ্টা</option>
                 <option value="360">৬ ঘণ্টা</option>
@@ -562,12 +713,6 @@ export default function TickerManager({ token, author }: { token: string; author
                 onChange={(e) => setCustomDateTime(e.target.value)}
               />
             )}
-
-            {expiryMode === "none" && (
-              <p className="text-[11px] text-gray-600">
-                💡 যতক্ষণ না এডমিন এই ব্রেকিংটি নিজে বন্ধ বা ডিলিট করবেন, ততক্ষণ সাইটে চলবে।
-              </p>
-            )}
           </div>
 
           <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer p-2 bg-gray-50 rounded-xl border">
@@ -583,16 +728,6 @@ export default function TickerManager({ token, author }: { token: string; author
           <button className={btnPrimary} onClick={handleSaveItem} disabled={busy}>
             {busy ? "সংরক্ষণ হচ্ছে..." : editId ? "ব্রেকিং আপডেট করুন" : "🚀 GO LIVE (ব্রেকিং প্রকাশ করুন)"}
           </button>
-
-          {editId && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="w-full text-xs underline text-gray-500 cursor-pointer"
-            >
-              বাতিল
-            </button>
-          )}
         </div>
       )}
 
@@ -605,16 +740,12 @@ export default function TickerManager({ token, author }: { token: string; author
                 <Settings2 className="size-4 text-red-600" />
                 <span>ব্রেকিং বেজ ও [সংক্ষেপ] ডিজাইন স্টুডিও</span>
               </h2>
-              <p className="text-xs text-gray-500">
-                সবকিছুই ঐচ্ছিক। আপনার পছন্দমতো আইকন, অ্যানিমেশন ও কালার সেট করুন।
-              </p>
             </div>
           </div>
 
-          {/* ১. ২০টি আইকন */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-700 block">
-              ১. ব্রেকিং বেজ আইকন (২০টি আইকন থেকে বেছে নিন):
+              ১. ব্রেকিং বেজ আইকন (২০টি আইকন):
             </label>
             <select
               className={selectInp}
@@ -627,7 +758,6 @@ export default function TickerManager({ token, author }: { token: string; author
             </select>
           </div>
 
-          {/* ২. ৩০টি আইকন অ্যানিমেশন */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-700 block">
               ২. বেজ আইকনের অ্যানিমেশন (৩০টি ইফেক্ট):
@@ -643,7 +773,6 @@ export default function TickerManager({ token, author }: { token: string; author
             </select>
           </div>
 
-          {/* ৩. বেজের লেখা ও টেক্সট কালার */}
           <div className="p-3 bg-gray-50 rounded-xl border space-y-3">
             <p className="text-xs font-bold text-gray-800">৩. ব্রেকিং বেজের লেখা ও রঙ:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -701,7 +830,6 @@ export default function TickerManager({ token, author }: { token: string; author
             </div>
           </div>
 
-          {/* ৪. ব্যাকগ্রাউন্ড রঙ ও অ্যানিমেশন */}
           <div className="p-3 bg-gray-50 rounded-xl border space-y-3">
             <p className="text-xs font-bold text-gray-800">৪. ব্রেকিং বেজের ব্যাকগ্রাউন্ড ও অ্যানিমেশন:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -756,7 +884,6 @@ export default function TickerManager({ token, author }: { token: string; author
             </div>
           </div>
 
-          {/* ৫. [সংক্ষেপ] লেবেল সেটিংস */}
           <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200 space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-bold text-amber-950">৫. টিকারে [সংক্ষেপ] লেবেল সেটিংস:</p>
@@ -849,16 +976,23 @@ export default function TickerManager({ token, author }: { token: string; author
 
       {/* তালিকা সেকশন */}
       <div className="space-y-3">
-        <h2 className="font-bold text-sm sm:text-base text-gray-800 flex items-center justify-between">
-          <span>সব শিরোনাম ({bn(list.length)})</span>
-          <span className="text-xs text-gray-500 font-normal">সর্বোচ্চ ১০টি শিরোনাম একটার পর একটা চলে</span>
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold text-sm sm:text-base text-gray-800">
+            সব শিরোনাম ({bn(list.length)})
+          </h2>
+          <span className="text-xs text-green-700 font-bold bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+            🔄 {bn(liveCount)}টি ব্রেকিং ধারাবাহিকভাবে সাইটে ঘুরবে
+          </span>
+        </div>
 
         {list.map((s, i) => {
-          const rem = s.expires_at ? formatTimeLeft(s.expires_at, now) : null
           return (
             <div key={s.id} className="bg-white rounded-2xl shadow p-3.5 text-sm space-y-2 border border-gray-100">
               <div className="flex items-start gap-3">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-100 font-bold text-xs text-red-800">
+                  #{bn(i + 1)}
+                </span>
+
                 <div className="min-w-0 flex-1 space-y-1">
                   <div
                     className="rounded-lg border px-2.5 py-1.5 font-semibold text-xs sm:text-sm break-words"
@@ -878,18 +1012,17 @@ export default function TickerManager({ token, author }: { token: string; author
                     <span>{s.title}</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 pt-0.5">
-                    <span>{getStatusBadge(s)}</span>
+                    {s.is_active ? (
+                      <span className="text-green-700 font-bold flex items-center gap-1">
+                        <CheckCircle className="size-3.5" /> ক্রমানুসারে লাইভ চলবে
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">বন্ধ আছে</span>
+                    )}
                     <span>· {bn(s.title.length)} অক্ষর</span>
                     {s.sound_alert && <span>· 🔊 শব্দ</span>}
                     {s.url && <span>· 🔗 লিংক</span>}
                   </div>
-                  {s.expires_at ? (
-                    <p className="text-[11px] text-gray-500">
-                      {rem ? `⏱️ বাকি: ${rem}` : "⏱️ মেয়াদ শেষ"}
-                    </p>
-                  ) : (
-                    <p className="text-[11px] text-green-700 font-medium">⏱️ মেয়াদ: স্থায়ী (ম্যানুয়াল অফ না করা পর্যন্ত)</p>
-                  )}
                 </div>
 
                 <button
