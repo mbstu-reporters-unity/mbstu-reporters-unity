@@ -36,10 +36,8 @@ import {
 
 const POLL = 20000
 
-// দুই প্রান্তে লেখা ফেড ইন / ফেড আউট
 const MASK = 'linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)'
 
-// ২০টি আইকন রেন্ডারার
 export function renderTickerBadgeIcon(key?: string, className = "size-4 shrink-0") {
   switch (key) {
     case "radio": return <Radio className={className} />
@@ -69,7 +67,6 @@ export function renderTickerBadgeIcon(key?: string, className = "size-4 shrink-0
 const CSS_ANIMATIONS = `
 @keyframes tkScroll{from{transform:translateX(var(--from))}to{transform:translateX(var(--to))}}
 
-/* ⭐ ৩০টি অ্যানিমেশন সিএসএস কি-ফ্রেম ⭐ */
 @keyframes anim_pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.18); opacity: 0.82; } }
 .anim_pulse { animation: anim_pulse 1.4s ease-in-out infinite; display: inline-flex; }
 
@@ -160,7 +157,6 @@ const CSS_ANIMATIONS = `
 @keyframes anim_radar { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); } 70% { box-shadow: 0 0 0 8px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
 .anim_radar { animation: anim_radar 1.5s infinite; display: inline-flex; border-radius: 9999px; }
 
-/* ⭐ ৮টি ব্যাকগ্রাউন্ড অ্যানিমেশন কি-ফ্রেম ⭐ */
 @keyframes bg_pulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3) contrast(1.1); } }
 .anim_bg_pulse { animation: bg_pulse 2s ease-in-out infinite; }
 
@@ -405,7 +401,6 @@ export function NewsTicker() {
 
   const cur = list[idx]
 
-  // অ্যানিমেশন ক্লাস
   const iconAnimClass = badgeConfig.icon_animation && badgeConfig.icon_animation !== "none"
     ? `anim_${badgeConfig.icon_animation.replace(/-/g, '_')}`
     : ""
@@ -427,7 +422,7 @@ export function NewsTicker() {
       <style>{CSS_ANIMATIONS}</style>
       <div className="mx-auto flex max-w-7xl items-stretch">
         
-        {/* ⭐ সম্পূর্ণ কাস্টমাইজেবল ব্রেকিং বেজ (২০ আইকন, ৩০ অ্যানিমেশন, ব্যাকগ্রাউন্ড ও টেক্সট কালার) ⭐ */}
+        {/* কাস্টমাইজেবল ব্রেকিং বেজ */}
         <div
           className={`relative z-10 flex shrink-0 items-center gap-2 px-3 py-2.5 text-xs font-bold transition-all sm:px-4 sm:text-sm select-none ${bgAnimClass}`}
           style={{
