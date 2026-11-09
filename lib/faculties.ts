@@ -34,6 +34,7 @@ export type Teacher = {
   email: string | null
   phone: string | null
   sort_order: number
+  is_chairman?: boolean
   created_at: string
 }
 
@@ -186,7 +187,7 @@ export async function deleteDepartment(token: string, id: string) {
 export async function getTeachers(deptId: string): Promise<Teacher[]> {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/department_teachers?select=*&department_id=eq.${encodeURIComponent(deptId)}&order=sort_order.asc,created_at.asc`,
+      `${SB_URL}/rest/v1/department_teachers?select=*&department_id=eq.${encodeURIComponent(deptId)}&order=is_chairman.desc.nullslast,sort_order.asc,created_at.asc`,
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
@@ -200,6 +201,16 @@ export async function createTeacher(token: string, data: Partial<Teacher>) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/department_teachers`, {
       method: "POST",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify(data),
+    })
+  )
+}
+
+export async function updateTeacher(token: string, id: string, data: Partial<Teacher>) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/department_teachers?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
       headers: { ...hdr(token, true), Prefer: "return=minimal" },
       body: JSON.stringify(data),
     })
@@ -250,7 +261,6 @@ export async function createDeptNotice(
   )
 }
 
-// উভয় নামেই এক্সপোর্ট রাখা হলো যাতে কোনো ফাইলেই অমিল না হয়
 export const createDeptNoticeSync = createDeptNotice
 
 export async function deleteDeptNotice(token: string, id: string) {
