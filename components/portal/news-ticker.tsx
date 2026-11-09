@@ -24,20 +24,25 @@ import {
   Info,
   Globe,
   FlameKindling,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import {
   getLiveTicker,
   DEFAULT_SPEED,
   getTickerBadgeConfig,
   DEFAULT_TICKER_BADGE_CONFIG,
+  bn,
   type TickerItem,
   type TickerBadgeConfig,
 } from '@/lib/ticker'
 
 const POLL = 20000
 
+// দুই প্রান্তে লেখা ফেড ইন / ফেড আউট
 const MASK = 'linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)'
 
+// ২০টি আইকন রেন্ডারার
 export function renderTickerBadgeIcon(key?: string, className = "size-4 shrink-0") {
   switch (key) {
     case "radio": return <Radio className={className} />
@@ -65,8 +70,6 @@ export function renderTickerBadgeIcon(key?: string, className = "size-4 shrink-0
 }
 
 const CSS_ANIMATIONS = `
-@keyframes tkScroll{from{transform:translateX(var(--from))}to{transform:translateX(var(--to))}}
-
 @keyframes anim_pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.18); opacity: 0.82; } }
 .anim_pulse { animation: anim_pulse 1.4s ease-in-out infinite; display: inline-flex; }
 
@@ -183,61 +186,55 @@ const CSS_ANIMATIONS = `
 .anim_bg_electric { animation: bg_electric 3s infinite; }
 `
 
-const alive = (t: TickerItem) => !t.expires_at || new Date(t.expires_at).getTime() > Date.now()
-
+// ⭐ একাধিক টিকার স্ক্রলিং ও সাইক্লিং ইঞ্জিন ⭐
 function Slide({
   item,
   paused,
   badgeConfig,
+  cycle,
   onEnd,
 }: {
   item: TickerItem
   paused: boolean
   badgeConfig: TickerBadgeConfig
+  cycle: number
   onEnd: () => void
 }) {
   const boxRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLDivElement>(null)
-  const endRef = useRef(onEnd)
-  endRef.current = onEnd
   const [dim, setDim] = useState<{ cw: number; tw: number } | null>(null)
-  const [still, setStill] = useState(false)
+  const finishedRef = useRef(false)
+  finishedRef.current = false
 
   useLayoutEffect(() => {
-    setStill(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-    setDim({
-      cw: boxRef.current?.clientWidth || 0,
-      tw: textRef.current?.offsetWidth || 0,
-    })
-  }, [item.title])
+    const cw = boxRef.current?.clientWidth || 360
+    const tw = textRef.current?.offsetWidth || 240
+    setDim({ cw, tw })
+  }, [item.title, item.id])
 
+  const cw = dim?.cw || 360
+  const tw = dim?.tw || 240
+  const speed = Math.max(20, item.speed || DEFAULT_SPEED)
+  const dur = Math.max(3.5, (cw + tw) / speed)
+
+  const handleFinish = useCallback(() => {
+    if (finishedRef.current) return
+    finishedRef.current = true
+    onEnd()
+  }, [onEnd])
+
+  // সেফটি টাইমার: অ্যানিমেশন শেষ হওয়া মাত্রই পরের টিকারে নিয়ে যাবে
   useEffect(() => {
-    if (!still) return
-    const id = setTimeout(() => endRef.current(), 7000)
-    return () => clearTimeout(id)
-  }, [still])
+    if (paused) return
+    const timer = setTimeout(() => {
+      handleFinish()
+    }, (dur + 0.35) * 1000)
+
+    return () => clearTimeout(timer)
+  }, [dur, paused, handleFinish, item.id, cycle])
 
   const external = !!item.url && /^https?:\/\//i.test(item.url)
-  const speed = Math.max(20, item.speed || DEFAULT_SPEED)
-  const dur = dim ? Math.max(4, (dim.cw + dim.tw) / speed) : 0
-
-  const vars = {
-    '--from': `${dim?.cw ?? 0}px`,
-    '--to': `-${dim?.tw ?? 0}px`,
-  } as CSSProperties
-
-  const moving: CSSProperties = still
-    ? { position: 'relative', paddingLeft: 12, maxWidth: '100%', overflow: 'hidden' }
-    : {
-        ...vars,
-        visibility: dim ? 'visible' : 'hidden',
-        animationName: dim ? 'tkScroll' : 'none',
-        animationDuration: `${dur}s`,
-        animationTimingFunction: 'linear',
-        animationDelay: '0.2s',
-        animationFillMode: 'both',
-        animationPlayState: paused ? 'paused' : 'running',
-      }
+  const animKey = `tk_anim_${item.id.replace(/[^a-zA-Z0-9]/g, '_')}_${cycle}`
 
   const briefAnimClass = badgeConfig.brief_animation && badgeConfig.brief_animation !== "none"
     ? `anim_${badgeConfig.brief_animation}`
@@ -246,14 +243,25 @@ function Slide({
   return (
     <div
       ref={boxRef}
-      className="relative h-10 overflow-hidden"
+      className="relative h-10 w-full overflow-hidden"
       style={{ WebkitMaskImage: MASK, maskImage: MASK }}
     >
+      {/* লিটারেল পিক্সেল দিয়ে অ্যানিমেশন যাতে মোবাইলে কোনো ত্রুটি না হয় */}
+      <style>{`
+        @keyframes ${animKey} {
+          0% { transform: translateX(${cw}px); }
+          100% { transform: translateX(-${tw + 20}px); }
+        }
+        .${animKey} {
+          animation: ${animKey} ${dur}s linear 0.1s both;
+          animation-play-state: ${paused ? 'paused' : 'running'};
+        }
+      `}</style>
+
       <div
         ref={textRef}
-        onAnimationEnd={onEnd}
-        className="absolute left-0 top-0 flex h-full items-center whitespace-nowrap text-sm font-medium"
-        style={moving}
+        onAnimationEnd={handleFinish}
+        className={`absolute left-0 top-0 flex h-full items-center whitespace-nowrap text-sm font-medium ${animKey}`}
       >
         <span
           className="mr-3 size-2 shrink-0 rounded-full"
@@ -300,12 +308,11 @@ export function NewsTicker() {
   const [soundOn, setSoundOn] = useState(false)
   const [announce, setAnnounce] = useState('')
 
-  const seen = useRef<Set<string> | null>(null)
   const audio = useRef<AudioContext | null>(null)
-  const soundRef = useRef(false)
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const list = items.filter(alive)
+  // শুধুমাত্র এডমিনের সক্রিয় রাখা (is_active) সব টিকার
+  const list = items.filter((t) => t.is_active !== false)
   const total = list.length
   const idx = total ? index % total : 0
 
@@ -336,39 +343,31 @@ export function NewsTicker() {
         getTickerBadgeConfig(),
       ])
       if (cfg) setBadgeConfig(cfg)
-      if (!rows) return
-
-      const prev = seen.current
-      const fresh = prev ? rows.filter((r) => !prev.has(r.id)) : []
-      seen.current = new Set(rows.map((r) => r.id))
-      setItems(rows)
-      setLoaded(true)
-      if (fresh.length > 0) {
-        setIndex(Math.max(0, rows.findIndex((r) => r.id === fresh[0].id)))
-        setCycle((c) => c + 1)
-        setAnnounce(fresh[0].title)
-        if (soundRef.current && fresh.some((f) => f.sound_alert)) ping()
+      if (rows && rows.length > 0) {
+        setItems(rows)
+        setLoaded(true)
       }
     } catch {}
-  }, [ping])
+  }, [])
 
   useEffect(() => {
     loadData()
     const id = setInterval(loadData, POLL)
-    const vis = () => {
-      if (document.visibilityState === 'visible') loadData()
-    }
-    document.addEventListener('visibilitychange', vis)
-    return () => {
-      clearInterval(id)
-      document.removeEventListener('visibilitychange', vis)
-    }
+    return () => clearInterval(id)
   }, [loadData])
 
-  const next = useCallback(() => {
-    setIndex((i) => i + 1)
+  // ⭐ একটার পর একটা ক্রমান্বয়ে আসার মূল লজিক (লুপ) ⭐
+  const nextSlide = useCallback(() => {
+    if (total <= 0) return
+    setIndex((prev) => (prev + 1) % total)
     setCycle((c) => c + 1)
-  }, [])
+  }, [total])
+
+  const prevSlide = useCallback(() => {
+    if (total <= 0) return
+    setIndex((prev) => (prev - 1 + total) % total)
+    setCycle((c) => c + 1)
+  }, [total])
 
   function toggleSound() {
     if (!soundOn) {
@@ -379,11 +378,9 @@ export function NewsTicker() {
         if (!audio.current) audio.current = new AC()
         void audio.current.resume()
       } catch {}
-      soundRef.current = true
       setSoundOn(true)
       ping()
     } else {
-      soundRef.current = false
       setSoundOn(false)
     }
   }
@@ -446,9 +443,9 @@ export function NewsTicker() {
           </span>
         </div>
 
-        {/* স্ক্রলিং সংবাদ বক্স */}
+        {/* স্ক্রলিং সংবাদ বক্স (একটার পর একটা চলবে) */}
         <div
-          className="min-w-0 flex-1 text-navy transition-colors duration-500"
+          className="min-w-0 flex-1 text-navy transition-colors duration-500 overflow-hidden"
           style={{ backgroundColor: cur.bg_color || undefined, color: cur.text_color || undefined }}
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
@@ -456,22 +453,48 @@ export function NewsTicker() {
           onTouchEnd={onTouchEnd}
         >
           <Slide
-            key={`${cur.id}-${cur.updated_at}-${cycle}`}
+            key={`${cur.id}-${cycle}`}
             item={cur}
             paused={paused}
             badgeConfig={badgeConfig}
-            onEnd={next}
+            cycle={cycle}
+            onEnd={nextSlide}
           />
         </div>
+
+        {/* একাধিক টিকার থাকলে নেভিগেশন কাউন্টার (যেমন: ১/৩, ২/৩) */}
+        {total > 1 && (
+          <div className="hidden sm:flex items-center gap-1 px-2 border-l border-border/60 text-xs text-navy/70 select-none">
+            <button
+              type="button"
+              onClick={prevSlide}
+              className="p-1 hover:bg-gray-100 rounded-md cursor-pointer"
+              title="আগের ব্রেকিং"
+            >
+              <ChevronLeft className="size-3.5" />
+            </button>
+            <span className="font-bold tabular-nums text-[11px] px-1">
+              {bn(idx + 1)}/{bn(total)}
+            </span>
+            <button
+              type="button"
+              onClick={nextSlide}
+              className="p-1 hover:bg-gray-100 rounded-md cursor-pointer"
+              title="পরের ব্রেকিং"
+            >
+              <ChevronRight className="size-3.5" />
+            </button>
+          </div>
+        )}
 
         <button
           type="button"
           onClick={toggleSound}
           aria-pressed={soundOn}
           aria-label={soundOn ? 'অ্যালার্ট শব্দ বন্ধ করুন' : 'অ্যালার্ট শব্দ চালু করুন'}
-          className="hidden h-10 w-10 shrink-0 items-center justify-center text-navy/60 hover:text-navy sm:flex cursor-pointer"
+          className="hidden h-10 w-10 shrink-0 items-center justify-center text-navy/60 hover:text-navy sm:flex cursor-pointer border-l border-border/60"
         >
-          {soundOn ? <Volume2 className="size-4" aria-hidden="true" /> : <VolumeX className="size-4" aria-hidden="true" />}
+          {soundOn ? <Volume2 className="size-4 text-emerald-600" /> : <VolumeX className="size-4 opacity-50" />}
         </button>
       </div>
 
