@@ -92,7 +92,7 @@
   --secondary: #f1f5f4;
   --secondary-foreground: #0f172a;
   --muted: #f4f6f5;
-  --muted-foreground: #334155; /* একটু গাঢ় করা হয়েছে যাতে হালকা বা ঝাপসা না লাগে */
+  --muted-foreground: #334155;
   --accent: #e7f3ec;
   --accent-foreground: #034d29;
   --destructive: #c8102e;
@@ -114,7 +114,7 @@
     -moz-osx-font-smoothing: grayscale;
   }
   
-  /* ⭐ পুরো ওয়েবসাইটের বেস ফন্ট এখন থেকে ভরাট, স্পষ্ট ও মিডিয়াম (500) থাকবে ⭐ */
+  /* ⭐ পুরো ওয়েবসাইটের ভরাট ও মিডিয়াম বডি ফন্ট ⭐ */
   body {
     @apply bg-background text-foreground font-sans;
     font-weight: 500;
@@ -122,44 +122,52 @@
     line-height: 1.65;
   }
 
-  /* প্যারাগ্রাফ ও আর্টিকেলের বাংলা টাইপোগ্রাফি স্পষ্ট ও দৃষ্টিনন্দন করা */
-  p, span, li, a {
-    text-rendering: optimizeLegibility;
-  }
-
-  p {
-    font-weight: 500;
-    color: #1e293b;
-  }
-
-  /* দীর্ঘ আর্টিকেলের লেখা জাস্টিফাই ও স্পষ্ট রিডিং */
-  article p, .prose p, .article-body, .whitespace-pre-line {
+  /* ⭐ স্বয়ংক্রিয় জাস্টিফাই সিস্টেম: ছবির নেতৃত্বের বার্তা, নোটিশ, সংবাদ, ক্লাব ও স্টুডেন্ট কর্নার ⭐ */
+  p, 
+  article p, 
+  .prose p, 
+  .article-body, 
+  .whitespace-pre-line,
+  .formatted-text,
+  blockquote {
     text-align: justify;
     text-justify: inter-word;
-    line-height: 1.75;
+    text-align-last: left; /* শেষ লাইন বা ছোট ১ লাইনের মেসেজ স্বাভাবিক বামে থাকবে, কখনো অযথা ছড়াবে না */
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.7;
     font-weight: 500;
   }
 
-  /* সব হেডিং ও টাইটেল স্বাভাবিক বোল্ড ও আকর্ষণীয় থাকবে */
-  h1, h2, h3, h4, h5, h6, article h1, article h2, article h3 {
-    text-align: left;
+  /* বিশেষ করে text-pretty থাকা বর্ণনামূলক সাবটাইটেল জাস্টিফাই নিশ্চিতকরণ */
+  p.text-pretty, .text-pretty {
+    text-align: justify;
+    text-justify: inter-word;
+    text-align-last: left;
+  }
+
+  /* শিরোনাম ও হেডিংস সবসময় স্বাভাবিক বামে থাকবে */
+  h1, h2, h3, h4, h5, h6, 
+  article h1, article h2, article h3,
+  .text-left, .text-left * {
+    text-align: left !important;
+    text-align-last: left !important;
     font-family: var(--font-serif), 'SolaimanLipi', sans-serif;
     letter-spacing: -0.01em;
   }
 
-  /* সেন্টার ও রাইটের জন্য নিরাপত্তা */
+  /* সেন্টার ও রাইটের উপাদান সুরক্ষিত রাখা (যেমন: কাউন্টার 2026, 25+, ফুটার কপিরাইট) */
   .text-center, .text-center * {
     text-align: center !important;
+    text-align-last: center !important;
   }
   .text-right, .text-right * {
     text-align: right !important;
-  }
-  .text-left, .text-left * {
-    text-align: left !important;
+    text-align-last: right !important;
   }
 }
 
-/* ক্লাব ও অন্যান্য অংশের জন্য স্পষ্ট ফন্ট */
+/* ক্লাব ও অন্যান্য অংশের জন্য ফন্ট */
 #club-news,
 #club-latest,
 .club-font,
@@ -379,7 +387,7 @@ html[data-theme="night"] body { letter-spacing: 0.015em; }
 html[data-theme="contrast"] :focus-visible { outline: 3px solid #000; outline-offset: 2px; }
 html[data-theme="contrast"] main a { text-decoration: underline; }
 
-/* ==================== হিরো স্লাইডার ও টেক্সটের অ্যানিমেশন কিফ্রেম ==================== */
+/* ==================== অ্যানিমেশন কিফ্রেমসমূহ ==================== */
 @keyframes heroProgressTimer { from { width: 0%; } to { width: 100%; } }
 @keyframes anim_fade-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
 @keyframes anim_zoom-pop { 0% { transform: scale(0.65); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
