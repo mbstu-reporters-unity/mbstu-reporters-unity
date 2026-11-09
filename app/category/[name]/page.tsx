@@ -8,7 +8,8 @@ import { NewsGrid } from '@/components/portal/news-card'
 import { SectionHeading } from '@/components/portal/section-heading'
 import { getCategoryPosts } from '@/lib/categories'
 
-export const dynamic = 'force-dynamic'
+// ⭐ ক্যাটাগরি পেজেও সুপারফাস্ট লোডিংয়ের জন্য ক্যাশিং সক্রিয় ⭐
+export const revalidate = 60
 
 export async function generateMetadata({
   params,
@@ -30,7 +31,7 @@ export default async function CategoryPage({
 }) {
   const { name } = await params
   const catName = decodeURIComponent(name)
-  const posts = await getCategoryPosts(catName, 100)
+  const posts = await getCategoryPosts(catName, 50)
 
   return (
     <>
@@ -38,7 +39,6 @@ export default async function CategoryPage({
       <SiteHeader />
       <main className="min-h-[75vh] py-10 sm:py-16 bg-gray-50/50">
         <div className="mx-auto max-w-7xl px-4 space-y-8">
-          {/* ব্যাক লিংক */}
           <div className="flex items-center gap-2">
             <a
               href="/"
@@ -48,14 +48,12 @@ export default async function CategoryPage({
             </a>
           </div>
 
-          {/* ক্যাটাগরি হেডিং */}
           <SectionHeading
             eyebrow="News Category"
             title={catName}
             subtitle={`${catName} বিভাগের সকল খবর ও প্রতিবেদন (${posts.length}টি সংবাদ প্রকাশিত)`}
           />
 
-          {/* হোমপেজের হুবহু প্রিভিউ গ্রিড */}
           {posts.length > 0 ? (
             <NewsGrid posts={posts} />
           ) : (
