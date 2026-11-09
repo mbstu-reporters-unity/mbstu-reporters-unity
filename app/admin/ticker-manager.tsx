@@ -73,9 +73,9 @@ export default function TickerManager({ token, author }: { token: string; author
   const [speed, setSpeed] = useState(DEFAULT_SPEED)
   const [sound, setSound] = useState(false)
 
-  // ⭐ কাস্টম সময় স্টেট ⭐
+  // কাস্টম সময় স্টেট
   const [expiryMode, setExpiryMode] = useState<string>("preset")
-  const [presetDuration, setPresetDuration] = useState("60") // মিনিট
+  const [presetDuration, setPresetDuration] = useState("60")
   const [customUnit, setCustomUnit] = useState<"min" | "hour" | "day">("hour")
   const [customValue, setCustomValue] = useState("3")
   const [customDateTime, setCustomDateTime] = useState("")
@@ -144,7 +144,6 @@ export default function TickerManager({ token, author }: { token: string; author
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  // ⭐ কাস্টম সময় ক্যালকুলেশন ⭐
   function calculateExpiry(): string | null {
     if (expiryMode === "keep") return oldExpires
     if (expiryMode === "none") return null
@@ -153,12 +152,11 @@ export default function TickerManager({ token, author }: { token: string; author
     }
     if (expiryMode === "custom") {
       const val = Number(customValue) || 1
-      let multiplier = 60 * 1000 // মিনিট
+      let multiplier = 60 * 1000
       if (customUnit === "hour") multiplier = 60 * 60 * 1000
       if (customUnit === "day") multiplier = 24 * 60 * 60 * 1000
       return new Date(Date.now() + val * multiplier).toISOString()
     }
-    // preset
     const minutes = Number(presetDuration) || 60
     return new Date(Date.now() + minutes * 60000).toISOString()
   }
@@ -206,7 +204,6 @@ export default function TickerManager({ token, author }: { token: string; author
     setBusy(false)
   }
 
-  // ব্রেকিং বেজ সেটিংস সংরক্ষণ
   async function handleSaveBadgeConfig() {
     setBusy(true)
     setMsg("")
@@ -303,7 +300,7 @@ export default function TickerManager({ token, author }: { token: string; author
         </p>
       )}
 
-      {/* ==================== লাইভ প্রিভিউ বার ==================== */}
+      {/* লাইভ প্রিভিউ বার */}
       <div className="bg-slate-900 text-white p-3.5 rounded-2xl border border-slate-800 space-y-2 shadow-lg">
         <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 text-xs">
           <span className="text-green-400 font-bold flex items-center gap-1.5">
@@ -313,7 +310,6 @@ export default function TickerManager({ token, author }: { token: string; author
         </div>
 
         <div className="rounded-xl overflow-hidden border border-slate-800 flex items-center bg-white text-navy text-xs sm:text-sm">
-          {/* ব্রেকিং বেজ প্রিভিউ */}
           <div
             className="flex items-center gap-1.5 px-3 py-2 font-bold shrink-0 select-none"
             style={{
@@ -334,7 +330,6 @@ export default function TickerManager({ token, author }: { token: string; author
             )}
           </div>
 
-          {/* টেক্সট ও [সংক্ষেপ] প্রিভিউ */}
           <div
             className="px-3 py-2 truncate flex-1 flex items-center gap-2"
             style={{ backgroundColor: bgColor || DEF_BG, color: textColor || DEF_TEXT }}
@@ -355,14 +350,13 @@ export default function TickerManager({ token, author }: { token: string; author
         </div>
       </div>
 
-      {/* ==================== ট্যাব ১: ব্রেকিং প্রকাশ ও সময় নিয়ন্ত্রণ ==================== */}
+      {/* ট্যাব ১: ব্রেকিং প্রকাশ ও সময় নিয়ন্ত্রণ */}
       {activeTab === "items" && (
         <div className="bg-white rounded-2xl shadow p-4 sm:p-5 space-y-4">
           <h2 className="font-bold text-base text-gray-800 flex items-center gap-2 border-b pb-2">
             <span>{editId ? "✏️ ব্রেকিং শিরোনাম এডিট করুন" : "⚡ দ্রুত ব্রেকিং প্রকাশ"}</span>
           </h2>
 
-          {/* আনলিমিটেড টেক্সট এরিয়া */}
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="text-xs font-bold text-gray-700">
@@ -394,7 +388,6 @@ export default function TickerManager({ token, author }: { token: string; author
             </p>
           </div>
 
-          {/* লেভেল নির্বাচন */}
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -416,7 +409,6 @@ export default function TickerManager({ token, author }: { token: string; author
             </button>
           </div>
 
-          {/* টেক্সট ও ব্যাকগ্রাউন্ড কালার */}
           <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border">
             <div>
               <span className="text-xs font-semibold text-gray-700 block mb-1">লেখার রং:</span>
@@ -457,7 +449,6 @@ export default function TickerManager({ token, author }: { token: string; author
             </div>
           </div>
 
-          {/* স্ক্রল গতি */}
           <div>
             <label className="text-xs font-bold text-gray-700 block mb-1">স্ক্রলের গতি:</label>
             <select className={inp} value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
@@ -467,7 +458,7 @@ export default function TickerManager({ token, author }: { token: string; author
             </select>
           </div>
 
-          {/* ⭐ কাস্টম সময় ও মেয়াদ কন্ট্রোল ⭐ */}
+          {/* কাস্টম সময় ও মেয়াদ কন্ট্রোল */}
           <div className="p-3.5 bg-red-50/60 rounded-xl border border-red-200 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-red-950 flex items-center gap-1.5">
@@ -525,7 +516,6 @@ export default function TickerManager({ token, author }: { token: string; author
               </button>
             </div>
 
-            {/* মোড ১: প্রিসেট ড্রপডাউন */}
             {expiryMode === "preset" && (
               <select
                 className={inp}
@@ -543,7 +533,6 @@ export default function TickerManager({ token, author }: { token: string; author
               </select>
             )}
 
-            {/* মোড ২: কাস্টম সংখ্যা ও ইউনিট */}
             {expiryMode === "custom" && (
               <div className="flex gap-2">
                 <input
@@ -565,7 +554,6 @@ export default function TickerManager({ token, author }: { token: string; author
               </div>
             )}
 
-            {/* মোড ৩: সরাসরি ক্যালেন্ডার ও ঘড়ি */}
             {expiryMode === "datetime" && (
               <input
                 type="datetime-local"
@@ -608,7 +596,7 @@ export default function TickerManager({ token, author }: { token: string; author
         </div>
       )}
 
-      {/* ==================== ট্যাব ২: ব্রেকিং বেজ ও [সংক্ষেপ] স্টুডিও ==================== */}
+      {/* ট্যাব ২: ব্রেকিং বেজ ও [সংক্ষেপ] স্টুডিও */}
       {activeTab === "badge" && (
         <div className="bg-white rounded-2xl shadow p-4 sm:p-5 space-y-4">
           <div className="flex items-center justify-between border-b pb-2">
@@ -623,7 +611,7 @@ export default function TickerManager({ token, author }: { token: string; author
             </div>
           </div>
 
-          {/* ১. ২০টি আইকন নির্বাচন */}
+          {/* ১. ২০টি আইকন */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-700 block">
               ১. ব্রেকিং বেজ আইকন (২০টি আইকন থেকে বেছে নিন):
@@ -713,7 +701,7 @@ export default function TickerManager({ token, author }: { token: string; author
             </div>
           </div>
 
-          {/* ৪. ব্যাকগ্রাউন্ড রঙ ও ব্যাকগ্রাউন্ড অ্যানিমেশন */}
+          {/* ৪. ব্যাকগ্রাউন্ড রঙ ও অ্যানিমেশন */}
           <div className="p-3 bg-gray-50 rounded-xl border space-y-3">
             <p className="text-xs font-bold text-gray-800">৪. ব্রেকিং বেজের ব্যাকগ্রাউন্ড ও অ্যানিমেশন:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -768,7 +756,7 @@ export default function TickerManager({ token, author }: { token: string; author
             </div>
           </div>
 
-          {/* ৫. [সংক্ষেপ] লেখা, কালার ও অ্যানিমেশন */}
+          {/* ৫. [সংক্ষেপ] লেবেল সেটিংস */}
           <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200 space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-bold text-amber-950">৫. টিকারে [সংক্ষেপ] লেবেল সেটিংস:</p>
@@ -859,7 +847,7 @@ export default function TickerManager({ token, author }: { token: string; author
         </div>
       )}
 
-      {/* ==================== তালিকা সেকশন ==================== */}
+      {/* তালিকা সেকশন */}
       <div className="space-y-3">
         <h2 className="font-bold text-sm sm:text-base text-gray-800 flex items-center justify-between">
           <span>সব শিরোনাম ({bn(list.length)})</span>
