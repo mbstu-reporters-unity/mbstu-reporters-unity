@@ -6,7 +6,6 @@ export type CommitteeMember = {
   photo_url?: string | null
 }
 
-// প্রতিটি মিডিয়া আইটেম (শিরোনাম, উপশিরোনাম, বিস্তারিত ও লিংক)
 export type ClubMediaItem = {
   id?: string
   title?: string
@@ -23,7 +22,7 @@ export type ClubReportItem = {
   embed_media_url?: string | null
   subtitle?: string | null
   description?: string | null
-  media_items?: ClubMediaItem[] | null // একাধিক ছবি/ভিডিও/লিংক
+  media_items?: ClubMediaItem[] | null
 }
 
 export type ClubItem = {
@@ -52,7 +51,36 @@ export type ClubItem = {
 
 export type ClubInput = Omit<ClubItem, "id" | "created_at">
 
-// ✅ এক্সটার্নাল লিংকে https:// না থাকলে স্বয়ংক্রিয়ভাবে যোগ করার নিরাপদ ফাংশন
+// ⭐ ক্লাব স্লাইডার ও ট্রানজিশন কনফিগ টাইপ ⭐
+export type ClubTransitionDirection = 'right-to-left' | 'left-to-right' | 'bottom-to-top' | 'top-to-bottom'
+export type ClubTransitionEffect = 'slide' | 'fade' | 'zoom' | 'flip'
+
+export interface ClubCarouselConfig {
+  enabled: boolean
+  direction: ClubTransitionDirection
+  effect: ClubTransitionEffect
+  duration_sec: number // স্লাইড পরিবর্তনের সময়কাল (যেমন: ৪ সেকেন্ড)
+  anim_speed_ms: number // অ্যানিমেশনের মসৃণতার গতি (যেমন: ৬০০ms)
+  pause_on_hover: boolean
+  cards_desktop: number // ১, ২, ৩ বা ৪টি কার্ড পাশাপাশি
+  show_arrows: boolean
+  show_dots: boolean
+}
+
+export const DEFAULT_CLUB_CAROUSEL_CONFIG: ClubCarouselConfig = {
+  enabled: true,
+  direction: 'right-to-left',
+  effect: 'slide',
+  duration_sec: 4,
+  anim_speed_ms: 600,
+  pause_on_hover: true,
+  cards_desktop: 3,
+  show_arrows: true,
+  show_dots: true,
+}
+
+const CAROUSEL_CONFIG_KEY = "club_carousel_config"
+
 export function safeExternalUrl(url?: string | null): string {
   if (!url || !url.trim()) return ""
   const trimmed = url.trim()
@@ -60,7 +88,6 @@ export function safeExternalUrl(url?: string | null): string {
   return `https://${trimmed}`
 }
 
-// একাধিক মিডিয়া পার্স ও কনভার্ট করার ফাংশন
 export function parseActivityMedia(raw?: string | null): ClubMediaItem[] {
   if (!raw || !raw.trim()) return []
   const str = raw.trim()
@@ -150,4 +177,40 @@ export async function getClubNewsPosts(clubId: string) {
   } catch {
     return []
   }
+}
+
+/* ==================== স্লাইডার কনফিগারেশন ফাংশনসমূহ ==================== */
+export async function getClubCarouselConfig(): Promise<ClubCarouselConfig> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/app_config?select=value&key=eq.${CAROUSEL_CONFIG_KEY}`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return DEFAULT_CLUB_CAROUSEL_CONFIG
+    const rows = await res.json()
+    if (Array.isArray(rows) && rows[0]?.value) {
+      return { ...DEFAULT_CLUB_CAROUSEL_CONFIG, ...JSON.parse(rows[0].value) }
+    }
+    return DEFAULT_CLUB_CAROUSEL_CONFIG
+  } catch {
+    return DEFAULT_CLUB_CAROUSEL_CONFIG
+  }
+}
+
+export async function saveClubCarouselConfig(token: string, config: ClubCarouselConfig) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/app_config`, {
+      method: "POST",
+      headers: {
+        apikey: SB_KEY,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify({
+        key: CAROUSEL_CONFIG_KEY,
+        value: JSON.stringify(config),
+      }),
+    })
+  )
 }
