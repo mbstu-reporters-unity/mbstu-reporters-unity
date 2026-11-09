@@ -10,6 +10,7 @@ import {
 } from "../../lib/sb"
 import type { Post, PendingComment, Profile } from "../../lib/sb"
 import { getCampusClubs, type ClubItem } from "../../lib/clubs"
+import { getCommunityPages, type CommunityPage } from "../../lib/pages"
 import LeadershipManager from "./leadership-manager"
 import NoticeManager from "./notice-manager"
 import HeroManager from "./hero-manager"
@@ -24,6 +25,7 @@ import FacultyManager from "./faculty-manager"
 import AssociationManager from "./association-manager"
 import SocialSiteManager from "./social-site-manager"
 import AdministrationManager from "./administration-manager"
+import CommunityPageManager from "./community-page-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -37,6 +39,7 @@ type Tab =
   | "posts" | "comments" | "reporters" | "profile" | "leaders" | "notices"
   | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "directors" | "categories" 
   | "clubs" | "faculties" | "associations" | "social_sites" | "administration"
+  | "community_pages"
 
 export type PostMediaItem = {
   id?: string
@@ -81,6 +84,7 @@ export default function AdminPage() {
   const [waiting, setWaiting] = useState<Profile[]>([])
   const [active, setActive] = useState<Profile[]>([])
   const [availableClubs, setAvailableClubs] = useState<ClubItem[]>([])
+  const [communityPages, setCommunityPages] = useState<CommunityPage[]>([])
 
   const [editId, setEditId] = useState<string | null>(null)
   const [title, setTitle] = useState("")
@@ -88,6 +92,7 @@ export default function AdminPage() {
   const [body, setBody] = useState("")
   const [category, setCategory] = useState(CATS[0])
   const [selectedClubId, setSelectedClubId] = useState("")
+  const [selectedPageId, setSelectedPageId] = useState("")
   const [author, setAuthor] = useState("")
   const [oldImage, setOldImage] = useState<string | null>(null)
   const [videoFile, setVideoFile] = useState<File | null>(null)
@@ -149,6 +154,9 @@ export default function AdminPage() {
       
       const clubs = await getCampusClubs(t)
       setAvailableClubs(clubs)
+
+      const pages = await getCommunityPages()
+      setCommunityPages(pages)
 
       if (profile?.role === "admin" && profile.approved) {
         const [c, w, a] = await Promise.all([
@@ -307,7 +315,7 @@ export default function AdminPage() {
     setLinkUrl("")
     setMediaItems([])
     setEditId(null); setTitle(""); setHeading(""); setBody("")
-    setCategory(CATS[0]); setSelectedClubId(""); setAuthor(me?.full_name || ""); setOldImage(null)
+    setCategory(CATS[0]); setSelectedClubId(""); setSelectedPageId(""); setAuthor(me?.full_name || ""); setOldImage(null)
     setOldVideo(null); setVideoFile(null)
     imgs.reset()
   }
@@ -342,6 +350,7 @@ export default function AdminPage() {
         body: body.trim(),
         category,
         club_id: finalClubId,
+        page_id: selectedPageId || null,
         author: author.trim() || me?.full_name || null,
         image_url: cover,
         video_url: vurl,
@@ -377,6 +386,7 @@ export default function AdminPage() {
     setBody(p.body || "")
     setCategory(p.category || CATS[0])
     setSelectedClubId((p as any).club_id || "")
+    setSelectedPageId((p as any).page_id || "")
     setAuthor(p.author || "")
     setOldImage(p.image_url)
     setOldVideo(p.video_url || null)
@@ -469,7 +479,7 @@ export default function AdminPage() {
 
   const canManage = (p: Post) => me.role === "admin" || me.role === "moderator" || p.user_id === me.id
   const tabCls = (name: string) =>
-    `flex-1 rounded-xl py-2 text-sm font-semibold cursor-pointer ${tab === name ? "bg-green-700 text-white shadow" : "bg-white border text-gray-700 hover:bg-gray-50"}`
+    `flex-1 rounded-xl py-2 px-3 text-sm font-semibold cursor-pointer whitespace-nowrap ${tab === name ? "bg-green-700 text-white shadow" : "bg-white border text-gray-700 hover:bg-gray-50"}`
 
   const isClubCategory = category.includes("ক্লাব") || category.includes("Club")
 
@@ -501,7 +511,6 @@ export default function AdminPage() {
           {isAdmin && (
             <>
               <button onClick={() => setTab("hero")} className={tabCls("hero")}>হিরো</button>
-              {/* ⭐ নতুন হিরো ব্যানার ট্যাব ⭐ */}
               <button onClick={() => setTab("hero_banner")} className={tabCls("hero_banner")}>হিরো ব্যানার</button>
               <button onClick={() => setTab("ticker")} className={tabCls("ticker")}>টিকার</button>
               <button onClick={() => setTab("comments")} className={tabCls("comments")}>কমেন্ট ({pending.length})</button>
@@ -515,6 +524,8 @@ export default function AdminPage() {
               <button onClick={() => setTab("associations")} className={tabCls("associations")}>অন্যান্য সমিতি</button>
               <button onClick={() => setTab("social_sites")} className={tabCls("social_sites")}>সোশ্যাল সাইট</button>
               <button onClick={() => setTab("administration")} className={tabCls("administration")}>প্রশাসন</button>
+              {/* ⭐ ফেসবুক স্টাইল পেজ ম্যানেজার ট্যাব ⭐ */}
+              <button onClick={() => setTab("community_pages")} className={tabCls("community_pages")}>পেজসমূহ</button>
               <button onClick={() => setTab("limits")} className={tabCls("limits")}>হোম সেটিং</button>
             </>
           )}
@@ -533,6 +544,25 @@ export default function AdminPage() {
               <select className={inp} value={category} onChange={(e) => setCategory(e.target.value)}>
                 {(cats.includes(category) ? cats : [...cats, category]).map((c) => <option key={c}>{c}</option>)}
               </select>
+
+              {/* ⭐ নির্দিষ্ট পেজে পোস্ট করার ঐচ্ছিক ড্রপডাউন (ফেসবুক পেজের মতো টাইমলাইনে দেখাবে) ⭐ */}
+              <div className="space-y-1.5 rounded-xl border border-blue-300 bg-blue-50/60 p-3">
+                <label className="text-xs font-bold text-blue-950 block">
+                  📄 নির্দিষ্ট পেজে পোস্ট করুন (ঐচ্ছিক — ফেসবুক পেজের মতো টাইমলাইনে দেখাবে):
+                </label>
+                <select
+                  className={inp}
+                  value={selectedPageId}
+                  onChange={(e) => setSelectedPageId(e.target.value)}
+                >
+                  <option value="">— কোনো নির্দিষ্ট পেজ নয় (সাধারণ সংবাদ) —</option>
+                  {communityPages.map((cp) => (
+                    <option key={cp.id} value={cp.id}>
+                      {cp.name} (/p/{cp.slug})
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {isClubCategory && (
                 <div className="space-y-1.5 rounded-xl border border-green-600 bg-green-50/60 p-3">
@@ -729,10 +759,7 @@ export default function AdminPage() {
 
         {tab === "notices" && <NoticeManager token={token} isAdmin={!!isAdmin} />}
         {tab === "hero" && isAdmin && <HeroManager token={token} shrink={shrink} />}
-        
-        {/* ⭐ নতুন হিরো ব্যানার ম্যানেজার ভিউ ⭐ */}
         {tab === "hero_banner" && isAdmin && <HeroBannerManager token={token} shrink={shrink} />}
-
         {tab === "ticker" && isAdmin && <TickerManager token={token} author={me.full_name} />}
         {tab === "students" && isAdmin && <StudentManager token={token} shrink={shrink} />}
         {tab === "clubs" && isAdmin && <ClubManager token={token} />}
@@ -740,6 +767,10 @@ export default function AdminPage() {
         {tab === "associations" && isAdmin && <AssociationManager token={token} shrink={shrink} />}
         {tab === "social_sites" && isAdmin && <SocialSiteManager token={token} shrink={shrink} />}
         {tab === "administration" && isAdmin && <AdministrationManager token={token} shrink={shrink} />}
+        
+        {/* ⭐ ফেসবুক স্টাইল পেজ ম্যানেজার ভিউ ⭐ */}
+        {tab === "community_pages" && isAdmin && <CommunityPageManager token={token} shrink={shrink} />}
+        
         {tab === "limits" && isAdmin && <SectionLimits token={token} cats={cats} />}
         {tab === "directors" && isAdmin && <DirectorManager token={token} members={active} onChanged={() => refresh(token, me)} />}
         {tab === "categories" && isAdmin && <CategoryManager token={token} onChanged={() => refresh(token, me)} />}
