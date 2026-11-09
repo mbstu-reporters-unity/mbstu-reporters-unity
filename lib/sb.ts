@@ -8,7 +8,7 @@ export type Post = {
   heading: string | null
   body: string | null
   category: string | null
-  club_id?: string | null // ✅ ক্লাব আইডি যুক্ত করা হয়েছে
+  club_id?: string | null
   author: string | null
   image_url: string | null
   video_url: string | null
@@ -21,11 +21,13 @@ export type Post = {
 
 export type PostInput = Omit<Post, "id" | "created_at" | "user_id">
 
+/* ⭐ রিপ্লাইয়ের সুবিধার্থে parent_id ফিল্ড যুক্ত করা হয়েছে ⭐ */
 export type PublicComment = {
   id: string
   name: string | null
   message: string
   created_at: string
+  parent_id?: string | null
 }
 
 export type PendingComment = PublicComment & {
@@ -278,13 +280,13 @@ export async function uploadVideo(token: string, file: File): Promise<string> {
   return `${SB_URL}/storage/v1/object/public/${BUCKET}/${name}`
 }
 
-/* ---------- কমেন্ট ও পাসওয়ার্ড রিকভারি ---------- */
+/* ---------- কমেন্ট ও রিপ্লাই ব্যবস্থাপনা ---------- */
 
 export async function getApprovedComments(postId: string): Promise<PublicComment[]> {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/comments?select=id,name,message,created_at&post_id=eq.${encodeURIComponent(postId)}&approved=eq.true&order=created_at.asc`,
-      { headers: hdr(), next: { revalidate: 30 } }
+      `${SB_URL}/rest/v1/comments?select=id,name,message,created_at,parent_id&post_id=eq.${encodeURIComponent(postId)}&approved=eq.true&order=created_at.asc`,
+      { headers: hdr(), next: { revalidate: 15 } }
     )
     if (!res.ok) return []
     return await res.json()
@@ -293,12 +295,17 @@ export async function getApprovedComments(postId: string): Promise<PublicComment
   }
 }
 
-export async function addComment(postId: string, name: string, message: string) {
+export async function addComment(postId: string, name: string, message: string, parentId?: string | null) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/comments`, {
       method: "POST",
       headers: { ...hdr(undefined, true), Prefer: "return=minimal" },
-      body: JSON.stringify({ post_id: postId, name, message }),
+      body: JSON.stringify({ 
+        post_id: postId, 
+        name: name || null, 
+        message,
+        parent_id: parentId || null
+      }),
     })
   )
 }
@@ -764,7 +771,6 @@ export async function removeAllImages(token: string, type: ParentType, id: strin
   )
 }
 
-/* নতুন সংবাদ তৈরি করে তার id ফেরত দেয় (ছবি জোড়ার জন্য দরকার) */
 export async function createPostReturningId(token: string, data: PostInput): Promise<string | null> {
   const res = await ok(
     await fetch(`${SB_URL}/rest/v1/posts?select=id`, {
@@ -877,7 +883,6 @@ export async function saveLayout(token: string, type: ParentType, id: string, la
   )
 }
 
-/* স্টুডেন্ট কর্নারের লেখা সেভ করে id ফেরত দেয় (ছবি জোড়ার জন্য) */
 export async function saveStudentItemReturningId(
   token: string,
   id: string | null,
