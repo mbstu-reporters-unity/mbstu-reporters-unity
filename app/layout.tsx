@@ -7,7 +7,7 @@ import { GlobalTextStudio } from '@/components/portal/global-text-studio'
 
 const hind = Hind_Siliguri({
   subsets: ['bengali', 'latin'],
-  weight: ['500', '600', '700'], // ৪00 সরিয়ে 500 কে বেস করা হয়েছে যাতে কোনো লেখা চিকন না হয়
+  weight: ['500', '600', '700'],
   variable: '--font-hind',
   display: 'swap',
 })
@@ -95,9 +95,12 @@ export default function RootLayout({
   return (
     <html lang="bn" suppressHydrationWarning className={`${hind.variable} ${notoSerif.variable}`}>
       <head>
+        {/* ⭐ ডাটাবেজ ও সিডিএন সংযোগ দ্রুত করার জন্য Preconnect ও DNS-Prefetch ⭐ */}
+        <link rel="preconnect" href="https://pdualebabnvkoaqaqcut.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://pdualebabnvkoaqaqcut.supabase.co" />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      {/* ⭐ font-medium যোগ করায় পুরো সাইটের বডি টেক্সট এখন থেকে ভরাট ও নিখুঁত থাকবে ⭐ */}
       <body className="antialiased font-sans font-medium">
         <script
           type="application/ld+json"
