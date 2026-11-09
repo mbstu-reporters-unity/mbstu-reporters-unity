@@ -9,12 +9,12 @@ import RichGallery from '@/components/portal/rich-gallery'
 import { FormattedText } from '@/components/portal/formatted-text'
 import { UniversalMediaEmbed } from '@/components/portal/universal-media-embed'
 
-export const dynamic = 'force-dynamic'
+// ⭐ গুগল সার্চ থেকে বিদ্যুৎগতিতে পেজ লোড হওয়ার জন্য ISR ক্যাশিং (৬০ সেকেন্ড পর ব্যাকগ্রাউন্ডে আপডেট হবে) ⭐
+export const revalidate = 60
 
 const BASE = 'https://mbsturu.vercel.app'
 const loadPost = cache(getPost)
 
-// ⭐ বাংলা মাসের নাম সহ তারিখ রূপান্তরকারী ফাংশন ⭐
 function formatBanglaDate(val?: string | null): string {
   if (!val) return ''
   if (/জানুয়ারি|ফেব্রুয়ারি|মার্চ|এপ্রিল|মে|জুন|জুলাই|আগস্ট|সেপ্টেম্বর|অক্টোবর|নভেম্বর|ডিসেম্বর/.test(val)) {
@@ -149,7 +149,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         {/* আপলোড করা ফটো গ্যালারি বা কভার ফটো */}
         <RichGallery items={items} layout={layout} />
 
-        {/* আপলোড করা নিজস্ব এমপি৪ ভিডিও (যদি থাকে) */}
+        {/* নিজস্ব ভিডিও (যদি থাকে) */}
         {post.video_url && (
           <video src={post.video_url} controls playsInline className="w-full rounded-2xl bg-black shadow-md" />
         )}
@@ -165,7 +165,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         {/* রিঅ্যাকশন ও সোশ্যাল শেয়ার বার */}
         <ReactionBar postId={id} title={post.title} />
 
-        {/* ⭐ ৫. পূর্ণাঙ্গ মন্তব্য ও রিপ্লাই থ্রেড সেকশন ⭐ */}
+        {/* ৫. পূর্ণাঙ্গ মন্তব্য ও রিপ্লাই থ্রেড সেকশন */}
         <CommentForm postId={id} initialComments={comments} />
 
       </article>
