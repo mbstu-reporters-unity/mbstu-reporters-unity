@@ -20,7 +20,7 @@ import {
   type ClubTransitionEffect,
 } from "../../lib/clubs"
 import { uploadImage, uploadVideo } from "../../lib/sb"
-import { Sliders, PlusCircle, ArrowRight, ArrowLeft, ArrowUp, ArrowDown } from "lucide-react"
+import { Sliders, PlusCircle, ArrowRight, ArrowLeft, ArrowUp, ArrowDown, Upload, Trash2 } from "lucide-react"
 
 const MAX_VIDEO_MB = 50
 
@@ -144,6 +144,7 @@ export default function ClubManager({ token }: { token: string }) {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
+  // ⭐ কার্যক্রমের মিডিয়া হ্যান্ডলার (আনলিমিটেড ব্যাচ আপলোড সহ) ⭐
   function addActivityMedia() {
     setActivityMediaList([...activityMediaList, { title: "", subtitle: "", description: "", url: "" }])
   }
@@ -155,6 +156,40 @@ export default function ClubManager({ token }: { token: string }) {
   function removeActivityMedia(index: number) {
     setActivityMediaList(activityMediaList.filter((_, i) => i !== index))
   }
+
+  // একাধিক ছবি/ভিডিও একসাথে আনলিমিটেড আপলোড করার মেথড
+  async function batchUploadActivityFiles(files: File[]) {
+    if (files.length === 0) return
+    setBusy(true)
+    const newItems: ClubMediaItem[] = []
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        setMsg(`মিডিয়া আপলোড হচ্ছে (${i + 1}/${files.length})...`)
+        let uploaded = ""
+        if (file.type.startsWith("video/")) {
+          if (file.size > MAX_VIDEO_MB * 1024 * 1024) continue
+          uploaded = await uploadVideo(token, file)
+        } else {
+          uploaded = await uploadImage(token, await shrink(file))
+        }
+        if (uploaded) {
+          newItems.push({
+            title: "",
+            subtitle: "",
+            description: "",
+            url: uploaded,
+          })
+        }
+      }
+      setActivityMediaList([...activityMediaList, ...newItems])
+      setMsg(`✅ ${newItems.length}টি মিডিয়া সফলভাবে যুক্ত হয়েছে`)
+    } catch {
+      setMsg("❌ কিছু ফাইল আপলোড ব্যর্থ হয়েছে")
+    }
+    setBusy(false)
+  }
+
   async function uploadActivityMediaFile(index: number, file: File) {
     if (file.type.startsWith("video/") && file.size > MAX_VIDEO_MB * 1024 * 1024) {
       setMsg(`❌ ভিডিও ${MAX_VIDEO_MB} MB-এর বেশি হতে পারবে না`)
@@ -175,6 +210,7 @@ export default function ClubManager({ token }: { token: string }) {
     }
   }
 
+  // কমিটি হ্যান্ডলার
   function addMember() {
     setMembers([...members, { name: "", role: "", photo_url: "" }])
   }
@@ -197,6 +233,7 @@ export default function ClubManager({ token }: { token: string }) {
     setMembers(members.filter((_, i) => i !== index))
   }
 
+  // ⭐ প্রতিবেদন হ্যান্ডলার (আনলিমিটেড ব্যাচ আপলোড সহ) ⭐
   function addReport() {
     setReports([
       ...reports,
@@ -235,6 +272,41 @@ export default function ClubManager({ token }: { token: string }) {
     const currentList = (reports[reportIdx].media_items || []).filter((_, i) => i !== mediaIdx)
     updateReport(reportIdx, "media_items", currentList)
   }
+
+  // নির্দিষ্ট প্রতিবেদনের মধ্যে একাধিক ছবি/ভিডিও একসাথে আনলিমিটেড আপলোড
+  async function batchUploadReportMediaFiles(reportIdx: number, files: File[]) {
+    if (files.length === 0) return
+    setBusy(true)
+    const newItems: ClubMediaItem[] = []
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        setMsg(`প্রতিবেদনের মিডিয়া আপলোড হচ্ছে (${i + 1}/${files.length})...`)
+        let uploaded = ""
+        if (file.type.startsWith("video/")) {
+          if (file.size > MAX_VIDEO_MB * 1024 * 1024) continue
+          uploaded = await uploadVideo(token, file)
+        } else {
+          uploaded = await uploadImage(token, await shrink(file))
+        }
+        if (uploaded) {
+          newItems.push({
+            title: "",
+            subtitle: "",
+            description: "",
+            url: uploaded,
+          })
+        }
+      }
+      const currentList = reports[reportIdx].media_items || []
+      updateReport(reportIdx, "media_items", [...currentList, ...newItems])
+      setMsg(`✅ প্রতিবেদনে ${newItems.length}টি মিডিয়া যুক্ত হয়েছে`)
+    } catch {
+      setMsg("❌ ফাইল আপলোড ব্যর্থ হয়েছে")
+    }
+    setBusy(false)
+  }
+
   async function uploadReportMediaFile(reportIdx: number, mediaIdx: number, file: File) {
     if (file.type.startsWith("video/") && file.size > MAX_VIDEO_MB * 1024 * 1024) {
       setMsg(`❌ ভিডিও ${MAX_VIDEO_MB} MB-এর বেশি হতে পারবে না`)
@@ -359,7 +431,6 @@ export default function ClubManager({ token }: { token: string }) {
     setBusy(false)
   }
 
-  // ⭐ স্লাইডার কনফিগারেশন সংরক্ষণ হ্যান্ডলার ⭐
   async function handleSaveCarouselConfig() {
     setSliderBusy(true)
     setSliderMsg("")
@@ -411,7 +482,6 @@ export default function ClubManager({ token }: { token: string }) {
             </p>
           </div>
 
-          {/* স্লাইডার চালু/বন্ধ */}
           <label className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border cursor-pointer">
             <span className="text-xs font-bold text-gray-800">
               স্বয়ংক্রিয় স্লাইডার/ট্রানজিশন সক্রিয় রাখুন:
@@ -424,7 +494,6 @@ export default function ClubManager({ token }: { token: string }) {
             />
           </label>
 
-          {/* ট্রানজিশনের দিক (Direction) */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-700 block">
               ১. ট্রানজিশনের দিক (Transition Direction):
@@ -480,7 +549,6 @@ export default function ClubManager({ token }: { token: string }) {
             </div>
           </div>
 
-          {/* ট্রানজিশনের ধরন (Effect) */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-700 block">
               ২. ট্রানজিশনের অ্যানিমেশন ইফেক্ট (Animation Effect):
@@ -508,7 +576,6 @@ export default function ClubManager({ token }: { token: string }) {
             </div>
           </div>
 
-          {/* স্লাইড পরিবর্তনের বিরতি ও অ্যানিমেশন স্পিড */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border text-xs">
             <div className="space-y-1">
               <div className="flex justify-between items-center">
@@ -526,7 +593,6 @@ export default function ClubManager({ token }: { token: string }) {
                 onChange={(e) => setSliderCfg({ ...sliderCfg, duration_sec: Number(e.target.value) })}
                 className="w-full accent-green-700 cursor-pointer"
               />
-              <span className="text-[10px] text-gray-400">২ সে. (দ্রুত) থেকে ১৫ সে. (ধীর)</span>
             </div>
 
             <div className="space-y-1">
@@ -545,11 +611,9 @@ export default function ClubManager({ token }: { token: string }) {
                 onChange={(e) => setSliderCfg({ ...sliderCfg, anim_speed_ms: Number(e.target.value) })}
                 className="w-full accent-green-700 cursor-pointer"
               />
-              <span className="text-[10px] text-gray-400">৩০০ms (তাৎক্ষণিক) থেকে ১৫০০ms (খুব মসৃণ)</span>
             </div>
           </div>
 
-          {/* অতিরিক্ত নিয়ন্ত্রণ */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div>
               <label className="text-xs font-semibold text-gray-700 block mb-1">
@@ -683,22 +747,43 @@ export default function ClubManager({ token }: { token: string }) {
             <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ বা সাম্প্রতিক কার্যক্রম (বাংলা)" value={activityBn} onChange={(e) => setActivityBn(e.target.value)} />
             <input className={inp} placeholder="কার্যক্রমের তারিখ (যেমন: 27 Oct 2026)" value={date} onChange={(e) => setDate(e.target.value)} />
 
-            {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া */}
+            {/* ⭐ পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া (আনলিমিটেড ব্যাচ আপলোড সহ) ⭐ */}
             <div className="space-y-3 rounded-2xl border-2 border-blue-200 bg-blue-50/50 p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="text-xs font-bold text-blue-950">
                     🎥 পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া (ছবি, ভিডিও, লিঙ্ক):
                   </p>
                   <p className="text-[11px] text-blue-800">ভিডিও সর্বোচ্চ ৫০ MB পর্যন্ত হতে পারবে।</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={addActivityMedia}
-                  className="text-xs bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-xl px-3 py-1.5 shadow shrink-0 cursor-pointer"
-                >
-                  + মিডিয়া যোগ করুন
-                </button>
+                
+                {/* ⭐ নতুন: একসাথে একাধিক ছবি/ভিডিও আনলিমিটেড আপলোড করার বাটন ⭐ */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <label className="text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl px-3 py-1.5 shadow flex items-center gap-1 cursor-pointer">
+                    <Upload className="size-3.5" />
+                    <span>📁 একসাথে একাধিক ফাইল যোগ (আনলিমিটেড)</span>
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          batchUploadActivityFiles(Array.from(e.target.files))
+                          e.target.value = ""
+                        }
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={addActivityMedia}
+                    className="text-xs bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-xl px-2.5 py-1.5 shadow cursor-pointer"
+                  >
+                    + লিংক বক্স
+                  </button>
+                </div>
               </div>
 
               {activityMediaList.map((m, idx) => (
@@ -708,9 +793,9 @@ export default function ClubManager({ token }: { token: string }) {
                     <button
                       type="button"
                       onClick={() => removeActivityMedia(idx)}
-                      className="text-red-600 font-semibold hover:underline cursor-pointer"
+                      className="text-red-600 font-semibold hover:underline cursor-pointer flex items-center gap-1"
                     >
-                      ✕ সরান
+                      <Trash2 className="size-3" /> সরান
                     </button>
                   </div>
 
@@ -743,7 +828,7 @@ export default function ClubManager({ token }: { token: string }) {
                       onChange={(e) => updateActivityMedia(idx, "url", e.target.value)}
                     />
                     <div className="flex items-center gap-2 pt-1">
-                      <span className="text-[10px] text-gray-500">অথবা ফাইল আপলোড:</span>
+                      <span className="text-[10px] text-gray-500">ফাইল পরিবর্তন:</span>
                       <input
                         type="file"
                         accept="image/*,video/*"
@@ -814,6 +899,7 @@ export default function ClubManager({ token }: { token: string }) {
               ))}
             </div>
 
+            {/* ⭐ ক্লাব প্রতিবেদন / Reports (আনলিমিটেড ব্যাচ আপলোড সহ) ⭐ */}
             <div className="rounded-2xl border p-3.5 bg-gray-50 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -857,18 +943,39 @@ export default function ClubManager({ token }: { token: string }) {
                     <input className={smallInp} placeholder="প্রতিবেদকের নাম" value={r.reporter} onChange={(e) => updateReport(idx, "reporter", e.target.value)} />
                   </div>
 
+                  {/* ⭐ প্রতিবেদনের মিডিয়া সেকশন — আনলিমিটেড মাল্টি-ফাইল আপলোড ⭐ */}
                   <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-2.5 space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
                       <span className="text-[11px] font-bold text-gray-700">
                         📷 এই প্রতিবেদনের ছবি/ভিডিও/লিংক ({r.media_items?.length || 0}):
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => addReportMedia(idx)}
-                        className="text-[11px] bg-emerald-700 text-white px-2 py-0.5 rounded-lg font-semibold hover:bg-emerald-800 cursor-pointer"
-                      >
-                        + মিডিয়া যোগ
-                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        <label className="text-[11px] bg-emerald-700 hover:bg-emerald-800 text-white px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow cursor-pointer">
+                          <Upload className="size-3" />
+                          <span>📁 একাধিক ফাইল যোগ (আনলিমিটেড)</span>
+                          <input
+                            type="file"
+                            accept="image/*,video/*"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files.length > 0) {
+                                batchUploadReportMediaFiles(idx, Array.from(e.target.files))
+                                e.target.value = ""
+                              }
+                            }}
+                          />
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => addReportMedia(idx)}
+                          className="text-[11px] bg-blue-700 hover:bg-blue-800 text-white px-2 py-1 rounded-lg font-semibold cursor-pointer"
+                        >
+                          + লিংক
+                        </button>
+                      </div>
                     </div>
 
                     {r.media_items?.map((rm, rmi) => (
@@ -882,7 +989,7 @@ export default function ClubManager({ token }: { token: string }) {
                         <textarea className={smallInp} rows={1} placeholder="মিডিয়ার বিস্তারিত বিবরণ (ঐচ্ছিক)" value={rm.description || ""} onChange={(e) => updateReportMedia(idx, rmi, "description", e.target.value)} />
                         <input className={smallInp} placeholder="ভিডিও/ছবি/ইউটিউব/ফেসবুক লিংক (https://...)" value={rm.url || ""} onChange={(e) => updateReportMedia(idx, rmi, "url", e.target.value)} />
                         <div className="flex items-center gap-2 pt-0.5">
-                          <span className="text-[10px] text-gray-400">অথবা ফাইল:</span>
+                          <span className="text-[10px] text-gray-400">ফাইল পরিবর্তন:</span>
                           <input
                             type="file"
                             accept="image/*,video/*"
