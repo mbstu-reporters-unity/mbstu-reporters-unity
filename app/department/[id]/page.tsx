@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, BookOpen, CalendarDays, Mail, MapPin, Megaphone, Phone, Users, Share2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, CalendarDays, Mail, MapPin, Megaphone, Phone, Users, Share2, Award } from 'lucide-react'
 import { getDepartmentById, getFaculties, getTeachers, getDeptNotices, getDeptEvents } from '@/lib/faculties'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
@@ -102,7 +102,7 @@ export default async function DepartmentDetailPage({
             </div>
           </div>
 
-          {/* শিক্ষকবৃন্দ */}
+          {/* শিক্ষকবৃন্দ (চেয়ারম্যান হাইলাইট ও ক্লিকেবল কল/মেইল) */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b border-border pb-2">
               <Users className="size-5 text-brand" />
@@ -112,7 +112,18 @@ export default async function DepartmentDetailPage({
             {teachers.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {teachers.map((t) => (
-                  <div key={t.id} className="bg-white rounded-2xl p-4 shadow-sm border border-border flex items-start gap-3.5 hover:border-brand transition-all">
+                  <div
+                    key={t.id}
+                    className={`bg-white rounded-2xl p-4 shadow-sm border transition-all flex items-start gap-3.5 relative ${
+                      t.is_chairman ? 'border-amber-400 bg-amber-50/20 shadow-md ring-1 ring-amber-300' : 'border-border hover:border-brand'
+                    }`}
+                  >
+                    {t.is_chairman && (
+                      <span className="absolute top-2 right-2 bg-amber-500 text-white font-bold text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+                        <Award className="size-3" /> বিভাগীয় প্রধান
+                      </span>
+                    )}
+
                     {t.photo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={t.photo_url} alt={t.name} className="size-16 rounded-2xl object-cover border shrink-0 bg-gray-50 shadow-inner" />
@@ -121,15 +132,32 @@ export default async function DepartmentDetailPage({
                         {t.name.charAt(0)}
                       </div>
                     )}
+
                     <div className="min-w-0 flex-1 space-y-1">
-                      <h3 className="font-bold text-sm text-navy truncate">{t.name}</h3>
+                      <h3 className="font-bold text-sm text-navy truncate pr-16">{t.name}</h3>
                       <p className="text-xs font-semibold text-brand truncate">{t.designation}</p>
                       {t.qualifications && <p className="text-[11px] text-gray-500 line-clamp-1">{t.qualifications}</p>}
                       {t.bio && <p className="text-[11px] text-gray-600 line-clamp-2">{t.bio}</p>}
+                      
+                      {/* ক্লিকেবল কল ও ইমেইল */}
                       {(t.email || t.phone) && (
-                        <div className="pt-1 text-[11px] text-gray-500 space-y-0.5">
-                          {t.email && <p className="flex items-center gap-1 truncate"><Mail className="size-3 text-gold" /> {t.email}</p>}
-                          {t.phone && <p className="flex items-center gap-1 truncate"><Phone className="size-3 text-gold" /> {t.phone}</p>}
+                        <div className="pt-1.5 flex flex-wrap gap-2 text-[11px]">
+                          {t.phone && (
+                            <a
+                              href={`tel:${t.phone}`}
+                              className="inline-flex items-center gap-1 rounded bg-green-50 text-green-800 px-2 py-0.5 border border-green-200 hover:bg-green-100 font-semibold"
+                            >
+                              <Phone className="size-3 text-green-700" /> {t.phone}
+                            </a>
+                          )}
+                          {t.email && (
+                            <a
+                              href={`mailto:${t.email}`}
+                              className="inline-flex items-center gap-1 rounded bg-slate-50 text-slate-800 px-2 py-0.5 border border-slate-200 hover:bg-slate-100 font-semibold truncate max-w-[170px]"
+                            >
+                              <Mail className="size-3 text-gold shrink-0" /> <span className="truncate">{t.email}</span>
+                            </a>
+                          )}
                         </div>
                       )}
                     </div>
@@ -179,7 +207,7 @@ export default async function DepartmentDetailPage({
                         </div>
                       )}
 
-                      {/* সরাসরি শেয়ার বাটন (কোনো এক্সটার্নাল ফাইল ছাড়াই কাজ করবে) */}
+                      {/* সোশ্যাল শেয়ার বাটন */}
                       <div className="flex items-center gap-2 pt-2 border-t border-border/60 text-[11px]">
                         <span className="text-gray-500 font-medium flex items-center gap-1">
                           <Share2 className="size-3" /> শেয়ার:
@@ -229,7 +257,7 @@ export default async function DepartmentDetailPage({
                         <p className="text-xs text-gray-600 whitespace-pre-line leading-relaxed">{ev.details}</p>
                       )}
 
-                      {/* ইভেন্টের একাধিক ছবি */}
+                      {/* ইভেন্টের ছবি */}
                       {ev.image_urls && ev.image_urls.length > 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-1">
                           {ev.image_urls.map((img, i) => (
@@ -241,7 +269,7 @@ export default async function DepartmentDetailPage({
                         </div>
                       )}
 
-                      {/* সরাসরি শেয়ার বাটন */}
+                      {/* সোশ্যাল শেয়ার বাটন */}
                       <div className="flex items-center gap-2 pt-2 border-t border-border/60 text-[11px]">
                         <span className="text-gray-500 font-medium flex items-center gap-1">
                           <Share2 className="size-3" /> শেয়ার:
