@@ -50,19 +50,20 @@ export const clubIcons: Record<string, LucideIcon> = {
 }
 
 function formatClub(c: ClubItem): Club {
-  const dynamicReports = c.reports && c.reports.length > 0
-    ? c.reports.map((r) => ({
-        title: r.title,
-        date: r.date || 'Recent',
-        reporter: r.reporter || 'MBSTU Reporters Unity',
-      }))
-    : [
-        {
-          title: c.activity_bn || c.activity || c.name,
-          date: c.date || 'Recent',
-          reporter: 'MBSTU Reporters Unity',
-        },
-      ]
+  const dynamicReports =
+    c.reports && c.reports.length > 0
+      ? c.reports.map((r) => ({
+          title: r.title,
+          date: r.date || 'Recent',
+          reporter: r.reporter || 'MBSTU Reporters Unity',
+        }))
+      : [
+          {
+            title: c.activity_bn || c.activity || c.name,
+            date: c.date || 'Recent',
+            reporter: 'MBSTU Reporters Unity',
+          },
+        ]
 
   return {
     id: c.id,
@@ -84,7 +85,7 @@ export function ClubNews() {
   const [selected, setSelected] = useState<Club | null>(null)
   const [config, setConfig] = useState<ClubCarouselConfig>(DEFAULT_CLUB_CAROUSEL_CONFIG)
 
-  // স্লাইডার ইন্ডেক্স ও কন্ট্রোল
+  // স্লাইডার ইনডেক্স ও প্লে/পজ কন্ট্রোল
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [animKey, setAnimKey] = useState(0)
@@ -126,7 +127,9 @@ export function ClubNews() {
 
       const map: Record<string, ClubItem> = {}
       if (items) {
-        items.forEach((it) => { map[it.id] = it })
+        items.forEach((it) => {
+          map[it.id] = it
+        })
       }
       setDbMap(map)
 
@@ -202,7 +205,7 @@ export function ClubNews() {
 
   // ⭐ শুধুমাত্র লম্বা পুশ (Deliberate Long Push) এ পরিবর্তন হওয়ার হ্যান্ডলার ⭐
   const handleTouchStart = (e: React.TouchEvent) => {
-    // পড়ার জন্য টাচ করার সাথে সাথে অটো-স্লাইড থামিয়ে রাখা
+    // পড়ার জন্য স্পর্শ করার সাথে সাথে অটো-স্লাইড থামিয়ে রাখা
     setIsPaused(true)
     if (touchResumeTimer.current) clearTimeout(touchResumeTimer.current)
 
@@ -211,7 +214,7 @@ export function ClubNews() {
   }
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    // টাচ ছেড়ে দেওয়ার পর পাঠক যাতে নিশ্চিন্তে পুরো লেখা পড়তে পারেন, সেজন্য অন্তত ৮ সেকেন্ড থেমে থাকবে
+    // টাচ ছেড়ে দেওয়ার পর পাঠক যাতে নিশ্চিন্তে পুরো লেখা পড়তে পারেন, সেজন্য ৮ সেকেন্ড থেমে থাকবে
     if (config.pause_on_hover) {
       if (touchResumeTimer.current) clearTimeout(touchResumeTimer.current)
       touchResumeTimer.current = setTimeout(() => {
@@ -230,8 +233,8 @@ export function ClubNews() {
     const absX = Math.abs(diffX)
     const absY = Math.abs(diffY)
 
-    // ⭐ সমাধান: সাধারণ স্পর্শ বা অল্প নড়াচড়ায় কখনোই স্লাইড চেঞ্জ হবে না ⭐
-    // ১. কমপক্ষে ৮৫ পিক্সেল লম্বা পুশ (Long Push) করতে হবে
+    // ⭐ সাধারণ স্পর্শ বা হালকা স্ক্রলে চেঞ্জ হবে না ⭐
+    // ১. কমপক্ষে ৮৫ পিক্সেল লম্বা পুশ হতে হবে
     // ২. উপর-নিচে স্ক্রল করার সময় (absY > absX) স্লাইড বদলাবে না, যাতে সাধারণ পেজ স্ক্রলিং অক্ষত থাকে
     const LONG_PUSH_THRESHOLD = 85
 
@@ -254,7 +257,7 @@ export function ClubNews() {
     setAnimKey((k) => k + 1)
   }
 
-  // দৃশ্যমান কার্ডসমূহ নির্ধারণ
+  // দৃশ্যমান কার্ডসমূহ নির্ধারণ (ডেস্কটপে অ্যাডমিনের চয়েস অনুযায়ী কার্ড সংখ্যা, মোবাইলে ১টি)
   const cardsCount = Math.min(config.cards_desktop || 3, total || 1)
   const displayedClubs: Club[] = []
   if (total > 0) {
@@ -383,7 +386,9 @@ export function ClubNews() {
                               src={raw.logo_url}
                               alt={club.name}
                               className="size-full object-cover select-none"
-                              onError={(e) => { (e.target as HTMLElement).style.display = 'none' }}
+                              onError={(e) => {
+                                ;(e.target as HTMLElement).style.display = 'none'
+                              }}
                             />
                           </div>
                         ) : (
@@ -415,10 +420,10 @@ export function ClubNews() {
                           </p>
                         )}
 
-                        {/* মিডিয়া থাকলে প্রথমটি প্রদর্শন */}
+                        {/* ⭐ আন্তর্জাতিক ১৬:৯ স্ট্যান্ডার্ড ছবি/মিডিয়া ফ্রেম (কখনোই কার্ড লম্বা করবে না) ⭐ */}
                         {activityMediaList.length > 0 && (
                           <div className="mt-2 pt-2 border-t border-white/10">
-                            <UniversalMediaEmbed url={activityMediaList[0].url} title={club.name} />
+                            <UniversalMediaEmbed url={activityMediaList[0].url} title={club.name} compact />
                           </div>
                         )}
                       </div>
@@ -428,17 +433,32 @@ export function ClubNews() {
                         <div className="mt-3 flex items-center gap-1.5 border-t border-white/10 pt-2.5 text-xs">
                           <span className="text-[10px] text-white/40">সোশ্যাল:</span>
                           {raw.fb_url && (
-                            <a href={safeExternalUrl(raw.fb_url)} target="_blank" rel="noopener noreferrer" className="rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white hover:bg-blue-600 transition">
+                            <a
+                              href={safeExternalUrl(raw.fb_url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white hover:bg-blue-600 transition"
+                            >
                               Facebook
                             </a>
                           )}
                           {raw.yt_url && (
-                            <a href={safeExternalUrl(raw.yt_url)} target="_blank" rel="noopener noreferrer" className="rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white hover:bg-red-600 transition">
+                            <a
+                              href={safeExternalUrl(raw.yt_url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white hover:bg-red-600 transition"
+                            >
                               YouTube
                             </a>
                           )}
                           {raw.web_url && (
-                            <a href={safeExternalUrl(raw.web_url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white hover:bg-brand transition">
+                            <a
+                              href={safeExternalUrl(raw.web_url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-0.5 rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white hover:bg-brand transition"
+                            >
                               <Globe className="size-2.5" /> Web
                             </a>
                           )}
@@ -467,7 +487,6 @@ export function ClubNews() {
           {/* ==================== স্লাইডার কন্ট্রোল বার (তীর, পজ ও ডটস) ==================== */}
           {total > 1 && config.enabled && (
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-4">
-              
               {/* ডটস ইন্ডিকেটর */}
               {config.show_dots && (
                 <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
@@ -475,11 +494,14 @@ export function ClubNews() {
                     <button
                       key={i}
                       type="button"
-                      onClick={() => { setCurrentIndex(i); setAnimKey((k) => k + 1) }}
+                      onClick={() => {
+                        setCurrentIndex(i)
+                        setAnimKey((k) => k + 1)
+                      }}
                       aria-label={`Slide ${i + 1}`}
                       className={cn(
-                        "h-2 rounded-full transition-all cursor-pointer",
-                        i === currentIndex ? "w-6 bg-gold shadow-md" : "w-2 bg-white/30 hover:bg-white/60"
+                        'h-2 rounded-full transition-all cursor-pointer',
+                        i === currentIndex ? 'w-6 bg-gold shadow-md' : 'w-2 bg-white/30 hover:bg-white/60',
                       )}
                     />
                   ))}
@@ -495,9 +517,9 @@ export function ClubNews() {
                 <button
                   type="button"
                   onClick={() => setIsPaused(!isPaused)}
-                  aria-label={isPaused ? "Play" : "Pause"}
+                  aria-label={isPaused ? 'Play' : 'Pause'}
                   className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition border border-white/15 cursor-pointer"
-                  title={isPaused ? "চালান" : "থামান (পড়ার জন্য)"}
+                  title={isPaused ? 'চালান' : 'থামান (পড়ার জন্য)'}
                 >
                   {isPaused ? <Play className="size-3 text-green-400" /> : <Pause className="size-3 text-yellow-400" />}
                 </button>
