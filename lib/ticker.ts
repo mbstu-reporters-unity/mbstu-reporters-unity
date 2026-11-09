@@ -32,7 +32,7 @@ export type TickerItem = {
 
 export type TickerInput = Omit<TickerItem, "id" | "created_at" | "updated_at">
 
-// ⭐ ২০টি ব্রেকিং বেজ আইকন তালিকা ⭐
+// ⭐ ২০টি ব্রেকিং বেজ আইকন ⭐
 export const TICKER_BADGE_ICONS = [
   { key: "radio", label: "📡 রেডিও / লাইভ সিগন্যাল" },
   { key: "siren", label: "🚨 সাইরেন (ব্রেকিং অ্যালার্ট)" },
@@ -56,7 +56,7 @@ export const TICKER_BADGE_ICONS = [
   { key: "flame-kindling", label: "🧨 এক্সক্লুসিভ ব্রেকিং" },
 ] as const
 
-// ⭐ ৩০টি বেজ ও টেক্সট অ্যানিমেশন তালিকা ⭐
+// ⭐ ৩০টি বেজ ও টেক্সট অ্যানিমেশন ⭐
 export const TICKER_ANIMATIONS = [
   { key: "none", label: "— কোনো অ্যানিমেশন নেই (স্থির) —" },
   { key: "pulse", label: "১. পালস স্পন্দন (Pulse)" },
@@ -91,7 +91,7 @@ export const TICKER_ANIMATIONS = [
   { key: "radar", label: "৩০. রাডার আলোকবৃত্ত (Radar Beam)" },
 ] as const
 
-// ⭐ ৮টি ব্যাকগ্রাউন্ড অ্যানিমেশন তালিকা ⭐
+// ⭐ ৮টি ব্যাকগ্রাউন্ড অ্যানিমেশন ⭐
 export const TICKER_BG_ANIMATIONS = [
   { key: "none", label: "— কোনো অ্যানিমেশন নেই (সলিড) —" },
   { key: "bg-pulse", label: "১. ব্যাকগ্রাউন্ড পালসিং (Pulse Glow)" },
@@ -103,9 +103,7 @@ export const TICKER_BG_ANIMATIONS = [
   { key: "bg-electric", label: "৭. ইলেকট্রিক ফ্ল্যাশ স্পার্ক (Electric Flash)" },
 ] as const
 
-// সম্পূর্ণ কাস্টমাইজেবল ব্রেকিং বেজ ও [সংক্ষেপ] ইন্টারফেস
 export interface TickerBadgeConfig {
-  // ব্রেকিং বেজ সেটিংস
   icon: string
   icon_animation: string
   badge_text: string
@@ -117,7 +115,6 @@ export interface TickerBadgeConfig {
   bg_color2?: string
   bg_animation: string
 
-  // [সংক্ষেপ] লেবেল সেটিংস
   brief_text: string
   show_brief: boolean
   brief_color: string
@@ -165,7 +162,6 @@ async function ok(res: Response): Promise<Response> {
 
 const ORDER = "order=sort_order.asc,created_at.desc"
 
-// পাবলিক: লাইভ শিরোনামসমূহ
 export async function getLiveTicker(): Promise<TickerItem[] | null> {
   try {
     const now = encodeURIComponent(new Date().toISOString())
@@ -180,7 +176,6 @@ export async function getLiveTicker(): Promise<TickerItem[] | null> {
   }
 }
 
-// অ্যাডমিন: সব শিরোনাম
 export async function getAllTicker(token: string): Promise<TickerItem[]> {
   const res = await ok(
     await fetch(`${SB_URL}/rest/v1/ticker_items?select=*&${ORDER}&limit=200`, {
@@ -220,7 +215,6 @@ export async function deleteTickerItem(token: string, id: string) {
   )
 }
 
-/* ==================== ব্রেকিং বেজ ও [সংক্ষেপ] গ্লোবাল কনফিগ ==================== */
 const BADGE_CONFIG_KEY = "ticker_badge_config"
 
 export async function getTickerBadgeConfig(): Promise<TickerBadgeConfig> {
