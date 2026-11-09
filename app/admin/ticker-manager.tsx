@@ -22,7 +22,7 @@ import {
   type TickerBadgeConfig,
 } from "../../lib/ticker"
 import { renderTickerBadgeIcon } from "../../components/portal/news-ticker"
-import { refreshAuthToken, isJwtExpired, login } from "../../lib/sb"
+import { login, SB_URL, SB_KEY } from "../../lib/sb"
 import {
   Palette,
   Sparkles,
@@ -45,6 +45,47 @@ const btnPrimary = "w-full bg-red-600 hover:bg-red-700 text-white rounded-xl py-
 
 const DEF_TEXT = "#1e293b"
 const DEF_BG = "#ffffff"
+
+// ⭐ বিল্ড এরর রোধে সেলফ-কনটেইন্ড হেল্পার ফাংশনসমূহ ⭐
+function isJwtExpired(tokenStr: string): boolean {
+  try {
+    const parts = tokenStr.split(".")
+    if (parts.length !== 3) return true
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")))
+    if (!payload.exp) return false
+    return Date.now() >= payload.exp * 1000 - 60000
+  } catch {
+    return false
+  }
+}
+
+async function refreshAuthToken(): Promise<string | null> {
+  try {
+    const rt = typeof window !== "undefined" ? localStorage.getItem("mbstu_admin_refresh_token") : null
+    if (!rt) return null
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: {
+        apikey: SB_KEY,
+        Authorization: `Bearer ${SB_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refresh_token: rt }),
+    })
+    if (!res.ok) return null
+    const j = await res.json()
+    if (j.access_token) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("mbstu_admin_token", j.access_token)
+        if (j.refresh_token) {
+          localStorage.setItem("mbstu_admin_refresh_token", j.refresh_token)
+        }
+      }
+      return j.access_token as string
+    }
+  } catch {}
+  return null
+}
 
 function formatTimeLeft(iso: string, now: number) {
   const s = Math.floor((new Date(iso).getTime() - now) / 1000)
@@ -84,7 +125,7 @@ export default function TickerManager({ token: initialToken, author }: { token: 
   const [speed, setSpeed] = useState(DEFAULT_SPEED)
   const [sound, setSound] = useState(false)
 
-  // ⭐ ডিফল্ট মেয়াদ স্থায়ী (মেয়াদের কোনো বাধা থাকবে না) ⭐
+  // ডিফল্ট মেয়াদ স্থায়ী (মেয়াদের কোনো বাধা থাকবে না)
   const [expiryMode, setExpiryMode] = useState<string>("none")
   const [presetDuration, setPresetDuration] = useState("1440")
   const [customUnit, setCustomUnit] = useState<"min" | "hour" | "day">("day")
@@ -276,6 +317,7 @@ export default function TickerManager({ token: initialToken, author }: { token: 
         if (/jwt|expired|token/i.test(err?.message || "")) {
           const fresh = await refreshAuthToken()
           if (fresh) {
+            setToken(fresh)
             await saveTickerBadgeConfig(fresh, badgeCfg)
           } else {
             setShowReLogin(true)
