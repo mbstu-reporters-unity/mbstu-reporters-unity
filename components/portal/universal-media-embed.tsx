@@ -22,6 +22,43 @@ export type SingleMediaItem = {
   url: string
 }
 
+// ⭐ তারিখকে বাংলায় রূপান্তর (যেমন: ৯ নভেম্বর ২০২৬) ⭐
+function formatBanglaDate(val?: string | null): string {
+  if (!val) return ''
+  
+  if (/জানুয়ারি|ফেব্রুয়ারি|মার্চ|এপ্রিল|মে|জুন|জুলাই|আগস্ট|সেপ্টেম্বর|অক্টোবর|নভেম্বর|ডিসেম্বর/.test(val)) {
+    return val
+  }
+
+  const d = new Date(val)
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleDateString('bn-BD', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Asia/Dhaka',
+    })
+  }
+
+  const normalized = val.replace(/[০-৯]/g, (digit) => '০১২৩৪৫৬৭৮৯'.indexOf(digit).toString())
+  const parts = normalized.split(/[/\-.]/)
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10)
+    const month = parseInt(parts[1], 10)
+    const year = parseInt(parts[2], 10)
+    const monthsBn = [
+      'জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
+      'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
+    ]
+    const toBn = (n: number | string) => String(n).replace(/\d/g, (x) => '০১২৩৪৫৬৭৮৯'[Number(x)])
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${toBn(day)} ${monthsBn[month - 1]} ${toBn(year)}`
+    }
+  }
+
+  return val
+}
+
 function parseMedia(rawUrl: string) {
   if (!rawUrl || typeof rawUrl !== 'string') return { type: 'unknown' as const }
   const url = rawUrl.trim()
@@ -32,7 +69,6 @@ function parseMedia(rawUrl: string) {
   if (ytMatch && ytMatch[2]?.length === 11) {
     return {
       type: 'youtube' as const,
-      // ⭐ fs=1 এবং playsinline=1 যোগ করা হয়েছে যাতে ফুলস্ক্রিন বোতাম সক্রিয় থাকে ⭐
       embedSrc: `https://www.youtube.com/embed/${ytMatch[2]}?enablejsapi=1&autoplay=0&mute=1&loop=1&playlist=${ytMatch[2]}&controls=1&modestbranding=1&rel=0&fs=1&playsinline=1`,
     }
   }
@@ -85,7 +121,6 @@ function SingleMediaCard({
   const media = parseMedia(item.url)
   const displayTitle = item.title || (total > 1 ? `মিডিয়া #${index + 1}` : defaultTitle)
 
-  // ফুলস্ক্রিন থিয়েটার চলাকালীন ব্যাকগ্রাউন্ড স্ক্রল লক
   useEffect(() => {
     if (isTheaterOpen) {
       document.body.style.overflow = 'hidden'
@@ -138,7 +173,7 @@ function SingleMediaCard({
         {item.url && (
           <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden bg-slate-950 shadow-inner flex items-center justify-center group/player">
             
-            {/* ⭐ যেকোনো ভিডিওর জন্য নিশ্চিত কাজ করা বড় পর্দা/ফুলস্ক্রিন বাটন ⭐ */}
+            {/* বড় পর্দা / ফুলস্ক্রিন বাটন */}
             <button
               type="button"
               onClick={(e) => {
@@ -209,17 +244,15 @@ function SingleMediaCard({
           </div>
         )}
 
-        {/* ক্যাপশন ও তারিখ */}
-        {!compact && (item.caption || item.date) && (
-          <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-gray-500 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100">
-            {item.caption && (
-              <span className="flex items-center gap-1 font-medium text-gray-700 truncate">
-                <Camera className="size-3 text-brand" /> {item.caption}
-              </span>
-            )}
+        {/* ⭐ ক্যাপশন বার: শুধুমাত্র ক্যাপশন থাকলে তবেই দেখাবে, ফাঁকা বক্স তৈরি হবে না ⭐ */}
+        {!compact && item.caption && item.caption.trim() !== '' && (
+          <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-gray-700 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200">
+            <span className="flex items-center gap-1 font-semibold text-gray-800 truncate">
+              <Camera className="size-3.5 text-emerald-700 shrink-0" /> {item.caption}
+            </span>
             {item.date && (
-              <span className="flex items-center gap-1 ml-auto text-[10px] text-gray-500">
-                <Calendar className="size-2.5 text-gold" /> {item.date}
+              <span className="flex items-center gap-1 ml-auto text-[10px] text-gray-500 font-medium">
+                <Calendar className="size-2.5 text-emerald-700" /> {formatBanglaDate(item.date)}
               </span>
             )}
           </div>
@@ -277,13 +310,12 @@ function SingleMediaCard({
         )}
       </div>
 
-      {/* ⭐ ১০০% কার্যকর আন্তর্জাতিক থিয়েটার / ফুলস্ক্রিন মোডাল (ভিডিও ও ছবির জন্য) ⭐ */}
+      {/* বড় পর্দা / ফুলস্ক্রিন থিয়েটার মোডাল */}
       {isTheaterOpen && (
         <div
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-md p-2 sm:p-6 animate-in fade-in"
           onClick={() => setIsTheaterOpen(false)}
         >
-          {/* ফুলস্ক্রিন বন্ধ করার বোতাম */}
           <button
             type="button"
             onClick={() => setIsTheaterOpen(false)}
@@ -297,7 +329,6 @@ function SingleMediaCard({
             className="relative w-full max-w-5xl flex flex-col items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* ইউটিউব বড় পর্দা */}
             {media.type === 'youtube' && (
               <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black">
                 <iframe
@@ -310,7 +341,6 @@ function SingleMediaCard({
               </div>
             )}
 
-            {/* ফেসবুক ভিডিও বড় পর্দা */}
             {media.type === 'facebook' && (
               <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black">
                 <iframe
@@ -323,7 +353,6 @@ function SingleMediaCard({
               </div>
             )}
 
-            {/* সরাসরি ভিডিও বড় পর্দা */}
             {media.type === 'video' && (
               <div className="relative w-full max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black flex items-center justify-center">
                 <video
@@ -336,7 +365,6 @@ function SingleMediaCard({
               </div>
             )}
 
-            {/* ছবি বড় পর্দা */}
             {media.type === 'image' && (
               <div className="relative w-full max-h-[85vh] flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
