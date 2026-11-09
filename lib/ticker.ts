@@ -1,6 +1,7 @@
 import { SB_URL, SB_KEY } from "./sb"
 
-export const MAX_LIVE_TICKER = 10
+// হোমপেজে সর্বোচ্চ কতটি সক্রিয় টিকার একটার পর একটা ঘুরবে
+export const MAX_LIVE_TICKER = 50
 export const DEFAULT_SPEED = 70
 
 // গতি: পিক্সেল প্রতি সেকেন্ড
@@ -103,6 +104,7 @@ export const TICKER_BG_ANIMATIONS = [
   { key: "bg-electric", label: "৭. ইলেকট্রিক ফ্ল্যাশ স্পার্ক (Electric Flash)" },
 ] as const
 
+// ব্রেকিং বেজ ও [সংক্ষেপ] ইন্টারফেস
 export interface TickerBadgeConfig {
   icon: string
   icon_animation: string
@@ -162,11 +164,11 @@ async function ok(res: Response): Promise<Response> {
 
 const ORDER = "order=sort_order.asc,created_at.desc"
 
+// ⭐ পাবলিক: সবকটি সক্রিয় টিকার নিয়ে আসবে (মেয়াদের বাধা ছাড়া একটার পর একটা ধারাবাহিকভাবে চলবে) ⭐
 export async function getLiveTicker(): Promise<TickerItem[] | null> {
   try {
-    const now = encodeURIComponent(new Date().toISOString())
     const res = await fetch(
-      `${SB_URL}/rest/v1/ticker_items?select=*&is_active=eq.true&or=(expires_at.is.null,expires_at.gt.${now})&${ORDER}&limit=${MAX_LIVE_TICKER}`,
+      `${SB_URL}/rest/v1/ticker_items?select=*&is_active=eq.true&${ORDER}&limit=${MAX_LIVE_TICKER}`,
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return null
@@ -176,6 +178,7 @@ export async function getLiveTicker(): Promise<TickerItem[] | null> {
   }
 }
 
+// অ্যাডমিন: সব শিরোনাম লোড করা
 export async function getAllTicker(token: string): Promise<TickerItem[]> {
   const res = await ok(
     await fetch(`${SB_URL}/rest/v1/ticker_items?select=*&${ORDER}&limit=200`, {
@@ -215,6 +218,7 @@ export async function deleteTickerItem(token: string, id: string) {
   )
 }
 
+/* ==================== ব্রেকিং বেজ ও [সংক্ষেপ] গ্লোবাল কনফিগ ==================== */
 const BADGE_CONFIG_KEY = "ticker_badge_config"
 
 export async function getTickerBadgeConfig(): Promise<TickerBadgeConfig> {
