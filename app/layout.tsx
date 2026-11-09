@@ -7,7 +7,7 @@ import { GlobalTextStudio } from '@/components/portal/global-text-studio'
 
 const hind = Hind_Siliguri({
   subsets: ['bengali', 'latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['500', '600', '700'], // ৪00 সরিয়ে 500 কে বেস করা হয়েছে যাতে কোনো লেখা চিকন না হয়
   variable: '--font-hind',
   display: 'swap',
 })
@@ -97,7 +97,8 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="antialiased">
+      {/* ⭐ font-medium যোগ করায় পুরো সাইটের বডি টেক্সট এখন থেকে ভরাট ও নিখুঁত থাকবে ⭐ */}
+      <body className="antialiased font-sans font-medium">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
@@ -108,7 +109,6 @@ export default function RootLayout({
         />
         <LangProvider>
           {children}
-          {/* ⭐ পুরো ওয়েবসাইট জুড়ে কার্যকর টেক্সট স্টুডিও ⭐ */}
           <GlobalTextStudio />
         </LangProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
