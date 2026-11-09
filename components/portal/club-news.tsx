@@ -15,10 +15,22 @@ import {
   Megaphone,
   Mic,
   Star,
+  ChevronLeft,
+  ChevronRight,
+  Pause,
+  Play,
   type LucideIcon,
 } from 'lucide-react'
 import { clubs as fallbackClubs, type Club, type ClubIcon } from '@/lib/data'
-import { getCampusClubs, parseActivityMedia, safeExternalUrl, type ClubItem } from '@/lib/clubs'
+import {
+  getCampusClubs,
+  parseActivityMedia,
+  safeExternalUrl,
+  getClubCarouselConfig,
+  DEFAULT_CLUB_CAROUSEL_CONFIG,
+  type ClubItem,
+  type ClubCarouselConfig,
+} from '@/lib/clubs'
 import { cn } from '@/lib/utils'
 import { SectionHeading } from './section-heading'
 import { ClubReportsDialog } from './club-reports-dialog'
@@ -70,7 +82,15 @@ export function ClubNews() {
   const [dbMap, setDbMap] = useState<Record<string, ClubItem>>({})
   const [filter, setFilter] = useState('All')
   const [selected, setSelected] = useState<Club | null>(null)
-  
+  const [config, setConfig] = useState<ClubCarouselConfig>(DEFAULT_CLUB_CAROUSEL_CONFIG)
+
+  // স্লাইডার ইন্ডেক্স ও কন্ট্রোল
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+  const [animKey, setAnimKey] = useState(0)
+
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
   const clubsRef = useRef<Club[]>(fallbackClubs)
 
   const handleCloseDialog = useCallback(() => {
@@ -96,11 +116,12 @@ export function ClubNews() {
   }, [])
 
   useEffect(() => {
-    getCampusClubs().then((items) => {
+    Promise.all([getCampusClubs(), getClubCarouselConfig()]).then(([items, cfg]) => {
       const formatted = items && items.length > 0 ? items.map(formatClub) : fallbackClubs
       setList(formatted)
       clubsRef.current = formatted
-      
+      if (cfg) setConfig(cfg)
+
       const map: Record<string, ClubItem> = {}
       if (items) {
         items.forEach((it) => { map[it.id] = it })
@@ -126,8 +147,6 @@ export function ClubNews() {
       const targetClub = clubsRef.current.find((c) => c.id === targetId)
       if (targetClub) {
         handleOpenClub(targetClub)
-        const el = document.getElementById(`club-${targetId}`)
-        if (el) el.scrollIntoView({ behavior: 'smooth' })
       }
     }
 
@@ -152,9 +171,124 @@ export function ClubNews() {
 
   const tags = ['All', ...Array.from(new Set(list.map((c) => c.tag)))]
   const visible = filter === 'All' ? list : list.filter((c) => c.tag === filter)
+  const total = visible.length
+
+  // পরবর্তী ও পূর্ববর্তী স্লাইড হ্যান্ডলার
+  const nextSlide = useCallback(() => {
+    if (total <= 1) return
+    setCurrentIndex((prev) => (prev + 1) % total)
+    setAnimKey((k) => k + 1)
+  }, [total])
+
+  const prevSlide = useCallback(() => {
+    if (total <= 1) return
+    setCurrentIndex((prev) => (prev - 1 + total) % total)
+    setAnimKey((k) => k + 1)
+  }, [total])
+
+  // অটো-ট্রানজিশন টাইমার
+  useEffect(() => {
+    if (!config.enabled || total <= 1 || isPaused) return
+
+    const intervalMs = Math.max(2, config.duration_sec || 4) * 1000
+    const timer = setInterval(() => {
+      nextSlide()
+    }, intervalMs)
+
+    return () => clearInterval(timer)
+  }, [config.enabled, config.duration_sec, total, isPaused, nextSlide])
+
+  // মোবাইল টাচ ও সোয়াইপ হ্যান্ডলার
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (config.pause_on_hover) setIsPaused(true)
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (config.pause_on_hover) setTimeout(() => setIsPaused(false), 2000)
+    if (touchStartX.current === null || touchStartY.current === null || total <= 1) return
+
+    const diffX = e.changedTouches[0].clientX - touchStartX.current
+    const diffY = e.changedTouches[0].clientY - touchStartY.current
+    const absX = Math.abs(diffX)
+    const absY = Math.abs(diffY)
+
+    if (absX > 35 || absY > 35) {
+      if (absX >= absY) {
+        if (diffX < 0) nextSlide()
+        else prevSlide()
+      } else {
+        if (diffY < 0) nextSlide()
+        else prevSlide()
+      }
+    }
+
+    touchStartX.current = null
+    touchStartY.current = null
+  }
+
+  // ফিল্টার বদলালে ইনডেক্স ০ করা
+  const handleFilterChange = (tag: string) => {
+    setFilter(tag)
+    setCurrentIndex(0)
+    setAnimKey((k) => k + 1)
+  }
+
+  // দৃশ্যমান কার্ডসমূহ নির্ধারণ (ডেস্কটপে অ্যাডমিনের চয়েস অনুযায়ী ১, ২, ৩ বা ৪টি এবং মোবাইলে ১টি)
+  const cardsCount = Math.min(config.cards_desktop || 3, total || 1)
+  const displayedClubs: Club[] = []
+  if (total > 0) {
+    for (let i = 0; i < cardsCount; i++) {
+      displayedClubs.push(visible[(currentIndex + i) % total])
+    }
+  }
+
+  const animDuration = `${config.anim_speed_ms || 600}ms`
 
   return (
-    <section id="club-news" className="bg-navy py-16 sm:py-20 overflow-hidden">
+    <section id="club-news" className="bg-navy py-14 sm:py-20 overflow-hidden relative select-none">
+      {/* ⭐ অ্যাডমিন নিয়ন্ত্রিত ট্রানজিশন সিএসএস কীফ্রেমসমূহ ⭐ */}
+      <style>{`
+        /* ১. ডান থেকে বামে */
+        @keyframes tr_right_to_left {
+          0% { transform: translateX(60px); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        .anim_right-to-left { animation: tr_right_to_left ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+        /* ২. বাম থেকে ডানে */
+        @keyframes tr_left_to_right {
+          0% { transform: translateX(-60px); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        .anim_left-to-right { animation: tr_left_to_right ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+        /* ৩. নিচ থেকে উপরে */
+        @keyframes tr_bottom_to_top {
+          0% { transform: translateY(50px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        .anim_bottom-to-top { animation: tr_bottom_to_top ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+        /* ৪. উপর থেকে নিচে */
+        @keyframes tr_top_to_bottom {
+          0% { transform: translateY(-50px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        .anim_top-to-bottom { animation: tr_top_to_bottom ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+        /* ইফেক্টস */
+        @keyframes tr_fade { 0% { opacity: 0; } 100% { opacity: 1; } }
+        .anim_effect_fade { animation: tr_fade ${animDuration} ease-in-out both; }
+
+        @keyframes tr_zoom { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .anim_effect_zoom { animation: tr_zoom ${animDuration} cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+        @keyframes tr_flip { 0% { transform: perspective(600px) rotateY(40deg); opacity: 0; } 100% { transform: perspective(600px) rotateY(0deg); opacity: 1; } }
+        .anim_effect_flip { animation: tr_flip ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
+      `}</style>
+
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeading
           inverted
@@ -163,152 +297,218 @@ export function ClubNews() {
           subtitle="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের কার্যক্রম এবং পরিচিতি।"
         />
 
-        <div className="mb-8 flex gap-2 overflow-x-auto pb-2" role="group" aria-label="Filter clubs by category">
+        {/* ক্যাটাগরি ফিল্টার বার */}
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none" role="group" aria-label="Filter clubs by category">
           {tags.map((tag) => (
             <button
               key={tag}
               type="button"
-              onClick={() => setFilter(tag)}
+              onClick={() => handleFilterChange(tag)}
               aria-pressed={filter === tag}
               className={cn(
-                'shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors cursor-pointer',
+                'shrink-0 rounded-full border px-4 py-1.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer',
                 filter === tag
-                  ? 'border-gold bg-gold text-navy'
+                  ? 'border-gold bg-gold text-navy font-bold shadow-md'
                   : 'border-white/20 text-white/80 hover:border-white/50 hover:text-white',
               )}
             >
               {tag}
               {tag !== 'All' && (
-                <span className="ml-1.5 text-xs opacity-70">{list.filter((c) => c.tag === tag).length}</span>
+                <span className="ml-1.5 text-xs opacity-75">({list.filter((c) => c.tag === tag).length})</span>
               )}
             </button>
           ))}
         </div>
 
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {visible.map((club) => {
-            const Icon = clubIcons[club.icon] || Star
-            const raw = dbMap[club.id]
-            const activityMediaList = parseActivityMedia(raw?.embed_media_url)
+        {/* ==================== স্লাইডার কনটেইনার ==================== */}
+        <div
+          onMouseEnter={() => config.pause_on_hover && setIsPaused(true)}
+          onMouseLeave={() => config.pause_on_hover && setIsPaused(false)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          className="relative w-full"
+        >
+          {total > 0 ? (
+            <div
+              key={animKey}
+              className={cn(
+                "grid gap-5 w-full min-w-0",
+                cardsCount === 1 ? "grid-cols-1 max-w-xl mx-auto" :
+                cardsCount === 2 ? "grid-cols-1 md:grid-cols-2" :
+                cardsCount === 3 ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" :
+                "grid-cols-1 md:grid-cols-2 lg:grid-cols-4",
+                config.effect === 'fade' ? 'anim_effect_fade' :
+                config.effect === 'zoom' ? 'anim_effect_zoom' :
+                config.effect === 'flip' ? 'anim_effect_flip' :
+                `anim_${config.direction || 'right-to-left'}`
+              )}
+            >
+              {displayedClubs.map((club, idx) => {
+                const Icon = clubIcons[club.icon] || Star
+                const raw = dbMap[club.id]
+                const activityMediaList = parseActivityMedia(raw?.embed_media_url)
 
-            return (
-              <li
-                key={club.id}
-                id={`club-${club.id}`}
-                className="scroll-mt-24 animate-in fade-in group flex flex-col rounded-3xl border border-white/10 bg-white/5 p-5 transition-all hover:-translate-y-1 hover:border-brand hover:bg-white/10 w-full min-w-0 overflow-hidden shadow-lg"
-              >
-                {/* ⭐ ক্লাবের লোগো — ১০০% নিখুঁত গোল এবং বৃত্তের পুরো জায়গা জুড়ে দৃশ্যমান ⭐ */}
-                <div className="flex items-start justify-between gap-3">
-                  {raw?.logo_url ? (
-                    <div className="size-20 sm:size-24 shrink-0 rounded-full overflow-hidden shadow-lg border-2 border-white/30 flex items-center justify-center bg-white">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={raw.logo_url}
-                        alt={club.name}
-                        className="size-full object-cover select-none"
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.display = 'none'
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <span className="flex size-20 sm:size-24 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-md">
-                      <Icon className="size-8" aria-hidden="true" />
-                    </span>
-                  )}
-                  <span className="rounded-full bg-gold/15 px-3 py-1 text-xs font-bold uppercase tracking-wide text-gold border border-gold/30">
-                    {club.tag}
-                  </span>
-                </div>
-                
-                {/* ক্লাবের নাম */}
-                <h3 className="mt-4 text-pretty font-serif text-lg font-bold leading-snug text-white">{club.name}</h3>
-                <p className="text-sm text-white/70">{club.nameBn}</p>
+                return (
+                  <div
+                    key={`${club.id}_${idx}`}
+                    id={`club-${club.id}`}
+                    className="group flex flex-col justify-between rounded-3xl border border-white/10 bg-white/5 p-5 transition-all hover:border-brand hover:bg-white/10 w-full min-w-0 overflow-hidden shadow-xl backdrop-blur-sm"
+                  >
+                    <div>
+                      {/* লোগো ও ট্যাগ */}
+                      <div className="flex items-start justify-between gap-3">
+                        {raw?.logo_url ? (
+                          <div className="size-20 shrink-0 rounded-full overflow-hidden shadow-lg border-2 border-white/30 flex items-center justify-center bg-white">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={raw.logo_url}
+                              alt={club.name}
+                              className="size-full object-cover select-none"
+                              onError={(e) => { (e.target as HTMLElement).style.display = 'none' }}
+                            />
+                          </div>
+                        ) : (
+                          <span className="flex size-20 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-md">
+                            <Icon className="size-8" aria-hidden="true" />
+                          </span>
+                        )}
+                        <span className="rounded-full bg-gold/15 px-3 py-1 text-xs font-bold uppercase tracking-wide text-gold border border-gold/30">
+                          {club.tag}
+                        </span>
+                      </div>
 
-                {/* ক্লাবের সাম্প্রতিক কার্যক্রম ও বিবরণ */}
-                <div className="mt-4 flex-1 rounded-2xl border border-white/10 bg-navy/60 p-4 w-full min-w-0 overflow-hidden">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-brand-soft/90">Latest Activity</p>
-                  <p className="mt-1 text-sm leading-relaxed text-white/90">{club.activity}</p>
-                  {club.activityBn && (
-                    <p className="mt-1 text-xs leading-relaxed text-white/60">{club.activityBn}</p>
-                  )}
-                  {club.date && (
-                    <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-white/50">
-                      <CalendarDays className="size-3.5" aria-hidden="true" />
-                      {club.date}
-                    </p>
-                  )}
+                      {/* ক্লাবের নাম */}
+                      <h3 className="mt-4 font-serif text-lg font-bold leading-snug text-white group-hover:text-gold transition-colors truncate">
+                        {club.name}
+                      </h3>
+                      {club.nameBn && <p className="text-xs text-white/70 truncate">{club.nameBn}</p>}
 
-                  {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া */}
-                  {activityMediaList.length > 0 && (
-                    <div className="mt-3 space-y-4">
-                      {activityMediaList.map((m, idx) => (
-                        <div key={idx} className="space-y-1.5 pt-2 border-t border-white/10">
-                          {m.title && <h4 className="font-bold text-sm text-white leading-snug">{m.title}</h4>}
-                          {m.subtitle && <p className="text-xs font-medium text-gold/90">{m.subtitle}</p>}
-                          {m.description && <p className="text-xs text-white/80 whitespace-pre-line leading-relaxed">{m.description}</p>}
-                          <UniversalMediaEmbed url={m.url} title={m.title || club.name} />
+                      {/* কার্যক্রম */}
+                      <div className="mt-3.5 rounded-2xl border border-white/10 bg-navy/60 p-3.5 space-y-1.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-brand-soft/90">Latest Activity</p>
+                        <p className="text-xs leading-relaxed text-white/90 line-clamp-3">{club.activity}</p>
+                        {club.activityBn && (
+                          <p className="text-[11px] text-white/60 line-clamp-2">{club.activityBn}</p>
+                        )}
+                        {club.date && (
+                          <p className="pt-1 inline-flex items-center gap-1 text-[11px] text-white/50">
+                            <CalendarDays className="size-3 text-gold" /> {club.date}
+                          </p>
+                        )}
+
+                        {/* মিডিয়া থাকলে প্রথমটি দেখানো */}
+                        {activityMediaList.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-white/10">
+                            <UniversalMediaEmbed url={activityMediaList[0].url} title={club.name} />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* সোশ্যাল লিংক */}
+                      {raw && (raw.fb_url || raw.yt_url || raw.web_url) && (
+                        <div className="mt-3 flex items-center gap-1.5 border-t border-white/10 pt-2.5 text-xs">
+                          <span className="text-[10px] text-white/40">সোশ্যাল:</span>
+                          {raw.fb_url && (
+                            <a href={safeExternalUrl(raw.fb_url)} target="_blank" rel="noopener noreferrer" className="rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white hover:bg-blue-600 transition">
+                              Facebook
+                            </a>
+                          )}
+                          {raw.yt_url && (
+                            <a href={safeExternalUrl(raw.yt_url)} target="_blank" rel="noopener noreferrer" className="rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white hover:bg-red-600 transition">
+                              YouTube
+                            </a>
+                          )}
+                          {raw.web_url && (
+                            <a href={safeExternalUrl(raw.web_url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white hover:bg-brand transition">
+                              <Globe className="size-2.5" /> Web
+                            </a>
+                          )}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
 
-                {/* সোশ্যাল লিঙ্কসমূহ */}
-                {raw && (raw.fb_url || raw.yt_url || raw.web_url) && (
-                  <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
-                    <span className="text-[11px] text-white/50">সোশ্যাল:</span>
-                    {raw.fb_url && (
-                      <a
-                        href={safeExternalUrl(raw.fb_url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-blue-600"
-                        title="Facebook Page"
-                      >
-                        Facebook
-                      </a>
-                    )}
-                    {raw.yt_url && (
-                      <a
-                        href={safeExternalUrl(raw.yt_url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-600"
-                        title="YouTube Channel"
-                      >
-                        YouTube
-                      </a>
-                    )}
-                    {raw.web_url && (
-                      <a
-                        href={safeExternalUrl(raw.web_url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-brand"
-                        title="Official Website"
-                      >
-                        <Globe className="size-3" />
-                        Web
-                      </a>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenClub(club)}
+                      className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand hover:bg-brand-dark px-4 py-2.5 text-xs sm:text-sm font-semibold text-white transition-all shadow-md active:scale-95 cursor-pointer w-full"
+                    >
+                      <FileText className="size-4" />
+                      <span>View Club Reports</span>
+                    </button>
                   </div>
-                )}
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-center text-sm text-white/50 py-10 bg-white/5 rounded-2xl border border-white/10">
+              কোনো ক্লাব পাওয়া যায়নি।
+            </p>
+          )}
+
+          {/* ==================== স্লাইডার কন্ট্রোল বার (তীর, পজ ও ডটস) ==================== */}
+          {total > 1 && config.enabled && (
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-4">
+              
+              {/* ডটস ইন্ডিকেটর */}
+              {config.show_dots && (
+                <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
+                  {visible.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => { setCurrentIndex(i); setAnimKey((k) => k + 1) }}
+                      aria-label={`Slide ${i + 1}`}
+                      className={cn(
+                        "h-2 rounded-full transition-all cursor-pointer",
+                        i === currentIndex ? "w-6 bg-gold shadow-md" : "w-2 bg-white/30 hover:bg-white/60"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* তীর ও পজ/প্লে বাটন */}
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-xs text-white/60 font-semibold mr-1">
+                  ক্লাব {currentIndex + 1} / {total}
+                </span>
 
                 <button
                   type="button"
-                  onClick={() => handleOpenClub(club)}
-                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold cursor-pointer shadow-md"
+                  onClick={() => setIsPaused(!isPaused)}
+                  aria-label={isPaused ? "Play" : "Pause"}
+                  className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition border border-white/15 cursor-pointer"
                 >
-                  <FileText className="size-4" aria-hidden="true" />
-                  View Club Reports
+                  {isPaused ? <Play className="size-3 text-green-400" /> : <Pause className="size-3 text-yellow-400" />}
                 </button>
-              </li>
-            )
-          })}
-        </ul>
+
+                {config.show_arrows && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={prevSlide}
+                      aria-label="Previous Club"
+                      className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition border border-white/15 cursor-pointer active:scale-95"
+                    >
+                      <ChevronLeft className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={nextSlide}
+                      aria-label="Next Club"
+                      className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition border border-white/15 cursor-pointer active:scale-95"
+                    >
+                      <ChevronRight className="size-4" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* ক্লাবের বিস্তারিত পপ-আপ ডায়ালগ */}
       <ClubReportsDialog
         club={selected}
         rawClub={selected ? dbMap[selected.id] : undefined}
