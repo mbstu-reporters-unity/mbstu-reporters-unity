@@ -2,7 +2,7 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-/* ⭐ প্রিমিয়াম সোলাইমান লিপি ফন্ট (নরমাল ও বোল্ড ফেস) ⭐ */
+/* ⭐ প্রিমিয়াম সোলাইমান লিপি ফন্ট ⭐ */
 @font-face {
   font-family: 'SolaimanLipi';
   src: url('https://cdn.jsdelivr.net/gh/maateen/bangla-fonts@master/SolaimanLipi/SolaimanLipi.woff2') format('woff2'),
@@ -122,31 +122,38 @@
     line-height: 1.65;
   }
 
-  /* ⭐ স্বয়ংক্রিয় জাস্টিফাই সিস্টেম: ছবির নেতৃত্বের বার্তা, নোটিশ, সংবাদ, ক্লাব ও স্টুডেন্ট কর্নার ⭐ */
-  p, 
-  article p, 
-  .prose p, 
-  .article-body, 
-  .whitespace-pre-line,
-  .formatted-text,
-  blockquote {
-    text-align: justify;
-    text-justify: inter-word;
-    text-align-last: left; /* শেষ লাইন বা ছোট ১ লাইনের মেসেজ স্বাভাবিক বামে থাকবে, কখনো অযথা ছড়াবে না */
-    word-break: break-word;
-    overflow-wrap: break-word;
-    line-height: 1.7;
-    font-weight: 500;
+  /* ⭐ সাধারণ লেখা, পরিচিতি ও সাবটাইটেল স্বাভাবিক বামে থাকবে (যাতে শব্দের মাঝে কোনো অদ্ভুত ফাঁকা না হয়) ⭐ */
+  p, span, li, a {
+    text-rendering: optimizeLegibility;
+    text-align: left;
   }
 
-  /* বিশেষ করে text-pretty থাকা বর্ণনামূলক সাবটাইটেল জাস্টিফাই নিশ্চিতকরণ */
-  p.text-pretty, .text-pretty {
+  /* ⭐ সেকশন সাবটাইটেল ও পরিচিতির লেখা শতভাগ স্বাভাবিক ও সুন্দর বামে থাকবে ⭐ */
+  p.text-pretty, 
+  .text-pretty,
+  .section-heading p {
+    text-align: left !important;
+    text-align-last: left !important;
+    word-spacing: normal !important;
+  }
+
+  /* ⭐ শুধুমাত্র বিস্তারিত বড় সংবাদ, নোটিশ, স্টুডেন্ট কর্নার ও ক্লাবের মূল লেখার ভেতর স্মুথ জাস্টিফাই ⭐ */
+  article .formatted-text,
+  article .formatted-text p,
+  article .article-body,
+  .prose p,
+  .notice-body,
+  .student-dialog-body,
+  .whitespace-pre-line:not(.text-pretty) {
     text-align: justify;
     text-justify: inter-word;
     text-align-last: left;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.75;
   }
 
-  /* শিরোনাম ও হেডিংস সবসময় স্বাভাবিক বামে থাকবে */
+  /* সব হেডিং ও টাইটেল স্বাভাবিক বামে থাকবে */
   h1, h2, h3, h4, h5, h6, 
   article h1, article h2, article h3,
   .text-left, .text-left * {
@@ -156,7 +163,7 @@
     letter-spacing: -0.01em;
   }
 
-  /* সেন্টার ও রাইটের উপাদান সুরক্ষিত রাখা (যেমন: কাউন্টার 2026, 25+, ফুটার কপিরাইট) */
+  /* সেন্টার ও রাইটের উপাদান সুরক্ষিত রাখা (যেমন: কাউন্টার 2026, 25+, ফুটার ইত্যাদি) */
   .text-center, .text-center * {
     text-align: center !important;
     text-align-last: center !important;
