@@ -4,17 +4,57 @@ import { ReactionBar } from './reaction-bar'
 import CardGallery from './card-gallery'
 import { UniversalMediaEmbed } from './universal-media-embed'
 
+// ⭐ যেকোনো তারিখকে স্পষ্ট বাংলা মাসের নাম সহ রূপান্তরকারী ফাংশন (যেমন: ৯ নভেম্বর ২০২৬) ⭐
+function formatBanglaDate(val?: string | null): string {
+  if (!val) return ''
+  
+  // তারিখটি অলরেডি বাংলা মাসের নামে থাকলে তাই রিটার্ন করবে
+  if (/জানুয়ারি|ফেব্রুয়ারি|মার্চ|এপ্রিল|মে|জুন|জুলাই|আগস্ট|সেপ্টেম্বর|অক্টোবর|নভেম্বর|ডিসেম্বর/.test(val)) {
+    return val
+  }
+
+  // ISO বা ইংরেজি তারিখ হলে বাংলা মাস সহ ফরম্যাট
+  const d = new Date(val)
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleDateString('bn-BD', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Asia/Dhaka',
+    })
+  }
+
+  // সংখ্যায় থাকলে (যেমন: ৯/১১/২০২৬ বা 9/11/2026) তাকে বাংলায় রূপান্তর
+  const normalized = val.replace(/[০-৯]/g, (digit) => '০১২৩৪৫৬৭৮৯'.indexOf(digit).toString())
+  const parts = normalized.split(/[/\-.]/)
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10)
+    const month = parseInt(parts[1], 10)
+    const year = parseInt(parts[2], 10)
+    const monthsBn = [
+      'জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
+      'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
+    ]
+    const toBn = (n: number | string) => String(n).replace(/\d/g, (x) => '০১২৩৪৫৬৭৮৯'[Number(x)])
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${toBn(day)} ${monthsBn[month - 1]} ${toBn(year)}`
+    }
+  }
+
+  return val
+}
+
 export function NewsCard({ p }: { p: Post }) {
   const href = p.link_url?.trim() || `/post/${p.id}`
   const isExt = /^https?:\/\//i.test(href)
   const ext = isExt ? { target: '_blank', rel: 'noopener noreferrer' } : {}
   const excerpt = (p.heading || p.body || '').slice(0, 140)
-  const date = new Date(p.created_at).toLocaleDateString('bn-BD')
+  const formattedDate = formatBanglaDate(p.created_at)
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl">
       
-      {/* যদি ভিডিও/ছবির এম্বেড লিংক না থাকে, তাহলে আগের মতো সাধারণ কভার ফটো দেখাবে */}
+      {/* যদি ভিডিও/ছবির এম্বেড লিংক না থাকে, তাহলে সাধারণ কভার ফটো দেখাবে */}
       {!p.embed_media_url && (
         <CardGallery
           postId={p.id}
@@ -27,43 +67,45 @@ export function NewsCard({ p }: { p: Post }) {
       )}
 
       <div className="flex flex-1 flex-col p-5">
-        {/* এম্বেড লিংক থাকলে উপরে ক্যাটাগরি ব্যাজ প্রদর্শন */}
+        {/* ক্যাটাগরি ব্যাজ */}
         {p.embed_media_url && (
-          <span className="mb-2.5 inline-block w-fit rounded bg-brand px-2.5 py-0.5 text-xs font-bold text-white">
-            {p.category || 'সংবাদ'}
+          <span className="mb-2.5 inline-block w-fit rounded bg-brand px-2.5 py-0.5 text-xs font-bold text-white shadow-xs">
+            {p.category || 'ক্যাম্পাস সংবাদ'}
           </span>
         )}
 
-        <div className="flex flex-wrap gap-x-4 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <CalendarDays className="size-3.5" aria-hidden="true" />
-            {date}
+        {/* ⭐ স্পষ্ট, গাঢ় ও সুস্পষ্ট বাংলা তারিখ এবং রিপোর্টার ব্যাজ ⭐ */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
+          <span className="inline-flex items-center gap-1.5 font-bold text-emerald-950 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg shadow-2xs">
+            <CalendarDays className="size-3.5 text-emerald-700 shrink-0" aria-hidden="true" />
+            <span>{formattedDate}</span>
           </span>
+
           {p.author && (
-            <span className="inline-flex items-center gap-1">
-              <User className="size-3.5" aria-hidden="true" />
-              {p.author}
+            <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800 bg-slate-100 border border-slate-200/80 px-2.5 py-1 rounded-lg">
+              <User className="size-3.5 text-slate-600 shrink-0" aria-hidden="true" />
+              <span>{p.author}</span>
             </span>
           )}
         </div>
 
         {/* ১. শিরোনাম (Title) */}
-        <h3 className="mt-3 font-serif text-lg font-bold leading-snug text-navy group-hover:text-brand">
+        <h3 className="mt-3 font-serif text-lg font-bold leading-snug text-navy group-hover:text-brand transition-colors">
           <a href={href} {...ext}>{p.title}</a>
         </h3>
 
         {/* ২. বিস্তারিত / উপশিরোনাম (Excerpt) */}
-        <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-700">
           {excerpt}
         </p>
 
-        {/* ⭐ ৩. লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবির প্রিভিউ দেখাবে ⭐ */}
+        {/* ৩. মিডিয়া প্লেয়ার (যদি ছবি বা ভিডিও লিংক থাকে) */}
         {p.embed_media_url && (
           <UniversalMediaEmbed url={p.embed_media_url} title={p.title} className="mb-2" />
         )}
 
-        <a href={href} {...ext} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand">
-          বিস্তারিত <ArrowRight className="size-4" aria-hidden="true" />
+        <a href={href} {...ext} className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-brand hover:underline">
+          বিস্তারিত পড়ুন <ArrowRight className="size-4" aria-hidden="true" />
         </a>
 
         <ReactionBar postId={p.id} title={p.title} />
