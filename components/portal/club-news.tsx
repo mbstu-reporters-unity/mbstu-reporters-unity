@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  ArrowRight,
   Baby,
   BookOpen,
   Briefcase,
   CalendarDays,
   Camera,
+  ChevronLeft,
+  ChevronRight,
   Droplet,
   FileText,
   FlaskConical,
@@ -14,11 +17,11 @@ import {
   Globe,
   Megaphone,
   Mic,
-  Star,
-  ChevronLeft,
-  ChevronRight,
   Pause,
   Play,
+  Sparkles,
+  Star,
+  Users,
   type LucideIcon,
 } from 'lucide-react'
 import { clubs as fallbackClubs, type Club, type ClubIcon } from '@/lib/data'
@@ -85,12 +88,10 @@ export function ClubNews() {
   const [selected, setSelected] = useState<Club | null>(null)
   const [config, setConfig] = useState<ClubCarouselConfig>(DEFAULT_CLUB_CAROUSEL_CONFIG)
 
-  // স্লাইডার ইনডেক্স ও প্লে/পজ কন্ট্রোল
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [animKey, setAnimKey] = useState(0)
 
-  // টাচ ও সোয়াইপ ট্র্যাক রেফারেন্স
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
   const touchResumeTimer = useRef<NodeJS.Timeout | null>(null)
@@ -178,7 +179,6 @@ export function ClubNews() {
   const visible = filter === 'All' ? list : list.filter((c) => c.tag === filter)
   const total = visible.length
 
-  // পরবর্তী ও পূর্ববর্তী স্লাইড হ্যান্ডলার
   const nextSlide = useCallback(() => {
     if (total <= 1) return
     setCurrentIndex((prev) => (prev + 1) % total)
@@ -191,7 +191,6 @@ export function ClubNews() {
     setAnimKey((k) => k + 1)
   }, [total])
 
-  // অটো-ট্রানজিশন টাইমার
   useEffect(() => {
     if (!config.enabled || total <= 1 || isPaused) return
 
@@ -203,9 +202,7 @@ export function ClubNews() {
     return () => clearInterval(timer)
   }, [config.enabled, config.duration_sec, total, isPaused, nextSlide])
 
-  // ⭐ শুধুমাত্র লম্বা পুশ (Deliberate Long Push) এ পরিবর্তন হওয়ার হ্যান্ডলার ⭐
   const handleTouchStart = (e: React.TouchEvent) => {
-    // পড়ার জন্য স্পর্শ করার সাথে সাথে অটো-স্লাইড থামিয়ে রাখা
     setIsPaused(true)
     if (touchResumeTimer.current) clearTimeout(touchResumeTimer.current)
 
@@ -214,12 +211,11 @@ export function ClubNews() {
   }
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    // টাচ ছেড়ে দেওয়ার পর পাঠক যাতে নিশ্চিন্তে পুরো লেখা পড়তে পারেন, সেজন্য ৮ সেকেন্ড থেমে থাকবে
     if (config.pause_on_hover) {
       if (touchResumeTimer.current) clearTimeout(touchResumeTimer.current)
       touchResumeTimer.current = setTimeout(() => {
         setIsPaused(false)
-      }, 8000)
+      }, 7000)
     }
 
     if (touchStartX.current === null || touchStartY.current === null || total <= 1) {
@@ -233,31 +229,21 @@ export function ClubNews() {
     const absX = Math.abs(diffX)
     const absY = Math.abs(diffY)
 
-    // ⭐ সাধারণ স্পর্শ বা হালকা স্ক্রলে চেঞ্জ হবে না ⭐
-    // ১. কমপক্ষে ৮৫ পিক্সেল লম্বা পুশ হতে হবে
-    // ২. উপর-নিচে স্ক্রল করার সময় (absY > absX) স্লাইড বদলাবে না, যাতে সাধারণ পেজ স্ক্রলিং অক্ষত থাকে
-    const LONG_PUSH_THRESHOLD = 85
-
-    if (absX >= LONG_PUSH_THRESHOLD && absX > absY * 1.5) {
-      if (diffX < 0) {
-        nextSlide() // লম্বা পুশ করে বামে ঠেললে পরের ক্লাব
-      } else {
-        prevSlide() // লম্বা পুশ করে ডানে ঠেললে আগের ক্লাব
-      }
+    if (absX >= 75 && absX > absY * 1.4) {
+      if (diffX < 0) nextSlide()
+      else prevSlide()
     }
 
     touchStartX.current = null
     touchStartY.current = null
   }
 
-  // ফিল্টার বদলালে ইনডেক্স ০ করা
   const handleFilterChange = (tag: string) => {
     setFilter(tag)
     setCurrentIndex(0)
     setAnimKey((k) => k + 1)
   }
 
-  // দৃশ্যমান কার্ডসমূহ নির্ধারণ (ডেস্কটপে অ্যাডমিনের চয়েস অনুযায়ী কার্ড সংখ্যা, মোবাইলে ১টি)
   const cardsCount = Math.min(config.cards_desktop || 3, total || 1)
   const displayedClubs: Club[] = []
   if (total > 0) {
@@ -269,58 +255,60 @@ export function ClubNews() {
   const animDuration = `${config.anim_speed_ms || 600}ms`
 
   return (
-    <section id="club-news" className="bg-navy py-14 sm:py-20 overflow-hidden relative">
-      {/* ট্রানজিশন সিএসএস কীফ্রেমসমূহ */}
+    <section
+      id="club-news"
+      className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-16 sm:py-24"
+    >
+      {/* ব্যাকগ্রাউন্ড লাইটিং অ্যাম্বিয়েন্ট ইফেক্ট */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))]" />
+
       <style>{`
-        /* ডান থেকে বামে */
         @keyframes tr_right_to_left {
-          0% { transform: translateX(50px); opacity: 0; }
+          0% { transform: translateX(45px); opacity: 0; }
           100% { transform: translateX(0); opacity: 1; }
         }
         .anim_right-to-left { animation: tr_right_to_left ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-        /* বাম থেকে ডানে */
         @keyframes tr_left_to_right {
-          0% { transform: translateX(-50px); opacity: 0; }
+          0% { transform: translateX(-45px); opacity: 0; }
           100% { transform: translateX(0); opacity: 1; }
         }
         .anim_left-to-right { animation: tr_left_to_right ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-        /* নিচ থেকে উপরে */
         @keyframes tr_bottom_to_top {
-          0% { transform: translateY(40px); opacity: 0; }
+          0% { transform: translateY(35px); opacity: 0; }
           100% { transform: translateY(0); opacity: 1; }
         }
         .anim_bottom-to-top { animation: tr_bottom_to_top ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-        /* উপর থেকে নিচে */
         @keyframes tr_top_to_bottom {
-          0% { transform: translateY(-40px); opacity: 0; }
+          0% { transform: translateY(-35px); opacity: 0; }
           100% { transform: translateY(0); opacity: 1; }
         }
         .anim_top-to-bottom { animation: tr_top_to_bottom ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-        /* ইফেক্টস */
         @keyframes tr_fade { 0% { opacity: 0; } 100% { opacity: 1; } }
         .anim_effect_fade { animation: tr_fade ${animDuration} ease-in-out both; }
 
-        @keyframes tr_zoom { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes tr_zoom { 0% { transform: scale(0.92); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .anim_effect_zoom { animation: tr_zoom ${animDuration} cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
-        @keyframes tr_flip { 0% { transform: perspective(600px) rotateY(35deg); opacity: 0; } 100% { transform: perspective(600px) rotateY(0deg); opacity: 1; } }
+        @keyframes tr_flip { 0% { transform: perspective(700px) rotateY(25deg); opacity: 0; } 100% { transform: perspective(700px) rotateY(0deg); opacity: 1; } }
         .anim_effect_flip { animation: tr_flip ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
       `}</style>
 
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        
+        {/* সেকশন হেডার */}
         <SectionHeading
           inverted
-          eyebrow="Campus Clubs"
-          title="ক্যাম্পাস ক্লাবসমূহ"
-          subtitle="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের কার্যক্রম এবং পরিচিতি।"
+          eyebrow="Campus Organizations & Clubs"
+          title="ক্যাম্পাস ক্লাব ও সংগঠনসমূহ"
+          subtitle="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের সাম্প্রতিক অর্জন, কার্যক্রম এবং পূর্ণাঙ্গ পরিচিতি।"
         />
 
-        {/* ক্যাটাগরি ফিল্টার বার */}
-        <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none" role="group" aria-label="Filter clubs by category">
+        {/* ক্যাটাগরি ফিল্টার পিলস (আধুনিক ডিজাইন) */}
+        <div className="mb-8 flex gap-2 overflow-x-auto pb-2 scrollbar-none" role="group" aria-label="Filter clubs by category">
           {tags.map((tag) => (
             <button
               key={tag}
@@ -328,16 +316,16 @@ export function ClubNews() {
               onClick={() => handleFilterChange(tag)}
               aria-pressed={filter === tag}
               className={cn(
-                'shrink-0 rounded-full border px-4 py-1.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer',
+                'shrink-0 rounded-full border px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer flex items-center gap-1.5',
                 filter === tag
-                  ? 'border-gold bg-gold text-navy font-bold shadow-md'
-                  : 'border-white/20 text-white/80 hover:border-white/50 hover:text-white',
+                  ? 'border-emerald-500 bg-emerald-600 text-white shadow-lg shadow-emerald-950/60 font-bold'
+                  : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700 hover:text-white',
               )}
             >
-              {tag}
-              {tag !== 'All' && (
-                <span className="ml-1.5 text-xs opacity-75">({list.filter((c) => c.tag === tag).length})</span>
-              )}
+              <span>{tag === 'All' ? 'সব ক্লাব' : tag}</span>
+              <span className={cn('text-[11px] px-1.5 py-0.2 rounded-full', filter === tag ? 'bg-emerald-800 text-white' : 'bg-slate-800 text-slate-400')}>
+                {tag === 'All' ? list.length : list.filter((c) => c.tag === tag).length}
+              </span>
             </button>
           ))}
         </div>
@@ -354,8 +342,8 @@ export function ClubNews() {
             <div
               key={animKey}
               className={cn(
-                "grid gap-5 w-full min-w-0",
-                cardsCount === 1 ? "grid-cols-1 max-w-xl mx-auto" :
+                "grid gap-6 w-full min-w-0",
+                cardsCount === 1 ? "grid-cols-1 max-w-lg mx-auto" :
                 cardsCount === 2 ? "grid-cols-1 md:grid-cols-2" :
                 cardsCount === 3 ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" :
                 "grid-cols-1 md:grid-cols-2 lg:grid-cols-4",
@@ -374,119 +362,146 @@ export function ClubNews() {
                   <div
                     key={`${club.id}_${idx}`}
                     id={`club-${club.id}`}
-                    className="group flex flex-col justify-between rounded-3xl border border-white/10 bg-white/5 p-5 transition-all hover:border-brand hover:bg-white/10 w-full min-w-0 overflow-hidden shadow-xl backdrop-blur-sm"
+                    className="group relative flex flex-col justify-between rounded-3xl border border-slate-800/80 bg-gradient-to-b from-slate-900/90 via-slate-900/70 to-slate-950 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all duration-300 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-950/40 w-full min-w-0 overflow-hidden"
                   >
                     <div>
-                      {/* লোগো ও ট্যাগ */}
-                      <div className="flex items-start justify-between gap-3">
-                        {raw?.logo_url ? (
-                          <div className="size-20 shrink-0 rounded-full overflow-hidden shadow-lg border-2 border-white/30 flex items-center justify-center bg-white">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                      {/* কার্ড হেডার: লোগো ও ক্যাটাগরি ব্যাজ */}
+                      <div className="flex items-start justify-between gap-3 border-b border-slate-800/60 pb-4">
+                        <div className="relative">
+                          {raw?.logo_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={raw.logo_url}
                               alt={club.name}
-                              className="size-full object-cover select-none"
+                              className="size-16 rounded-full object-cover ring-2 ring-emerald-500/40 p-0.5 bg-white shadow-md select-none"
                               onError={(e) => {
                                 ;(e.target as HTMLElement).style.display = 'none'
                               }}
                             />
-                          </div>
-                        ) : (
-                          <span className="flex size-20 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-md">
-                            <Icon className="size-8" aria-hidden="true" />
-                          </span>
-                        )}
-                        <span className="rounded-full bg-gold/15 px-3 py-1 text-xs font-bold uppercase tracking-wide text-gold border border-gold/30">
+                          ) : (
+                            <div className="size-16 rounded-full bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center text-white ring-2 ring-emerald-500/40 shadow-md">
+                              <Icon className="size-7 text-white" aria-hidden="true" />
+                            </div>
+                          )}
+                          <span className="absolute -bottom-1 -right-1 size-4 rounded-full bg-emerald-500 ring-2 ring-slate-900" title="সক্রিয় ক্যাম্পাস ক্লাব" />
+                        </div>
+
+                        <span className="rounded-full bg-emerald-950/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-400 border border-emerald-800/60 shadow-xs">
                           {club.tag}
                         </span>
                       </div>
 
                       {/* ক্লাবের নাম */}
-                      <h3 className="mt-4 font-serif text-lg font-bold leading-snug text-white group-hover:text-gold transition-colors truncate">
-                        {club.name}
-                      </h3>
-                      {club.nameBn && <p className="text-xs text-white/70 truncate">{club.nameBn}</p>}
-
-                      {/* কার্যক্রম */}
-                      <div className="mt-3.5 rounded-2xl border border-white/10 bg-navy/60 p-3.5 space-y-1.5">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-brand-soft/90">Latest Activity</p>
-                        <p className="text-xs leading-relaxed text-white/90 line-clamp-3">{club.activity}</p>
-                        {club.activityBn && (
-                          <p className="text-[11px] text-white/60 line-clamp-2">{club.activityBn}</p>
+                      <div className="mt-4">
+                        <h3 className="font-serif text-lg sm:text-xl font-bold leading-snug text-white group-hover:text-emerald-400 transition-colors truncate">
+                          {club.nameBn || club.name}
+                        </h3>
+                        {club.nameBn && (
+                          <p className="text-xs font-medium text-slate-400 truncate mt-0.5">{club.name}</p>
                         )}
-                        {club.date && (
-                          <p className="pt-1 inline-flex items-center gap-1 text-[11px] text-white/50">
-                            <CalendarDays className="size-3 text-gold" /> {club.date}
-                          </p>
-                        )}
+                      </div>
 
-                        {/* ⭐ আন্তর্জাতিক ১৬:৯ স্ট্যান্ডার্ড ছবি/মিডিয়া ফ্রেম (কখনোই কার্ড লম্বা করবে না) ⭐ */}
+                      {/* সাম্প্রতিক কার্যক্রমের আধুনিক কার্ড */}
+                      <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/80 p-4 space-y-2">
+                        <div className="flex items-center justify-between text-[11px] border-b border-slate-800/80 pb-1.5">
+                          <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                            <Sparkles className="size-3.5 text-gold" />
+                            <span>সাম্প্রতিক কার্যক্রম</span>
+                          </span>
+                          {club.date && (
+                            <span className="text-slate-400 font-mono flex items-center gap-1 text-[10px]">
+                              <CalendarDays className="size-3 text-gold" /> {club.date}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-xs sm:text-sm leading-relaxed text-slate-300 line-clamp-3">
+                          {club.activityBn || club.activity}
+                        </p>
+
+                        {/* মিডিয়া প্রিভিউ (ভিডিও/ছবি) */}
                         {activityMediaList.length > 0 && (
-                          <div className="mt-2 pt-2 border-t border-white/10">
+                          <div className="pt-2 border-t border-slate-800/80 overflow-hidden rounded-xl">
                             <UniversalMediaEmbed url={activityMediaList[0].url} title={club.name} compact />
                           </div>
                         )}
                       </div>
+                    </div>
 
-                      {/* সোশ্যাল লিংক */}
-                      {raw && (raw.fb_url || raw.yt_url || raw.web_url) && (
-                        <div className="mt-3 flex items-center gap-1.5 border-t border-white/10 pt-2.5 text-xs">
-                          <span className="text-[10px] text-white/40">সোশ্যাল:</span>
-                          {raw.fb_url && (
+                    {/* কার্ড ফুটার: সোশ্যাল লিংক ও অ্যাকশন বাটন */}
+                    <div className="mt-5 space-y-3 pt-3 border-t border-slate-800/60">
+                      <div className="flex items-center justify-between gap-2">
+                        {/* সোশ্যাল বাটনসমূহ */}
+                        <div className="flex items-center gap-1.5">
+                          {raw?.fb_url && (
                             <a
                               href={safeExternalUrl(raw.fb_url)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white hover:bg-blue-600 transition"
+                              className="size-7 rounded-lg bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white flex items-center justify-center transition shadow-xs text-[11px] font-bold"
+                              title="Facebook Page"
                             >
-                              Facebook
+                              FB
                             </a>
                           )}
-                          {raw.yt_url && (
+                          {raw?.yt_url && (
                             <a
                               href={safeExternalUrl(raw.yt_url)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white hover:bg-red-600 transition"
+                              className="size-7 rounded-lg bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white flex items-center justify-center transition shadow-xs text-[11px] font-bold"
+                              title="YouTube Channel"
                             >
-                              YouTube
+                              YT
                             </a>
                           )}
-                          {raw.web_url && (
+                          {raw?.web_url && (
                             <a
                               href={safeExternalUrl(raw.web_url)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-0.5 rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white hover:bg-brand transition"
+                              className="size-7 rounded-lg bg-slate-800 hover:bg-emerald-600 text-slate-300 hover:text-white flex items-center justify-center transition shadow-xs"
+                              title="Official Website"
                             >
-                              <Globe className="size-2.5" /> Web
+                              <Globe className="size-3.5" />
                             </a>
                           )}
                         </div>
-                      )}
-                    </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleOpenClub(club)}
-                      className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand hover:bg-brand-dark px-4 py-2.5 text-xs sm:text-sm font-semibold text-white transition-all shadow-md active:scale-95 cursor-pointer w-full"
-                    >
-                      <FileText className="size-4" />
-                      <span>View Club Reports</span>
-                    </button>
+                        {/* কমিটি সদস্য সংখ্যা */}
+                        {raw?.committee_members && raw.committee_members.length > 0 && (
+                          <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
+                            <Users className="size-3.5 text-emerald-400" />
+                            <span>{raw.committee_members.length} জন সদস্য</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* মূল ইন্টারেক্টিভ বাটন */}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenClub(club)}
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-950/60 transition-all active:scale-[0.98] cursor-pointer"
+                      >
+                        <FileText className="size-4" />
+                        <span>প্রতিবেদন ও কমিটি দেখুন</span>
+                        <ArrowRight className="size-3.5" />
+                      </button>
+                    </div>
                   </div>
                 )
               })}
             </div>
           ) : (
-            <p className="text-center text-sm text-white/50 py-10 bg-white/5 rounded-2xl border border-white/10">
+            <p className="text-center text-sm text-slate-400 py-12 bg-slate-900/50 rounded-2xl border border-slate-800">
               কোনো ক্লাব পাওয়া যায়নি।
             </p>
           )}
 
-          {/* ==================== স্লাইডার কন্ট্রোল বার (তীর, পজ ও ডটস) ==================== */}
+          {/* ==================== স্লাইডার কন্ট্রোল বার (আধুনিক নেভিগেশন) ==================== */}
           {total > 1 && config.enabled && (
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-4">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-800/80 pt-5">
+              
               {/* ডটস ইন্ডিকেটর */}
               {config.show_dots && (
                 <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
@@ -500,17 +515,17 @@ export function ClubNews() {
                       }}
                       aria-label={`Slide ${i + 1}`}
                       className={cn(
-                        'h-2 rounded-full transition-all cursor-pointer',
-                        i === currentIndex ? 'w-6 bg-gold shadow-md' : 'w-2 bg-white/30 hover:bg-white/60',
+                        'h-2 rounded-full transition-all duration-300 cursor-pointer',
+                        i === currentIndex ? 'w-7 bg-emerald-500 shadow-md shadow-emerald-500/50' : 'w-2 bg-slate-700 hover:bg-slate-500',
                       )}
                     />
                   ))}
                 </div>
               )}
 
-              {/* তীর ও পজ/প্লে বাটন */}
-              <div className="flex items-center gap-2 ml-auto">
-                <span className="text-xs text-white/60 font-semibold mr-1">
+              {/* তীর, পজ ও কাউন্টার কন্ট্রোল */}
+              <div className="flex items-center gap-2.5 ml-auto">
+                <span className="text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">
                   ক্লাব {currentIndex + 1} / {total}
                 </span>
 
@@ -518,10 +533,10 @@ export function ClubNews() {
                   type="button"
                   onClick={() => setIsPaused(!isPaused)}
                   aria-label={isPaused ? 'Play' : 'Pause'}
-                  className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition border border-white/15 cursor-pointer"
-                  title={isPaused ? 'চালান' : 'থামান (পড়ার জন্য)'}
+                  className="size-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition border border-slate-800 cursor-pointer shadow-xs"
+                  title={isPaused ? 'স্লাইড চালান' : 'স্লাইড থামান (পড়ার জন্য)'}
                 >
-                  {isPaused ? <Play className="size-3 text-green-400" /> : <Pause className="size-3 text-yellow-400" />}
+                  {isPaused ? <Play className="size-3.5 text-emerald-400" /> : <Pause className="size-3.5 text-gold" />}
                 </button>
 
                 {config.show_arrows && (
@@ -530,7 +545,7 @@ export function ClubNews() {
                       type="button"
                       onClick={prevSlide}
                       aria-label="Previous Club"
-                      className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition border border-white/15 cursor-pointer active:scale-95"
+                      className="size-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition border border-slate-800 cursor-pointer active:scale-95 shadow-xs"
                     >
                       <ChevronLeft className="size-4" />
                     </button>
@@ -538,7 +553,7 @@ export function ClubNews() {
                       type="button"
                       onClick={nextSlide}
                       aria-label="Next Club"
-                      className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition border border-white/15 cursor-pointer active:scale-95"
+                      className="size-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition border border-slate-800 cursor-pointer active:scale-95 shadow-xs"
                     >
                       <ChevronRight className="size-4" />
                     </button>
@@ -550,7 +565,7 @@ export function ClubNews() {
         </div>
       </div>
 
-      {/* ক্লাবের বিস্তারিত পপ-আপ ডায়ালগ */}
+      {/* ক্লাবের বিস্তারিত ডায়ালগ */}
       <ClubReportsDialog
         club={selected}
         rawClub={selected ? dbMap[selected.id] : undefined}
