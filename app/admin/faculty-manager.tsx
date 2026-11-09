@@ -4,12 +4,13 @@ import { useEffect, useState } from "react"
 import {
   getFaculties, createFaculty, updateFaculty, deleteFaculty,
   getDepartments, createDepartment, updateDepartment, deleteDepartment,
-  getTeachers, createTeacher, deleteTeacher,
+  getTeachers, createTeacher, updateTeacher, deleteTeacher,
   getDeptNotices, createDeptNotice, deleteDeptNotice,
   getDeptEvents, createDeptEvent, deleteDeptEvent,
   type Faculty, type Department, type Teacher, type DeptNotice, type DeptEvent,
 } from "../../lib/faculties"
 import { uploadImage } from "../../lib/sb"
+import { ArrowUp, ArrowDown, Edit3, Trash2, X, PlusCircle, CheckCircle2 } from "lucide-react"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-green-600"
 const btn = "w-full bg-green-700 text-white rounded-xl py-2.5 font-semibold text-sm hover:bg-green-800 disabled:opacity-50 cursor-pointer shadow-sm"
@@ -53,21 +54,25 @@ export default function FacultyManager({
   const [notices, setNotices] = useState<DeptNotice[]>([])
   const [events, setEvents] = useState<DeptEvent[]>([])
 
-  // শিক্ষক
+  // শিক্ষক স্টেট (এডিট ও লাইভ প্রিভিউ সহ)
+  const [tEditId, setTEditId] = useState<string | null>(null)
   const [tName, setTName] = useState("")
   const [tDesig, setTDesig] = useState("")
   const [tQual, setTQual] = useState("")
   const [tBio, setTBio] = useState("")
   const [tEmail, setTEmail] = useState("")
   const [tPhone, setTPhone] = useState("")
+  const [tIsChairman, setTIsChairman] = useState(false)
+  const [tOrder, setTOrder] = useState(0)
+  const [tImgUrl, setTImgUrl] = useState<string | null>(null)
   const [tFile, setTFile] = useState<File | null>(null)
 
-  // নোটিশ (একাধিক ছবি সহ)
+  // নোটিশ
   const [nTitle, setNTitle] = useState("")
   const [nBody, setNBody] = useState("")
   const [nFiles, setNFiles] = useState<File[]>([])
 
-  // ইভেন্ট (একাধিক ছবি সহ)
+  // ইভেন্ট
   const [eTitle, setETitle] = useState("")
   const [eDetails, setEDetails] = useState("")
   const [eDate, setEDate] = useState("")
@@ -92,6 +97,41 @@ export default function FacultyManager({
     }
   }, [selectedDeptId])
 
+  function resetFacForm() {
+    setFacEditId(null)
+    setFacName("")
+    setFacNameEn("")
+    setFacDesc("")
+    setFacImgUrl(null)
+    setFacFile(null)
+  }
+
+  function resetDeptForm() {
+    setDeptEditId(null)
+    setDeptName("")
+    setDeptNameEn("")
+    setDeptCode("")
+    setDeptAbout("")
+    setDeptContact("")
+    setDeptImgUrl(null)
+    setDeptFile(null)
+  }
+
+  function resetTeacherForm() {
+    setTEditId(null)
+    setTName("")
+    setTDesig("")
+    setTQual("")
+    setTBio("")
+    setTEmail("")
+    setTPhone("")
+    setTIsChairman(false)
+    setTOrder(0)
+    setTImgUrl(null)
+    setTFile(null)
+  }
+
+  /* অনুষদ সংরক্ষণ */
   async function saveFaculty() {
     if (!facName.trim()) { setMsg("❌ অনুষদের নাম লিখুন"); return }
     setBusy(true); setMsg("")
@@ -114,12 +154,13 @@ export default function FacultyManager({
         await createFaculty(token, { ...data, sort_order: faculties.length * 10 })
         setMsg("✅ নতুন অনুষদ যুক্ত হয়েছে")
       }
-      setFacEditId(null); setFacName(""); setFacNameEn(""); setFacDesc(""); setFacImgUrl(null); setFacFile(null)
+      resetFacForm()
       await loadAll()
     } catch (e: any) { setMsg("❌ " + (e?.message || "ত্রুটি হয়েছে")) }
     setBusy(false)
   }
 
+  /* বিভাগ সংরক্ষণ */
   async function saveDepartment() {
     if (!deptFacId) { setMsg("❌ অনুষদ বেছে নিন"); return }
     if (!deptName.trim()) { setMsg("❌ বিভাগের নাম লিখুন"); return }
@@ -146,22 +187,27 @@ export default function FacultyManager({
         await createDepartment(token, { ...data, sort_order: departments.length * 10 })
         setMsg("✅ নতুন বিভাগ যুক্ত হয়েছে")
       }
-      setDeptEditId(null); setDeptName(""); setDeptNameEn(""); setDeptCode(""); setDeptAbout(""); setDeptContact(""); setDeptImgUrl(null); setDeptFile(null)
+      resetDeptForm()
       await loadAll()
     } catch (e: any) { setMsg("❌ " + (e?.message || "ত্রুটি হয়েছে")) }
     setBusy(false)
   }
 
-  async function addTeacherHandler() {
+  /* শিক্ষক সংরক্ষণ ও এডিট */
+  async function saveTeacherHandler() {
     if (!selectedDeptId || !tName.trim() || !tDesig.trim()) {
       setMsg("❌ শিক্ষকের নাম ও পদবি লিখুন")
       return
     }
     setBusy(true); setMsg("")
     try {
-      let photo = null
-      if (tFile) photo = await uploadImage(token, await shrink(tFile))
-      await createTeacher(token, {
+      let photo = tImgUrl
+      if (tFile) {
+        setMsg("শিক্ষকের ছবি আপলোড হচ্ছে...")
+        photo = await uploadImage(token, await shrink(tFile))
+      }
+
+      const payload = {
         department_id: selectedDeptId,
         name: tName.trim(),
         designation: tDesig.trim(),
@@ -170,15 +216,64 @@ export default function FacultyManager({
         email: tEmail.trim() || null,
         phone: tPhone.trim() || null,
         photo_url: photo,
-      })
-      setTName(""); setTDesig(""); setTQual(""); setTBio(""); setTEmail(""); setTPhone(""); setTFile(null)
+        is_chairman: tIsChairman,
+        sort_order: Number(tOrder) || 0,
+      }
+
+      if (tEditId) {
+        await updateTeacher(token, tEditId, payload)
+        setMsg("✅ শিক্ষকের তথ্য আপডেট হয়েছে")
+      } else {
+        const nextOrder = teachers.length ? Math.max(...teachers.map(t => t.sort_order || 0)) + 10 : 0
+        await createTeacher(token, { ...payload, sort_order: payload.sort_order || nextOrder })
+        setMsg("✅ শিক্ষক সফলভাবে যুক্ত হয়েছেন")
+      }
+
+      resetTeacherForm()
       setTeachers(await getTeachers(selectedDeptId))
-      setMsg("✅ শিক্ষক যুক্ত হয়েছেন")
     } catch (e: any) { setMsg("❌ " + (e?.message || "ব্যর্থ হয়েছে")) }
     setBusy(false)
   }
 
-  /* নোটিশ যোগ (একাধিক ছবি ও স্বয়ংক্রিয় সিঙ্ক সহ) */
+  function startEditTeacher(t: Teacher) {
+    setTEditId(t.id)
+    setTName(t.name)
+    setTDesig(t.designation)
+    setTQual(t.qualifications || "")
+    setTBio(t.bio || "")
+    setTEmail(t.email || "")
+    setTPhone(t.phone || "")
+    setTIsChairman(Boolean(t.is_chairman))
+    setTOrder(t.sort_order || 0)
+    setTImgUrl(t.photo_url || null)
+    setTFile(null)
+    window.scrollTo({ top: 300, behavior: "smooth" })
+  }
+
+  async function moveTeacher(idx: number, dir: -1 | 1) {
+    const targetIdx = idx + dir
+    if (targetIdx < 0 || targetIdx >= teachers.length) return
+    const arr = [...teachers]
+    const a = arr[idx]
+    const b = arr[targetIdx]
+    arr[idx] = b
+    arr[targetIdx] = a
+    setTeachers(arr)
+
+    try {
+      const orderA = a.sort_order ?? idx * 10
+      const orderB = b.sort_order ?? targetIdx * 10
+      await Promise.all([
+        updateTeacher(token, a.id, { sort_order: orderB }),
+        updateTeacher(token, b.id, { sort_order: orderA }),
+      ])
+      setTeachers(await getTeachers(selectedDeptId))
+    } catch {
+      setMsg("❌ ক্রম পরিবর্তন ব্যর্থ হয়েছে")
+    }
+  }
+
+  /* নোটিশ যোগ */
   async function addNoticeHandler() {
     if (!selectedDeptId || !nTitle.trim()) { setMsg("❌ নোটিশের শিরোনাম লিখুন"); return }
     setBusy(true); setMsg("")
@@ -204,7 +299,7 @@ export default function FacultyManager({
     setBusy(false)
   }
 
-  /* ইভেন্ট যোগ (একাধিক ছবি সহ) */
+  /* ইভেন্ট যোগ */
   async function addEventHandler() {
     if (!selectedDeptId || !eTitle.trim()) { setMsg("❌ ইভেন্টের নাম লিখুন"); return }
     setBusy(true); setMsg("")
@@ -233,35 +328,45 @@ export default function FacultyManager({
 
   return (
     <div className="space-y-4">
-      {/* সাব-ট্যাব */}
+      {/* সাব-ট্যাব ন্যাভিগেশন */}
       <div className="flex bg-white rounded-xl p-1 shadow-sm border border-gray-200 gap-1 text-xs font-semibold">
         <button
           onClick={() => setSubTab("faculties")}
-          className={`flex-1 py-2 rounded-lg transition-all ${subTab === "faculties" ? "bg-green-700 text-white shadow" : "text-gray-600 hover:bg-gray-100"}`}
+          className={`flex-1 py-2.5 rounded-lg transition-all ${subTab === "faculties" ? "bg-green-700 text-white shadow" : "text-gray-600 hover:bg-gray-100"}`}
         >
           🏛️ অনুষদ ({faculties.length})
         </button>
         <button
           onClick={() => setSubTab("departments")}
-          className={`flex-1 py-2 rounded-lg transition-all ${subTab === "departments" ? "bg-green-700 text-white shadow" : "text-gray-600 hover:bg-gray-100"}`}
+          className={`flex-1 py-2.5 rounded-lg transition-all ${subTab === "departments" ? "bg-green-700 text-white shadow" : "text-gray-600 hover:bg-gray-100"}`}
         >
           🎓 বিভাগ ({departments.length})
         </button>
         <button
           onClick={() => setSubTab("dept_details")}
-          className={`flex-1 py-2 rounded-lg transition-all ${subTab === "dept_details" ? "bg-green-700 text-white shadow" : "text-gray-600 hover:bg-gray-100"}`}
+          className={`flex-1 py-2.5 rounded-lg transition-all ${subTab === "dept_details" ? "bg-green-700 text-white shadow" : "text-gray-600 hover:bg-gray-100"}`}
         >
-          👥 শিক্ষক, নোটিশ ও ইভেন্ট
+          👨‍🏫 শিক্ষক ও নোটিশ
         </button>
       </div>
 
-      {msg && <p className="text-sm font-semibold p-2.5 rounded-xl bg-green-50 border border-green-200 text-green-800 text-center">{msg}</p>}
+      {msg && <p className="text-xs sm:text-sm font-semibold p-2.5 rounded-xl bg-green-50 border border-green-200 text-green-800 text-center">{msg}</p>}
 
-      {/* অনুষদ ব্যবস্থাপনা */}
+      {/* ==================== অনুষদ ব্যবস্থাপনা ==================== */}
       {subTab === "faculties" && (
         <div className="space-y-4">
           <div className="bg-white rounded-2xl shadow p-4 space-y-3">
-            <h2 className="font-bold text-base text-gray-800">{facEditId ? "অনুষদ এডিট করুন" : "নতুন অনুষদ যুক্ত করুন"}</h2>
+            <div className="flex items-center justify-between border-b pb-2">
+              <h2 className="font-bold text-base text-gray-800">
+                {facEditId ? "✏️ অনুষদ এডিট করুন" : "➕ নতুন অনুষদ যুক্ত করুন"}
+              </h2>
+              {facEditId && (
+                <button type="button" onClick={resetFacForm} className="text-xs text-red-600 flex items-center gap-1 font-semibold">
+                  <X className="size-3.5" /> বাতিল
+                </button>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <input className={inp} placeholder="অনুষদের নাম (বাংলা) *" value={facName} onChange={(e) => setFacName(e.target.value)} />
               <input className={inp} placeholder="অনুষদের নাম (English)" value={facNameEn} onChange={(e) => setFacNameEn(e.target.value)} />
@@ -289,9 +394,30 @@ export default function FacultyManager({
             {faculties.map((f) => (
               <div key={f.id} className="bg-white rounded-xl shadow p-3 text-sm flex items-center justify-between gap-3">
                 <p className="font-bold text-gray-800 truncate">{f.name}</p>
-                <div className="flex gap-3 text-xs font-semibold">
-                  <button onClick={() => { setFacEditId(f.id); setFacName(f.name); setFacNameEn(f.name_en || ""); setFacDesc(f.description || ""); setFacImgUrl(f.image_url) }} className="text-green-700">এডিট</button>
-                  <button onClick={() => deleteFaculty(token, f.id).then(loadAll)} className="text-red-600">মুছুন</button>
+                <div className="flex gap-3 text-xs font-semibold shrink-0">
+                  <button
+                    onClick={() => {
+                      setFacEditId(f.id)
+                      setFacName(f.name)
+                      setFacNameEn(f.name_en || "")
+                      setFacDesc(f.description || "")
+                      setFacImgUrl(f.image_url)
+                      window.scrollTo({ top: 0, behavior: "smooth" })
+                    }}
+                    className="text-green-700 hover:underline"
+                  >
+                    এডিট
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`"${f.name}" অনুষদ ও এর অধীনস্থ সব বিভাগ মুছে ফেলতে চান?`)) {
+                        deleteFaculty(token, f.id).then(loadAll)
+                      }
+                    }}
+                    className="text-red-600 hover:underline"
+                  >
+                    মুছুন
+                  </button>
                 </div>
               </div>
             ))}
@@ -299,19 +425,31 @@ export default function FacultyManager({
         </div>
       )}
 
-      {/* বিভাগ ব্যবস্থাপনা */}
+      {/* ==================== বিভাগ ব্যবস্থাপনা ==================== */}
       {subTab === "departments" && (
         <div className="space-y-4">
           <div className="bg-white rounded-2xl shadow p-4 space-y-3">
-            <h2 className="font-bold text-base text-gray-800">{deptEditId ? "বিভাগ এডিট করুন" : "নতুন বিভাগ যুক্ত করুন"}</h2>
+            <div className="flex items-center justify-between border-b pb-2">
+              <h2 className="font-bold text-base text-gray-800">
+                {deptEditId ? "✏️ বিভাগ এডিট করুন" : "➕ নতুন বিভাগ যুক্ত করুন"}
+              </h2>
+              {deptEditId && (
+                <button type="button" onClick={resetDeptForm} className="text-xs text-red-600 flex items-center gap-1 font-semibold">
+                  <X className="size-3.5" /> বাতিল
+                </button>
+              )}
+            </div>
+
+            <label className="text-xs font-bold text-gray-700 block">কোন অনুষদের অধীনে বিভাগটি পড়বে:</label>
             <select className={inp} value={deptFacId} onChange={(e) => setDeptFacId(e.target.value)}>
               {faculties.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
             </select>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <input className={inp} placeholder="বিভাগের নাম (বাংলা) *" value={deptName} onChange={(e) => setDeptName(e.target.value)} />
               <input className={inp} placeholder="বিভাগের নাম (English)" value={deptNameEn} onChange={(e) => setDeptNameEn(e.target.value)} />
             </div>
-            <input className={inp} placeholder="বিভাগীয় কোড (যেমন: CSE)" value={deptCode} onChange={(e) => setDeptCode(e.target.value)} />
+            <input className={inp} placeholder="বিভাগীয় কোড (যেমন: CSE, EEE, BGE)" value={deptCode} onChange={(e) => setDeptCode(e.target.value)} />
             <textarea className={inp} rows={3} placeholder="বিভাগের পরিচিতি (About)" value={deptAbout} onChange={(e) => setDeptAbout(e.target.value)} />
             <input className={inp} placeholder="অফিসের ঠিকানা ও যোগাযোগের তথ্য" value={deptContact} onChange={(e) => setDeptContact(e.target.value)} />
 
@@ -333,92 +471,229 @@ export default function FacultyManager({
           </div>
 
           <div className="space-y-2">
-            {departments.map((d) => (
-              <div key={d.id} className="bg-white rounded-xl shadow p-3 text-sm flex items-center justify-between gap-3">
-                <p className="font-bold text-gray-800 truncate">{d.name} {d.code ? `(${d.code})` : ""}</p>
-                <div className="flex gap-3 text-xs font-semibold">
-                  <button onClick={() => { setDeptEditId(d.id); setDeptFacId(d.faculty_id); setDeptName(d.name); setDeptCode(d.code || ""); setDeptAbout(d.about || ""); setDeptContact(d.contact_info || ""); setDeptImgUrl(d.image_url) }} className="text-green-700">এডিট</button>
-                  <button onClick={() => deleteDepartment(token, d.id).then(loadAll)} className="text-red-600">মুছুন</button>
+            {departments.map((d) => {
+              const fac = faculties.find((f) => f.id === d.faculty_id)
+              return (
+                <div key={d.id} className="bg-white rounded-xl shadow p-3 text-sm flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-800 truncate">{d.name} {d.code ? `(${d.code})` : ""}</p>
+                    <p className="text-[11px] text-gray-500 truncate">🏛️ {fac?.name || "অনুষদ নেই"}</p>
+                  </div>
+                  <div className="flex gap-3 text-xs font-semibold shrink-0">
+                    <button
+                      onClick={() => {
+                        setDeptEditId(d.id)
+                        setDeptFacId(d.faculty_id)
+                        setDeptName(d.name)
+                        setDeptNameEn(d.name_en || "")
+                        setDeptCode(d.code || "")
+                        setDeptAbout(d.about || "")
+                        setDeptContact(d.contact_info || "")
+                        setDeptImgUrl(d.image_url)
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }}
+                      className="text-green-700 hover:underline"
+                    >
+                      এডিট
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`"${d.name}" বিভাগ ও এর শিক্ষকদের তথ্য মুছে ফেলতে চান?`)) {
+                          deleteDepartment(token, d.id).then(loadAll)
+                        }
+                      }}
+                      className="text-red-600 hover:underline"
+                    >
+                      মুছুন
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
 
-      {/* বিস্তারিত: শিক্ষক, নোটিশ ও ইভেন্ট */}
+      {/* ==================== শিক্ষক, নোটিশ ও ইভেন্ট ==================== */}
       {subTab === "dept_details" && (
         <div className="space-y-5">
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-3.5 space-y-1">
-            <label className="text-xs font-bold text-green-900 block">📌 কোন বিভাগের তথ্য নিয়ন্ত্রণ করতে চান? বেছে নিন:</label>
-            <select className={inp} value={selectedDeptId} onChange={(e) => setSelectedDeptId(e.target.value)}>
-              {departments.map((d) => (
-                <option key={d.id} value={d.id}>{d.name} {d.code ? `(${d.code})` : ""}</option>
-              ))}
+          {/* অনুষদভিত্তিক ড্রপডাউন যাতে মোবাইল থেকে নিমেষেই বিভাগ বাছা যায় */}
+          <div className="bg-green-50 border border-green-200 rounded-2xl p-3.5 space-y-1.5">
+            <label className="text-xs font-bold text-green-950 block">📌 কোন বিভাগের শিক্ষক ও নোটিশ পরিচালনা করবেন?:</label>
+            <select
+              className={inp}
+              value={selectedDeptId}
+              onChange={(e) => {
+                setSelectedDeptId(e.target.value)
+                resetTeacherForm()
+              }}
+            >
+              {faculties.map((f) => {
+                const deptsInFac = departments.filter((d) => d.faculty_id === f.id)
+                if (deptsInFac.length === 0) return null
+                return (
+                  <optgroup key={f.id} label={`🏛️ ${f.name}`}>
+                    {deptsInFac.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} {d.code ? `(${d.code})` : ""}
+                      </option>
+                    ))}
+                  </optgroup>
+                )
+              })}
             </select>
           </div>
 
-          {/* ১. শিক্ষক */}
+          {/* ১. শিক্ষক ব্যবস্থাপনা (এডিট ও লাইভ ছবি প্রিভিউ সহ) */}
           <div className="bg-white rounded-2xl shadow p-4 space-y-3">
-            <h3 className="font-bold text-sm text-gray-800 border-b pb-2">👨‍🏫 নতুন শিক্ষক যুক্ত করুন ({teachers.length} জন)</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input className={inp} placeholder="শিক্ষকের নাম *" value={tName} onChange={(e) => setTName(e.target.value)} />
-              <input className={inp} placeholder="পদবি *" value={tDesig} onChange={(e) => setTDesig(e.target.value)} />
+            <div className="flex items-center justify-between border-b pb-2">
+              <h3 className="font-bold text-sm text-gray-800">
+                {tEditId ? "✏️ শিক্ষকের তথ্য এডিট করুন" : `👨‍🏫 নতুন শিক্ষক যুক্ত করুন (${teachers.length} জন)`}
+              </h3>
+              {tEditId && (
+                <button type="button" onClick={resetTeacherForm} className="text-xs text-red-600 flex items-center gap-1 font-semibold">
+                  <X className="size-3.5" /> বাতিল
+                </button>
+              )}
             </div>
-            <input className={inp} placeholder="শিক্ষাগত যোগ্যতা" value={tQual} onChange={(e) => setTQual(e.target.value)} />
-            <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত পরিচিতি বা গবেষণার ক্ষেত্র" value={tBio} onChange={(e) => setTBio(e.target.value)} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input className={inp} placeholder="ইমেইল" value={tEmail} onChange={(e) => setTEmail(e.target.value)} />
-              <input className={inp} placeholder="ফোন নম্বর" value={tPhone} onChange={(e) => setTPhone(e.target.value)} />
-            </div>
-            <div className="text-xs">
-              <label className="text-xs font-semibold text-gray-700 block mb-1">শিক্ষকের ছবি:</label>
-              <input type="file" accept="image/*" onChange={(e) => setTFile(e.target.files?.[0] || null)} />
-            </div>
-            <button className={btn} onClick={addTeacherHandler} disabled={busy}>+ শিক্ষক যুক্ত করুন</button>
 
-            <div className="space-y-2 pt-2">
-              {teachers.map((t) => (
-                <div key={t.id} className="flex items-center justify-between border rounded-xl p-2.5 text-xs bg-gray-50/60">
-                  <p className="font-bold text-gray-800 truncate">{t.name} ({t.designation})</p>
-                  <button onClick={() => deleteTeacher(token, t.id).then(() => getTeachers(selectedDeptId).then(setTeachers))} className="text-red-600 font-bold">বাদ দিন</button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input className={inp} placeholder="শিক্ষকের পূর্ণ নাম *" value={tName} onChange={(e) => setTName(e.target.value)} />
+              <input className={inp} placeholder="পদবি (যেমন: অধ্যাপক / সহযোগী অধ্যাপক) *" value={tDesig} onChange={(e) => setTDesig(e.target.value)} />
+            </div>
+
+            <label className="flex items-center gap-2 p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-xs font-bold text-amber-900 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={tIsChairman}
+                onChange={(e) => setTIsChairman(e.target.checked)}
+                className="size-4 accent-amber-600 rounded cursor-pointer"
+              />
+              <span>⭐ ইনি এই বিভাগের বর্তমান চেয়ারম্যান / বিভাগীয় প্রধান (Chairman)</span>
+            </label>
+
+            <input className={inp} placeholder="শিক্ষাগত যোগ্যতা (যেমন: Ph.D, M.Sc.)" value={tQual} onChange={(e) => setTQual(e.target.value)} />
+            <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত পরিচিতি বা গবেষণার ক্ষেত্র" value={tBio} onChange={(e) => setTBio(e.target.value)} />
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input className={inp} placeholder="ইমেইল (name@mbstu.ac.bd)" value={tEmail} onChange={(e) => setTEmail(e.target.value)} />
+              <input className={inp} placeholder="মোবাইল বা অফিস ফোন নম্বর" value={tPhone} onChange={(e) => setTPhone(e.target.value)} />
+            </div>
+
+            {/* ছবি আপলোড ও লাইভ থাম্বনেইল প্রিভিউ */}
+            <div className="rounded-xl border p-2.5 bg-gray-50 space-y-1.5">
+              <label className="text-xs font-semibold text-gray-700 block">শিক্ষকের ছবি:</label>
+              <input type="file" accept="image/*" onChange={(e) => setTFile(e.target.files?.[0] || null)} className="text-xs" />
+              {(tFile || tImgUrl) && (
+                <div className="flex items-center gap-2.5 pt-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={tFile ? URL.createObjectURL(tFile) : tImgUrl || ""}
+                    alt="Teacher"
+                    className="size-14 rounded-full object-cover border-2 border-green-600 bg-white shadow-sm"
+                  />
+                  <button type="button" onClick={() => { setTFile(null); setTImgUrl(null) }} className="text-xs text-red-600 underline">
+                    ছবি সরান
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button className={btn} onClick={saveTeacherHandler} disabled={busy}>
+              {busy ? "সংরক্ষণ হচ্ছে..." : tEditId ? "✓ শিক্ষকের তথ্য আপডেট করুন" : "+ শিক্ষক সংরক্ষণ করুন"}
+            </button>
+
+            {/* শিক্ষকদের তালিকা (সাজানোর তীর ও এডিট বাটন সহ) */}
+            <div className="space-y-2 pt-3 border-t">
+              <p className="text-xs font-bold text-gray-700">বর্তমান শিক্ষকবৃন্দ ও ক্রম:</p>
+              {teachers.map((t, idx) => (
+                <div key={t.id} className="flex items-center justify-between border rounded-xl p-2.5 text-xs bg-gray-50/70 gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-green-100 font-bold text-green-800 text-[10px]">
+                      {idx + 1}
+                    </span>
+                    {t.photo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={t.photo_url} alt="" className="size-8 rounded-full object-cover shrink-0 border" />
+                    ) : (
+                      <span className="size-8 rounded-full bg-gray-200 text-gray-600 font-bold flex items-center justify-center shrink-0">
+                        👤
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-800 truncate">
+                        {t.name} {t.is_chairman && <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 py-0.2 rounded font-bold">চেয়ারম্যান</span>}
+                      </p>
+                      <p className="text-[11px] text-green-700 truncate">{t.designation}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => moveTeacher(idx, -1)}
+                      disabled={idx === 0}
+                      className="p-1 rounded border bg-white hover:bg-gray-100 disabled:opacity-30"
+                      title="উপরে নিন"
+                    >
+                      <ArrowUp className="size-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveTeacher(idx, 1)}
+                      disabled={idx === teachers.length - 1}
+                      className="p-1 rounded border bg-white hover:bg-gray-100 disabled:opacity-30"
+                      title="নিচে নিন"
+                    >
+                      <ArrowDown className="size-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => startEditTeacher(t)}
+                      className="text-green-700 font-bold hover:underline px-1"
+                    >
+                      এডিট
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm(`"${t.name}" এর তথ্য মুছে ফেলতে চান?`)) {
+                          deleteTeacher(token, t.id).then(() => getTeachers(selectedDeptId).then(setTeachers))
+                        }
+                      }}
+                      className="text-red-600 font-bold hover:underline px-1"
+                    >
+                      মুছুন
+                    </button>
+                  </div>
                 </div>
               ))}
+              {teachers.length === 0 && (
+                <p className="text-xs text-gray-400 text-center py-3">এই বিভাগে কোনো শিক্ষক যোগ করা হয়নি।</p>
+              )}
             </div>
           </div>
 
-          {/* ২. নোটিশ (একাধিক ছবি ও স্বয়ংক্রিয় সিঙ্ক) */}
+          {/* ২. নোটিশ সেকশন */}
           <div className="bg-white rounded-2xl shadow p-4 space-y-3">
             <h3 className="font-bold text-sm text-gray-800 border-b pb-2 flex items-center justify-between">
               <span>📢 বিভাগীয় নোটিশ কর্নার ({notices.length} টি)</span>
-              <span className="text-[11px] bg-green-100 text-green-800 font-semibold px-2 py-0.5 rounded-full">✓ মূল নোটিশ বোর্ডে সিঙ্ক হবে</span>
+              <span className="text-[10px] bg-green-100 text-green-800 font-semibold px-2 py-0.5 rounded-full">✓ মূল বোর্ডে সিঙ্ক হবে</span>
             </h3>
             <input className={inp} placeholder="নোটিশের শিরোনাম *" value={nTitle} onChange={(e) => setNTitle(e.target.value)} />
             <textarea className={inp} rows={3} placeholder="নোটিশের বিস্তারিত লেখা" value={nBody} onChange={(e) => setNBody(e.target.value)} />
 
             <div className="rounded-xl border p-2.5 bg-gray-50 space-y-1">
-              <label className="text-xs font-bold text-gray-700 block">
-                🖼️ নোটিশের ছবি যুক্ত করুন (একাধিক ছবি বাছা যাবে):
-              </label>
+              <label className="text-xs font-bold text-gray-700 block">🖼️ নোটিশের ছবি যুক্ত করুন:</label>
               <input
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={(e) => {
-                  if (e.target.files) setNFiles(Array.from(e.target.files))
-                }}
+                onChange={(e) => e.target.files && setNFiles(Array.from(e.target.files))}
                 className="text-xs"
               />
               {nFiles.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {nFiles.map((f, i) => (
-                    <div key={i} className="relative size-12 rounded-lg border overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={URL.createObjectURL(f)} alt="" className="size-full object-cover" />
-                    </div>
-                  ))}
-                  <p className="w-full text-[11px] text-green-700 font-bold">{nFiles.length}টি ছবি বাছাই করা হয়েছে</p>
-                </div>
+                <p className="text-[11px] text-green-700 font-bold">{nFiles.length}টি ছবি বাছাই করা হয়েছে</p>
               )}
             </div>
 
@@ -427,20 +702,16 @@ export default function FacultyManager({
             <div className="space-y-1.5 pt-2">
               {notices.map((n) => (
                 <div key={n.id} className="flex items-center justify-between border rounded-xl p-2.5 text-xs bg-gray-50/60">
-                  <div className="min-w-0">
-                    <p className="font-bold text-gray-800 truncate">{n.title}</p>
-                    <p className="text-[11px] text-gray-500">
-                      {new Date(n.created_at).toLocaleDateString("bn-BD")}
-                      {n.image_urls?.length ? ` · 📷 ${n.image_urls.length}টি ছবি` : ""}
-                    </p>
-                  </div>
-                  <button onClick={() => deleteDeptNotice(token, n.id).then(() => getDeptNotices(selectedDeptId).then(setNotices))} className="text-red-600 font-bold">মুছুন</button>
+                  <p className="font-bold text-gray-800 truncate">{n.title}</p>
+                  <button onClick={() => deleteDeptNotice(token, n.id).then(() => getDeptNotices(selectedDeptId).then(setNotices))} className="text-red-600 font-bold shrink-0">
+                    মুছুন
+                  </button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* ৩. ইভেন্ট (একাধিক ছবি সহ) */}
+          {/* ৩. ইভেন্ট সেকশন */}
           <div className="bg-white rounded-2xl shadow p-4 space-y-3">
             <h3 className="font-bold text-sm text-gray-800 border-b pb-2">🎉 বিভাগীয় ইভেন্টসমূহ ({events.length} টি)</h3>
             <input className={inp} placeholder="ইভেন্টের নাম / শিরোনাম *" value={eTitle} onChange={(e) => setETitle(e.target.value)} />
@@ -448,28 +719,16 @@ export default function FacultyManager({
             <input className={inp} placeholder="ইভেন্টের তারিখ" value={eDate} onChange={(e) => setEDate(e.target.value)} />
 
             <div className="rounded-xl border p-2.5 bg-gray-50 space-y-1">
-              <label className="text-xs font-bold text-gray-700 block">
-                🖼️ ইভেন্টের ছবি যুক্ত করুন (একাধিক ছবি বাছা যাবে):
-              </label>
+              <label className="text-xs font-bold text-gray-700 block">🖼️ ইভেন্টের ছবি:</label>
               <input
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={(e) => {
-                  if (e.target.files) setEFiles(Array.from(e.target.files))
-                }}
+                onChange={(e) => e.target.files && setEFiles(Array.from(e.target.files))}
                 className="text-xs"
               />
               {eFiles.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {eFiles.map((f, i) => (
-                    <div key={i} className="relative size-12 rounded-lg border overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={URL.createObjectURL(f)} alt="" className="size-full object-cover" />
-                    </div>
-                  ))}
-                  <p className="w-full text-[11px] text-green-700 font-bold">{eFiles.length}টি ছবি বাছাই করা হয়েছে</p>
-                </div>
+                <p className="text-[11px] text-green-700 font-bold">{eFiles.length}টি ছবি বাছাই করা হয়েছে</p>
               )}
             </div>
 
@@ -478,14 +737,10 @@ export default function FacultyManager({
             <div className="space-y-2 pt-2">
               {events.map((ev) => (
                 <div key={ev.id} className="flex items-center justify-between border rounded-xl p-2.5 text-xs bg-gray-50/60">
-                  <div className="min-w-0">
-                    <p className="font-bold text-gray-800 truncate">{ev.title}</p>
-                    <p className="text-[11px] text-gray-500">
-                      {ev.date}
-                      {ev.image_urls?.length ? ` · 📷 ${ev.image_urls.length}টি ছবি` : ""}
-                    </p>
-                  </div>
-                  <button onClick={() => deleteDeptEvent(token, ev.id).then(() => getDeptEvents(selectedDeptId).then(setEvents))} className="text-red-600 font-bold">মুছুন</button>
+                  <p className="font-bold text-gray-800 truncate">{ev.title} ({ev.date})</p>
+                  <button onClick={() => deleteDeptEvent(token, ev.id).then(() => getDeptEvents(selectedDeptId).then(setEvents))} className="text-red-600 font-bold shrink-0">
+                    মুছুন
+                  </button>
                 </div>
               ))}
             </div>
