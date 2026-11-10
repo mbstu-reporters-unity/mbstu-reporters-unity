@@ -1,17 +1,35 @@
 import React from 'react'
 
-// ইউজার ফ্রেন্ডলি শর্টকোডগুলোকে সরাসরি আকর্ষণীয় CSS ডিজাইনে রূপান্তরকারী ফাংশন
+/**
+ * ক্ষতিকর HTML ট্যাগ ও ইভেন্ট হ্যান্ডলার স্যানিটাইজ করার নিরাপদ ফাংশন
+ */
+function sanitizeHtml(html: string): string {
+  if (!html) return ''
+
+  let clean = html
+    // ১. বিপজ্জনক ট্যাগসমূহ (<script>, <iframe>, <object>, <embed>, <svg>, <form> ইত্যাদি) পুরোপুরি মুছে ফেলা
+    .replace(/<\/?(script|iframe|object|embed|svg|form|input|button|style|link|meta|applet)[^>]*>/gi, '')
+    // ২. যেকোনো ধরনের ক্ষতিকর ইভেন্ট হ্যান্ডলার (যেমন: onerror=, onclick=, onload= ইত্যাদি) মুছে ফেলা
+    .replace(/\s*on\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    // ৩. javascript: বা vbscript: যুক্ত লিংক বাতিল করা
+    .replace(/(href|src)\s*=\s*["']?\s*(javascript|vbscript|data:text\/html):[^"'>\s]*/gi, '$1="#"')
+
+  return clean
+}
+
+/**
+ * শর্টকোডগুলোকে আকর্ষণীয় নিরাপদ স্টাইলে রূপান্তর
+ */
 function parseSimpleFormatting(text: string): string {
   if (!text) return ''
   let s = text
 
-  // যদি আগের কোনো জটিল <span> বা style ট্যাগ থেকে থাকে, সেগুলোকে পরিষ্কার করা বা রেন্ডার উপযোগী করা
-  // (প্রয়োজনে র ডেটা থেকে সরাসরি শর্টকোডে রূপান্তর)
+  // পূর্বের লিগ্যাসি ক্লাসগুলোকে রূপান্তর
   s = s.replace(/<span[^>]*class="[^"]*text-gold-gradient[^"]*"[^>]*>(.*?)<\/span>/gi, '<span class="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 bg-clip-text text-transparent font-bold">$1</span>')
   s = s.replace(/<span[^>]*class="[^"]*text-green-gradient[^"]*"[^>]*>(.*?)<\/span>/gi, '<span class="bg-gradient-to-r from-emerald-600 via-teal-500 to-green-700 bg-clip-text text-transparent font-bold">$1</span>')
   s = s.replace(/<span[^>]*class="[^"]*text-red-gradient[^"]*"[^>]*>(.*?)<\/span>/gi, '<span class="bg-gradient-to-r from-red-600 to-rose-400 bg-clip-text text-transparent font-bold">$1</span>')
-  
-  // নতুন সহজ শর্টকোড রূপান্তর
+
+  // নতুন শর্টকোড রূপান্তর
   s = s.replace(/\[gold\](.*?)\[\/gold\]/gi, '<span class="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 bg-clip-text text-transparent font-bold">$1</span>')
   s = s.replace(/\[green\](.*?)\[\/green\]/gi, '<span class="bg-gradient-to-r from-emerald-600 via-teal-500 to-green-700 bg-clip-text text-transparent font-bold">$1</span>')
   s = s.replace(/\[red\](.*?)\[\/red\]/gi, '<span class="bg-gradient-to-r from-red-600 to-rose-400 bg-clip-text text-transparent font-bold">$1</span>')
@@ -22,7 +40,8 @@ function parseSimpleFormatting(text: string): string {
   s = s.replace(/\[h1\](.*?)\[\/h1\]/gi, '<h1 class="font-serif text-2xl font-bold my-2 text-navy">$1</h1>')
   s = s.replace(/\[h2\](.*?)\[\/h2\]/gi, '<h2 class="font-serif text-xl font-bold my-1.5 text-navy">$1</h2>')
 
-  return s
+  // রেন্ডার করার পূর্বে সম্পূর্ণ টেক্সট স্যানিটাইজ করা
+  return sanitizeHtml(s)
 }
 
 export function FormattedText({
