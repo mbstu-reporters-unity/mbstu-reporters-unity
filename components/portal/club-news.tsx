@@ -92,12 +92,8 @@ export function ClubNews() {
   const [isPaused, setIsPaused] = useState(false)
   const [animKey, setAnimKey] = useState(0)
 
-  // টাচ ও স্মুথ সোয়াইপ রেফারেন্স
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const isDraggingRef = useRef(false)
-  const startXRef = useRef(0)
-  const scrollLeftRef = useRef(0)
-  const reqAnimIdRef = useRef<number | null>(null)
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
   const clubsRef = useRef<Club[]>(fallbackClubs)
 
   const handleCloseDialog = useCallback(() => {
@@ -141,7 +137,9 @@ export function ClubNews() {
         const clubId = new URLSearchParams(window.location.search).get('club')
         if (clubId) {
           const found = formatted.find((c) => c.id === clubId)
-          if (found) setSelected(found)
+          if (found) {
+            setSelected(found)
+          }
         }
       }
     })
@@ -150,7 +148,9 @@ export function ClubNews() {
       const customEvent = e as CustomEvent<string>
       const targetId = customEvent.detail
       const targetClub = clubsRef.current.find((c) => c.id === targetId)
-      if (targetClub) handleOpenClub(targetClub)
+      if (targetClub) {
+        handleOpenClub(targetClub)
+      }
     }
 
     const handlePopState = () => {
@@ -176,84 +176,6 @@ export function ClubNews() {
   const visible = filter === 'All' ? list : list.filter((c) => c.tag === filter)
   const total = visible.length
 
-  // ⭐ ৩ গুণ তালিকা তৈরি (যাতে টাচ করে ডানে-বামে ঠেললেও লুপ ভাঙে না) ⭐
-  const loopClubs = useMemo(() => {
-    if (visible.length === 0) return []
-    let base = [...visible]
-    while (base.length < 6) {
-      base = [...base, ...visible]
-    }
-    return [...base, ...base, ...base]
-  }, [visible])
-
-  // ==================== ফিজিক্স-বেজড অটো-স্ক্রল ও টাচ সোয়াইপ ইঞ্জিন ====================
-  useEffect(() => {
-    if (config.effect !== 'continuous' || !config.enabled || visible.length === 0) return
-
-    const container = scrollContainerRef.current
-    if (!container) return
-
-    // ইনিশিয়াল পজিশন মাঝামাঝি সেট করা
-    const oneThird = container.scrollWidth / 3
-    if (container.scrollLeft === 0) {
-      container.scrollLeft = oneThird
-    }
-
-    let lastTime = performance.now()
-    const speed = Math.max(25, 140 / (config.duration_sec || 4)) // পিক্সেল প্রতি সেকেন্ড
-    const dirFactor = config.direction === 'left-to-right' ? -1 : 1
-
-    const animateScroll = (time: number) => {
-      const dt = (time - lastTime) / 1000
-      lastTime = time
-
-      if (!isDraggingRef.current && (!config.pause_on_hover || !isPaused) && container) {
-        container.scrollLeft += speed * dt * dirFactor
-
-        const maxOneThird = container.scrollWidth / 3
-        if (container.scrollLeft >= maxOneThird * 2) {
-          container.scrollLeft -= maxOneThird
-        } else if (container.scrollLeft <= 5) {
-          container.scrollLeft += maxOneThird
-        }
-      }
-
-      reqAnimIdRef.current = requestAnimationFrame(animateScroll)
-    }
-
-    reqAnimIdRef.current = requestAnimationFrame(animateScroll)
-
-    return () => {
-      if (reqAnimIdRef.current) cancelAnimationFrame(reqAnimIdRef.current)
-    }
-  }, [config.effect, config.enabled, config.duration_sec, config.direction, config.pause_on_hover, isPaused, visible])
-
-  // টাচ ও মাউস ড্র্যাগ হ্যান্ডলার (আঙুল দিয়ে ডানে-বামে সোয়াইপ)
-  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
-    if (config.pause_on_hover) setIsPaused(true)
-    isDraggingRef.current = true
-
-    const pageX = 'touches' in e ? e.touches[0].pageX : e.pageX
-    startXRef.current = pageX
-    if (scrollContainerRef.current) {
-      scrollLeftRef.current = scrollContainerRef.current.scrollLeft
-    }
-  }
-
-  const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
-    if (!isDraggingRef.current || !scrollContainerRef.current) return
-    const pageX = 'touches' in e ? e.touches[0].pageX : e.pageX
-    const walk = (pageX - startXRef.current) * 1.3 // ড্র্যাগের গতি
-    scrollContainerRef.current.scrollLeft = scrollLeftRef.current - walk
-  }
-
-  const handleTouchEnd = () => {
-    isDraggingRef.current = false
-    if (config.pause_on_hover) {
-      setTimeout(() => setIsPaused(false), 2000)
-    }
-  }
-
   const nextSlide = useCallback(() => {
     if (total <= 1) return
     setCurrentIndex((prev) => (prev + 1) % total)
@@ -266,9 +188,69 @@ export function ClubNews() {
     setAnimKey((k) => k + 1)
   }, [total])
 
+  useEffect(() => {
+    if (!config.enabled || total <= 1 || isPaused || config.effect === 'continuous') return
+
+    const intervalMs = Math.max(2, config.duration_sec || 4) * 1000
+    const timer = setInterval(() => {
+      nextSlide()
+    }, intervalMs)
+
+    return () => clearInterval(timer)
+  }, [config.enabled, config.duration_sec, total, isPaused, nextSlide, config.effect])
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (config.pause_on_hover) setIsPaused(true)
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (config.pause_on_hover) {
+      setTimeout(() => setIsPaused(false), 2000)
+    }
+
+    if (touchStartX.current === null || touchStartY.current === null || total <= 1 || config.effect === 'continuous') {
+      touchStartX.current = null
+      touchStartY.current = null
+      return
+    }
+
+    const diffX = e.changedTouches[0].clientX - touchStartX.current
+    const diffY = e.changedTouches[0].clientY - touchStartY.current
+    const absX = Math.abs(diffX)
+    const absY = Math.abs(diffY)
+
+    if (absX >= 75 && absX > absY * 1.4) {
+      if (diffX < 0) nextSlide()
+      else prevSlide()
+    }
+
+    touchStartX.current = null
+    touchStartY.current = null
+  }
+
+  // ⭐ নিরবচ্ছিন্ন স্ক্রলের জন্য ডুপ্লিকেট তালিকা (Seamless Loop) ⭐
+  const marqueeClubs = useMemo(() => {
+    if (visible.length === 0) return []
+    let arr = [...visible]
+    while (arr.length < 8) {
+      arr = [...arr, ...visible]
+    }
+    return [...arr, ...arr]
+  }, [visible])
+
+  const cardsCount = Math.min(config.cards_desktop || 3, total || 1)
+  const displayedClubs: Club[] = []
+  if (total > 0) {
+    for (let i = 0; i < cardsCount; i++) {
+      displayedClubs.push(visible[(currentIndex + i) % total])
+    }
+  }
+
   const animDuration = `${config.anim_speed_ms || 600}ms`
 
-  // ==================== আধুনিক কার্ড রেন্ডারার ====================
+  // ক্লাব কার্ড রেন্ডারার
   const renderCard = (club: Club) => {
     const Icon = clubIcons[club.icon] || Star
     const raw = dbMap[club.id]
@@ -277,11 +259,10 @@ export function ClubNews() {
     return (
       <div
         id={`club-${club.id}`}
-        className="group relative flex flex-col justify-between rounded-3xl border border-white/10 bg-slate-900/80 backdrop-blur-2xl p-5 sm:p-6 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.6)] transition-all duration-300 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-950/40 w-full min-w-0 overflow-hidden select-none"
+        className="group relative flex flex-col justify-between rounded-3xl border border-slate-800/80 bg-gradient-to-b from-slate-900/90 via-slate-900/70 to-slate-950 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all duration-300 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-950/40 w-full min-w-0 overflow-hidden"
       >
         <div>
-          {/* কার্ড হেডার */}
-          <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
+          <div className="flex items-start justify-between gap-3 border-b border-slate-800/60 pb-4">
             <div className="relative">
               {raw?.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -298,15 +279,14 @@ export function ClubNews() {
                   <Icon className="size-7 text-white" aria-hidden="true" />
                 </div>
               )}
-              <span className="absolute -bottom-1 -right-1 size-4 rounded-full bg-emerald-500 ring-2 ring-slate-900 shadow-sm" />
+              <span className="absolute -bottom-1 -right-1 size-4 rounded-full bg-emerald-500 ring-2 ring-slate-900" title="সক্রিয় ক্যাম্পাস ক্লাব" />
             </div>
 
-            <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-400 border border-emerald-500/25 shadow-xs">
+            <span className="rounded-full bg-emerald-950/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-400 border border-emerald-800/60 shadow-xs">
               {club.tag}
             </span>
           </div>
 
-          {/* ক্লাবের নাম */}
           <div className="mt-4">
             <h3 className="font-serif text-lg sm:text-xl font-bold leading-snug text-white group-hover:text-emerald-400 transition-colors truncate">
               {club.nameBn || club.name}
@@ -316,16 +296,15 @@ export function ClubNews() {
             )}
           </div>
 
-          {/* সাম্প্রতিক কার্যক্রম */}
-          <div className="mt-4 rounded-2xl border border-white/5 bg-slate-950/70 p-4 space-y-2">
-            <div className="flex items-center justify-between text-[11px] border-b border-white/10 pb-1.5">
+          <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/80 p-4 space-y-2">
+            <div className="flex items-center justify-between text-[11px] border-b border-slate-800/80 pb-1.5">
               <span className="font-bold text-emerald-400 flex items-center gap-1.5">
-                <Sparkles className="size-3.5 text-amber-400" />
+                <Sparkles className="size-3.5 text-gold" />
                 <span>সাম্প্রতিক কার্যক্রম</span>
               </span>
               {club.date && (
                 <span className="text-slate-400 font-mono flex items-center gap-1 text-[10px]">
-                  <CalendarDays className="size-3 text-amber-400" /> {club.date}
+                  <CalendarDays className="size-3 text-gold" /> {club.date}
                 </span>
               )}
             </div>
@@ -335,15 +314,14 @@ export function ClubNews() {
             </p>
 
             {activityMediaList.length > 0 && (
-              <div className="pt-2 border-t border-white/10 overflow-hidden rounded-xl">
+              <div className="pt-2 border-t border-slate-800/80 overflow-hidden rounded-xl">
                 <UniversalMediaEmbed url={activityMediaList[0].url} title={club.name} compact />
               </div>
             )}
           </div>
         </div>
 
-        {/* কার্ড ফুটার বাটনসমূহ */}
-        <div className="mt-5 space-y-3 pt-3 border-t border-white/10">
+        <div className="mt-5 space-y-3 pt-3 border-t border-slate-800/60">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               {raw?.fb_url && (
@@ -351,7 +329,7 @@ export function ClubNews() {
                   href={safeExternalUrl(raw.fb_url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="size-7 rounded-lg bg-slate-800/80 hover:bg-blue-600 text-slate-300 hover:text-white flex items-center justify-center transition shadow-xs text-[11px] font-bold border border-white/5"
+                  className="size-7 rounded-lg bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white flex items-center justify-center transition shadow-xs text-[11px] font-bold"
                   title="Facebook Page"
                 >
                   FB
@@ -362,7 +340,7 @@ export function ClubNews() {
                   href={safeExternalUrl(raw.yt_url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="size-7 rounded-lg bg-slate-800/80 hover:bg-red-600 text-slate-300 hover:text-white flex items-center justify-center transition shadow-xs text-[11px] font-bold border border-white/5"
+                  className="size-7 rounded-lg bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white flex items-center justify-center transition shadow-xs text-[11px] font-bold"
                   title="YouTube Channel"
                 >
                   YT
@@ -373,7 +351,7 @@ export function ClubNews() {
                   href={safeExternalUrl(raw.web_url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="size-7 rounded-lg bg-slate-800/80 hover:bg-emerald-600 text-slate-300 hover:text-white flex items-center justify-center transition shadow-xs border border-white/5"
+                  className="size-7 rounded-lg bg-slate-800 hover:bg-emerald-600 text-slate-300 hover:text-white flex items-center justify-center transition shadow-xs"
                   title="Official Website"
                 >
                   <Globe className="size-3.5" />
@@ -392,7 +370,7 @@ export function ClubNews() {
           <button
             type="button"
             onClick={() => handleOpenClub(club)}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-950/60 transition-all active:scale-[0.98] cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-950/60 transition-all active:scale-[0.98] cursor-pointer"
           >
             <FileText className="size-4" />
             <span>প্রতিবেদন ও কমিটি দেখুন</span>
@@ -406,14 +384,23 @@ export function ClubNews() {
   return (
     <section
       id="club-news"
-      className="relative overflow-hidden bg-[#070d18] py-16 sm:py-24 text-white"
+      className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-16 sm:py-24"
     >
-      {/* ==================== আধুনিক আলোকিত অ্যাম্বিয়েন্ট ব্যাকগ্রাউন্ড ==================== */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-emerald-500/20 via-teal-500/10 to-transparent blur-3xl rounded-full" />
-      <div className="pointer-events-none absolute -bottom-40 right-0 w-[500px] h-[400px] bg-gradient-to-t from-blue-600/15 via-emerald-600/10 to-transparent blur-3xl rounded-full" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-35" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))]" />
 
+      {/* ⭐ নিরবচ্ছিন্ন স্ক্রল (Continuous Marquee) সিএসএস অ্যানিমেশন ⭐ */}
       <style>{`
+        @keyframes continuous_marquee_glide {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .anim_marquee_track {
+          display: flex;
+          width: max-content;
+          will-change: transform;
+          animation: continuous_marquee_glide var(--marquee-speed, 35s) linear infinite;
+        }
+
         @keyframes tr_right_to_left {
           0% { transform: translateX(45px); opacity: 0; }
           100% { transform: translateX(0); opacity: 1; }
@@ -457,7 +444,6 @@ export function ClubNews() {
           subtitle="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের সাম্প্রতিক অর্জন, কার্যক্রম এবং পূর্ণাঙ্গ পরিচিতি।"
         />
 
-        {/* ক্যাটাগরি ফিল্টার পিলস (আধুনিক ফ্রস্টেড গ্লাস স্টাইল) */}
         <div className="mb-8 flex gap-2 overflow-x-auto pb-2 scrollbar-none" role="group">
           {tags.map((tag) => (
             <button
@@ -471,12 +457,12 @@ export function ClubNews() {
               className={cn(
                 'shrink-0 rounded-full border px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer flex items-center gap-1.5',
                 filter === tag
-                  ? 'border-emerald-400/80 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-950/80 font-bold'
-                  : 'border-white/10 bg-slate-900/60 backdrop-blur-md text-slate-300 hover:border-emerald-500/50 hover:text-white',
+                  ? 'border-emerald-500 bg-emerald-600 text-white shadow-lg shadow-emerald-950/60 font-bold'
+                  : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700 hover:text-white',
               )}
             >
               <span>{tag === 'All' ? 'সব ক্লাব' : tag}</span>
-              <span className={cn('text-[11px] px-1.5 py-0.2 rounded-full', filter === tag ? 'bg-emerald-900 text-white' : 'bg-white/10 text-slate-400')}>
+              <span className={cn('text-[11px] px-1.5 py-0.2 rounded-full', filter === tag ? 'bg-emerald-800 text-white' : 'bg-slate-800 text-slate-400')}>
                 {tag === 'All' ? list.length : list.filter((c) => c.tag === tag).length}
               </span>
             </button>
@@ -484,39 +470,41 @@ export function ClubNews() {
         </div>
 
         {/* ==================== স্লাইডার কনটেইনার ==================== */}
-        <div className="relative w-full">
+        <div
+          onMouseEnter={() => config.pause_on_hover && setIsPaused(true)}
+          onMouseLeave={() => config.pause_on_hover && setIsPaused(false)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          className="relative w-full overflow-hidden"
+        >
           {total > 0 ? (
+            /* ⭐ ভিডিওর মতো নিরবচ্ছিন্ন স্মুথ স্ক্রলিং মোড ⭐ */
             config.effect === 'continuous' ? (
-              /* ⭐ নিরবচ্ছিন্ন অটো-স্ক্রল + আঙুল দিয়ে ডানে-বামে সোয়াইপ মোড ⭐ */
-              <div
-                ref={scrollContainerRef}
-                onMouseDown={handleTouchStart}
-                onMouseMove={handleTouchMove}
-                onMouseUp={handleTouchEnd}
-                onMouseLeave={handleTouchEnd}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                className="overflow-x-auto scrollbar-none py-4 w-full cursor-grab active:cursor-grabbing select-none"
-                style={{ scrollBehavior: isDraggingRef.current ? 'auto' : 'smooth' }}
-              >
-                <div className="flex gap-6 w-max px-2">
-                  {loopClubs.map((club, idx) => (
-                    <div key={`${club.id}_${idx}`} className="w-[285px] sm:w-[340px] shrink-0">
+              <div className="py-2 overflow-hidden w-full select-none">
+                <div
+                  className="anim_marquee_track flex gap-6"
+                  style={{
+                    animationDuration: `${Math.max(14, (config.duration_sec || 4) * (marqueeClubs.length / 2))}s`,
+                    animationDirection: config.direction === 'left-to-right' ? 'reverse' : 'normal',
+                    animationPlayState: isPaused ? 'paused' : 'running',
+                  }}
+                >
+                  {marqueeClubs.map((club, idx) => (
+                    <div key={`${club.id}_${idx}`} className="w-[290px] sm:w-[340px] shrink-0">
                       {renderCard(club)}
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              /* সাধারণ গ্রিড মোড */
+              /* সাধারণ গ্রিড ট্রানজিশন মোড */
               <div
                 key={animKey}
                 className={cn(
                   "grid gap-6 w-full min-w-0",
-                  config.cards_desktop === 1 ? "grid-cols-1 max-w-lg mx-auto" :
-                  config.cards_desktop === 2 ? "grid-cols-1 md:grid-cols-2" :
-                  config.cards_desktop === 3 ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" :
+                  cardsCount === 1 ? "grid-cols-1 max-w-lg mx-auto" :
+                  cardsCount === 2 ? "grid-cols-1 md:grid-cols-2" :
+                  cardsCount === 3 ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" :
                   "grid-cols-1 md:grid-cols-2 lg:grid-cols-4",
                   config.effect === 'fade' ? 'anim_effect_fade' :
                   config.effect === 'zoom' ? 'anim_effect_zoom' :
@@ -524,18 +512,18 @@ export function ClubNews() {
                   `anim_${config.direction || 'right-to-left'}`
                 )}
               >
-                {visible.slice(0, config.cards_desktop || 3).map((club) => renderCard(club))}
+                {displayedClubs.map((club) => renderCard(club))}
               </div>
             )
           ) : (
-            <p className="text-center text-sm text-slate-400 py-12 bg-slate-900/50 rounded-2xl border border-white/10">
+            <p className="text-center text-sm text-slate-400 py-12 bg-slate-900/50 rounded-2xl border border-slate-800">
               কোনো ক্লাব পাওয়া যায়নি।
             </p>
           )}
 
-          {/* কন্ট্রোল বার (সাধারণ মোডে কার্যকর) */}
+          {/* নেভিগেশন কন্ট্রোল (সাধারণ মোডে কার্যকর) */}
           {total > 1 && config.enabled && config.effect !== 'continuous' && (
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-5">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-800/80 pt-5">
               {config.show_dots && (
                 <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
                   {visible.map((_, i) => (
@@ -546,6 +534,7 @@ export function ClubNews() {
                         setCurrentIndex(i)
                         setAnimKey((k) => k + 1)
                       }}
+                      aria-label={`Slide ${i + 1}`}
                       className={cn(
                         'h-2 rounded-full transition-all duration-300 cursor-pointer',
                         i === currentIndex ? 'w-7 bg-emerald-500 shadow-md shadow-emerald-500/50' : 'w-2 bg-slate-700 hover:bg-slate-500',
@@ -556,16 +545,16 @@ export function ClubNews() {
               )}
 
               <div className="flex items-center gap-2.5 ml-auto">
-                <span className="text-xs font-semibold text-slate-400 bg-slate-900 border border-white/10 px-2.5 py-1 rounded-lg">
+                <span className="text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">
                   ক্লাব {currentIndex + 1} / {total}
                 </span>
 
                 <button
                   type="button"
                   onClick={() => setIsPaused(!isPaused)}
-                  className="size-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition border border-white/10 cursor-pointer shadow-xs"
+                  className="size-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition border border-slate-800 cursor-pointer shadow-xs"
                 >
-                  {isPaused ? <Play className="size-3.5 text-emerald-400" /> : <Pause className="size-3.5 text-amber-400" />}
+                  {isPaused ? <Play className="size-3.5 text-emerald-400" /> : <Pause className="size-3.5 text-gold" />}
                 </button>
 
                 {config.show_arrows && (
@@ -573,14 +562,14 @@ export function ClubNews() {
                     <button
                       type="button"
                       onClick={prevSlide}
-                      className="size-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition border border-white/10 cursor-pointer active:scale-95 shadow-xs"
+                      className="size-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition border border-slate-800 cursor-pointer active:scale-95 shadow-xs"
                     >
                       <ChevronLeft className="size-4" />
                     </button>
                     <button
                       type="button"
                       onClick={nextSlide}
-                      className="size-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition border border-white/10 cursor-pointer active:scale-95 shadow-xs"
+                      className="size-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition border border-slate-800 cursor-pointer active:scale-95 shadow-xs"
                     >
                       <ChevronRight className="size-4" />
                     </button>
