@@ -32,7 +32,7 @@ export type ClubItem = {
   tag: string
   icon: string
   logo_url?: string | null
-  cover_url?: string | null // কভার ফটোর ফিল্ড যুক্ত হলো
+  cover_url?: string | null
   activity: string | null
   activity_bn: string | null
   date: string | null
@@ -52,18 +52,18 @@ export type ClubItem = {
 
 export type ClubInput = Omit<ClubItem, "id" | "created_at">
 
-// ⭐ ক্লাব স্লাইডার ও ট্রানজিশন কনফিগ টাইপ ⭐
+// ⭐ 'continuous' (ভিডিওর মতো নিরবচ্ছিন্ন স্মুথ স্ক্রল) যুক্ত করা হলো ⭐
 export type ClubTransitionDirection = 'right-to-left' | 'left-to-right' | 'bottom-to-top' | 'top-to-bottom'
-export type ClubTransitionEffect = 'slide' | 'fade' | 'zoom' | 'flip'
+export type ClubTransitionEffect = 'slide' | 'fade' | 'zoom' | 'flip' | 'continuous'
 
 export interface ClubCarouselConfig {
   enabled: boolean
   direction: ClubTransitionDirection
   effect: ClubTransitionEffect
-  duration_sec: number // স্লাইড পরিবর্তনের সময়কাল (যেমন: ৪ সেকেন্ড)
-  anim_speed_ms: number // অ্যানিমেশনের মসৃণতার গতি (যেমন: ৬০০ms)
+  duration_sec: number
+  anim_speed_ms: number
   pause_on_hover: boolean
-  cards_desktop: number // ১, ২, ৩ বা ৪টি কার্ড পাশাপাশি
+  cards_desktop: number
   show_arrows: boolean
   show_dots: boolean
 }
@@ -71,7 +71,7 @@ export interface ClubCarouselConfig {
 export const DEFAULT_CLUB_CAROUSEL_CONFIG: ClubCarouselConfig = {
   enabled: true,
   direction: 'right-to-left',
-  effect: 'slide',
+  effect: 'continuous', // ডিফল্টভাবে ভিডিওর মতো স্মুথ স্ক্রল
   duration_sec: 4,
   anim_speed_ms: 600,
   pause_on_hover: true,
@@ -138,7 +138,6 @@ export async function getCampusClubs(token?: string): Promise<ClubItem[]> {
   }
 }
 
-// নির্দিষ্ট ক্লাবের তথ্য আনার ফাংশন
 export async function getClubById(id: string): Promise<ClubItem | null> {
   try {
     const res = await fetch(
@@ -195,7 +194,6 @@ export async function getClubNewsPosts(clubId: string) {
   }
 }
 
-/* ==================== স্লাইডার কনফিগারেশন ফাংশনসমূহ ==================== */
 export async function getClubCarouselConfig(): Promise<ClubCarouselConfig> {
   try {
     const res = await fetch(
