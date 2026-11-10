@@ -8,7 +8,6 @@ import {
   Check,
   Globe,
   Mail,
-  Newspaper,
   Share2,
   UserRound,
   Users,
@@ -16,8 +15,8 @@ import {
   X,
   MessageSquare,
   MapPin,
-  Image as ImageIcon,
-  PlaySquare
+  Camera,
+  Play
 } from 'lucide-react'
 import type { Club } from '@/lib/data'
 import {
@@ -29,18 +28,18 @@ import {
 import { UniversalMediaEmbed } from './universal-media-embed'
 import { ReactionBar } from './reaction-bar'
 
-// ভিডিও ইউআরএল শনাক্তকারী হেল্পার
+// ভিডিও ইউআরএল শনাক্তকারী নিরাপদ ফাংশন
 function isVideoUrl(url?: string | null): boolean {
-  if (!url) return false
+  if (!url || typeof url !== 'string') return false
   const u = url.toLowerCase()
   return (
     u.includes('youtube.com') ||
     u.includes('youtu.be') ||
     u.includes('facebook.com') ||
     u.includes('fb.watch') ||
-    u.includes('.mp4') ||
-    u.includes('.webm') ||
-    u.includes('.mov')
+    u.endsWith('.mp4') ||
+    u.endsWith('.webm') ||
+    u.endsWith('.mov')
   )
 }
 
@@ -69,7 +68,9 @@ export function ClubReportsDialog({
 
   useEffect(() => {
     if (!club?.id) return
-    getClubNewsPosts(club.id).then(setLiveNews)
+    getClubNewsPosts(club.id)
+      .then((data) => setLiveNews(Array.isArray(data) ? data : []))
+      .catch(() => setLiveNews([]))
   }, [club?.id])
 
   useEffect(() => {
@@ -87,7 +88,7 @@ export function ClubReportsDialog({
 
   if (!club) return null
 
-  const members = rawClub?.committee_members || []
+  const members = Array.isArray(rawClub?.committee_members) ? rawClub.committee_members : []
   const term = rawClub?.committee_term
   const logo = rawClub?.logo_url
   const cover = rawClub?.cover_url
@@ -95,60 +96,62 @@ export function ClubReportsDialog({
   const activityMediaList = parseActivityMedia(rawClub?.embed_media_url)
 
   const manualReports =
-    rawClub?.reports && rawClub.reports.length > 0
+    Array.isArray(rawClub?.reports) && rawClub.reports.length > 0
       ? rawClub.reports
-      : club.reports && club.reports.length > 0
+      : Array.isArray(club.reports) && club.reports.length > 0
       ? club.reports
       : []
 
-  // ⭐ স্বয়ংক্রিয়ভাবে সকল পোস্ট থেকে ফটোগুলো সংগ্রহ করা ⭐
+  // ⭐ নিরাপদভাবে সকল পোস্ট থেকে ফটোগুলো সংগ্রহ করা ⭐
   const allPhotos = useMemo(() => {
     const list: { url: string; title?: string; date?: string }[] = []
     
-    // ১. লাইভ নিউজ থেকে ছবি
+    // ১. লাইভ নিউজ
     liveNews.forEach((p) => {
       if (p.image_url && !isVideoUrl(p.image_url)) {
         list.push({ url: p.image_url, title: p.title, date: new Date(p.created_at).toLocaleDateString('bn-BD') })
       }
       const parsed = parseActivityMedia(p.embed_media_url)
       parsed.forEach((m) => {
-        if (m.url && !isVideoUrl(m.url)) {
+        if (m && m.url && !isVideoUrl(m.url)) {
           list.push({ url: m.url, title: m.title || p.title })
         }
       })
     })
 
-    // ২. ক্লাবের সাম্প্রতিক কার্যক্রমের ছবি
+    // ২. ক্লাবের সাম্প্রতিক কার্যক্রম
     activityMediaList.forEach((m) => {
-      if (m.url && !isVideoUrl(m.url)) {
+      if (m && m.url && !isVideoUrl(m.url)) {
         list.push({ url: m.url, title: m.title || club.name })
       }
     })
 
-    // ৩. ম্যানুয়াল রিপোর্ট থেকে ছবি
+    // ৩. ম্যানুয়াল রিপোর্ট
     manualReports.forEach((r: any) => {
-      if (r.embed_media_url && !isVideoUrl(r.embed_media_url)) {
+      if (r?.embed_media_url && !isVideoUrl(r.embed_media_url)) {
         list.push({ url: r.embed_media_url, title: r.title, date: r.date })
       }
-      r.media_items?.forEach((m: any) => {
-        if (m.url && !isVideoUrl(m.url)) {
-          list.push({ url: m.url, title: m.title || r.title })
-        }
-      })
+      if (Array.isArray(r?.media_items)) {
+        r.media_items.forEach((m: any) => {
+          if (m && m.url && !isVideoUrl(m.url)) {
+            list.push({ url: m.url, title: m.title || r.title })
+          }
+        })
+      }
     })
 
     return list
   }, [liveNews, activityMediaList, manualReports, club.name])
 
-  // ⭐ স্বয়ংক্রিয়ভাবে সকল পোস্ট থেকে ভিডিও ও ভিডিও লিংক সংগ্রহ করা ⭐
+  // ⭐ নিরাপদভাবে সকল পোস্ট থেকে ভিডিও ও ভিডিও লিংক সংগ্রহ করা ⭐
   const allVideos = useMemo(() => {
     const list: { url: string; title?: string; date?: string }[] = []
 
-    // ১. লাইভ নিউজ থেকে ভিডিও
+    // ১. লাইভ নিউজ
     liveNews.forEach((p) => {
       const parsed = parseActivityMedia(p.embed_media_url)
       parsed.forEach((m) => {
-        if (m.url && isVideoUrl(m.url)) {
+        if (m && m.url && isVideoUrl(m.url)) {
           list.push({ url: m.url, title: m.title || p.title, date: new Date(p.created_at).toLocaleDateString('bn-BD') })
         }
       })
@@ -159,21 +162,23 @@ export function ClubReportsDialog({
 
     // ২. ক্লাবের কার্যক্রমের ভিডিও
     activityMediaList.forEach((m) => {
-      if (m.url && isVideoUrl(m.url)) {
+      if (m && m.url && isVideoUrl(m.url)) {
         list.push({ url: m.url, title: m.title || club.name })
       }
     })
 
-    // ৩. ম্যানুয়াল রিপোর্ট থেকে ভিডিও
+    // ৩. ম্যানুয়াল রিপোর্ট
     manualReports.forEach((r: any) => {
-      if (r.embed_media_url && isVideoUrl(r.embed_media_url)) {
+      if (r?.embed_media_url && isVideoUrl(r.embed_media_url)) {
         list.push({ url: r.embed_media_url, title: r.title, date: r.date })
       }
-      r.media_items?.forEach((m: any) => {
-        if (m.url && isVideoUrl(m.url)) {
-          list.push({ url: m.url, title: m.title || r.title })
-        }
-      })
+      if (Array.isArray(r?.media_items)) {
+        r.media_items.forEach((m: any) => {
+          if (m && m.url && isVideoUrl(m.url)) {
+            list.push({ url: m.url, title: m.title || r.title })
+          }
+        })
+      }
     })
 
     return list
@@ -253,7 +258,7 @@ export function ClubReportsDialog({
                 )}
               </div>
 
-              {/* পেজের নাম (কাটা যাবে না, সম্পূর্ণ শো করবে) */}
+              {/* পেজের নাম (ভাঙবে না বা কাটবে না) */}
               <div className="flex-1 text-center sm:text-left mt-2 sm:mt-0 sm:mb-2 min-w-0 w-full px-1">
                 <h1
                   id={titleId}
@@ -307,7 +312,7 @@ export function ClubReportsDialog({
               </div>
             </div>
 
-            {/* ⭐ ৪টি কার্যকর ফেসবুক মেনু ট্যাব (Posts, About, Photos, Videos) ⭐ */}
+            {/* ৪টি কার্যকর ফেসবুক মেনু ট্যাব (Posts, About, Photos, Videos) */}
             <div className="flex items-center gap-1 border-t border-gray-200 mt-2 overflow-x-auto scrollbar-none">
               <button
                 type="button"
@@ -342,7 +347,7 @@ export function ClubReportsDialog({
                     : 'text-[#65676B] border-transparent hover:bg-gray-100 rounded-lg'
                 }`}
               >
-                <ImageIcon className="size-4" />
+                <Camera className="size-4" />
                 <span>Photos</span>
                 {allPhotos.length > 0 && (
                   <span className="text-xs px-1.5 py-0.2 rounded-full bg-gray-200 text-gray-700">
@@ -360,7 +365,7 @@ export function ClubReportsDialog({
                     : 'text-[#65676B] border-transparent hover:bg-gray-100 rounded-lg'
                 }`}
               >
-                <PlaySquare className="size-4" />
+                <Play className="size-4" />
                 <span>Videos</span>
                 {allVideos.length > 0 && (
                   <span className="text-xs px-1.5 py-0.2 rounded-full bg-gray-200 text-gray-700">
@@ -384,7 +389,7 @@ export function ClubReportsDialog({
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
                   <h2 className="font-bold text-lg text-[#050505] mb-2.5">Intro</h2>
                   
-                  {/* ⭐ ইন্ট্রো টেক্সট শতভাগ জাস্টিফাই (উভয় পাশে সমান) ⭐ */}
+                  {/* ইন্ট্রো টেক্সট শতভাগ জাস্টিফাই */}
                   <p
                     className="text-[14px] sm:text-[15px] text-[#050505] whitespace-pre-line leading-relaxed text-justify"
                     style={{ textAlign: 'justify', textJustify: 'inter-word' }}
@@ -424,7 +429,7 @@ export function ClubReportsDialog({
                     <div className="grid grid-cols-3 gap-2">
                       {members.slice(0, 6).map((m: any, i: number) => (
                         <div key={i} className="flex flex-col gap-1 items-center">
-                          {m.photo_url ? (
+                          {m?.photo_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={m.photo_url} alt="" className="size-16 rounded-lg object-cover border border-gray-200 shadow-sm" />
                           ) : (
@@ -432,8 +437,8 @@ export function ClubReportsDialog({
                               <UserRound className="size-7" />
                             </div>
                           )}
-                          <p className="font-semibold text-[11px] text-[#050505] text-center truncate w-full px-0.5">{m.name}</p>
-                          <p className="text-[10px] text-[#65676B] text-center truncate w-full">{m.role}</p>
+                          <p className="font-semibold text-[11px] text-[#050505] text-center truncate w-full px-0.5">{m?.name || ''}</p>
+                          <p className="text-[10px] text-[#65676B] text-center truncate w-full">{m?.role || ''}</p>
                         </div>
                       ))}
                     </div>
@@ -444,7 +449,6 @@ export function ClubReportsDialog({
               {/* ডান পাশ: টাইমলাইন (Posts) */}
               <div className="md:col-span-3 space-y-4">
                 
-                {/* পোস্ট হেডার */}
                 <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200 flex items-center justify-between">
                   <h2 className="font-bold text-base text-[#050505]">Timeline Posts</h2>
                   <span className="text-xs text-[#65676B]">
@@ -452,7 +456,7 @@ export function ClubReportsDialog({
                   </span>
                 </div>
 
-                {/* লাইভ নিউজ তালিকা (ফেসবুক পোস্ট স্টাইল) */}
+                {/* লাইভ নিউজ তালিকা */}
                 {liveNews.map((post: any) => (
                   <article key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div className="flex items-center gap-2.5 p-4">
@@ -500,7 +504,6 @@ export function ClubReportsDialog({
                       )}
                     </div>
 
-                    {/* রিঅ্যাকশন ও কমেন্ট বার */}
                     <div className="px-4 py-2 border-t border-gray-100">
                       <ReactionBar postId={post.id} title={post.title} />
                       <div className="border-t border-gray-200 mt-2 pt-2">
@@ -548,7 +551,7 @@ export function ClubReportsDialog({
                         <UniversalMediaEmbed url={r.embed_media_url} title={r.title} />
                       )}
 
-                      {r.media_items && r.media_items.length > 0 && (
+                      {Array.isArray(r.media_items) && r.media_items.length > 0 && (
                         <div className="space-y-1">
                           {r.media_items.map((m: any, mi: number) => (
                             <div key={mi} className="bg-white pb-2">
@@ -622,17 +625,17 @@ export function ClubReportsDialog({
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 pt-2">
                     {members.map((m: any, i: number) => (
                       <div key={i} className="flex items-center gap-3 p-2 bg-gray-50 rounded-xl border border-gray-200">
-                        {m.photo_url ? (
+                        {m?.photo_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={m.photo_url} alt="" className="size-12 rounded-full object-cover border" />
                         ) : (
                           <div className="size-12 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-base shrink-0">
-                            {m.name.charAt(0)}
+                            {m?.name?.charAt(0) || 'স'}
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="font-bold text-xs text-[#050505] truncate">{m.name}</p>
-                          <p className="text-[11px] text-gray-500 truncate">{m.role}</p>
+                          <p className="font-bold text-xs text-[#050505] truncate">{m?.name || ''}</p>
+                          <p className="text-[11px] text-gray-500 truncate">{m?.role || ''}</p>
                         </div>
                       </div>
                     ))}
