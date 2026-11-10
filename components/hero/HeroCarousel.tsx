@@ -116,60 +116,10 @@ export function HeroCarousel() {
 
   return (
     <div id="home" className="w-full flex flex-col bg-slate-950 text-white relative">
-      {/* ট্রানজিশন সিএসএস */}
-      <style>{`
-        @keyframes heroTimer { from { width: 0%; } to { width: 100%; } }
-
-        @keyframes tr_slide_left { 0% { transform: translateX(70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-        .tr_slide-left { animation: tr_slide_left 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_slide_right { 0% { transform: translateX(-70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-        .tr_slide-right { animation: tr_slide_right 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_slide_up { 0% { transform: translateY(60px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-        .tr_slide-up { animation: tr_slide_up 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_slide_down { 0% { transform: translateY(-60px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-        .tr_slide-down { animation: tr_slide_down 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_fade { 0% { opacity: 0; filter: blur(4px); } 100% { opacity: 1; filter: blur(0); } }
-        .tr_fade { animation: tr_fade 0.8s ease-in-out both; }
-
-        @keyframes tr_zoom_in { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        .tr_zoom-in { animation: tr_zoom_in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_zoom_out { 0% { transform: scale(1.15); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        .tr_zoom-out { animation: tr_zoom_out 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_flip_h { 0% { transform: perspective(800px) rotateY(65deg); opacity: 0; } 100% { transform: perspective(800px) rotateY(0deg); opacity: 1; } }
-        .tr_flip-h { animation: tr_flip_h 0.85s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_flip_v { 0% { transform: perspective(800px) rotateX(65deg); opacity: 0; } 100% { transform: perspective(800px) rotateX(0deg); opacity: 1; } }
-        .tr_flip-v { animation: tr_flip_v 0.85s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_blur_fade { 0% { filter: blur(16px); opacity: 0; transform: scale(0.96); } 100% { filter: blur(0); opacity: 1; transform: scale(1); } }
-        .tr_blur-fade { animation: tr_blur_fade 0.8s ease-out both; }
-
-        @keyframes tr_push_left { 0% { transform: translateX(80px) scale(0.92); opacity: 0; } 100% { transform: translateX(0) scale(1); opacity: 1; } }
-        .tr_push-left { animation: tr_push_left 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_push_right { 0% { transform: translateX(-80px) scale(0.92); opacity: 0; } 100% { transform: translateX(0) scale(1); opacity: 1; } }
-        .tr_push-right { animation: tr_push_right 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_circle_reveal { 0% { clip-path: circle(0% at 50% 50%); opacity: 0; } 100% { clip-path: circle(100% at 50% 50%); opacity: 1; } }
-        .tr_circle-reveal { animation: tr_circle_reveal 0.85s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_twist_spin { 0% { transform: rotate(-8deg) scale(0.88); opacity: 0; } 100% { transform: rotate(0deg) scale(1); opacity: 1; } }
-        .tr_twist-spin { animation: tr_twist_spin 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_elastic { 0% { transform: scale(0.7); opacity: 0; } 65% { transform: scale(1.03); opacity: 1; } 85% { transform: scale(0.98); } 100% { transform: scale(1); opacity: 1; } }
-        .tr_elastic { animation: tr_elastic 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-      `}</style>
-
       {/* হিরো ব্যানার */}
       <HeroBreakingBanner settings={settings} />
 
-      {/* ⭐ হিরো স্লাইডার — রাউন্ড শেপ বা কাটা ছাড়া হিরো ব্যানারের মতো স্ক্রিনে সম্পূর্ণ ফুল-উইডথ সেট ⭐ */}
+      {/* হিরো স্লাইডার */}
       {total > 0 && (
         <section
           aria-label="Hero Slider"
@@ -194,7 +144,7 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ================= ২টি SPLIT (ফুল-উইডথ ও কোনো কাটা কর্নার নেই) ================= */}
+          {/* ================= ২টি SPLIT ================= */}
           {activeSplits === 2 && visibleSlides.length >= 2 && (
             <div className="flex flex-col divide-y divide-white/10 w-full">
               <div className="relative h-[240px] sm:h-[290px] w-full overflow-hidden bg-slate-900">
@@ -274,7 +224,7 @@ export function HeroCarousel() {
             </span>
           </div>
 
-          {/* কন্ট্রোল বার — ফুল-উইডথ স্ক্রিন এজ */}
+          {/* কন্ট্রোল বার */}
           {total > 1 && (
             <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950/90 border-t border-white/10">
               <div className="flex items-center gap-1.5">
