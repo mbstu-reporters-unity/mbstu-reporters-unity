@@ -40,7 +40,7 @@ import {
 const POLL = 20000
 
 // দুই প্রান্তে লেখা মসৃণভাবে ফেড ইন / ফেড আউট
-const MASK = 'linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)'
+const MASK = 'linear-gradient(to right, transparent 0, #000 40px, #000 calc(100% - 40px), transparent 100%)'
 
 // ২০টি আইকন রেন্ডারার
 export function renderTickerBadgeIcon(key?: string, className = "size-4 shrink-0") {
@@ -106,7 +106,7 @@ function Slide({
     onEnd()
   }, [onEnd])
 
-  // সেফটি টাইমার: অ্যানিমেশন শেষ হওয়া মাত্রই পরের টিকারে নিয়ে যাবে
+  // সেফটি টাইমার
   useEffect(() => {
     if (paused) return
     const timer = setTimeout(() => {
@@ -126,7 +126,7 @@ function Slide({
   return (
     <div
       ref={boxRef}
-      className="relative h-10 w-full overflow-hidden"
+      className="relative h-12 w-full overflow-hidden"
       style={{ WebkitMaskImage: MASK, maskImage: MASK }}
     >
       <style>{`
@@ -143,11 +143,11 @@ function Slide({
       <div
         ref={textRef}
         onAnimationEnd={handleFinish}
-        className={`absolute left-0 top-0 flex h-full items-center whitespace-nowrap text-sm font-medium ${animKey}`}
+        className={`absolute left-0 top-0 flex h-full items-center whitespace-nowrap text-sm font-bold text-[#071739] drop-shadow-xs ${animKey}`}
       >
         <span
-          className="mr-3 size-2 shrink-0 rounded-full"
-          style={{ backgroundColor: item.text_color || badgeConfig.bg_color || '#c8102e' }}
+          className="mr-3 size-2.5 shrink-0 rounded-full shadow-[0_0_10px_#0284c7] ring-2 ring-white/80"
+          style={{ backgroundColor: item.text_color || badgeConfig.bg_color || '#0284c7' }}
           aria-hidden="true"
         />
 
@@ -157,23 +157,23 @@ function Slide({
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:underline focus-visible:underline focus-visible:outline-none"
+              className="hover:text-sky-800 hover:underline focus-visible:underline focus-visible:outline-none transition-colors"
             >
               {item.title}
             </a>
           ) : (
             <Link
               href={item.url}
-              className="hover:underline focus-visible:underline focus-visible:outline-none"
+              className="hover:text-sky-800 hover:underline focus-visible:underline focus-visible:outline-none transition-colors"
             >
               {item.title}
             </Link>
           )
         ) : (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {badgeConfig.show_brief && badgeConfig.brief_text && (
               <span
-                className={`px-1.5 py-0.5 rounded text-xs font-bold shrink-0 shadow-xs ${briefAnimClass}`}
+                className={`px-2.5 py-0.5 rounded-full text-xs font-bold shrink-0 border border-white/80 shadow-[0_2px_8px_rgba(225,29,72,0.15),inset_0_1px_1.5px_rgba(255,255,255,0.9)] ${briefAnimClass}`}
                 style={{
                   color: badgeConfig.brief_color || '#c8102e',
                   backgroundColor: badgeConfig.brief_bg_color || '#fee2e2',
@@ -304,12 +304,14 @@ export function NewsTicker() {
     : badgeConfig.bg_color
 
   return (
-    <div className="border-b border-border bg-white" role="region" aria-label="সর্বশেষ সংবাদ">
-      <div className="mx-auto flex max-w-7xl items-stretch">
+    <div className="relative z-20 mx-auto max-w-7xl px-3 sm:px-4 py-2.5" role="region" aria-label="সর্বশেষ সংবাদ">
+      
+      {/* ⭐ আপনার রেফারেন্স ছবির মতো খাঁটি 3D লিকুইড গ্লাস ক্যাপসুল বার ⭐ */}
+      <div className="flex items-center rounded-full border-[1.5px] border-white/85 bg-white/45 backdrop-blur-2xl shadow-[0_14px_35px_-8px_rgba(10,45,110,0.2),inset_0_2.5px_4px_rgba(255,255,255,0.95),inset_0_-2.5px_4px_rgba(0,35,90,0.08)] p-1.5 transition-all">
         
-        {/* কাস্টমাইজেবল ব্রেকিং বেজ */}
+        {/* ব্রেকিং বেজ (গ্লসি পিল) */}
         <div
-          className={`relative z-10 flex shrink-0 items-center gap-1.5 px-3 py-2 text-xs font-bold transition-all sm:px-4 sm:text-sm select-none ${bgAnimClass}`}
+          className={`relative z-10 flex shrink-0 items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs font-bold sm:text-sm select-none rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.18),inset_0_1.5px_2px_rgba(255,255,255,0.85)] border border-white/50 ${bgAnimClass}`}
           style={{
             background: badgeBg,
             color: badgeConfig.text_color || '#ffffff',
@@ -333,7 +335,7 @@ export function NewsTicker() {
 
         {/* স্ক্রলিং সংবাদ বক্স */}
         <div
-          className="min-w-0 flex-1 text-navy transition-colors duration-500 overflow-hidden"
+          className="min-w-0 flex-1 overflow-hidden px-1"
           style={{ backgroundColor: cur.bg_color || undefined, color: cur.text_color || undefined }}
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
@@ -350,42 +352,44 @@ export function NewsTicker() {
           />
         </div>
 
-        {/* মোবাইল ও ডেস্কটপ উভয়ের জন্য নেভিগেশন কাউন্টার ও কন্ট্রোল */}
+        {/* ডানদিকের কন্ট্রোল: রেফারেন্স ছবির সার্কুলার অ্যারো বাটন */}
         {total > 1 && (
-          <div className="flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 border-l border-border/60 text-xs text-navy/70 select-none shrink-0 bg-white">
+          <div className="flex items-center gap-1 sm:gap-1.5 px-2 text-xs text-[#071739] select-none shrink-0 font-bold">
             <button
               type="button"
               onClick={prevSlide}
-              className="p-1 hover:bg-gray-100 rounded-md cursor-pointer active:scale-95 transition-transform"
+              className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-white/50 hover:bg-white/80 border border-white/90 text-sky-900 shadow-[0_4px_10px_rgba(0,40,110,0.08),inset_0_1.5px_2px_rgba(255,255,255,0.95)] cursor-pointer active:scale-95 transition-all"
               title="আগের ব্রেকিং"
               aria-label="Previous Breaking News"
             >
-              <ChevronLeft className="size-3.5" />
+              <ChevronLeft className="size-3.5 sm:size-4" />
             </button>
-            <span className="font-bold tabular-nums text-[10px] sm:text-[11px] px-0.5">
+            
+            <span className="tabular-nums text-[10px] sm:text-[11px] px-1 font-bold text-sky-950">
               {bn(idx + 1)}/{bn(total)}
             </span>
+
             <button
               type="button"
               onClick={nextSlide}
-              className="p-1 hover:bg-gray-100 rounded-md cursor-pointer active:scale-95 transition-transform"
+              className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-white/50 hover:bg-white/80 border border-white/90 text-sky-900 shadow-[0_4px_10px_rgba(0,40,110,0.08),inset_0_1.5px_2px_rgba(255,255,255,0.95)] cursor-pointer active:scale-95 transition-all"
               title="পরের ব্রেকিং"
               aria-label="Next Breaking News"
             >
-              <ChevronRight className="size-3.5" />
+              <ChevronRight className="size-3.5 sm:size-4" />
             </button>
           </div>
         )}
 
-        {/* অডিও অ্যালার্ট টগল */}
+        {/* অডিও অ্যালার্ট সার্কুলার গ্লাস বাটন */}
         <button
           type="button"
           onClick={toggleSound}
           aria-pressed={soundOn}
           aria-label={soundOn ? 'অ্যালার্ট শব্দ বন্ধ করুন' : 'অ্যালার্ট শব্দ চালু করুন'}
-          className="hidden h-10 w-10 shrink-0 items-center justify-center text-navy/60 hover:text-navy sm:flex cursor-pointer border-l border-border/60"
+          className="hidden size-8 sm:flex shrink-0 items-center justify-center rounded-full bg-white/45 hover:bg-white/75 border border-white/90 text-[#071739] shadow-[0_4px_10px_rgba(0,40,110,0.08),inset_0_1.5px_2px_rgba(255,255,255,0.95)] cursor-pointer mr-1 active:scale-95 transition-all"
         >
-          {soundOn ? <Volume2 className="size-4 text-emerald-600" /> : <VolumeX className="size-4 opacity-50" />}
+          {soundOn ? <Volume2 className="size-3.5 text-sky-700" /> : <VolumeX className="size-3.5 opacity-50" />}
         </button>
       </div>
     </div>
