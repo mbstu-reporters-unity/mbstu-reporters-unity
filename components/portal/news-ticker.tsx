@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { CSSProperties } from 'react'
+import Link from 'next/link'
 import {
   Volume2,
   VolumeX,
@@ -39,7 +39,7 @@ import {
 
 const POLL = 20000
 
-// দুই প্রান্তে লেখা ফেড ইন / ফেড আউট
+// দুই প্রান্তে লেখা মসৃণভাবে ফেড ইন / ফেড আউট
 const MASK = 'linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)'
 
 // ২০টি আইকন রেন্ডারার
@@ -69,124 +69,7 @@ export function renderTickerBadgeIcon(key?: string, className = "size-4 shrink-0
   }
 }
 
-const CSS_ANIMATIONS = `
-@keyframes anim_pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.18); opacity: 0.82; } }
-.anim_pulse { animation: anim_pulse 1.4s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_ping { 0% { transform: scale(1); opacity: 1; } 75%, 100% { transform: scale(1.6); opacity: 0; } }
-.anim_ping { animation: anim_ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; display: inline-flex; }
-
-@keyframes anim_bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-.anim_bounce { animation: anim_bounce 1.2s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_heartbeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.22); } 28% { transform: scale(1); } 42% { transform: scale(1.15); } 70% { transform: scale(1); } }
-.anim_heartbeat { animation: anim_heartbeat 1.5s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_neon { 0%, 100% { filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 8px #facc15); } 50% { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 16px #ef4444); } }
-.anim_neon { animation: anim_neon 1.6s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_flash { 0%, 50%, 100% { opacity: 1; } 25%, 75% { opacity: 0.2; } }
-.anim_flash { animation: anim_flash 1.3s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-3px); } 40%, 80% { transform: translateX(3px); } }
-.anim_shake { animation: anim_shake 0.8s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_wiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-12deg); } 75% { transform: rotate(12deg); } }
-.anim_wiggle { animation: anim_wiggle 1.2s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_rubber { 0%, 100% { transform: scale(1, 1); } 30% { transform: scale(1.25, 0.75); } 40% { transform: scale(0.75, 1.25); } 60% { transform: scale(1.15, 0.85); } }
-.anim_rubber { animation: anim_rubber 1.5s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_swing { 0%, 100% { transform: rotate(0deg); } 20% { transform: rotate(12deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(5deg); } 80% { transform: rotate(-5deg); } }
-.anim_swing { animation: anim_swing 1.8s ease-in-out infinite; transform-origin: top center; display: inline-flex; }
-
-@keyframes anim_jello { 0%, 100% { transform: scale3d(1, 1, 1); } 30% { transform: scale3d(1.2, 0.8, 1); } 40% { transform: scale3d(0.8, 1.2, 1); } 50% { transform: scale3d(1.1, 0.9, 1); } 65% { transform: scale3d(0.95, 1.05, 1); } }
-.anim_jello { animation: anim_jello 1.6s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-.anim_float { animation: anim_float 2s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_glow_expand { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.06); filter: brightness(1.35); } }
-.anim_glow_expand { animation: anim_glow_expand 1.8s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_flip_x { 0%, 100% { transform: perspective(400px) rotateX(0deg); } 50% { transform: perspective(400px) rotateX(180deg); } }
-.anim_flip_x { animation: anim_flip_x 2.5s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_flip_y { 0%, 100% { transform: perspective(400px) rotateY(0deg); } 50% { transform: perspective(400px) rotateY(180deg); } }
-.anim_flip_y { animation: anim_flip_y 2.5s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_glitch { 0%, 100% { transform: translate(0); } 20% { transform: translate(-2px, 1px); } 40% { transform: translate(2px, -1px); } 60% { transform: translate(-1px, -1px); } 80% { transform: translate(1px, 1px); } }
-.anim_glitch { animation: anim_glitch 2s infinite; display: inline-flex; }
-
-@keyframes anim_breathe { 0%, 100% { transform: scale(0.97); opacity: 0.85; } 50% { transform: scale(1.04); opacity: 1; } }
-.anim_breathe { animation: anim_breathe 2.4s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_zoom { 0%, 100% { transform: scale(0.92); } 50% { transform: scale(1.1); } }
-.anim_zoom { animation: anim_zoom 1.6s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.anim_spin { animation: anim_spin 3s linear infinite; display: inline-flex; }
-
-@keyframes anim_tilt { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
-.anim_tilt { animation: anim_tilt 1.6s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_tada { 0%, 100% { transform: scale(1) rotate(0); } 10%, 20% { transform: scale(0.9) rotate(-3deg); } 30%, 50%, 70%, 90% { transform: scale(1.1) rotate(3deg); } 40%, 60%, 80% { transform: scale(1.1) rotate(-3deg); } }
-.anim_tada { animation: anim_tada 2s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_wobble { 0%, 100% { transform: translateX(0%); } 15% { transform: translateX(-8%) rotate(-4deg); } 30% { transform: translateX(6%) rotate(3deg); } 45% { transform: translateX(-5%) rotate(-2deg); } 60% { transform: translateX(3%) rotate(1deg); } }
-.anim_wobble { animation: anim_wobble 2s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_shiver { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(1px, -1px); } 50% { transform: translate(-1px, 1px); } 75% { transform: translate(-1px, -1px); } }
-.anim_shiver { animation: anim_shiver 0.7s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_pop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.22); } }
-.anim_pop { animation: anim_pop 1.3s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_ripple { 0% { transform: scale(0.96); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.75; } 100% { transform: scale(0.96); opacity: 1; } }
-.anim_ripple { animation: anim_ripple 1.8s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_beacon { 0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px currentColor); } 50% { opacity: 0.4; filter: drop-shadow(0 0 1px currentColor); } }
-.anim_beacon { animation: anim_beacon 1.4s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_electric { 0%, 100% { filter: hue-rotate(0deg) brightness(1); } 50% { filter: hue-rotate(90deg) brightness(1.4); } }
-.anim_electric { animation: anim_electric 2s linear infinite; display: inline-flex; }
-
-@keyframes anim_slide_shift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
-.anim_slide_shift { animation: anim_slide_shift 1.5s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_rotate_slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.anim_rotate_slow { animation: anim_rotate_slow 6s linear infinite; display: inline-flex; }
-
-@keyframes anim_radar { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); } 70% { box-shadow: 0 0 0 8px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
-.anim_radar { animation: anim_radar 1.5s infinite; display: inline-flex; border-radius: 9999px; }
-
-@keyframes bg_pulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3) contrast(1.1); } }
-.anim_bg_pulse { animation: bg_pulse 2s ease-in-out infinite; }
-
-@keyframes bg_shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-.anim_bg_shimmer {
-  background-size: 200% 100% !important;
-  background-image: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0) 100%) !important;
-  animation: bg_shimmer 2.5s infinite;
-}
-
-@keyframes bg_gradient_shift { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
-.anim_bg_gradient_shift { animation: bg_gradient_shift 6s linear infinite; }
-
-@keyframes bg_glow { 0%, 100% { box-shadow: 0 0 4px rgba(255,255,255,0.3); } 50% { box-shadow: 0 0 16px rgba(255,255,255,0.7); } }
-.anim_bg_glow { animation: bg_glow 2s ease-in-out infinite; }
-
-@keyframes bg_breathe { 0%, 100% { opacity: 0.9; } 50% { opacity: 1; filter: brightness(1.15); } }
-.anim_bg_breathe { animation: bg_breathe 2.5s ease-in-out infinite; }
-
-@keyframes bg_flame { 0%, 100% { filter: brightness(1) saturate(1); } 50% { filter: brightness(1.25) saturate(1.4); } }
-.anim_bg_flame { animation: bg_flame 1.5s ease-in-out infinite; }
-
-@keyframes bg_electric { 0%, 100% { filter: brightness(1); } 10%, 30% { filter: brightness(1.4) drop-shadow(0 0 6px #67e8f9); } 20%, 40% { filter: brightness(0.95); } }
-.anim_bg_electric { animation: bg_electric 3s infinite; }
-`
-
-// ⭐ একাধিক টিকার স্ক্রলিং ও সাইক্লিং ইঞ্জিন ⭐
+// একাধিক টিকার স্ক্রলিং ও সাইক্লিং ইঞ্জিন
 function Slide({
   item,
   paused,
@@ -237,7 +120,7 @@ function Slide({
   const animKey = `tk_anim_${item.id.replace(/[^a-zA-Z0-9]/g, '_')}_${cycle}`
 
   const briefAnimClass = badgeConfig.brief_animation && badgeConfig.brief_animation !== "none"
-    ? `anim_${badgeConfig.brief_animation}`
+    ? `anim_${badgeConfig.brief_animation.replace(/-/g, '_')}`
     : ""
 
   return (
@@ -246,7 +129,6 @@ function Slide({
       className="relative h-10 w-full overflow-hidden"
       style={{ WebkitMaskImage: MASK, maskImage: MASK }}
     >
-      {/* লিটারেল পিক্সেল দিয়ে অ্যানিমেশন যাতে মোবাইলে কোনো ত্রুটি না হয় */}
       <style>{`
         @keyframes ${animKey} {
           0% { transform: translateX(${cw}px); }
@@ -270,13 +152,23 @@ function Slide({
         />
 
         {item.url ? (
-          <a
-            href={item.url}
-            {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-            className="hover:underline focus-visible:underline focus-visible:outline-none"
-          >
-            {item.title}
-          </a>
+          external ? (
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline focus-visible:underline focus-visible:outline-none"
+            >
+              {item.title}
+            </a>
+          ) : (
+            <Link
+              href={item.url}
+              className="hover:underline focus-visible:underline focus-visible:outline-none"
+            >
+              {item.title}
+            </Link>
+          )
         ) : (
           <div className="flex items-center gap-1.5">
             {badgeConfig.show_brief && badgeConfig.brief_text && (
@@ -306,12 +198,10 @@ export function NewsTicker() {
   const [cycle, setCycle] = useState(0)
   const [paused, setPaused] = useState(false)
   const [soundOn, setSoundOn] = useState(false)
-  const [announce, setAnnounce] = useState('')
 
   const audio = useRef<AudioContext | null>(null)
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // শুধুমাত্র এডমিনের সক্রিয় রাখা (is_active) সব টিকার
   const list = items.filter((t) => t.is_active !== false)
   const total = list.length
   const idx = total ? index % total : 0
@@ -356,7 +246,6 @@ export function NewsTicker() {
     return () => clearInterval(id)
   }, [loadData])
 
-  // ⭐ একটার পর একটা ক্রমান্বয়ে আসার মূল লজিক (লুপ) ⭐
   const nextSlide = useCallback(() => {
     if (total <= 0) return
     setIndex((prev) => (prev + 1) % total)
@@ -416,19 +305,18 @@ export function NewsTicker() {
 
   return (
     <div className="border-b border-border bg-white" role="region" aria-label="সর্বশেষ সংবাদ">
-      <style>{CSS_ANIMATIONS}</style>
       <div className="mx-auto flex max-w-7xl items-stretch">
         
         {/* কাস্টমাইজেবল ব্রেকিং বেজ */}
         <div
-          className={`relative z-10 flex shrink-0 items-center gap-2 px-3 py-2.5 text-xs font-bold transition-all sm:px-4 sm:text-sm select-none ${bgAnimClass}`}
+          className={`relative z-10 flex shrink-0 items-center gap-1.5 px-3 py-2 text-xs font-bold transition-all sm:px-4 sm:text-sm select-none ${bgAnimClass}`}
           style={{
             background: badgeBg,
             color: badgeConfig.text_color || '#ffffff',
           }}
         >
           <span className={iconAnimClass}>
-            {renderTickerBadgeIcon(badgeConfig.icon, 'size-4 shrink-0')}
+            {renderTickerBadgeIcon(badgeConfig.icon, 'size-3.5 sm:size-4 shrink-0')}
           </span>
           <span
             className={`${textAnimClass} flex items-center gap-1 leading-none font-bold`}
@@ -436,14 +324,14 @@ export function NewsTicker() {
           >
             <span>{badgeConfig.badge_text || 'সর্বশেষ'}</span>
             {badgeConfig.show_subtext && badgeConfig.badge_subtext && (
-              <span className="hidden sm:inline font-semibold opacity-90 text-[11px] sm:text-xs">
+              <span className="hidden md:inline font-semibold opacity-90 text-[11px] sm:text-xs">
                 / {badgeConfig.badge_subtext}
               </span>
             )}
           </span>
         </div>
 
-        {/* স্ক্রলিং সংবাদ বক্স (একটার পর একটা চলবে) */}
+        {/* স্ক্রলিং সংবাদ বক্স */}
         <div
           className="min-w-0 flex-1 text-navy transition-colors duration-500 overflow-hidden"
           style={{ backgroundColor: cur.bg_color || undefined, color: cur.text_color || undefined }}
@@ -462,31 +350,34 @@ export function NewsTicker() {
           />
         </div>
 
-        {/* একাধিক টিকার থাকলে নেভিগেশন কাউন্টার (যেমন: ১/৩, ২/৩) */}
+        {/* মোবাইল ও ডেস্কটপ উভয়ের জন্য নেভিগেশন কাউন্টার ও কন্ট্রোল */}
         {total > 1 && (
-          <div className="hidden sm:flex items-center gap-1 px-2 border-l border-border/60 text-xs text-navy/70 select-none">
+          <div className="flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 border-l border-border/60 text-xs text-navy/70 select-none shrink-0 bg-white">
             <button
               type="button"
               onClick={prevSlide}
-              className="p-1 hover:bg-gray-100 rounded-md cursor-pointer"
+              className="p-1 hover:bg-gray-100 rounded-md cursor-pointer active:scale-95 transition-transform"
               title="আগের ব্রেকিং"
+              aria-label="Previous Breaking News"
             >
               <ChevronLeft className="size-3.5" />
             </button>
-            <span className="font-bold tabular-nums text-[11px] px-1">
+            <span className="font-bold tabular-nums text-[10px] sm:text-[11px] px-0.5">
               {bn(idx + 1)}/{bn(total)}
             </span>
             <button
               type="button"
               onClick={nextSlide}
-              className="p-1 hover:bg-gray-100 rounded-md cursor-pointer"
+              className="p-1 hover:bg-gray-100 rounded-md cursor-pointer active:scale-95 transition-transform"
               title="পরের ব্রেকিং"
+              aria-label="Next Breaking News"
             >
               <ChevronRight className="size-3.5" />
             </button>
           </div>
         )}
 
+        {/* অডিও অ্যালার্ট টগল */}
         <button
           type="button"
           onClick={toggleSound}
@@ -497,8 +388,6 @@ export function NewsTicker() {
           {soundOn ? <Volume2 className="size-4 text-emerald-600" /> : <VolumeX className="size-4 opacity-50" />}
         </button>
       </div>
-
-      <div className="sr-only" role="status" aria-live="polite">{announce}</div>
     </div>
   )
 }
