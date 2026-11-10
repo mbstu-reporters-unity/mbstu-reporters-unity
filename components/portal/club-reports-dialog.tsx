@@ -404,6 +404,19 @@ export function ClubReportsDialog({
               <span>যোগাযোগ: {rawClub.contact_info}</span>
             </div>
           )}
+
+          {/* ⭐ নতুন: ডেডিকেটেড পেজে যাওয়ার বাটন ⭐ */}
+          <div className="pt-4 border-t border-border mt-4">
+            <a
+              href={`/club/${club.id}`}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-950/40 hover:from-emerald-700 hover:to-teal-800 transition-all active:scale-95 cursor-pointer"
+            >
+              <Globe className="size-4" />
+              <span>এই ক্লাবের নিজস্ব সম্পূর্ণ পেজে প্রবেশ করুন</span>
+              <ArrowRight className="size-4" />
+            </a>
+          </div>
+
         </div>
       </div>
     </div>
