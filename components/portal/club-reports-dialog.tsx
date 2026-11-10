@@ -14,7 +14,9 @@ import {
   Users,
   Video,
   X,
-  MessageSquare
+  MessageSquare,
+  MapPin,
+  Info
 } from 'lucide-react'
 import type { Club } from '@/lib/data'
 import {
@@ -48,13 +50,11 @@ export function ClubReportsDialog({
     }>
   >([])
 
-  // ক্লাবের আইডি পেলে সরাসরি নিউজগুলো নিয়ে আসবে (কোনো রিলোড ছাড়াই)
   useEffect(() => {
     if (!club?.id) return
     getClubNewsPosts(club.id).then(setLiveNews)
   }, [club?.id])
 
-  // স্ক্রল লক ও এস্কেপ বাটন হ্যান্ডলার
   useEffect(() => {
     if (!club) return
     const prev = document.body.style.overflow
@@ -73,6 +73,7 @@ export function ClubReportsDialog({
   const members = rawClub?.committee_members || []
   const term = rawClub?.committee_term
   const logo = rawClub?.logo_url
+  const cover = rawClub?.cover_url
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/?club=${club.id}` : ''
   const activityMediaList = parseActivityMedia(rawClub?.embed_media_url)
 
@@ -102,276 +103,293 @@ export function ClubReportsDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 club-dialog-font">
-      {/* ব্যাকড্রপ */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 club-dialog-font">
       <button
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="animate-in fade-in absolute inset-0 bg-navy/90 backdrop-blur-sm cursor-default"
+        className="animate-in fade-in absolute inset-0 bg-black/60 backdrop-blur-sm cursor-default hidden sm:block"
       />
 
-      {/* বিশাল পপ-আপ কন্টেইনার (সম্পূর্ণ পেজের মতো কাজ করবে) */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="animate-in zoom-in-95 fade-in relative max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl bg-slate-100 shadow-2xl border border-border"
+        className="animate-in zoom-in-95 fade-in relative h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] w-full max-w-5xl overflow-y-auto sm:rounded-2xl bg-[#f0f2f5] shadow-2xl"
       >
-        {/* ==================== হেডার (কভার + প্রোফাইল) ==================== */}
-        <div className="bg-white border-b border-border shadow-xs relative">
+        {/* ==================== ফেসবুক স্টাইল হেডার (কভার + প্রোফাইল) ==================== */}
+        <div className="bg-white shadow-sm relative">
           
           {/* ক্লোজ বাটন */}
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-3 top-3 z-20 flex size-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur transition-all cursor-pointer"
+            className="fixed sm:absolute right-3 top-3 z-30 flex size-9 items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur transition-all cursor-pointer shadow-md"
           >
             <X className="size-5" />
           </button>
 
-          {/* কভার ফটো / গ্রেডিয়েন্ট */}
-          <div className="relative h-40 sm:h-64 w-full overflow-hidden bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-900 sm:rounded-t-3xl flex items-center justify-center">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.2),rgba(255,255,255,0))]" />
-            <h1 className="text-white/10 font-serif text-3xl sm:text-5xl font-bold px-4 text-center select-none uppercase">
-              {club.tag}
-            </h1>
+          {/* ১. কভার ফটো */}
+          <div className="relative h-48 sm:h-72 w-full overflow-hidden bg-gradient-to-r from-gray-200 to-gray-300 sm:rounded-t-2xl">
+            {cover ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={cover} alt="Cover" className="size-full object-cover" />
+            ) : (
+              <div className="size-full flex items-center justify-center text-gray-400 font-bold text-xl uppercase tracking-widest select-none">
+                MBSTU CLUB
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
           </div>
 
-          {/* প্রোফাইল লোগো, নাম ও সোশ্যাল লিংক */}
-          <div className="px-5 sm:px-8 pb-5">
-            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-14 sm:-mt-20">
+          {/* ২. প্রোফাইল লোগো, নাম ও বাটনসমূহ */}
+          <div className="px-4 sm:px-8 max-w-5xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-4 -mt-16 sm:-mt-10 pb-4">
               
-              <div className="relative size-28 sm:size-36 rounded-full bg-white ring-4 ring-white shadow-xl overflow-hidden shrink-0 z-10 flex items-center justify-center">
+              {/* গোল প্রোফাইল লোগো */}
+              <div className="relative size-32 sm:size-40 rounded-full bg-white ring-4 ring-white shadow-md overflow-hidden shrink-0 z-10 flex items-center justify-center">
                 {logo ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logo} alt={club.name} className="size-full object-cover" />
+                  <img src={logo} alt={club?.name} className="size-full object-cover" />
                 ) : (
-                  <div className="size-full bg-gradient-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center text-5xl font-bold">
-                    {club.name.charAt(0)}
+                  <div className="size-full bg-gradient-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center text-6xl font-bold">
+                    {club?.name.charAt(0)}
                   </div>
                 )}
               </div>
 
-              <div className="flex-1 text-center sm:text-left min-w-0">
-                <h1 id={titleId} className="font-serif text-2xl sm:text-3xl font-bold text-navy truncate">
-                  {club.nameBn || club.name}
+              {/* পেজের নাম ও বিবরণ */}
+              <div className="flex-1 text-center sm:text-left mt-2 sm:mt-0 sm:mb-2 min-w-0">
+                <h1 id={titleId} className="text-2xl sm:text-3xl font-bold text-[#050505] truncate leading-tight">
+                  {club?.nameBn || club?.name}
                 </h1>
-                {club.nameBn && (
-                  <p className="text-xs sm:text-sm text-gray-500 font-medium">{club.name}</p>
-                )}
-                <span className="inline-block mt-1.5 bg-emerald-50 text-emerald-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                  {club.tag}
-                </span>
+                <p className="text-sm font-semibold text-[#65676B] mt-0.5">{club?.tag} • MBSTU</p>
               </div>
 
-              {/* সোশ্যাল লিংক বাটন */}
-              <div className="shrink-0 flex gap-2 pt-2 sm:pt-0">
+              {/* সোশ্যাল ও অ্যাকশন বাটন */}
+              <div className="flex flex-wrap justify-center sm:justify-end gap-2 w-full sm:w-auto sm:mb-2 mt-2 sm:mt-0">
                 {rawClub?.fb_url && (
-                  <a href={safeExternalUrl(rawClub.fb_url)} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-bold shadow transition">
-                    Facebook
+                  <a href={safeExternalUrl(rawClub.fb_url)} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-lg bg-[#0866FF] hover:bg-[#0054e0] text-white px-4 py-2 text-sm font-semibold transition cursor-pointer">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="size-4"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>
+                    Follow
                   </a>
                 )}
                 {rawClub?.yt_url && (
-                  <a href={safeExternalUrl(rawClub.yt_url)} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-xs font-bold shadow transition">
+                  <a href={safeExternalUrl(rawClub.yt_url)} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-lg bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#050505] px-4 py-2 text-sm font-semibold transition cursor-pointer">
                     YouTube
                   </a>
                 )}
+                <button type="button" onClick={handleShare} className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-lg bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#050505] px-4 py-2 text-sm font-semibold transition cursor-pointer">
+                  {copied ? <Check className="size-4 text-green-600" /> : <Share2 className="size-4" />}
+                  {copied ? 'Copied' : 'Share'}
+                </button>
               </div>
+            </div>
+
+            {/* ফেসবুক স্টাইল মেনু ট্যাব */}
+            <div className="flex items-center gap-1 border-t border-gray-200 mt-2">
+              <button className="px-4 py-3 text-sm font-bold text-[#0866FF] border-b-[3px] border-[#0866FF]">
+                Posts
+              </button>
+              <button className="px-4 py-3 text-sm font-semibold text-[#65676B] hover:bg-gray-100 rounded-lg my-1 transition">
+                About
+              </button>
+              <button className="px-4 py-3 text-sm font-semibold text-[#65676B] hover:bg-gray-100 rounded-lg my-1 transition hidden sm:block">
+                Photos
+              </button>
             </div>
           </div>
         </div>
 
-        {/* ==================== পেজ কন্টেন্ট: পরিচিতি ও টাইমলাইন ==================== */}
-        <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          
-          {/* বাম পাশ: About / পেজের পরিচিতি, কমিটি ও ওয়েবসাইট */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-3xl p-5 shadow-sm border border-border space-y-4">
-              <h2 className="font-bold text-base text-navy border-b pb-2 flex items-center justify-between">
-                <span>📌 পরিচিতি ও কার্যক্রম</span>
-                <button type="button" onClick={handleShare} className="text-brand hover:underline flex items-center gap-1 text-xs">
-                  {copied ? <Check className="size-3 text-green-600" /> : <Share2 className="size-3" />}
-                  শেয়ার
-                </button>
-              </h2>
-              <p className="text-xs sm:text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                {club.activityBn || club.activity || "কোনো বিবরণ দেওয়া হয়নি।"}
-              </p>
-              
-              {/* যোগাযোগের লিংকসমূহ */}
-              <div className="space-y-2 pt-2 border-t">
-                {rawClub?.contact_info && (
-                  <p className="flex items-center gap-2 text-xs text-gray-600">
-                    <Mail className="size-3.5 text-brand shrink-0" /> {rawClub.contact_info}
-                  </p>
-                )}
-                {rawClub?.web_url && (
-                  <a href={safeExternalUrl(rawClub.web_url)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-emerald-700 font-bold hover:underline text-xs">
-                    <Globe className="size-4 shrink-0" /> ওয়েবসাইট ভিজিট করুন
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {/* কার্যনির্বাহী কমিটি */}
-            {members.length > 0 && (
-              <div className="bg-white rounded-3xl p-5 shadow-sm border border-border space-y-4">
-                <div className="flex items-center justify-between border-b pb-2">
-                  <h2 className="font-bold text-sm text-navy flex items-center gap-2">
-                    <Users className="size-4 text-brand" /> কমিটি
-                  </h2>
-                  {term && (
-                    <span className="text-[10px] bg-brand-soft text-brand px-2 py-0.5 rounded-full font-bold">
-                      {term}
-                    </span>
-                  )}
-                </div>
-                <div className="space-y-3">
-                  {members.map((m: any, i: number) => (
-                    <div key={i} className="flex items-center gap-3">
-                      {m.photo_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={m.photo_url} alt="" className="size-10 rounded-full object-cover border" />
-                      ) : (
-                        <div className="size-10 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm">
-                          {m.name.charAt(0)}
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="font-bold text-xs text-navy truncate">{m.name}</p>
-                        <p className="text-[11px] text-gray-500 truncate">{m.role}</p>
-                      </div>
+        {/* ==================== পেজ বডি (About & Posts) ==================== */}
+        <div className="max-w-5xl mx-auto px-2 sm:px-4 mt-4 pb-10">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
+            
+            {/* বাম পাশ: About (Intro) */}
+            <div className="md:col-span-2 space-y-4">
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                <h2 className="font-bold text-lg text-[#050505] mb-3">Intro</h2>
+                <p className="text-[15px] text-[#050505] whitespace-pre-line text-center leading-relaxed">
+                  {club?.activityBn || club?.activity || "ক্যাম্পাস ক্লাব ও সংগঠন"}
+                </p>
+                <div className="border-t border-gray-200 mt-4 pt-3 space-y-3">
+                  {rawClub?.contact_info && (
+                    <div className="flex items-start gap-3 text-[15px] text-[#050505]">
+                      <Mail className="size-5 text-[#8C939D] shrink-0" />
+                      <span>{rawClub.contact_info}</span>
                     </div>
-                  ))}
+                  )}
+                  {rawClub?.web_url && (
+                    <div className="flex items-center gap-3 text-[15px] text-[#050505]">
+                      <Globe className="size-5 text-[#8C939D] shrink-0" />
+                      <a href={safeExternalUrl(rawClub.web_url)} target="_blank" rel="noopener noreferrer" className="hover:underline text-[#0866FF]">
+                        {rawClub.web_url.replace(/^https?:\/\//, '')}
+                      </a>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 text-[15px] text-[#050505]">
+                    <MapPin className="size-5 text-[#8C939D] shrink-0" />
+                    <span>MBSTU, Santosh, Tangail</span>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* ডান পাশ: টাইমলাইন (নিউজ, ভিডিও, পোস্ট) */}
-          <div className="md:col-span-2 space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-lg text-navy flex items-center gap-2">
-                <Newspaper className="size-5 text-brand" />
-                <span>টাইমলাইন ও সংবাদসমূহ ({liveNews.length + manualReports.length})</span>
-              </h2>
-            </div>
-
-            {/* লাইভ নিউজ তালিকা (অ্যাডমিন প্যানেল থেকে পোস্ট করা সংবাদ) */}
-            {liveNews.map((post: any) => (
-              <article
-                key={post.id}
-                className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-border space-y-3.5"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="size-11 rounded-full overflow-hidden bg-slate-100 border shrink-0">
-                    {logo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={logo} loading="lazy" alt="" className="size-full object-cover" />
-                    ) : (
-                      <div className="size-full bg-brand text-white flex items-center justify-center font-bold text-sm">
-                        {club.name.charAt(0)}
-                      </div>
-                    )}
+              {/* কার্যনির্বাহী কমিটি */}
+              {members.length > 0 && (
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="font-bold text-lg text-[#050505]">Committee</h2>
+                    {term && <span className="text-sm font-semibold text-[#0866FF]">{term}</span>}
                   </div>
-                  <div>
-                    <p className="font-bold text-sm text-navy flex items-center gap-1">
-                      <span>{club.nameBn || club.name}</span>
-                      <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 rounded-full font-bold">Official</span>
-                    </p>
-                    <p className="text-[11px] text-gray-400 flex items-center gap-1">
-                      <CalendarDays className="size-3 text-gold" />
-                      <span>{new Date(post.created_at).toLocaleDateString('bn-BD')}</span>
-                      {post.author && <span>· {post.author}</span>}
-                    </p>
-                  </div>
-                </div>
-
-                <h3 className="font-serif text-lg font-bold text-navy leading-snug">
-                  {post.title}
-                </h3>
-
-                {post.embed_media_url && (
-                  <UniversalMediaEmbed url={post.embed_media_url} title={post.title} />
-                )}
-
-                {post.image_url && !post.embed_media_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={post.image_url}
-                    alt={post.title}
-                    loading="lazy"
-                    className="w-full max-h-96 object-cover rounded-2xl border"
-                  />
-                )}
-
-                {/* রিঅ্যাকশন ও কমেন্টে যাওয়ার বাটন (কোনো রিলোড ছাড়া) */}
-                <ReactionBar postId={post.id} title={post.title} />
-                <div className="pt-2 border-t">
-                  <Link
-                    href={`/post/${post.id}`}
-                    onClick={onClose}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline"
-                  >
-                    <MessageSquare className="size-3.5" /> বিস্তারিত পড়ুন ও মন্তব্য করুন <ArrowRight className="size-3.5" />
-                  </Link>
-                </div>
-              </article>
-            ))}
-
-            {/* ম্যানুয়াল রিপোর্টসমূহ (ক্লাব সেটিংস থেকে যোগ করা) */}
-            {manualReports.map((r: any, i: number) => (
-              <article
-                key={`manual-${i}`}
-                className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-border space-y-3.5"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="size-11 rounded-full overflow-hidden bg-slate-100 border shrink-0 flex items-center justify-center text-brand">
-                    <UserRound className="size-6" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm text-navy">{r.reporter || 'রিপোর্টার'}</p>
-                    <p className="text-[11px] text-gray-400 flex items-center gap-1">
-                      <CalendarDays className="size-3 text-gold" /> {r.date}
-                    </p>
-                  </div>
-                </div>
-
-                <h3 className="font-serif text-lg font-bold text-navy leading-snug">{r.title}</h3>
-                {r.subtitle && <p className="text-xs font-semibold text-brand">{r.subtitle}</p>}
-                
-                {r.description && (
-                  <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                    {r.description}
-                  </p>
-                )}
-
-                {r.embed_media_url && (
-                  <UniversalMediaEmbed url={r.embed_media_url} title={r.title} />
-                )}
-
-                {r.media_items && r.media_items.length > 0 && (
-                  <div className="space-y-3 pt-2">
-                    {r.media_items.map((m: any, mi: number) => (
-                      <div key={mi} className="rounded-xl bg-gray-50 p-2.5 border border-border/70 space-y-1">
-                        {m.title && <h5 className="font-bold text-xs text-navy">{m.title}</h5>}
-                        {m.subtitle && <p className="text-[11px] font-semibold text-brand">{m.subtitle}</p>}
-                        {m.description && <p className="text-[11px] text-gray-600 whitespace-pre-line">{m.description}</p>}
-                        <UniversalMediaEmbed url={m.url} title={m.title || r.title} compact />
+                  <div className="grid grid-cols-3 gap-2">
+                    {members.map((m: any, i: number) => (
+                      <div key={i} className="flex flex-col gap-1 items-center">
+                        {m.photo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={m.photo_url} alt="" className="size-16 sm:size-20 rounded-lg object-cover border border-gray-200 shadow-sm" />
+                        ) : (
+                          <div className="size-16 sm:size-20 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400">
+                            <UserRound className="size-8" />
+                          </div>
+                        )}
+                        <p className="font-semibold text-xs text-[#050505] text-center truncate w-full px-1">{m.name}</p>
+                        <p className="text-[10px] text-[#65676B] text-center truncate w-full">{m.role}</p>
                       </div>
                     ))}
                   </div>
-                )}
-              </article>
-            ))}
+                </div>
+              )}
+            </div>
 
-            {liveNews.length === 0 && manualReports.length === 0 && (
-              <div className="bg-white rounded-3xl p-10 text-center border border-dashed space-y-2">
-                <Video className="size-10 text-gray-300 mx-auto" />
-                <p className="font-bold text-sm text-gray-600">এই ক্লাবের কোনো কার্যক্রম বা সংবাদ এখনো দেওয়া হয়নি।</p>
+            {/* ডান পাশ: টাইমলাইন (Posts) */}
+            <div className="md:col-span-3 space-y-4">
+              
+              {/* ফিল্টার বার */}
+              <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200 flex items-center justify-between">
+                <h2 className="font-bold text-lg text-[#050505]">Posts</h2>
+                <div className="flex gap-2 bg-[#F0F2F5] px-2 py-1 rounded-lg">
+                  <button className="px-3 py-1 bg-white rounded-md text-sm font-semibold shadow-sm">All</button>
+                  <button className="px-3 py-1 text-sm font-semibold text-[#65676B]">Photos</button>
+                </div>
               </div>
-            )}
+
+              {/* লাইভ নিউজ তালিকা (ফেসবুক পোস্ট স্টাইল) */}
+              {liveNews.map((post: any) => (
+                <article key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  {/* পোস্ট হেডার */}
+                  <div className="flex items-center gap-2.5 p-4">
+                    <div className="size-10 rounded-full overflow-hidden bg-gray-100 border border-gray-200 shrink-0">
+                      {logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={logo} loading="lazy" alt="" className="size-full object-cover" />
+                      ) : (
+                        <div className="size-full bg-brand text-white flex items-center justify-center font-bold text-lg">
+                          {club?.name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[15px] text-[#050505] hover:underline cursor-pointer flex items-center gap-1">
+                        {club?.nameBn || club?.name}
+                      </p>
+                      <div className="flex items-center gap-1 text-[13px] text-[#65676B]">
+                        <span>{new Date(post.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                        <span>·</span>
+                        <Globe className="size-3" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* পোস্টের শিরোনাম/টেক্সট */}
+                  <div className="px-4 pb-2">
+                    <h3 className="text-[15px] text-[#050505]">
+                      {post.title}
+                    </h3>
+                  </div>
+
+                  {/* মিডিয়া */}
+                  <div className="w-full">
+                    {post.embed_media_url && (
+                      <UniversalMediaEmbed url={post.embed_media_url} title={post.title} />
+                    )}
+
+                    {post.image_url && !post.embed_media_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={post.image_url}
+                        alt={post.title}
+                        loading="lazy"
+                        className="w-full max-h-[500px] object-cover"
+                      />
+                    )}
+                  </div>
+
+                  {/* রিঅ্যাকশন ও কমেন্ট বাটন (ফেসবুক স্টাইল) */}
+                  <div className="px-4 py-2">
+                    <ReactionBar postId={post.id} title={post.title} />
+                    <div className="border-t border-gray-200 mt-2 pt-2">
+                      <Link
+                        href={`/post/${post.id}`}
+                        onClick={onClose}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg hover:bg-[#F0F2F5] text-[#65676B] font-semibold text-[15px] py-1.5 transition cursor-pointer"
+                      >
+                        <MessageSquare className="size-5" />
+                        Write a comment...
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              ))}
+
+              {/* ম্যানুয়াল রিপোর্টসমূহ */}
+              {manualReports.map((r: any, i: number) => (
+                <article key={`manual-${i}`} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="flex items-center gap-2.5 p-4">
+                    <div className="size-10 rounded-full overflow-hidden bg-gray-100 border border-gray-200 shrink-0 flex items-center justify-center text-gray-500">
+                      <UserRound className="size-6" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[15px] text-[#050505]">{r.reporter || 'Reporter'}</p>
+                      <p className="text-[13px] text-[#65676B]">{r.date}</p>
+                    </div>
+                  </div>
+
+                  <div className="px-4 pb-3 space-y-1">
+                    <h3 className="font-bold text-[16px] text-[#050505] leading-snug">{r.title}</h3>
+                    {r.subtitle && <p className="text-[14px] font-semibold text-gray-700">{r.subtitle}</p>}
+                    {r.description && <p className="text-[15px] text-[#050505] whitespace-pre-line">{r.description}</p>}
+                  </div>
+
+                  <div className="w-full">
+                    {r.embed_media_url && (
+                      <UniversalMediaEmbed url={r.embed_media_url} title={r.title} />
+                    )}
+
+                    {r.media_items && r.media_items.length > 0 && (
+                      <div className="space-y-1">
+                        {r.media_items.map((m: any, mi: number) => (
+                          <div key={mi} className="bg-white pb-2">
+                            {(m.title || m.description) && (
+                              <div className="px-4 pb-2">
+                                {m.title && <h5 className="font-semibold text-[15px]">{m.title}</h5>}
+                                {m.description && <p className="text-[14px] text-gray-700">{m.description}</p>}
+                              </div>
+                            )}
+                            <UniversalMediaEmbed url={m.url} title={m.title || r.title} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </article>
+              ))}
+
+              {liveNews.length === 0 && manualReports.length === 0 && (
+                <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
+                  <p className="font-bold text-[#65676B]">No posts available yet.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
