@@ -277,15 +277,17 @@ html[data-theme] .text-gray-800 { color: #1e293b !important; }
 html[data-theme] .text-gray-700 { color: #334155 !important; }
 html[data-theme] .text-gray-600 { color: #475569 !important; }
 
-/* ⭐⭐⭐ আপনার ছবির মতো ডিপ রয়্যাল ভায়োলেট ও ইলেকট্রিক ইন্ডিগো গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড ⭐⭐⭐ */
+/* ⭐⭐⭐ লিকুইড গ্লাস ব্যাকগ্রাউন্ড ও কার্ড ওভাররাইড ⭐⭐⭐ */
 #club-news {
-  background: linear-gradient(135deg, #14074d 0%, #230d85 45%, #2d109f 80%, #19085e 100%) !important;
+  background: radial-gradient(circle at 85% 15%, rgba(0, 210, 255, 0.42), transparent 50%),
+              radial-gradient(circle at 15% 85%, rgba(46, 16, 101, 0.6), transparent 55%),
+              linear-gradient(135deg, #110e4a 0%, #063489 35%, #0066cc 70%, #0096a6 100%) !important;
 }
 #club-news .group h3 {
   color: #ffffff !important;
 }
 #club-news .group p {
-  color: #cbd5e1 !important;
+  color: #f1f5f9 !important;
 }
 
 /* ক্লাব পপ-আপ ডায়ালগ (Popup Dialog)-এর ভেতরের সব লেখা ১০০% স্পষ্ট ও গাঢ় কালো */
