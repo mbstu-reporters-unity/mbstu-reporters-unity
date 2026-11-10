@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { ArrowRight, Download, ExternalLink, FileText, Megaphone, Pin } from "lucide-react"
 import { BRANCHES, getNotices, downloadUrl, timeAgo } from "@/lib/notices"
 import type { Notice } from "@/lib/notices"
@@ -74,9 +75,15 @@ export function NoticeBoard() {
                         </p>
                       )}
                     </div>
-                    <a href={`/notices?n=${n.id}`} className="mt-1.5 block text-pretty font-semibold text-navy hover:text-brand">
+                    
+                    {/* নোটিশ শিরোনামে SPA Link */}
+                    <Link
+                      href={`/notices?n=${n.id}`}
+                      className="mt-1.5 block text-pretty font-semibold text-navy hover:text-brand cursor-pointer"
+                    >
                       {n.title}
-                    </a>
+                    </Link>
+
                     {n.heading && <p className="text-sm text-muted-foreground">{n.heading}</p>}
                     <p className="text-xs text-muted-foreground">{timeAgo(n.created_at)}</p>
                   </div>
@@ -105,13 +112,14 @@ export function NoticeBoard() {
             })}
           </ul>
 
-          <a
+          {/* সব নোটিশ দেখুন বাটনে SPA Link */}
+          <Link
             href="/notices"
-            className="flex items-center justify-center gap-2 border-t border-border bg-muted px-5 py-4 text-sm font-semibold text-brand transition-colors hover:bg-brand-soft"
+            className="flex items-center justify-center gap-2 border-t border-border bg-muted px-5 py-4 text-sm font-semibold text-brand transition-colors hover:bg-brand-soft cursor-pointer"
           >
             সব নোটিশ দেখুন
             <ArrowRight className="size-4" aria-hidden="true" />
-          </a>
+          </Link>
         </div>
       </div>
     </section>
