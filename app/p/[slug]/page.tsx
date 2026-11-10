@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import {
-  ArrowLeft,
   CalendarDays,
   CheckCircle2,
   Globe,
@@ -72,6 +71,7 @@ export default async function PublicCommunityPage({
                 <img
                   src={page.cover_url}
                   alt={page.name}
+                  loading="lazy"
                   className="size-full object-cover select-none"
                 />
               ) : (
@@ -92,6 +92,7 @@ export default async function PublicCommunityPage({
                     <img
                       src={page.avatar_url}
                       alt={page.name}
+                      loading="lazy"
                       className="size-full object-cover"
                     />
                   ) : (
@@ -222,7 +223,7 @@ export default async function PublicCommunityPage({
                     <div className="size-11 rounded-full overflow-hidden bg-slate-100 border shrink-0">
                       {page.avatar_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={page.avatar_url} alt="" className="size-full object-cover" />
+                        <img src={page.avatar_url} loading="lazy" alt="" className="size-full object-cover" />
                       ) : (
                         <div className="size-full bg-brand text-white flex items-center justify-center font-bold text-sm">
                           {page.name.charAt(0)}
@@ -262,6 +263,7 @@ export default async function PublicCommunityPage({
                     <img
                       src={post.image_url}
                       alt={post.title}
+                      loading="lazy"
                       className="w-full max-h-96 object-cover rounded-2xl border"
                     />
                   )}
