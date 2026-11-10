@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { ArrowLeft, ArrowUpRight, Award, BookOpen, Feather, GraduationCap, MessageSquareQuote } from 'lucide-react'
 import { getStudentItems, getStudentCategories, type StudentItem } from '@/lib/sb'
 import { TopBar } from '@/components/portal/top-bar'
@@ -49,14 +50,14 @@ export default function StudentCornerPage() {
       <main className="min-h-[75vh] py-10 sm:py-16 bg-gray-50/50">
         <div className="mx-auto max-w-7xl px-4 space-y-8">
           
-          {/* হোমপেজে ফেরার লিংক */}
+          {/* হোমপেজে ফেরার রিলোডহীন লিংক */}
           <div className="flex items-center gap-2">
-            <a
+            <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline cursor-pointer"
             >
               <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-            </a>
+            </Link>
           </div>
 
           <SectionHeading
@@ -66,13 +67,13 @@ export default function StudentCornerPage() {
           />
 
           {/* ক্যাটাগরি বাটন ফিল্টার */}
-          <div className="flex gap-2 overflow-x-auto pb-2" role="group">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none" role="group">
             {kinds.map((k) => (
               <button
                 key={k}
                 type="button"
                 onClick={() => setFilter(k)}
-                className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-bold transition-all ${
+                className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                   filter === k
                     ? 'border-brand bg-brand text-white shadow'
                     : 'border-border bg-white text-navy hover:bg-brand-soft'
@@ -104,6 +105,7 @@ export default function StudentCornerPage() {
                         <img
                           src={item.image_url}
                           alt=""
+                          loading="lazy"
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       </div>
@@ -151,8 +153,9 @@ export default function StudentCornerPage() {
               })}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed p-10 text-center bg-white">
-              <p className="text-sm font-bold text-gray-500">এই বিভাগে এখনো কোনো লেখা প্রকাশিত হয়নি।</p>
+            <div className="rounded-2xl border border-dashed p-10 text-center bg-white shadow-sm space-y-1">
+              <p className="text-sm font-bold text-navy">এই বিভাগে এখনো কোনো লেখা প্রকাশিত হয়নি।</p>
+              <p className="text-xs text-muted-foreground">শীঘ্রই মাভাবিপ্রবি শিক্ষার্থীদের নতুন লেখা এখানে যুক্ত হবে।</p>
             </div>
           )}
         </div>
