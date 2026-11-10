@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { ArrowRight, CalendarDays, User } from 'lucide-react'
 import type { Post } from '@/lib/sb'
 import { ReactionBar } from './reaction-bar'
@@ -47,14 +48,13 @@ function formatBanglaDate(val?: string | null): string {
 export function NewsCard({ p }: { p: Post }) {
   const href = p.link_url?.trim() || `/post/${p.id}`
   const isExt = /^https?:\/\//i.test(href)
-  const ext = isExt ? { target: '_blank', rel: 'noopener noreferrer' } : {}
   const excerpt = (p.heading || p.body || '').slice(0, 140)
   const formattedDate = formatBanglaDate(p.created_at)
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl">
       
-      {/* যদি ভিডিও/ছবির এম্বেড লিংক না থাকে, তাহলে সাধারণ কভার ফটো দেখাবে */}
+      {/* যদি ভিডিও/ছবির এম্বেড লিংক না থাকে, তাহলে কভার ফটো দেখাবে */}
       {!p.embed_media_url && (
         <CardGallery
           postId={p.id}
@@ -74,7 +74,7 @@ export function NewsCard({ p }: { p: Post }) {
           </span>
         )}
 
-        {/* ⭐ স্পষ্ট, গাঢ় ও সুস্পষ্ট বাংলা তারিখ এবং রিপোর্টার ব্যাজ ⭐ */}
+        {/* বাংলা তারিখ এবং রিপোর্টার ব্যাজ */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
           <span className="inline-flex items-center gap-1.5 font-bold text-emerald-950 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg shadow-2xs">
             <CalendarDays className="size-3.5 text-emerald-700 shrink-0" aria-hidden="true" />
@@ -89,24 +89,47 @@ export function NewsCard({ p }: { p: Post }) {
           )}
         </div>
 
-        {/* ১. শিরোনাম (Title) */}
+        {/* ১. শিরোনাম (SPA Link যুক্ত) */}
         <h3 className="mt-3 font-serif text-lg font-bold leading-snug text-navy group-hover:text-brand transition-colors">
-          <a href={href} {...ext}>{p.title}</a>
+          {isExt ? (
+            <a href={href} target="_blank" rel="noopener noreferrer">
+              {p.title}
+            </a>
+          ) : (
+            <Link href={href}>
+              {p.title}
+            </Link>
+          )}
         </h3>
 
-        {/* ২. বিস্তারিত / উপশিরোনাম (Excerpt) */}
+        {/* ২. বিস্তারিত / উপশিরোনাম */}
         <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-700">
           {excerpt}
         </p>
 
-        {/* ৩. মিডিয়া প্লেয়ার (যদি ছবি বা ভিডিও লিংক থাকে) */}
+        {/* ৩. মিডিয়া প্লেয়ার (ছবি বা ভিডিও লিংক থাকলে) */}
         {p.embed_media_url && (
           <UniversalMediaEmbed url={p.embed_media_url} title={p.title} className="mb-2" />
         )}
 
-        <a href={href} {...ext} className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-brand hover:underline">
-          বিস্তারিত পড়ুন <ArrowRight className="size-4" aria-hidden="true" />
-        </a>
+        {/* ৪. বিস্তারিত পড়ুন অ্যাকশন বাটন (SPA Link যুক্ত) */}
+        {isExt ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-brand hover:underline"
+          >
+            বিস্তারিত পড়ুন <ArrowRight className="size-4" aria-hidden="true" />
+          </a>
+        ) : (
+          <Link
+            href={href}
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-brand hover:underline"
+          >
+            বিস্তারিত পড়ুন <ArrowRight className="size-4" aria-hidden="true" />
+          </Link>
+        )}
 
         <ReactionBar postId={p.id} title={p.title} />
       </div>
