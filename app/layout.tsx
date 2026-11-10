@@ -85,7 +85,8 @@ const organizationJsonLd = {
   },
 }
 
-const themeScript = `(function(){try{var ok=['light','dark','sepia','mint','night','contrast'];var t=localStorage.getItem('mbstu_theme');if(ok.indexOf(t)<0){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('mbstu_lang');if(l==='en'||l==='bn'){document.documentElement.lang=l}}catch(e){}})();`
+/* ⭐ শুধুমাত্র উজ্জ্বল থিমসমূহ সক্রিয় এবং ডিফল্ট থিম সবসময় উজ্জ্বল 'light' ⭐ */
+const themeScript = `(function(){try{var ok=['light','sky','sunshine','rose','lavender','spring','mint','sepia','contrast'];var t=localStorage.getItem('mbstu_theme');if(ok.indexOf(t)<0){t='light';}document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('mbstu_lang');if(l==='en'||l==='bn'){document.documentElement.lang=l;}}catch(e){}})();`
 
 export default function RootLayout({
   children,
