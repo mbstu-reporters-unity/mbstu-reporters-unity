@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { ArrowLeft, CalendarDays, Globe, Megaphone, Share2 } from 'lucide-react'
 import { getSocialSites, getSocialSiteNotices, type SocialSite } from '@/lib/social-sites'
 import { TopBar } from '@/components/portal/top-bar'
@@ -28,11 +29,11 @@ async function SocialSiteCard({ site }: { site: SocialSite }) {
             targetLink ? (
               <a href={targetLink} target="_blank" rel="noopener noreferrer" className="shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={site.logo_url} alt={site.name} className="size-16 rounded-2xl object-contain border p-1 bg-white shadow-sm hover:opacity-90" />
+                <img src={site.logo_url} alt={site.name} loading="lazy" className="size-16 rounded-2xl object-contain border p-1 bg-white shadow-sm hover:opacity-90" />
               </a>
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={site.logo_url} alt={site.name} className="size-16 rounded-2xl object-contain border p-1 bg-white shadow-sm shrink-0" />
+              <img src={site.logo_url} alt={site.name} loading="lazy" className="size-16 rounded-2xl object-contain border p-1 bg-white shadow-sm shrink-0" />
             )
           ) : (
             <div className="size-16 rounded-2xl bg-brand/10 text-brand flex items-center justify-center text-2xl font-bold border shrink-0">
@@ -102,7 +103,7 @@ async function SocialSiteCard({ site }: { site: SocialSite }) {
                       {n.image_urls.map((img, i) => (
                         <a key={i} href={img} target="_blank" rel="noopener noreferrer">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={img} alt="" className="size-16 w-full object-cover rounded-lg border hover:opacity-90" />
+                          <img src={img} alt="" loading="lazy" className="size-16 w-full object-cover rounded-lg border hover:opacity-90" />
                         </a>
                       ))}
                     </div>
@@ -155,9 +156,13 @@ export default async function SocialSitesPage() {
       <main className="min-h-screen bg-gray-50/50 py-8 sm:py-12">
         <div className="mx-auto max-w-6xl px-4 space-y-8">
           
-          <a href="/" className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline">
+          {/* দ্রুত হোমপেজে ফেরার বাটন (SPA Link) */}
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline cursor-pointer"
+          >
             <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-          </a>
+          </Link>
 
           {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark via-brand to-navy text-white p-6 sm:p-10 shadow-lg text-center">
@@ -185,6 +190,16 @@ export default async function SocialSitesPage() {
               <p className="text-xs text-muted-foreground">অ্যাডমিন প্যানেল থেকে তথ্য যুক্ত করলেই এখানে সরাসরি চলে আসবে।</p>
             </div>
           )}
+
+          {/* নিচে স্ক্রল করার পর পাঠকদের জন্য ফিরতি লিংক */}
+          <div className="pt-4 text-center border-t">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline cursor-pointer"
+            >
+              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
+            </Link>
+          </div>
 
         </div>
       </main>
