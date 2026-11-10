@@ -9,7 +9,7 @@ import {
   type CommunityPage,
 } from "../../lib/pages"
 import { uploadImage } from "../../lib/sb"
-import { ExternalLink, CheckCircle2, Trash2, Edit3, PlusCircle, X } from "lucide-react"
+import { ExternalLink, CheckCircle2, Trash2, Edit3, PlusCircle, X, ArrowUp, ArrowDown } from "lucide-react"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-green-600"
 const btn = "w-full bg-green-700 text-white rounded-xl py-2.5 font-semibold text-sm hover:bg-green-800 disabled:opacity-50 cursor-pointer shadow-sm"
@@ -36,6 +36,7 @@ export default function CommunityPageManager({
   const [websiteUrl, setWebsiteUrl] = useState("")
   const [fbUrl, setFbUrl] = useState("")
   const [isVerified, setIsVerified] = useState(false)
+  const [isActive, setIsActive] = useState(true)
 
   // ছবি
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
@@ -65,6 +66,7 @@ export default function CommunityPageManager({
     setWebsiteUrl("")
     setFbUrl("")
     setIsVerified(false)
+    setIsActive(true)
     setAvatarUrl(null)
     setAvatarFile(null)
     setCoverUrl(null)
@@ -84,6 +86,7 @@ export default function CommunityPageManager({
     setWebsiteUrl(p.website_url || "")
     setFbUrl(p.fb_url || "")
     setIsVerified(Boolean(p.is_verified))
+    setIsActive(p.is_active !== false)
     setAvatarUrl(p.avatar_url || null)
     setCoverUrl(p.cover_url || null)
     setAvatarFile(null)
@@ -127,7 +130,7 @@ export default function CommunityPageManager({
         is_verified: isVerified,
         avatar_url: finalAvatar,
         cover_url: finalCover,
-        is_active: true,
+        is_active: isActive,
       }
 
       if (editId) {
@@ -138,7 +141,7 @@ export default function CommunityPageManager({
           ...data,
           sort_order: list.length * 10,
         })
-        setMsg("✅ নতুন পেজ সফলভাবে তৈরি হয়েছে! নিচে লিংক দেওয়া হয়েছে।")
+        setMsg("✅ নতুন পেজ সফলভাবে তৈরি হয়েছে এবং হোমপেজে যুক্ত হয়েছে!")
       }
 
       resetForm()
@@ -149,6 +152,41 @@ export default function CommunityPageManager({
     setBusy(false)
   }
 
+  async function toggleStatus(p: CommunityPage) {
+    setBusy(true)
+    try {
+      await updateCommunityPage(token, p.id, { is_active: !(p.is_active !== false) })
+      await load()
+      setMsg(p.is_active ? "✅ পেজটি হোমপেজ থেকে লুকানো হয়েছে" : "✅ পেজটি হোমপেজে দৃশ্যমান করা হয়েছে")
+    } catch {
+      setMsg("❌ পরিবর্তন করা যায়নি")
+    }
+    setBusy(false)
+  }
+
+  async function move(i: number, dir: -1 | 1) {
+    const j = i + dir
+    if (j < 0 || j >= list.length) return
+    const arr = [...list]
+    const a = arr[i]
+    const b = arr[j]
+    arr[i] = b
+    arr[j] = a
+    setList(arr)
+
+    try {
+      const orderA = a.sort_order ?? i * 10
+      const orderB = b.sort_order ?? j * 10
+      await Promise.all([
+        updateCommunityPage(token, a.id, { sort_order: orderB }),
+        updateCommunityPage(token, b.id, { sort_order: orderA }),
+      ])
+      await load()
+    } catch {
+      setMsg("❌ ক্রম পরিবর্তন করা যায়নি")
+    }
+  }
+
   async function handleDelete(id: string, pageName: string) {
     if (!confirm(`"${pageName}" পেজটি মুছে ফেলতে চান?`)) return
     setBusy(true)
@@ -156,7 +194,7 @@ export default function CommunityPageManager({
       await deleteCommunityPage(token, id)
       await load()
       setMsg("✅ পেজ মুছে ফেলা হয়েছে")
-    } catch (e: any) {
+    } catch {
       setMsg("❌ মুছতে সমস্যা হয়েছে")
     }
     setBusy(false)
@@ -203,19 +241,31 @@ export default function CommunityPageManager({
 
         <input className={inp} placeholder="ক্যাটাগরি (যেমন: ডিবেট ক্লাব, রক্তদান, হল সংসদ, বিভাগীয় সোসাইটি)" value={category} onChange={(e) => setCategory(e.target.value)} />
 
-        {/* ভেরিফাইড টিকচিহ্ন সুইচ */}
-        <label className="flex items-center gap-2 p-2.5 bg-blue-50 rounded-xl border border-blue-200 text-xs font-bold text-blue-900 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={isVerified}
-            onChange={(e) => setIsVerified(e.target.checked)}
-            className="size-4 accent-blue-600 rounded cursor-pointer"
-          />
-          <span className="flex items-center gap-1">
-            <CheckCircle2 className="size-4 fill-blue-600 text-white" />
-            <span>অফিসিয়াল ভেরিফাইড ব্যাজ (Blue Tick Badge) চালু রাখুন</span>
-          </span>
-        </label>
+        {/* ভেরিফাইড টিকচিহ্ন ও হোমপেজ সক্রিয় সুইচ */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <label className="flex items-center gap-2 p-2.5 bg-blue-50 rounded-xl border border-blue-200 text-xs font-bold text-blue-900 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isVerified}
+              onChange={(e) => setIsVerified(e.target.checked)}
+              className="size-4 accent-blue-600 rounded cursor-pointer"
+            />
+            <span className="flex items-center gap-1">
+              <CheckCircle2 className="size-4 fill-blue-600 text-white" />
+              <span>ব্লু-টিক ব্যাজ (Blue Tick)</span>
+            </span>
+          </label>
+
+          <label className="flex items-center gap-2 p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 text-xs font-bold text-emerald-900 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              className="size-4 accent-emerald-600 rounded cursor-pointer"
+            />
+            <span>হোমপেজে দৃশ্যমান রাখুন</span>
+          </label>
+        </div>
 
         {/* প্রোফাইল লোগো ও কভার ফটো আপলোড */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border">
@@ -256,46 +306,77 @@ export default function CommunityPageManager({
         {msg && <p className="text-xs font-bold text-center text-green-800 bg-green-50 p-2.5 rounded-xl border border-green-200">{msg}</p>}
       </div>
 
-      {/* বর্তমান পেজসমূহের তালিকা */}
+      {/* বর্তমান পেজসমূহের তালিকা ও পূর্ণ অ্যাডমিন কন্ট্রোল */}
       <div className="space-y-2.5">
         <h3 className="font-bold text-sm text-gray-800">
           বর্তমান পেজসমূহ ({list.length})
         </h3>
 
         {list.map((item, idx) => (
-          <div key={item.id} className="bg-white rounded-2xl shadow p-3.5 text-sm flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="size-6 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0">
-                {idx + 1}
-              </span>
-
-              {item.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.avatar_url} alt="" className="size-11 rounded-full object-cover border p-0.5 shrink-0 bg-white" />
-              ) : (
-                <span className="size-11 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center shrink-0">
-                  {item.name.charAt(0)}
+          <div key={item.id} className="bg-white rounded-2xl shadow p-3.5 text-sm space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="size-6 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0">
+                  {idx + 1}
                 </span>
-              )}
 
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <p className="font-bold text-navy truncate">{item.name}</p>
-                  {item.is_verified && <CheckCircle2 className="size-3.5 fill-blue-600 text-white shrink-0" />}
+                {item.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.avatar_url} alt="" className="size-11 rounded-full object-cover border p-0.5 shrink-0 bg-white" />
+                ) : (
+                  <span className="size-11 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center shrink-0">
+                    {item.name.charAt(0)}
+                  </span>
+                )}
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-bold text-navy truncate">{item.name}</p>
+                    {item.is_verified && <CheckCircle2 className="size-3.5 fill-blue-600 text-white shrink-0" />}
+                    <span className={`text-[10px] px-2 py-0.2 rounded-full font-bold ${item.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                      {item.is_active !== false ? 'হোমপেজে সক্রিয়' : 'লুকানো'}
+                    </span>
+                  </div>
+                  <a
+                    href={`/p/${item.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-emerald-700 font-mono hover:underline flex items-center gap-1"
+                  >
+                    <span>/p/{item.slug}</span>
+                    <ExternalLink className="size-2.5" />
+                  </a>
                 </div>
-                <a
-                  href={`/p/${item.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-emerald-700 font-mono hover:underline flex items-center gap-1"
-                >
-                  <span>/p/{item.slug}</span>
-                  <ExternalLink className="size-2.5" />
-                </a>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 text-xs font-semibold shrink-0">
+            {/* অ্যাডমিন ক্রম ও অ্যাকশন কন্ট্রোল */}
+            <div className="flex flex-wrap items-center gap-3 border-t pt-2 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => move(idx, -1)}
+                disabled={idx === 0}
+                className="rounded-lg border px-2 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-30 cursor-pointer flex items-center gap-1"
+              >
+                <ArrowUp className="size-3" /> উপরে
+              </button>
+              <button
+                type="button"
+                onClick={() => move(idx, 1)}
+                disabled={idx === list.length - 1}
+                className="rounded-lg border px-2 py-1 text-gray-700 hover:bg-gray-100 disabled:opacity-30 cursor-pointer flex items-center gap-1"
+              >
+                <ArrowDown className="size-3" /> নিচে
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleStatus(item)}
+                className={`ml-auto ${item.is_active !== false ? 'text-amber-600' : 'text-green-700'} hover:underline cursor-pointer`}
+              >
+                {item.is_active !== false ? 'হোমপেজ থেকে লুকান' : 'হোমপেজে দেখান'}
+              </button>
+
               <button onClick={() => startEdit(item)} className="text-green-700 hover:underline">
                 এডিট
               </button>
