@@ -91,8 +91,8 @@ export function ClubNews() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [animKey, setAnimKey] = useState(0)
+  const [manualOffset, setManualOffset] = useState(0)
 
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
   const clubsRef = useRef<Club[]>(fallbackClubs)
@@ -189,60 +189,24 @@ export function ClubNews() {
     setAnimKey((k) => k + 1)
   }, [total])
 
-  // ⭐ বাটন চেপে ডানে বা বামে ম্যানুয়াল নেভিগেশন করার ফাংশন ⭐
+  // ⭐ নেভিগেশন বাটন: সামনে এবং পেছনে মসৃণভাবে যাওয়ার হ্যান্ডলার ⭐
   const handleNext = () => {
-    if (config.effect === 'continuous' && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 340, behavior: 'smooth' })
+    if (config.effect === 'continuous') {
+      setManualOffset((prev) => prev - 340)
     } else {
       nextSlide()
     }
   }
 
   const handlePrev = () => {
-    if (config.effect === 'continuous' && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -340, behavior: 'smooth' })
+    if (config.effect === 'continuous') {
+      setManualOffset((prev) => prev + 340)
     } else {
       prevSlide()
     }
   }
 
-  // ⭐ নিরবচ্ছিন্ন স্ক্রল (Continuous Smooth Auto-Glide) ইঞ্জিন ⭐
-  useEffect(() => {
-    if (!config.enabled || config.effect !== 'continuous' || isPaused || visible.length <= 1) return
-
-    const container = scrollContainerRef.current
-    if (!container) return
-
-    let animId: number
-    let lastTime = performance.now()
-    const speed = Math.max(30, 140 / (config.duration_sec || 4))
-
-    const step = (time: number) => {
-      const delta = (time - lastTime) / 1000
-      lastTime = time
-
-      if (container) {
-        const maxScroll = container.scrollWidth / 2
-        if (config.direction === 'left-to-right') {
-          container.scrollLeft -= speed * delta
-          if (container.scrollLeft <= 0) {
-            container.scrollLeft += maxScroll
-          }
-        } else {
-          container.scrollLeft += speed * delta
-          if (container.scrollLeft >= maxScroll) {
-            container.scrollLeft -= maxScroll
-          }
-        }
-      }
-      animId = requestAnimationFrame(step)
-    }
-
-    animId = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(animId)
-  }, [config.enabled, config.effect, config.direction, config.duration_sec, isPaused, visible.length])
-
-  // সাধারণ ট্রানজিশন মোডের টাইমার
+  // সাধারণ মোডের টাইমার
   useEffect(() => {
     if (!config.enabled || config.effect === 'continuous' || isPaused || total <= 1) return
 
@@ -254,7 +218,7 @@ export function ClubNews() {
     return () => clearInterval(timer)
   }, [config.enabled, config.duration_sec, config.effect, total, isPaused, nextSlide])
 
-  // টাচ ও সোয়াইপ
+  // টাচ সোয়াইপ
   const handleTouchStart = (e: React.TouchEvent) => {
     if (config.pause_on_hover) setIsPaused(true)
     touchStartX.current = e.touches[0].clientX
@@ -277,7 +241,7 @@ export function ClubNews() {
     const absX = Math.abs(diffX)
     const absY = Math.abs(diffY)
 
-    if (absX >= 60 && absX > absY * 1.4) {
+    if (absX >= 50 && absX > absY * 1.3) {
       if (diffX < 0) handleNext()
       else handlePrev()
     }
@@ -286,14 +250,14 @@ export function ClubNews() {
     touchStartY.current = null
   }
 
-  // নিরবচ্ছিন্ন স্ক্রলের জন্য ডুপ্লিকেট তালিকা
+  // নিরবচ্ছিন্ন মসৃণ স্ক্রলের জন্য মাল্টিপল সেট
   const marqueeClubs = useMemo(() => {
     if (visible.length === 0) return []
     let arr = [...visible]
-    while (arr.length < 8) {
+    while (arr.length < 12) {
       arr = [...arr, ...visible]
     }
-    return [...arr, ...arr]
+    return [...arr, ...arr, ...arr]
   }, [visible])
 
   const cardsCount = Math.min(config.cards_desktop || 3, total || 1)
@@ -314,7 +278,7 @@ export function ClubNews() {
     return (
       <div
         id={`club-${club.id}`}
-        className="group relative flex flex-col justify-between rounded-3xl border border-slate-800/80 bg-gradient-to-b from-slate-900/90 via-slate-900/70 to-slate-950 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all duration-300 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-950/40 w-full min-w-0 overflow-hidden"
+        className="group relative flex flex-col justify-between rounded-3xl border border-slate-800/80 bg-gradient-to-b from-slate-900/95 via-slate-900/80 to-slate-950 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all duration-300 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-950/40 w-full min-w-0 overflow-hidden select-none"
       >
         <div>
           <div className="flex items-start justify-between gap-3 border-b border-slate-800/60 pb-4">
@@ -324,7 +288,7 @@ export function ClubNews() {
                 <img
                   src={raw.logo_url}
                   alt={club.name}
-                  className="size-16 rounded-full object-cover ring-2 ring-emerald-500/40 p-0.5 bg-white shadow-md select-none"
+                  className="size-16 rounded-full object-cover ring-2 ring-emerald-500/40 p-0.5 bg-white shadow-md select-none pointer-events-none"
                   onError={(e) => {
                     ;(e.target as HTMLElement).style.display = 'none'
                   }}
@@ -443,7 +407,19 @@ export function ClubNews() {
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))]" />
 
+      {/* ⭐ খাঁটি সিএসএস জিপিইউ ইঞ্জিন: ১০০% স্বয়ংক্রিয় মসৃণ চলাচল নিশ্চিত করে ⭐ */}
       <style>{`
+        @keyframes continuous_marquee_glide {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-33.333%); }
+        }
+        .anim_marquee_track {
+          display: flex;
+          width: max-content;
+          will-change: transform;
+          animation: continuous_marquee_glide 35s linear infinite;
+        }
+
         @keyframes tr_right_to_left {
           0% { transform: translateX(45px); opacity: 0; }
           100% { transform: translateX(0); opacity: 1; }
@@ -495,6 +471,7 @@ export function ClubNews() {
               onClick={() => {
                 setFilter(tag)
                 setCurrentIndex(0)
+                setManualOffset(0)
                 setAnimKey((k) => k + 1)
               }}
               className={cn(
@@ -522,20 +499,32 @@ export function ClubNews() {
         >
           {total > 0 ? (
             config.effect === 'continuous' ? (
-              /* ⭐ নিরবচ্ছিন্ন স্ক্রল + বাটন দিয়ে সামনে/পিছে নিয়ন্ত্রণ ⭐ */
-              <div
-                ref={scrollContainerRef}
-                className="flex gap-6 overflow-x-auto scrollbar-none py-3 px-1 select-none scroll-smooth"
-                style={{ scrollBehavior: 'smooth' }}
-              >
-                {marqueeClubs.map((club, idx) => (
-                  <div key={`${club.id}_${idx}`} className="w-[290px] sm:w-[340px] shrink-0">
-                    {renderCard(club)}
+              /* ⭐ স্বয়ংক্রিয়ভাবে ভিডিওর মতো স্ক্রল হবে + নেভিগেশন চাপলে তাৎক্ষণিক সামনে/পিছে যাবে ⭐ */
+              <div className="py-2 overflow-hidden w-full select-none">
+                <div
+                  style={{
+                    transform: `translateX(${manualOffset}px)`,
+                    transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                >
+                  <div
+                    className="anim_marquee_track flex gap-6"
+                    style={{
+                      animationDuration: `${Math.max(16, (config.duration_sec || 4) * 8)}s`,
+                      animationDirection: config.direction === 'left-to-right' ? 'reverse' : 'normal',
+                      animationPlayState: isPaused ? 'paused' : 'running',
+                    }}
+                  >
+                    {marqueeClubs.map((club, idx) => (
+                      <div key={`${club.id}_${idx}`} className="w-[290px] sm:w-[340px] shrink-0">
+                        {renderCard(club)}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
             ) : (
-              /* সাধারণ গ্রিড মোড */
+              /* সাধারণ গ্রিড ট্রানজিশন মোড */
               <div
                 key={animKey}
                 className={cn(
@@ -559,30 +548,30 @@ export function ClubNews() {
             </p>
           )}
 
-          {/* ⭐ দুই পাশের বড় ফ্লোটিং তীর বাটন (Floating Side Arrows) ⭐ */}
+          {/* ⭐ ১. দুই পাশের বড় ফ্লোটিং নেভিগেশন তীর বাটন (Floating Side Arrows) ⭐ */}
           {total > 1 && config.enabled && (
             <>
               <button
                 type="button"
                 onClick={handlePrev}
                 aria-label="Previous Club"
-                className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-30 size-11 sm:size-12 rounded-full bg-slate-950/85 hover:bg-emerald-600 text-white flex items-center justify-center transition-all border border-slate-700 shadow-2xl cursor-pointer active:scale-95 group/arrow"
+                className="absolute -left-2 sm:left-2 top-1/2 -translate-y-1/2 z-30 size-11 sm:size-12 rounded-full bg-slate-950/90 hover:bg-emerald-600 text-white flex items-center justify-center transition-all border border-slate-700 shadow-2xl cursor-pointer active:scale-95"
               >
-                <ChevronLeft className="size-6 text-white group-hover/arrow:-translate-x-0.5 transition-transform" />
+                <ChevronLeft className="size-6 text-white" />
               </button>
 
               <button
                 type="button"
                 onClick={handleNext}
                 aria-label="Next Club"
-                className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-30 size-11 sm:size-12 rounded-full bg-slate-950/85 hover:bg-emerald-600 text-white flex items-center justify-center transition-all border border-slate-700 shadow-2xl cursor-pointer active:scale-95 group/arrow"
+                className="absolute -right-2 sm:right-2 top-1/2 -translate-y-1/2 z-30 size-11 sm:size-12 rounded-full bg-slate-950/90 hover:bg-emerald-600 text-white flex items-center justify-center transition-all border border-slate-700 shadow-2xl cursor-pointer active:scale-95"
               >
-                <ChevronRight className="size-6 text-white group-hover/arrow:translate-x-0.5 transition-transform" />
+                <ChevronRight className="size-6 text-white" />
               </button>
             </>
           )}
 
-          {/* ⭐ নিচে স্থায়ী কন্ট্রোল বার (Bottom Navigation Bar) ⭐ */}
+          {/* ⭐ ২. নিচে স্থায়ী কন্ট্রোল ও নেভিগেশন কি বার ⭐ */}
           {total > 1 && config.enabled && (
             <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-slate-800/80 pt-5">
               <div className="flex items-center gap-2.5">
@@ -601,12 +590,12 @@ export function ClubNews() {
                 </button>
               </div>
 
-              {/* ম্যানুয়াল সামনে ও পেছনে যাওয়ার বাটনসমূহ */}
+              {/* ম্যানুয়াল সামনে ও পেছনের নেভিগেশন কি */}
               <div className="flex items-center gap-2 ml-auto">
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white flex items-center gap-1.5 text-xs font-bold transition border border-slate-800 cursor-pointer active:scale-95 shadow-md"
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white flex items-center gap-1.5 text-xs font-bold transition border border-slate-700 cursor-pointer active:scale-95 shadow-md"
                 >
                   <ChevronLeft className="size-4" />
                   <span>আগেরটি</span>
@@ -614,7 +603,7 @@ export function ClubNews() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white flex items-center gap-1.5 text-xs font-bold transition border border-slate-800 cursor-pointer active:scale-95 shadow-md"
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white flex items-center gap-1.5 text-xs font-bold transition border border-slate-700 cursor-pointer active:scale-95 shadow-md"
                 >
                   <span>পরেরটি</span>
                   <ChevronRight className="size-4" />
