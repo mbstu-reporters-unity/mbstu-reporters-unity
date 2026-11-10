@@ -277,9 +277,9 @@ html[data-theme] .text-gray-800 { color: #1e293b !important; }
 html[data-theme] .text-gray-700 { color: #334155 !important; }
 html[data-theme] .text-gray-600 { color: #475569 !important; }
 
-/* ⭐⭐⭐ হিরো স্লাইডারের মতো রয়্যাল ব্লু ও ডিপ ইন্ডিগো ব্যাকগ্রাউন্ড গ্রেডিয়েন্ট ⭐⭐⭐ */
+/* ⭐⭐⭐ আপনার ছবির মতো ডিপ রয়্যাল ভায়োলেট ও ইলেকট্রিক ইন্ডিগো গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড ⭐⭐⭐ */
 #club-news {
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 45%, #2563eb 85%, #1e1b4b 100%) !important;
+  background: linear-gradient(135deg, #14074d 0%, #230d85 45%, #2d109f 80%, #19085e 100%) !important;
 }
 #club-news .group h3 {
   color: #ffffff !important;
