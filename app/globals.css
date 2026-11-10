@@ -277,9 +277,9 @@ html[data-theme] .text-gray-800 { color: #1e293b !important; }
 html[data-theme] .text-gray-700 { color: #334155 !important; }
 html[data-theme] .text-gray-600 { color: #475569 !important; }
 
-/* শুধুমাত্র হোমপেজের ক্লাব কার্ডের লেখা (ডার্ক ব্যাকগ্রাউন্ডের জন্য) */
+/* ⭐⭐⭐ হিরো স্লাইডারের মতো রয়্যাল ব্লু ও ডিপ ইন্ডিগো ব্যাকগ্রাউন্ড গ্রেডিয়েন্ট ⭐⭐⭐ */
 #club-news {
-  background: linear-gradient(to bottom, #09121d, #0f1c2e, #09121d) !important;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 45%, #2563eb 85%, #1e1b4b 100%) !important;
 }
 #club-news .group h3 {
   color: #ffffff !important;
@@ -288,7 +288,7 @@ html[data-theme] .text-gray-600 { color: #475569 !important; }
   color: #cbd5e1 !important;
 }
 
-/* ⭐⭐⭐ চূড়ান্ত ফিক্স: ক্লাব পপ-আপ ডায়ালগ (Popup Dialog)-এর ভেতরের সব লেখা ১০০% স্পষ্ট ও গাঢ় কালো ⭐⭐⭐ */
+/* ক্লাব পপ-আপ ডায়ালগ (Popup Dialog)-এর ভেতরের সব লেখা ১০০% স্পষ্ট ও গাঢ় কালো */
 [role="dialog"],
 .club-dialog-font {
   color: #0f172a !important;
