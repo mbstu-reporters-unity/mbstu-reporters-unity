@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { ArrowLeft, Newspaper } from 'lucide-react'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
@@ -39,13 +40,15 @@ export default async function CategoryPage({
       <SiteHeader />
       <main className="min-h-[75vh] py-10 sm:py-16 bg-gray-50/50">
         <div className="mx-auto max-w-7xl px-4 space-y-8">
+          
+          {/* দ্রুত হোমপেজে ফেরার বাটন (SPA Link) */}
           <div className="flex items-center gap-2">
-            <a
+            <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline cursor-pointer"
             >
               <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-            </a>
+            </Link>
           </div>
 
           <SectionHeading
@@ -62,9 +65,22 @@ export default async function CategoryPage({
                 <Newspaper className="size-6" />
               </div>
               <p className="text-base font-bold text-navy">এই ক্যাটাগরিতে এখনো কোনো সংবাদ প্রকাশিত হয়নি।</p>
-              <p className="text-xs text-muted-foreground">অ্যাডমিন বা মডারেটররা এই ক্যাটাগরিতে পোস্ট দিলেই তা এখানে লাইভ হয়ে যাবে।</p>
+              <p className="text-xs text-muted-foreground">অ্যাডমিন বা মডারেটররা এই ক্যাটাগরিতে পোস্ট দিলেই তা এখানে সরাসরি লাইভ হয়ে যাবে।</p>
             </div>
           )}
+
+          {/* নিচে স্ক্রল করার পর পাঠকদের জন্য ফিরতি লিংক */}
+          {posts.length > 3 && (
+            <div className="pt-6 text-center border-t border-border/60">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline cursor-pointer"
+              >
+                <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
+              </Link>
+            </div>
+          )}
+
         </div>
       </main>
       <SiteFooter />
