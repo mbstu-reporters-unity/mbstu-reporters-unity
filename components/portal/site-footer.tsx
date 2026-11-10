@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Mail, MapPin, Phone } from 'lucide-react'
 import { navLinks, siteContact } from '@/lib/data'
 import { Logo } from './logo'
@@ -25,13 +26,17 @@ export function SiteFooter() {
         <nav aria-label="Footer quick links">
           <h2 className="font-serif text-base font-bold text-white"><Tx bn="দ্রুত লিংক" en="Quick Links" /></h2>
           <ul className="mt-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-1">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <a href={link.href} className="transition-colors hover:text-gold">
-                  <Tx bn={link.bn} en={link.label} />
-                </a>
-              </li>
-            ))}
+            {navLinks.map((link) => {
+              // হ্যাশ লিংক হলে অন্য যেকোনো পেজ থেকেও যাতে হোমপেজে মসৃণভাবে যায়
+              const targetHref = link.href.startsWith('#') ? `/${link.href}` : link.href
+              return (
+                <li key={link.href}>
+                  <Link href={targetHref} className="transition-colors hover:text-gold cursor-pointer">
+                    <Tx bn={link.bn} en={link.label} />
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         </nav>
 
