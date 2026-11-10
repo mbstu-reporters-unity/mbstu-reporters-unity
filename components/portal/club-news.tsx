@@ -92,6 +92,7 @@ export function ClubNews() {
   const [isPaused, setIsPaused] = useState(false)
   const [animKey, setAnimKey] = useState(0)
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
   const clubsRef = useRef<Club[]>(fallbackClubs)
@@ -188,8 +189,62 @@ export function ClubNews() {
     setAnimKey((k) => k + 1)
   }, [total])
 
+  // ⭐ বাটন চেপে ডানে বা বামে ম্যানুয়াল নেভিগেশন করার ফাংশন ⭐
+  const handleNext = () => {
+    if (config.effect === 'continuous' && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 340, behavior: 'smooth' })
+    } else {
+      nextSlide()
+    }
+  }
+
+  const handlePrev = () => {
+    if (config.effect === 'continuous' && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -340, behavior: 'smooth' })
+    } else {
+      prevSlide()
+    }
+  }
+
+  // ⭐ নিরবচ্ছিন্ন স্ক্রল (Continuous Smooth Auto-Glide) ইঞ্জিন ⭐
   useEffect(() => {
-    if (!config.enabled || total <= 1 || isPaused || config.effect === 'continuous') return
+    if (!config.enabled || config.effect !== 'continuous' || isPaused || visible.length <= 1) return
+
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    let animId: number
+    let lastTime = performance.now()
+    const speed = Math.max(30, 140 / (config.duration_sec || 4))
+
+    const step = (time: number) => {
+      const delta = (time - lastTime) / 1000
+      lastTime = time
+
+      if (container) {
+        const maxScroll = container.scrollWidth / 2
+        if (config.direction === 'left-to-right') {
+          container.scrollLeft -= speed * delta
+          if (container.scrollLeft <= 0) {
+            container.scrollLeft += maxScroll
+          }
+        } else {
+          container.scrollLeft += speed * delta
+          if (container.scrollLeft >= maxScroll) {
+            container.scrollLeft -= maxScroll
+          }
+        }
+      }
+      animId = requestAnimationFrame(step)
+    }
+
+    animId = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(animId)
+  }, [config.enabled, config.effect, config.direction, config.duration_sec, isPaused, visible.length])
+
+  // সাধারণ ট্রানজিশন মোডের টাইমার
+  useEffect(() => {
+    if (!config.enabled || config.effect === 'continuous' || isPaused || total <= 1) return
 
     const intervalMs = Math.max(2, config.duration_sec || 4) * 1000
     const timer = setInterval(() => {
@@ -197,8 +252,9 @@ export function ClubNews() {
     }, intervalMs)
 
     return () => clearInterval(timer)
-  }, [config.enabled, config.duration_sec, total, isPaused, nextSlide, config.effect])
+  }, [config.enabled, config.duration_sec, config.effect, total, isPaused, nextSlide])
 
+  // টাচ ও সোয়াইপ
   const handleTouchStart = (e: React.TouchEvent) => {
     if (config.pause_on_hover) setIsPaused(true)
     touchStartX.current = e.touches[0].clientX
@@ -207,10 +263,10 @@ export function ClubNews() {
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (config.pause_on_hover) {
-      setTimeout(() => setIsPaused(false), 2000)
+      setTimeout(() => setIsPaused(false), 2500)
     }
 
-    if (touchStartX.current === null || touchStartY.current === null || total <= 1 || config.effect === 'continuous') {
+    if (touchStartX.current === null || touchStartY.current === null || total <= 1) {
       touchStartX.current = null
       touchStartY.current = null
       return
@@ -221,16 +277,16 @@ export function ClubNews() {
     const absX = Math.abs(diffX)
     const absY = Math.abs(diffY)
 
-    if (absX >= 75 && absX > absY * 1.4) {
-      if (diffX < 0) nextSlide()
-      else prevSlide()
+    if (absX >= 60 && absX > absY * 1.4) {
+      if (diffX < 0) handleNext()
+      else handlePrev()
     }
 
     touchStartX.current = null
     touchStartY.current = null
   }
 
-  // ⭐ নিরবচ্ছিন্ন স্ক্রলের জন্য ডুপ্লিকেট তালিকা (Seamless Loop) ⭐
+  // নিরবচ্ছিন্ন স্ক্রলের জন্য ডুপ্লিকেট তালিকা
   const marqueeClubs = useMemo(() => {
     if (visible.length === 0) return []
     let arr = [...visible]
@@ -250,7 +306,6 @@ export function ClubNews() {
 
   const animDuration = `${config.anim_speed_ms || 600}ms`
 
-  // ক্লাব কার্ড রেন্ডারার
   const renderCard = (club: Club) => {
     const Icon = clubIcons[club.icon] || Star
     const raw = dbMap[club.id]
@@ -388,19 +443,7 @@ export function ClubNews() {
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))]" />
 
-      {/* ⭐ নিরবচ্ছিন্ন স্ক্রল (Continuous Marquee) সিএসএস অ্যানিমেশন ⭐ */}
       <style>{`
-        @keyframes continuous_marquee_glide {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .anim_marquee_track {
-          display: flex;
-          width: max-content;
-          will-change: transform;
-          animation: continuous_marquee_glide var(--marquee-speed, 35s) linear infinite;
-        }
-
         @keyframes tr_right_to_left {
           0% { transform: translateX(45px); opacity: 0; }
           100% { transform: translateX(0); opacity: 1; }
@@ -475,29 +518,24 @@ export function ClubNews() {
           onMouseLeave={() => config.pause_on_hover && setIsPaused(false)}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="relative w-full overflow-hidden"
+          className="relative w-full group/slider"
         >
           {total > 0 ? (
-            /* ⭐ ভিডিওর মতো নিরবচ্ছিন্ন স্মুথ স্ক্রলিং মোড ⭐ */
             config.effect === 'continuous' ? (
-              <div className="py-2 overflow-hidden w-full select-none">
-                <div
-                  className="anim_marquee_track flex gap-6"
-                  style={{
-                    animationDuration: `${Math.max(14, (config.duration_sec || 4) * (marqueeClubs.length / 2))}s`,
-                    animationDirection: config.direction === 'left-to-right' ? 'reverse' : 'normal',
-                    animationPlayState: isPaused ? 'paused' : 'running',
-                  }}
-                >
-                  {marqueeClubs.map((club, idx) => (
-                    <div key={`${club.id}_${idx}`} className="w-[290px] sm:w-[340px] shrink-0">
-                      {renderCard(club)}
-                    </div>
-                  ))}
-                </div>
+              /* ⭐ নিরবচ্ছিন্ন স্ক্রল + বাটন দিয়ে সামনে/পিছে নিয়ন্ত্রণ ⭐ */
+              <div
+                ref={scrollContainerRef}
+                className="flex gap-6 overflow-x-auto scrollbar-none py-3 px-1 select-none scroll-smooth"
+                style={{ scrollBehavior: 'smooth' }}
+              >
+                {marqueeClubs.map((club, idx) => (
+                  <div key={`${club.id}_${idx}`} className="w-[290px] sm:w-[340px] shrink-0">
+                    {renderCard(club)}
+                  </div>
+                ))}
               </div>
             ) : (
-              /* সাধারণ গ্রিড ট্রানজিশন মোড */
+              /* সাধারণ গ্রিড মোড */
               <div
                 key={animKey}
                 className={cn(
@@ -521,60 +559,66 @@ export function ClubNews() {
             </p>
           )}
 
-          {/* নেভিগেশন কন্ট্রোল (সাধারণ মোডে কার্যকর) */}
-          {total > 1 && config.enabled && config.effect !== 'continuous' && (
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-800/80 pt-5">
-              {config.show_dots && (
-                <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
-                  {visible.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => {
-                        setCurrentIndex(i)
-                        setAnimKey((k) => k + 1)
-                      }}
-                      aria-label={`Slide ${i + 1}`}
-                      className={cn(
-                        'h-2 rounded-full transition-all duration-300 cursor-pointer',
-                        i === currentIndex ? 'w-7 bg-emerald-500 shadow-md shadow-emerald-500/50' : 'w-2 bg-slate-700 hover:bg-slate-500',
-                      )}
-                    />
-                  ))}
-                </div>
-              )}
+          {/* ⭐ দুই পাশের বড় ফ্লোটিং তীর বাটন (Floating Side Arrows) ⭐ */}
+          {total > 1 && config.enabled && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrev}
+                aria-label="Previous Club"
+                className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-30 size-11 sm:size-12 rounded-full bg-slate-950/85 hover:bg-emerald-600 text-white flex items-center justify-center transition-all border border-slate-700 shadow-2xl cursor-pointer active:scale-95 group/arrow"
+              >
+                <ChevronLeft className="size-6 text-white group-hover/arrow:-translate-x-0.5 transition-transform" />
+              </button>
 
-              <div className="flex items-center gap-2.5 ml-auto">
-                <span className="text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">
-                  ক্লাব {currentIndex + 1} / {total}
+              <button
+                type="button"
+                onClick={handleNext}
+                aria-label="Next Club"
+                className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-30 size-11 sm:size-12 rounded-full bg-slate-950/85 hover:bg-emerald-600 text-white flex items-center justify-center transition-all border border-slate-700 shadow-2xl cursor-pointer active:scale-95 group/arrow"
+              >
+                <ChevronRight className="size-6 text-white group-hover/arrow:translate-x-0.5 transition-transform" />
+              </button>
+            </>
+          )}
+
+          {/* ⭐ নিচে স্থায়ী কন্ট্রোল বার (Bottom Navigation Bar) ⭐ */}
+          {total > 1 && config.enabled && (
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-slate-800/80 pt-5">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
+                  <Sparkles className="size-3.5 text-gold" />
+                  <span>ক্যাম্পাস ক্লাব ({total}টি)</span>
                 </span>
 
                 <button
                   type="button"
                   onClick={() => setIsPaused(!isPaused)}
-                  className="size-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition border border-slate-800 cursor-pointer shadow-xs"
+                  className="h-8 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-1.5 text-xs font-bold transition border border-slate-800 cursor-pointer shadow-xs active:scale-95"
                 >
                   {isPaused ? <Play className="size-3.5 text-emerald-400" /> : <Pause className="size-3.5 text-gold" />}
+                  <span>{isPaused ? 'চালান' : 'থামান'}</span>
                 </button>
+              </div>
 
-                {config.show_arrows && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={prevSlide}
-                      className="size-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition border border-slate-800 cursor-pointer active:scale-95 shadow-xs"
-                    >
-                      <ChevronLeft className="size-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={nextSlide}
-                      className="size-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition border border-slate-800 cursor-pointer active:scale-95 shadow-xs"
-                    >
-                      <ChevronRight className="size-4" />
-                    </button>
-                  </>
-                )}
+              {/* ম্যানুয়াল সামনে ও পেছনে যাওয়ার বাটনসমূহ */}
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white flex items-center gap-1.5 text-xs font-bold transition border border-slate-800 cursor-pointer active:scale-95 shadow-md"
+                >
+                  <ChevronLeft className="size-4" />
+                  <span>আগেরটি</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white flex items-center gap-1.5 text-xs font-bold transition border border-slate-800 cursor-pointer active:scale-95 shadow-md"
+                >
+                  <span>পরেরটি</span>
+                  <ChevronRight className="size-4" />
+                </button>
               </div>
             </div>
           )}
