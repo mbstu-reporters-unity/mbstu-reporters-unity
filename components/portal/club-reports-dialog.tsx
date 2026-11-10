@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useId, useState } from 'react'
+import Link from 'next/link'
 import {
   ArrowRight,
   CalendarDays,
@@ -11,7 +12,9 @@ import {
   Share2,
   UserRound,
   Users,
+  Video,
   X,
+  MessageSquare
 } from 'lucide-react'
 import type { Club } from '@/lib/data'
 import {
@@ -21,6 +24,7 @@ import {
   type ClubItem,
 } from '@/lib/clubs'
 import { UniversalMediaEmbed } from './universal-media-embed'
+import { ReactionBar } from './reaction-bar'
 
 export function ClubReportsDialog({
   club,
@@ -44,13 +48,13 @@ export function ClubReportsDialog({
     }>
   >([])
 
-  // ১. শুধুমাত্র ক্লাবের আইডি পরিবর্তন হলেই সংশ্লিষ্ট নিউজ লোড হবে
+  // ক্লাবের আইডি পেলে সরাসরি নিউজগুলো নিয়ে আসবে (কোনো রিলোড ছাড়াই)
   useEffect(() => {
     if (!club?.id) return
     getClubNewsPosts(club.id).then(setLiveNews)
   }, [club?.id])
 
-  // ২. বডি স্ক্রল ও কীবোর্ডের Escape বাটন হ্যান্ডলার
+  // স্ক্রল লক ও এস্কেপ বাটন হ্যান্ডলার
   useEffect(() => {
     if (!club) return
     const prev = document.body.style.overflow
@@ -69,12 +73,9 @@ export function ClubReportsDialog({
   const members = rawClub?.committee_members || []
   const term = rawClub?.committee_term
   const logo = rawClub?.logo_url
-  const reportsHeading = rawClub?.reports_title || 'Club Reports / ক্লাব প্রতিবেদন'
-  const shareUrl =
-    typeof window !== 'undefined' ? `${window.location.origin}/?club=${club.id}` : ''
+  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/?club=${club.id}` : ''
   const activityMediaList = parseActivityMedia(rawClub?.embed_media_url)
 
-  // ডাটাবেজের রিপোর্ট থাকলে সেটা দেখাবে, না থাকলে ফলব্যাক ক্লাবের রিপোর্ট দেখাবে
   const manualReports =
     rawClub?.reports && rawClub.reports.length > 0
       ? rawClub.reports
@@ -101,322 +102,277 @@ export function ClubReportsDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 club-dialog-font">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 club-dialog-font">
       {/* ব্যাকড্রপ */}
       <button
         type="button"
-        aria-label="Close reports"
+        aria-label="Close"
         onClick={onClose}
-        className="animate-in fade-in absolute inset-0 bg-navy/85 backdrop-blur-md"
+        className="animate-in fade-in absolute inset-0 bg-navy/90 backdrop-blur-sm cursor-default"
       />
 
+      {/* বিশাল পপ-আপ কন্টেইনার (সম্পূর্ণ পেজের মতো কাজ করবে) */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="animate-in zoom-in-95 fade-in relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white shadow-2xl border border-border club-dialog-font"
+        className="animate-in zoom-in-95 fade-in relative max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl bg-slate-100 shadow-2xl border border-border"
       >
-        {/* হেডার ব্যানার */}
-        <div className="relative bg-gradient-to-r from-brand to-brand-dark px-6 py-6 text-white">
+        {/* ==================== হেডার (কভার + প্রোফাইল) ==================== */}
+        <div className="bg-white border-b border-border shadow-xs relative">
+          
+          {/* ক্লোজ বাটন */}
           <button
             type="button"
             onClick={onClose}
-            autoFocus
-            className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors cursor-pointer"
+            className="absolute right-3 top-3 z-20 flex size-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur transition-all cursor-pointer"
           >
-            <X className="size-4" aria-hidden="true" />
-            <span className="sr-only">Close</span>
+            <X className="size-5" />
           </button>
 
-          <div className="flex items-center gap-4 pr-8">
-            {/* স্পষ্ট গোল লোগো */}
-            {logo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={logo}
-                alt={club.name}
-                className="size-20 sm:size-24 rounded-full object-cover p-0.5 bg-white shadow-lg shrink-0"
-                onError={(e) => {
-                  ;(e.target as HTMLElement).style.display = 'none'
-                }}
-              />
-            ) : (
-              <div className="size-20 sm:size-24 rounded-full bg-white/15 flex items-center justify-center font-bold text-3xl border border-white/25 shrink-0">
-                {club.name.charAt(0)}
+          {/* কভার ফটো / গ্রেডিয়েন্ট */}
+          <div className="relative h-40 sm:h-64 w-full overflow-hidden bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-900 sm:rounded-t-3xl flex items-center justify-center">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.2),rgba(255,255,255,0))]" />
+            <h1 className="text-white/10 font-serif text-3xl sm:text-5xl font-bold px-4 text-center select-none uppercase">
+              {club.tag}
+            </h1>
+          </div>
+
+          {/* প্রোফাইল লোগো, নাম ও সোশ্যাল লিংক */}
+          <div className="px-5 sm:px-8 pb-5">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-14 sm:-mt-20">
+              
+              <div className="relative size-28 sm:size-36 rounded-full bg-white ring-4 ring-white shadow-xl overflow-hidden shrink-0 z-10 flex items-center justify-center">
+                {logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logo} alt={club.name} className="size-full object-cover" />
+                ) : (
+                  <div className="size-full bg-gradient-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center text-5xl font-bold">
+                    {club.name.charAt(0)}
+                  </div>
+                )}
               </div>
-            )}
-            <div className="min-w-0 flex-1">
-              <span className="rounded-full bg-gold px-3 py-0.5 text-xs font-bold uppercase tracking-wider text-navy">
-                {club.tag}
-              </span>
-              <h2 id={titleId} className="mt-1 font-serif text-xl sm:text-2xl font-bold leading-tight">
-                {club.name}
-              </h2>
-              {club.nameBn && <p className="text-sm text-white/90 font-medium">{club.nameBn}</p>}
+
+              <div className="flex-1 text-center sm:text-left min-w-0">
+                <h1 id={titleId} className="font-serif text-2xl sm:text-3xl font-bold text-navy truncate">
+                  {club.nameBn || club.name}
+                </h1>
+                {club.nameBn && (
+                  <p className="text-xs sm:text-sm text-gray-500 font-medium">{club.name}</p>
+                )}
+                <span className="inline-block mt-1.5 bg-emerald-50 text-emerald-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  {club.tag}
+                </span>
+              </div>
+
+              {/* সোশ্যাল লিংক বাটন */}
+              <div className="shrink-0 flex gap-2 pt-2 sm:pt-0">
+                {rawClub?.fb_url && (
+                  <a href={safeExternalUrl(rawClub.fb_url)} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-bold shadow transition">
+                    Facebook
+                  </a>
+                )}
+                {rawClub?.yt_url && (
+                  <a href={safeExternalUrl(rawClub.yt_url)} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-xs font-bold shadow transition">
+                    YouTube
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="p-5 sm:p-6 space-y-6">
-          {/* সোশ্যাল মিডিয়া ও শেয়ার বার */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-gray-50 p-3 border border-border/80">
-            <div className="flex items-center gap-1.5 text-xs font-semibold">
-              {rawClub?.fb_url && (
-                <a
-                  href={safeExternalUrl(rawClub.fb_url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-lg bg-blue-600 text-white px-2.5 py-1 hover:bg-blue-700 transition"
-                >
-                  Facebook
-                </a>
-              )}
-              {rawClub?.yt_url && (
-                <a
-                  href={safeExternalUrl(rawClub.yt_url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-lg bg-red-600 text-white px-2.5 py-1 hover:bg-red-700 transition"
-                >
-                  YouTube
-                </a>
-              )}
-              {rawClub?.web_url && (
-                <a
-                  href={safeExternalUrl(rawClub.web_url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-lg bg-brand text-white px-2.5 py-1 hover:bg-brand-dark transition"
-                >
-                  <Globe className="size-3" /> Website
-                </a>
-              )}
-            </div>
-
-            <div className="flex items-center gap-1.5 ml-auto">
-              <button
-                type="button"
-                onClick={handleShare}
-                className="inline-flex items-center gap-1 rounded-lg bg-white border px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-soft transition cursor-pointer"
-              >
-                {copied ? <Check className="size-3 text-green-600" /> : <Share2 className="size-3" />}
-                {copied ? 'কপি হয়েছে!' : 'শেয়ার'}
-              </button>
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(club.name + ' ' + shareUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg bg-emerald-600 text-white px-2 py-1 text-xs font-semibold hover:bg-emerald-700 transition"
-                title="WhatsApp-এ শেয়ার করুন"
-              >
-                WhatsApp
-              </a>
-              <a
-                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg bg-blue-700 text-white px-2 py-1 text-xs font-semibold hover:bg-blue-800 transition"
-                title="Facebook-এ শেয়ার করুন"
-              >
-                FB
-              </a>
-            </div>
-          </div>
-
-          {/* পরিচিতি ও কার্যক্রম */}
-          {(club.activity || club.activityBn || activityMediaList.length > 0) && (
-            <div className="rounded-2xl border p-4 bg-white space-y-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-brand">
-                পরিচিতি ও সাম্প্রতিক কার্যক্রম
+        {/* ==================== পেজ কন্টেন্ট: পরিচিতি ও টাইমলাইন ==================== */}
+        <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          
+          {/* বাম পাশ: About / পেজের পরিচিতি, কমিটি ও ওয়েবসাইট */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-3xl p-5 shadow-sm border border-border space-y-4">
+              <h2 className="font-bold text-base text-navy border-b pb-2 flex items-center justify-between">
+                <span>📌 পরিচিতি ও কার্যক্রম</span>
+                <button type="button" onClick={handleShare} className="text-brand hover:underline flex items-center gap-1 text-xs">
+                  {copied ? <Check className="size-3 text-green-600" /> : <Share2 className="size-3" />}
+                  শেয়ার
+                </button>
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                {club.activityBn || club.activity || "কোনো বিবরণ দেওয়া হয়নি।"}
               </p>
-              {club.activity && <p className="text-sm text-navy leading-relaxed">{club.activity}</p>}
-              {club.activityBn && (
-                <p className="text-xs text-muted-foreground leading-relaxed pt-1">{club.activityBn}</p>
-              )}
-              {club.date && (
-                <p className="pt-2 text-xs text-muted-foreground inline-flex items-center gap-1">
-                  <CalendarDays className="size-3.5 text-gold" /> {club.date}
-                </p>
-              )}
+              
+              {/* যোগাযোগের লিংকসমূহ */}
+              <div className="space-y-2 pt-2 border-t">
+                {rawClub?.contact_info && (
+                  <p className="flex items-center gap-2 text-xs text-gray-600">
+                    <Mail className="size-3.5 text-brand shrink-0" /> {rawClub.contact_info}
+                  </p>
+                )}
+                {rawClub?.web_url && (
+                  <a href={safeExternalUrl(rawClub.web_url)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-emerald-700 font-bold hover:underline text-xs">
+                    <Globe className="size-4 shrink-0" /> ওয়েবসাইট ভিজিট করুন
+                  </a>
+                )}
+              </div>
+            </div>
 
-              {/* ⭐ একাধিক মিডিয়া প্রদর্শন — কমপ্যাক্ট ১৬:৯ আন্তর্জাতিক মোড ⭐ */}
-              {activityMediaList.length > 0 && (
-                <div className="mt-3 space-y-3">
-                  {activityMediaList.map((m, idx) => (
-                    <div key={idx} className="space-y-1.5 pt-2 border-t border-border/80">
-                      {m.title && <h4 className="font-bold text-sm text-navy leading-snug">{m.title}</h4>}
-                      {m.subtitle && <p className="text-xs font-semibold text-brand">{m.subtitle}</p>}
-                      {m.description && (
-                        <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">
-                          {m.description}
-                        </p>
+            {/* কার্যনির্বাহী কমিটি */}
+            {members.length > 0 && (
+              <div className="bg-white rounded-3xl p-5 shadow-sm border border-border space-y-4">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <h2 className="font-bold text-sm text-navy flex items-center gap-2">
+                    <Users className="size-4 text-brand" /> কমিটি
+                  </h2>
+                  {term && (
+                    <span className="text-[10px] bg-brand-soft text-brand px-2 py-0.5 rounded-full font-bold">
+                      {term}
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  {members.map((m: any, i: number) => (
+                    <div key={i} className="flex items-center gap-3">
+                      {m.photo_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={m.photo_url} alt="" className="size-10 rounded-full object-cover border" />
+                      ) : (
+                        <div className="size-10 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm">
+                          {m.name.charAt(0)}
+                        </div>
                       )}
-                      <UniversalMediaEmbed url={m.url} title={m.title || club.name} compact />
+                      <div className="min-w-0">
+                        <p className="font-bold text-xs text-navy truncate">{m.name}</p>
+                        <p className="text-[11px] text-gray-500 truncate">{m.role}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* কার্যনির্বাহী পরিষদ / কমিটি */}
-          {members.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between border-b pb-2">
-                <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-brand">
-                  <Users className="size-4" aria-hidden="true" />
-                  কার্যনির্বাহী পরিষদ / Committee
-                </h3>
-                {term && (
-                  <span className="text-xs bg-brand-soft text-brand font-semibold px-2.5 py-0.5 rounded-full">
-                    {term}
-                  </span>
-                )}
               </div>
+            )}
+          </div>
 
-              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {members.map((m, idx) => (
-                  <div key={idx} className="flex items-center gap-2.5 rounded-xl border p-2 bg-gray-50/70">
-                    {m.photo_url ? (
+          {/* ডান পাশ: টাইমলাইন (নিউজ, ভিডিও, পোস্ট) */}
+          <div className="md:col-span-2 space-y-5">
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-lg text-navy flex items-center gap-2">
+                <Newspaper className="size-5 text-brand" />
+                <span>টাইমলাইন ও সংবাদসমূহ ({liveNews.length + manualReports.length})</span>
+              </h2>
+            </div>
+
+            {/* লাইভ নিউজ তালিকা (অ্যাডমিন প্যানেল থেকে পোস্ট করা সংবাদ) */}
+            {liveNews.map((post: any) => (
+              <article
+                key={post.id}
+                className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-border space-y-3.5"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="size-11 rounded-full overflow-hidden bg-slate-100 border shrink-0">
+                    {logo ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={m.photo_url}
-                        alt={m.name}
-                        className="size-11 rounded-full object-cover shrink-0 border bg-white"
-                        onError={(e) => {
-                          ;(e.target as HTMLElement).style.display = 'none'
-                        }}
-                      />
+                      <img src={logo} loading="lazy" alt="" className="size-full object-cover" />
                     ) : (
-                      <div className="size-11 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm shrink-0">
-                        {m.name.charAt(0) || 'স'}
+                      <div className="size-full bg-brand text-white flex items-center justify-center font-bold text-sm">
+                        {club.name.charAt(0)}
                       </div>
                     )}
-                    <div className="min-w-0">
-                      <p className="font-semibold text-xs text-navy truncate">{m.name}</p>
-                      <p className="text-[11px] text-gray-500 truncate">{m.role}</p>
-                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ক্লাব প্রতিবেদন সেকশন */}
-          <div>
-            <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-brand border-b pb-2">
-              <Newspaper className="size-4" aria-hidden="true" />
-              {reportsHeading}
-            </h3>
-
-            <ul className="mt-3 space-y-4">
-              {/* লাইভ নিউজ তালিকা */}
-              {liveNews.map((p) => (
-                <li
-                  key={p.id}
-                  className="rounded-2xl border border-border p-4 transition-all hover:border-brand bg-white shadow-sm hover:shadow-md"
-                >
-                  <a href={`/post/${p.id}`} className="block group">
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="font-serif font-bold leading-snug text-navy text-sm sm:text-base group-hover:text-brand transition-colors">
-                        {p.title}
-                      </p>
-                      <ArrowRight className="size-4 text-brand opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1" />
-                    </div>
-                    <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground border-t pt-2">
-                      <span className="inline-flex items-center gap-1 font-medium">
-                        <CalendarDays className="size-3.5 text-gold" aria-hidden="true" />
-                        {new Date(p.created_at).toLocaleDateString('bn-BD')}
-                      </span>
-                      {p.author && (
-                        <span className="inline-flex items-center gap-1 font-medium text-brand">
-                          <UserRound className="size-3.5" aria-hidden="true" />
-                          {p.author}
-                        </span>
-                      )}
-                    </div>
-                  </a>
-                </li>
-              ))}
-
-              {/* ম্যানুয়াল রিপোর্টসমূহ */}
-              {manualReports.map((r: any, i: number) => (
-                <li
-                  key={`manual-${i}`}
-                  className="rounded-2xl border border-border p-4 bg-white shadow-sm space-y-2.5"
-                >
-                  <p className="font-serif font-bold leading-snug text-navy text-base">{r.title}</p>
-                  {r.subtitle && <p className="text-xs font-semibold text-brand">{r.subtitle}</p>}
-                  {r.description && (
-                    <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">
-                      {r.description}
+                  <div>
+                    <p className="font-bold text-sm text-navy flex items-center gap-1">
+                      <span>{club.nameBn || club.name}</span>
+                      <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 rounded-full font-bold">Official</span>
                     </p>
-                  )}
-
-                  {/* ⭐ একক মিডিয়া — ১৬:৯ কমপ্যাক্ট মোড ⭐ */}
-                  {r.embed_media_url && (
-                    <UniversalMediaEmbed url={r.embed_media_url} title={r.title} compact />
-                  )}
-
-                  {/* ⭐ একাধিক মিডিয়া — ১৬:৯ কমপ্যাক্ট মোড ⭐ */}
-                  {r.media_items && r.media_items.length > 0 && (
-                    <div className="space-y-3 pt-2">
-                      {r.media_items.map((m: any, mi: number) => (
-                        <div key={mi} className="rounded-xl bg-gray-50 p-2.5 border border-border/70 space-y-1">
-                          {m.title && <h5 className="font-bold text-xs text-navy">{m.title}</h5>}
-                          {m.subtitle && <p className="text-[11px] font-semibold text-brand">{m.subtitle}</p>}
-                          {m.description && (
-                            <p className="text-[11px] text-gray-600 whitespace-pre-line">
-                              {m.description}
-                            </p>
-                          )}
-                          <UniversalMediaEmbed url={m.url} title={m.title || r.title} compact />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground border-t pt-2">
-                    <span className="inline-flex items-center gap-1 font-medium">
-                      <CalendarDays className="size-3.5 text-gold" aria-hidden="true" />
-                      {r.date}
-                    </span>
-                    <span className="inline-flex items-center gap-1 font-medium text-brand">
-                      <UserRound className="size-3.5" aria-hidden="true" />
-                      {r.reporter}
-                    </span>
+                    <p className="text-[11px] text-gray-400 flex items-center gap-1">
+                      <CalendarDays className="size-3 text-gold" />
+                      <span>{new Date(post.created_at).toLocaleDateString('bn-BD')}</span>
+                      {post.author && <span>· {post.author}</span>}
+                    </p>
                   </div>
-                </li>
-              ))}
+                </div>
 
-              {liveNews.length === 0 && manualReports.length === 0 && (
-                <p className="text-xs text-muted-foreground text-center py-4 italic">
-                  এই ক্লাবের কোনো প্রতিবেদন এখনো প্রকাশিত হয়নি।
-                </p>
-              )}
-            </ul>
+                <h3 className="font-serif text-lg font-bold text-navy leading-snug">
+                  {post.title}
+                </h3>
+
+                {post.embed_media_url && (
+                  <UniversalMediaEmbed url={post.embed_media_url} title={post.title} />
+                )}
+
+                {post.image_url && !post.embed_media_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={post.image_url}
+                    alt={post.title}
+                    loading="lazy"
+                    className="w-full max-h-96 object-cover rounded-2xl border"
+                  />
+                )}
+
+                {/* রিঅ্যাকশন ও কমেন্টে যাওয়ার বাটন (কোনো রিলোড ছাড়া) */}
+                <ReactionBar postId={post.id} title={post.title} />
+                <div className="pt-2 border-t">
+                  <Link
+                    href={`/post/${post.id}`}
+                    onClick={onClose}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline"
+                  >
+                    <MessageSquare className="size-3.5" /> বিস্তারিত পড়ুন ও মন্তব্য করুন <ArrowRight className="size-3.5" />
+                  </Link>
+                </div>
+              </article>
+            ))}
+
+            {/* ম্যানুয়াল রিপোর্টসমূহ (ক্লাব সেটিংস থেকে যোগ করা) */}
+            {manualReports.map((r: any, i: number) => (
+              <article
+                key={`manual-${i}`}
+                className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-border space-y-3.5"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="size-11 rounded-full overflow-hidden bg-slate-100 border shrink-0 flex items-center justify-center text-brand">
+                    <UserRound className="size-6" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-navy">{r.reporter || 'রিপোর্টার'}</p>
+                    <p className="text-[11px] text-gray-400 flex items-center gap-1">
+                      <CalendarDays className="size-3 text-gold" /> {r.date}
+                    </p>
+                  </div>
+                </div>
+
+                <h3 className="font-serif text-lg font-bold text-navy leading-snug">{r.title}</h3>
+                {r.subtitle && <p className="text-xs font-semibold text-brand">{r.subtitle}</p>}
+                
+                {r.description && (
+                  <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                    {r.description}
+                  </p>
+                )}
+
+                {r.embed_media_url && (
+                  <UniversalMediaEmbed url={r.embed_media_url} title={r.title} />
+                )}
+
+                {r.media_items && r.media_items.length > 0 && (
+                  <div className="space-y-3 pt-2">
+                    {r.media_items.map((m: any, mi: number) => (
+                      <div key={mi} className="rounded-xl bg-gray-50 p-2.5 border border-border/70 space-y-1">
+                        {m.title && <h5 className="font-bold text-xs text-navy">{m.title}</h5>}
+                        {m.subtitle && <p className="text-[11px] font-semibold text-brand">{m.subtitle}</p>}
+                        {m.description && <p className="text-[11px] text-gray-600 whitespace-pre-line">{m.description}</p>}
+                        <UniversalMediaEmbed url={m.url} title={m.title || r.title} compact />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </article>
+            ))}
+
+            {liveNews.length === 0 && manualReports.length === 0 && (
+              <div className="bg-white rounded-3xl p-10 text-center border border-dashed space-y-2">
+                <Video className="size-10 text-gray-300 mx-auto" />
+                <p className="font-bold text-sm text-gray-600">এই ক্লাবের কোনো কার্যক্রম বা সংবাদ এখনো দেওয়া হয়নি।</p>
+              </div>
+            )}
           </div>
-
-          {/* যোগাযোগ */}
-          {rawClub?.contact_info && (
-            <div className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground flex items-center gap-2">
-              <Mail className="size-3.5 text-brand shrink-0" />
-              <span>যোগাযোগ: {rawClub.contact_info}</span>
-            </div>
-          )}
-
-          {/* ⭐ নতুন: ডেডিকেটেড পেজে যাওয়ার বাটন ⭐ */}
-          <div className="pt-4 border-t border-border mt-4">
-            <a
-              href={`/club/${club.id}`}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-950/40 hover:from-emerald-700 hover:to-teal-800 transition-all active:scale-95 cursor-pointer"
-            >
-              <Globe className="size-4" />
-              <span>এই ক্লাবের নিজস্ব সম্পূর্ণ পেজে প্রবেশ করুন</span>
-              <ArrowRight className="size-4" />
-            </a>
-          </div>
-
         </div>
       </div>
     </div>
