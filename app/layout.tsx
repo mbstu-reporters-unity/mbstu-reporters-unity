@@ -1,13 +1,13 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Hind_Siliguri, Noto_Serif_Bengali } from 'next/font/google'
+import { Noto_Sans_Bengali, Noto_Serif_Bengali } from 'next/font/google'
 import './globals.css'
 import { LangProvider } from '@/lib/i18n'
 import { GlobalTextStudio } from '@/components/portal/global-text-studio'
 
-const hind = Hind_Siliguri({
+const notoSans = Noto_Sans_Bengali({
   subsets: ['bengali', 'latin'],
-  weight: ['500', '600', '700'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-hind',
   display: 'swap',
 })
@@ -93,12 +93,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="bn" suppressHydrationWarning className={`${hind.variable} ${notoSerif.variable}`}>
+    <html lang="bn" suppressHydrationWarning className={`${notoSans.variable} ${notoSerif.variable}`}>
       <head>
-        {/* ⭐ ডাটাবেজ ও সিডিএন সংযোগ দ্রুত করার জন্য Preconnect ও DNS-Prefetch ⭐ */}
         <link rel="preconnect" href="https://pdualebabnvkoaqaqcut.supabase.co" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://pdualebabnvkoaqaqcut.supabase.co" />
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="antialiased font-sans font-medium">
