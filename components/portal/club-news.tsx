@@ -265,7 +265,7 @@ export function ClubNews() {
 
   const animDuration = `${config.anim_speed_ms || 600}ms`
 
-  {/* ⭐ লিকুইড গ্লাস (Liquid Glass) কার্ড রেন্ডারার ⭐ */}
+  {/* ⭐ ছবির মতো ঘূর্ণায়মান নিয়ন বাতি ও লিকুইড গ্লাস কার্ড ⭐ */}
   const renderCard = (club: Club) => {
     const Icon = clubIcons[club.icon] || Star
     const raw = dbMap[club.id]
@@ -274,151 +274,150 @@ export function ClubNews() {
     return (
       <div
         id={`club-${club.id}`}
-        className="group relative flex flex-col justify-between rounded-3xl border border-white/30 bg-white/[0.14] p-3.5 sm:p-4 shadow-[0_8px_32px_0_rgba(0,15,60,0.35)] backdrop-blur-2xl transition-all duration-300 hover:border-cyan-300/70 hover:bg-white/[0.22] hover:shadow-[0_12px_40px_0_rgba(0,210,255,0.35)] w-full min-w-0 overflow-hidden select-none h-[345px] sm:h-[365px]"
-        style={{
-          boxShadow: 'inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.45), 0 12px 30px -4px rgba(0, 15, 60, 0.4)',
-        }}
+        className="neon-glass-wrapper group relative w-full min-w-0 select-none h-[345px] sm:h-[365px]"
       >
-        <div>
-          {/* ১. লোগো ও গ্লাস ট্যাগ */}
-          <div className="flex items-center justify-between gap-2 border-b border-white/20 pb-2">
-            <div className="relative">
-              {raw?.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={raw.logo_url}
-                  alt={club.name}
-                  className="size-9 sm:size-10 rounded-full object-cover ring-2 ring-white/60 p-0.5 bg-white shadow-md select-none pointer-events-none"
-                  onError={(e) => {
-                    ;(e.target as HTMLElement).style.display = 'none'
-                  }}
-                />
-              ) : (
-                <div className="size-9 sm:size-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white ring-2 ring-white/60 shadow-md">
-                  <Icon className="size-4 sm:size-5 text-white" aria-hidden="true" />
-                </div>
-              )}
-              <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-cyan-400 ring-1 ring-white" />
-            </div>
-
-            <span className="rounded-full bg-white/20 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white border border-white/35 shadow-xs truncate max-w-[150px]">
-              {club.tag}
-            </span>
-          </div>
-
-          {/* ২. ক্লাবের নাম */}
-          <div className="mt-2">
-            <h3 className="font-serif text-sm sm:text-base font-bold leading-tight text-white group-hover:text-cyan-200 transition-colors truncate drop-shadow-sm">
-              {club.nameBn || club.name}
-            </h3>
-            {club.nameBn && (
-              <p className="text-[10px] sm:text-[11px] font-medium text-cyan-100/80 truncate mt-0.5">
-                {club.name}
-              </p>
-            )}
-          </div>
-
-          {/* ৩. সাম্প্রতিক কার্যক্রম ও মিডিয়া বক্স (ফ্রস্টেড গ্লাস ডিজাইন) */}
-          <div className="mt-2 rounded-2xl border border-white/20 bg-white/[0.08] backdrop-blur-md p-2 space-y-1 shadow-inner">
-            <div className="flex items-center justify-between text-[10px] border-b border-white/15 pb-1">
-              <span className="font-bold text-cyan-200 flex items-center gap-1">
-                <Sparkles className="size-3 text-yellow-300" />
-                <span>সাম্প্রতিক কার্যক্রম</span>
-              </span>
-              {club.date && (
-                <span className="text-white/80 font-mono text-[9px] flex items-center gap-0.5">
-                  <CalendarDays className="size-2.5 text-cyan-300" /> {club.date}
-                </span>
-              )}
-            </div>
-
-            <p className="text-[10px] sm:text-[11px] leading-snug text-white/95 line-clamp-1">
-              {club.activityBn || club.activity}
-            </p>
-
-            {/* থাম্বনেইল */}
-            {activityMediaList.length > 0 && (
-              <div className="relative h-20 sm:h-22 w-full rounded-xl overflow-hidden bg-black/40 border border-white/20 mt-1">
-                {activityMediaList[0].url.includes('youtube') ||
-                activityMediaList[0].url.includes('facebook') ||
-                activityMediaList[0].url.includes('.mp4') ? (
-                  <div className="size-full flex items-center justify-center bg-blue-950/80 text-cyan-300 gap-1 text-[11px] font-semibold">
-                    <Play className="size-3.5 fill-cyan-400" />
-                    <span>ভিডিও ক্লিপ</span>
-                  </div>
-                ) : (
+        <div className="neon-glass-inner flex flex-col justify-between p-3.5 sm:p-4 overflow-hidden">
+          <div>
+            {/* ১. লোগো ও গ্লাস ট্যাগ */}
+            <div className="flex items-center justify-between gap-2 border-b border-white/20 pb-2">
+              <div className="relative">
+                {raw?.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={activityMediaList[0].url}
-                    alt=""
-                    loading="lazy"
-                    className="size-full object-cover select-none pointer-events-none"
+                    src={raw.logo_url}
+                    alt={club.name}
+                    className="size-9 sm:size-10 rounded-full object-cover ring-2 ring-cyan-300/80 p-0.5 bg-white shadow-md select-none pointer-events-none"
                     onError={(e) => {
                       ;(e.target as HTMLElement).style.display = 'none'
                     }}
                   />
+                ) : (
+                  <div className="size-9 sm:size-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white ring-2 ring-cyan-300/80 shadow-md">
+                    <Icon className="size-4 sm:size-5 text-white" aria-hidden="true" />
+                  </div>
                 )}
+                <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-cyan-400 ring-1 ring-white shadow-[0_0_8px_#00e5ff]" />
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* ৪. সোশ্যাল লিংক ও লিকুইড গ্লাস বাটন */}
-        <div className="mt-2 pt-2 border-t border-white/20 space-y-2">
-          <div className="flex items-center justify-between gap-1 text-[10px]">
-            <div className="flex items-center gap-1">
-              {raw?.fb_url && (
-                <a
-                  href={safeExternalUrl(raw.fb_url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="size-5 sm:size-6 rounded-lg bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition text-[9px] font-bold border border-white/25 backdrop-blur"
-                  title="Facebook"
-                >
-                  FB
-                </a>
-              )}
-              {raw?.yt_url && (
-                <a
-                  href={safeExternalUrl(raw.yt_url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="size-5 sm:size-6 rounded-lg bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition text-[9px] font-bold border border-white/25 backdrop-blur"
-                  title="YouTube"
-                >
-                  YT
-                </a>
-              )}
-              {raw?.web_url && (
-                <a
-                  href={safeExternalUrl(raw.web_url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="size-5 sm:size-6 rounded-lg bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition border border-white/25 backdrop-blur"
-                  title="Website"
-                >
-                  <Globe className="size-2.5 sm:size-3" />
-                </a>
+              <span className="rounded-full bg-white/20 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white border border-white/35 shadow-xs truncate max-w-[150px]">
+                {club.tag}
+              </span>
+            </div>
+
+            {/* ২. ক্লাবের নাম */}
+            <div className="mt-2">
+              <h3 className="font-serif text-sm sm:text-base font-bold leading-tight text-white group-hover:text-cyan-200 transition-colors truncate drop-shadow-sm">
+                {club.nameBn || club.name}
+              </h3>
+              {club.nameBn && (
+                <p className="text-[10px] sm:text-[11px] font-medium text-cyan-100/90 truncate mt-0.5">
+                  {club.name}
+                </p>
               )}
             </div>
 
-            {raw?.committee_members && raw.committee_members.length > 0 && (
-              <span className="text-[10px] text-white/90 font-semibold flex items-center gap-1 bg-white/15 px-2 py-0.5 rounded-full border border-white/20">
-                <Users className="size-3 text-cyan-300" />
-                <span>{raw.committee_members.length} জন</span>
-              </span>
-            )}
+            {/* ৩. সাম্প্রতিক কার্যক্রম ও মিডিয়া বক্স */}
+            <div className="mt-2 rounded-2xl border border-white/20 bg-black/25 backdrop-blur-md p-2 space-y-1 shadow-inner">
+              <div className="flex items-center justify-between text-[10px] border-b border-white/15 pb-1">
+                <span className="font-bold text-cyan-200 flex items-center gap-1">
+                  <Sparkles className="size-3 text-yellow-300" />
+                  <span>সাম্প্রতিক কার্যক্রম</span>
+                </span>
+                {club.date && (
+                  <span className="text-white/80 font-mono text-[9px] flex items-center gap-0.5">
+                    <CalendarDays className="size-2.5 text-cyan-300" /> {club.date}
+                  </span>
+                )}
+              </div>
+
+              <p className="text-[10px] sm:text-[11px] leading-snug text-white/95 line-clamp-1">
+                {club.activityBn || club.activity}
+              </p>
+
+              {/* থাম্বনেইল */}
+              {activityMediaList.length > 0 && (
+                <div className="relative h-20 sm:h-22 w-full rounded-xl overflow-hidden bg-black/40 border border-white/20 mt-1">
+                  {activityMediaList[0].url.includes('youtube') ||
+                  activityMediaList[0].url.includes('facebook') ||
+                  activityMediaList[0].url.includes('.mp4') ? (
+                    <div className="size-full flex items-center justify-center bg-blue-950/80 text-cyan-300 gap-1 text-[11px] font-semibold">
+                      <Play className="size-3.5 fill-cyan-400" />
+                      <span>ভিডিও ক্লিপ</span>
+                    </div>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={activityMediaList[0].url}
+                      alt=""
+                      loading="lazy"
+                      className="size-full object-cover select-none pointer-events-none"
+                      onError={(e) => {
+                        ;(e.target as HTMLElement).style.display = 'none'
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => handleOpenClub(club)}
-            className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500/90 via-blue-600/90 to-indigo-600/90 hover:from-cyan-400 hover:to-blue-500 py-1.5 sm:py-2 text-xs font-bold text-white shadow-lg border border-white/40 transition-all active:scale-[0.98] cursor-pointer"
-          >
-            <FileText className="size-3.5" />
-            <span>প্রতিবেদন ও কমিটি দেখুন</span>
-            <ArrowRight className="size-3" />
-          </button>
+          {/* ৪. সোশ্যাল লিংক ও লিকুইড গ্লাস বাটন */}
+          <div className="mt-2 pt-2 border-t border-white/20 space-y-2">
+            <div className="flex items-center justify-between gap-1 text-[10px]">
+              <div className="flex items-center gap-1">
+                {raw?.fb_url && (
+                  <a
+                    href={safeExternalUrl(raw.fb_url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="size-5 sm:size-6 rounded-lg bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition text-[9px] font-bold border border-white/25 backdrop-blur"
+                    title="Facebook"
+                  >
+                    FB
+                  </a>
+                )}
+                {raw?.yt_url && (
+                  <a
+                    href={safeExternalUrl(raw.yt_url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="size-5 sm:size-6 rounded-lg bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition text-[9px] font-bold border border-white/25 backdrop-blur"
+                    title="YouTube"
+                  >
+                    YT
+                  </a>
+                )}
+                {raw?.web_url && (
+                  <a
+                    href={safeExternalUrl(raw.web_url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="size-5 sm:size-6 rounded-lg bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition border border-white/25 backdrop-blur"
+                    title="Website"
+                  >
+                    <Globe className="size-2.5 sm:size-3" />
+                  </a>
+                )}
+              </div>
+
+              {raw?.committee_members && raw.committee_members.length > 0 && (
+                <span className="text-[10px] text-white/90 font-semibold flex items-center gap-1 bg-white/15 px-2 py-0.5 rounded-full border border-white/20">
+                  <Users className="size-3 text-cyan-300" />
+                  <span>{raw.committee_members.length} জন</span>
+                </span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleOpenClub(club)}
+              className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500/90 via-blue-600/90 to-indigo-600/90 hover:from-cyan-400 hover:to-blue-500 py-1.5 sm:py-2 text-xs font-bold text-white shadow-lg border border-white/40 transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <FileText className="size-3.5" />
+              <span>প্রতিবেদন ও কমিটি দেখুন</span>
+              <ArrowRight className="size-3" />
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -429,12 +428,12 @@ export function ClubNews() {
       id="club-news"
       className="relative overflow-hidden py-14 sm:py-20"
       style={{
-        background: `radial-gradient(circle at 85% 15%, rgba(0, 210, 255, 0.42), transparent 50%),
-                     radial-gradient(circle at 15% 85%, rgba(46, 16, 101, 0.6), transparent 55%),
-                     linear-gradient(135deg, #110e4a 0%, #063489 35%, #0066cc 70%, #0096a6 100%)`,
+        background: `radial-gradient(circle at 85% 15%, rgba(0, 210, 255, 0.45), transparent 50%),
+                     radial-gradient(circle at 15% 85%, rgba(30, 27, 75, 0.6), transparent 55%),
+                     linear-gradient(135deg, #0b1540 0%, #032d84 35%, #005bb5 70%, #008fa0 100%)`,
       }}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,210,255,0.2),transparent_60%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,210,255,0.22),transparent_60%)]" />
 
       <style>{`
         @keyframes continuous_marquee_glide {
@@ -509,8 +508,8 @@ export function ClubNews() {
         >
           {total > 0 ? (
             config.effect === 'continuous' ? (
-              /* ⭐ লিকুইড গ্লাস কমপ্যাক্ট ট্র‍্যাক ⭐ */
-              <div className="py-2 overflow-hidden w-full select-none">
+              /* ⭐ ঘূর্ণায়মান নিয়ন লাইট ট্র‍্যাক ⭐ */
+              <div className="py-3 overflow-hidden w-full select-none">
                 <div
                   style={{
                     transform: `translateX(${manualOffset}px)`,
@@ -555,7 +554,7 @@ export function ClubNews() {
             </p>
           )}
 
-          {/* লিকুইড গ্লাস ফ্লোটিং তীর বাটন */}
+          {/* ফ্লোটিং তীর বাটন */}
           {total > 1 && config.enabled && (
             <>
               <button
@@ -578,7 +577,7 @@ export function ClubNews() {
             </>
           )}
 
-          {/* নিচে লিকুইড গ্লাস কন্ট্রোল বার */}
+          {/* নিচে স্থায়ী কন্ট্রোল বার */}
           {total > 1 && config.enabled && (
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/20 pt-4">
               <div className="flex items-center gap-2">
@@ -590,7 +589,7 @@ export function ClubNews() {
                 <button
                   type="button"
                   onClick={() => setIsPaused(!isPaused)}
-                  className="h-7 px-3 rounded-xl bg-white/20 hover:bg-white/30 text-white flex items-center gap-1 text-[11px] font-bold transition border border-white/30 cursor-pointer shadow-xs active:scale-95 backdrop-blur-md"
+                  className="h-7 px-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white flex items-center gap-1 text-[11px] font-bold transition border border-white/30 cursor-pointer shadow-xs active:scale-95 backdrop-blur-md"
                 >
                   {isPaused ? <Play className="size-3 text-cyan-300" /> : <Pause className="size-3 text-yellow-300" />}
                   <span>{isPaused ? 'চালান' : 'থামান'}</span>
