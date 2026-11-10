@@ -8,31 +8,31 @@
   --font-sans: var(--font-hind), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-noto-serif), Georgia, serif;
 
-  --color-brand: var(--brand);
-  --color-brand-dark: var(--brand-dark);
-  --color-brand-soft: var(--brand-soft);
-  --color-navy: var(--navy);
-  --color-crimson: var(--crimson);
-  --color-gold: var(--gold);
+  --color-brand: #00f0ff;
+  --color-brand-dark: #0284c7;
+  --color-brand-soft: rgba(255, 255, 255, 0.2);
+  --color-navy: #ffffff;
+  --color-crimson: #ff3366;
+  --color-gold: #ffd700;
 
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --color-foreground: var(--foreground);
-  --color-background: var(--background);
+  --color-ring: #00f0ff;
+  --color-input: rgba(255, 255, 255, 0.3);
+  --color-border: rgba(255, 255, 255, 0.35);
+  --color-destructive: #ff3366;
+  --color-accent-foreground: #ffffff;
+  --color-accent: rgba(255, 255, 255, 0.25);
+  --color-muted-foreground: #e2e8f0;
+  --color-muted: rgba(255, 255, 255, 0.15);
+  --color-secondary-foreground: #ffffff;
+  --color-secondary: rgba(255, 255, 255, 0.2);
+  --color-primary-foreground: #ffffff;
+  --color-primary: #00f0ff;
+  --color-popover-foreground: #ffffff;
+  --color-popover: rgba(15, 23, 42, 0.85);
+  --color-card-foreground: #ffffff;
+  --color-card: rgba(255, 255, 255, 0.2);
+  --color-foreground: #ffffff;
+  --color-background: #1e3a8a;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -55,31 +55,31 @@
 
 :root {
   color-scheme: light;
-  --brand: #0284c7;
-  --brand-dark: #0369a1;
-  --brand-soft: rgba(255, 255, 255, 0.4);
-  --navy: #0f172a;
-  --crimson: #c8102e;
-  --gold: #d4a017;
+  --brand: #00f0ff;
+  --brand-dark: #0284c7;
+  --brand-soft: rgba(255, 255, 255, 0.2);
+  --navy: #ffffff;
+  --crimson: #ff3366;
+  --gold: #ffd700;
 
-  --background: #2563eb;
-  --foreground: #0f172a;
-  --card: rgba(255, 255, 255, 0.78);
-  --card-foreground: #0f172a;
-  --popover: rgba(255, 255, 255, 0.92);
-  --popover-foreground: #0f172a;
-  --primary: #0284c7;
+  --background: #1e3a8a;
+  --foreground: #ffffff;
+  --card: rgba(255, 255, 255, 0.2);
+  --card-foreground: #ffffff;
+  --popover: rgba(15, 23, 42, 0.85);
+  --popover-foreground: #ffffff;
+  --primary: #00f0ff;
   --primary-foreground: #ffffff;
-  --secondary: rgba(255, 255, 255, 0.5);
-  --secondary-foreground: #0f172a;
-  --muted: rgba(255, 255, 255, 0.4);
-  --muted-foreground: #334155;
-  --accent: rgba(255, 255, 255, 0.5);
-  --accent-foreground: #0369a1;
-  --destructive: #c8102e;
-  --border: rgba(255, 255, 255, 0.5);
-  --input: #cbd5e1;
-  --ring: #0284c7;
+  --secondary: rgba(255, 255, 255, 0.2);
+  --secondary-foreground: #ffffff;
+  --muted: rgba(255, 255, 255, 0.15);
+  --muted-foreground: #e2e8f0;
+  --accent: rgba(255, 255, 255, 0.2);
+  --accent-foreground: #ffffff;
+  --destructive: #ff3366;
+  --border: rgba(255, 255, 255, 0.35);
+  --input: rgba(255, 255, 255, 0.3);
+  --ring: #00f0ff;
   --radius: 0.625rem;
 }
 
@@ -96,19 +96,19 @@
     min-height: 100%;
   }
   
-  /* ⭐⭐⭐ ছবির মতো পুরো ওয়েবসাইটের গ্লাসি মেশ গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড ⭐⭐⭐ */
+  /* ⭐⭐⭐ রেফারেন্স ছবির মতো গ্লোবাল মেশ ব্যাকগ্রাউন্ড ⭐⭐⭐ */
   body {
     font-family: var(--font-hind), ui-sans-serif, system-ui, sans-serif !important;
     min-height: 100vh;
-    background-color: #2563eb;
+    background-color: #1e3a8a;
     background-image: 
-      radial-gradient(circle at 6% 12%, rgba(236, 72, 153, 0.85), transparent 38%),
-      radial-gradient(circle at 94% 88%, rgba(6, 182, 212, 0.9), transparent 42%),
-      radial-gradient(circle at 50% 45%, rgba(99, 102, 241, 0.6), transparent 50%),
-      linear-gradient(135deg, #8b5cf6 0%, #2563eb 50%, #0284c7 100%);
+      radial-gradient(circle at 10% 12%, rgba(217, 70, 239, 0.8), transparent 40%),
+      radial-gradient(circle at 92% 88%, rgba(6, 182, 212, 0.85), transparent 45%),
+      radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.65), transparent 55%),
+      linear-gradient(135deg, #a855f7 0%, #3b82f6 50%, #06b6d4 100%);
     background-attachment: fixed;
     background-size: cover;
-    color: var(--foreground);
+    color: #ffffff;
     font-weight: 500;
     letter-spacing: 0.012em;
     line-height: 1.65;
@@ -164,87 +164,107 @@
 /* ==================== থিমসমূহ ==================== */
 body { transition: background-color .25s ease, color .25s ease; }
 
-html[data-theme="light"] {
-  --foreground: #0f172a;
-  --navy: #0f172a;
-  --brand: #0284c7;
-}
-
-html[data-theme="sky"] {
-  --foreground: #082f49;
-  --navy: #082f49;
-  --brand: #0284c7;
-  --brand-dark: #0369a1;
-}
-
-html[data-theme="sunshine"] {
-  --foreground: #291804;
-  --navy: #291804;
-  --brand: #b45309;
-}
-
-html[data-theme="rose"] {
-  --foreground: #370614;
-  --navy: #370614;
-  --brand: #e11d48;
-}
-
-html[data-theme="lavender"] {
-  --foreground: #1e1338;
-  --navy: #1e1338;
-  --brand: #7c3aed;
-}
-
-html[data-theme="spring"] {
-  --foreground: #052e16;
-  --navy: #052e16;
-  --brand: #15803d;
-}
-
-html[data-theme="mint"] {
-  --foreground: #062b25;
-  --navy: #062b25;
-  --brand: #0d9488;
-}
-
-html[data-theme="sepia"] {
-  --foreground: #2d241e;
-  --navy: #2d241e;
-  --brand: #854d0e;
-}
-
-html[data-theme="contrast"] {
-  --foreground: #000000;
-  --navy: #000000;
-  --brand: #000000;
-}
-
-/* ⭐⭐⭐ পুরো ওয়েবসাইটের কার্ড ও সারফেসে ফ্রস্টেড লিকুইড গ্লাস এফেক্ট (Glassmorphism) ⭐⭐⭐ */
+/* ⭐⭐⭐ রেফারেন্স ছবির মতো খাঁটি ফ্রস্টেড লিকুইড গ্লাস কার্ড (True Glassmorphism) ⭐⭐⭐ */
+article:not(#club-news *),
 .bg-white:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
 .bg-card:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
 .bg-gray-50:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
 .bg-slate-50:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
 .bg-muted:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *) {
-  background-color: rgba(255, 255, 255, 0.78) !important;
-  backdrop-filter: blur(24px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
-  box-shadow: inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.75), 0 10px 30px -5px rgba(0, 20, 60, 0.12) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(25px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(190%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.38) !important;
+  border-radius: 1.5rem !important;
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.22), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.5) !important;
+  color: #ffffff !important;
 }
 
-/* সেকশন হেডিংস ও কার্ড টেক্সট স্পষ্ট রাখার রুলস */
-.text-navy { color: #0f172a !important; }
-.text-gray-800 { color: #1e293b !important; }
-.text-gray-700 { color: #334155 !important; }
-.text-gray-600 { color: #475569 !important; }
+/* কাঁচের কার্ডের ভেতরের লেখা ও টাইটেল সম্পূর্ণ উজ্জ্বল সাদা */
+article:not(#club-news *) h1,
+article:not(#club-news *) h2,
+article:not(#club-news *) h3,
+article:not(#club-news *) h4,
+.text-navy,
+h1, h2, h3 {
+  color: #ffffff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+}
 
-/* সেকশন ব্যাকগ্রাউন্ড ট্রান্সপারেন্ট রাখা যাতে গ্লোয়িং গ্লাস দৃশ্যমান হয় */
+/* প্যারাগ্রাফ ও সাধারণ টেক্সট */
+article:not(#club-news *) p,
+article:not(#club-news *) span:not(.bg-brand),
+.text-gray-800,
+.text-gray-700,
+.text-slate-800,
+.text-slate-700 {
+  color: #f8fafc !important;
+}
+
+article:not(#club-news *) .text-gray-600,
+article:not(#club-news *) .text-gray-500,
+article:not(#club-news *) .text-muted-foreground,
+article:not(#club-news *) .text-slate-600,
+article:not(#club-news *) .text-slate-500 {
+  color: #e2e8f0 !important;
+}
+
+/* কার্ডের ভেতরের তারিখ, ব্যাজ ও পিল আইটেমগুলো ছবির মতো সফট গ্লাস লুক */
+article:not(#club-news *) .bg-slate-100,
+article:not(#club-news *) .bg-gray-100,
+article:not(#club-news *) .bg-emerald-50,
+article:not(#club-news *) .border-emerald-200\/80,
+article:not(#club-news *) .border-slate-200\/80 {
+  background-color: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+/* সেকশন হেডিং এর বিবরণী ও অ্যাকসেন্ট */
+.section-heading p {
+  color: #e2e8f0 !important;
+}
+.section-heading span,
+.section-heading p:first-child {
+  color: #00f0ff !important;
+}
+
+/* টপ বার, হেডার ও টিকারের গ্লাসি লুক */
+.bg-navy {
+  background: rgba(10, 15, 35, 0.5) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+header {
+  background: rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+
+header nav a,
+header nav button {
+  color: #ffffff !important;
+}
+
+/* সেকশন ব্যাকগ্রাউন্ড ট্রান্সপারেন্ট রাখা যাতে পুরো ব্যাকগ্রাউন্ড ভেসে ওঠে */
 #leadership,
 #general-news,
 #student-corner,
 #notices,
 section[id^="cat-"] {
   background-color: transparent !important;
+}
+
+/* ফুটার গ্লাস */
+footer {
+  background: rgba(10, 18, 40, 0.75) !important;
+  backdrop-filter: blur(25px) !important;
+  -webkit-backdrop-filter: blur(25px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.25) !important;
 }
 
 /* ⭐⭐⭐ ক্লাবগুলোর ব্যাকগ্রাউন্ড ও নিয়ন বাতি পূর্বের মতোই সম্পূর্ণ অক্ষত ⭐⭐⭐ */
