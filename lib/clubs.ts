@@ -214,3 +214,16 @@ export async function saveClubCarouselConfig(token: string, config: ClubCarousel
     })
   )
 }
+export async function getClubById(id: string): Promise<ClubItem | null> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/campus_clubs?select=*&id=eq.${encodeURIComponent(id)}&limit=1`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return null
+    const rows: ClubItem[] = await res.json()
+    return rows[0] || null
+  } catch {
+    return null
+  }
+}
