@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
 import {
   BRANCHES, getNotices, getNoticeComments, addNoticeComment,
   downloadUrl, fmtDateTime, timeAgo, isImageType,
@@ -12,6 +14,10 @@ import RichGallery from "../../components/portal/rich-gallery"
 import type { GalleryItem } from "../../components/portal/rich-gallery"
 import { FormattedText } from "../../components/portal/formatted-text"
 import { UniversalMediaEmbed } from "../../components/portal/universal-media-embed"
+import { TopBar } from "../../components/portal/top-bar"
+import { SiteHeader } from "../../components/portal/site-header"
+import { SiteFooter } from "../../components/portal/site-footer"
+import { BackToTop } from "../../components/portal/back-to-top"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const safeUrl = (u: string | null) => !!u && /^https?:\/\//i.test(u)
@@ -53,7 +59,7 @@ function Comments({ id }: { id: string }) {
       {list.length === 0 && <p className="text-sm text-gray-500">এখনো কোনো কমেন্ট নেই।</p>}
       <input className={inp} placeholder="আপনার নাম (ঐচ্ছিক)" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
       <textarea className={inp} rows={3} maxLength={1000} placeholder="কমেন্ট লিখুন..." value={text} onChange={(e) => setText(e.target.value)} />
-      <button onClick={send} disabled={busy} className="w-full bg-green-700 text-white rounded-xl py-2 font-semibold disabled:opacity-50">
+      <button onClick={send} disabled={busy} className="w-full bg-green-700 text-white rounded-xl py-2 font-semibold disabled:opacity-50 cursor-pointer">
         {busy ? "অপেক্ষা করুন..." : "কমেন্ট করুন"}
       </button>
       {err && <p className="text-sm">{err}</p>}
@@ -106,16 +112,16 @@ function NoticeCard({
       className={`bg-white rounded-2xl shadow p-4 space-y-3 ${highlight ? "ring-2 ring-green-600" : ""} ${n.is_pinned ? "border-l-4 border-yellow-500" : ""}`}
     >
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        {n.is_pinned && <span className="bg-yellow-100 text-yellow-800 rounded-full px-2 py-0.5">📌 পিন করা</span>}
-        {isNew && <span className="bg-red-100 text-red-700 rounded-full px-2 py-0.5">নতুন</span>}
-        <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5">{branch}</span>
+        {n.is_pinned && <span className="bg-yellow-100 text-yellow-800 rounded-full px-2 py-0.5 font-bold">📌 পিন করা</span>}
+        {isNew && <span className="bg-red-100 text-red-700 rounded-full px-2 py-0.5 font-bold">নতুন</span>}
+        <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5 font-semibold">{branch}</span>
         {n.ref_number && <span className="text-gray-500">Ref: {n.ref_number}</span>}
       </div>
 
       {/* ১. প্রধান শিরোনাম ও উপশিরোনাম */}
       <div>
-        <h2 className="text-lg font-bold">{n.title}</h2>
-        {n.heading && <p className="text-gray-600">{n.heading}</p>}
+        <h2 className="text-lg font-bold text-navy">{n.title}</h2>
+        {n.heading && <p className="text-gray-600 text-sm mt-0.5">{n.heading}</p>}
       </div>
 
       {/* ২. বিস্তারিত লেখা */}
@@ -125,14 +131,14 @@ function NoticeCard({
             <FormattedText text={n.body} className="text-sm text-navy/90" />
           </div>
           {long && (
-            <button onClick={() => setMore(!more)} className="text-sm text-green-700 mt-1">
+            <button onClick={() => setMore(!more)} className="text-sm font-semibold text-green-700 mt-1 cursor-pointer">
               {more ? "কম দেখুন" : "আরও পড়ুন"}
             </button>
           )}
         </div>
       )}
 
-      {/* ⭐ ৩. লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবির প্রিভিউ দেখাবে ⭐ */}
+      {/* ৩. মিডিয়া এম্বেড */}
       {n.embed_media_url && (
         <UniversalMediaEmbed url={n.embed_media_url} title={n.title} />
       )}
@@ -155,19 +161,19 @@ function NoticeCard({
                 📄 দেখুন
               </a>
             )}
-            <a href={downloadUrl(n.file_url, n.file_name)} className="bg-green-700 text-white rounded-xl px-3 py-2">
+            <a href={downloadUrl(n.file_url, n.file_name)} className="bg-green-700 text-white rounded-xl px-3 py-2 font-medium">
               ⬇ ডাউনলোড{n.file_name ? ` (${n.file_name.length > 20 ? n.file_name.slice(0, 18) + "…" : n.file_name})` : ""}
             </a>
           </>
         )}
         {safeUrl(n.link_url) && (
-          <a href={n.link_url!} target="_blank" rel="noopener noreferrer" className="border border-green-700 text-green-800 rounded-xl px-3 py-2">
+          <a href={n.link_url!} target="_blank" rel="noopener noreferrer" className="border border-green-700 text-green-800 rounded-xl px-3 py-2 font-medium">
             🔗 লিংক খুলুন
           </a>
         )}
       </div>
 
-      <div className="text-xs text-gray-500 space-y-0.5">
+      <div className="text-xs text-gray-500 space-y-0.5 border-t pt-2">
         <p>প্রকাশক: {n.poster_name || "ডিরেক্টর প্যানেল"}</p>
         <p>
           {fmtDateTime(n.created_at)} · {timeAgo(n.created_at)}
@@ -177,8 +183,8 @@ function NoticeCard({
       </div>
 
       <div className="flex flex-wrap items-center gap-3 text-sm border-t pt-2">
-        <button onClick={() => setOpen(!open)} className="text-green-700">💬 কমেন্ট</button>
-        <button onClick={share} className="text-green-700">{copied ? "✅ লিংক কপি হয়েছে" : "↗ শেয়ার"}</button>
+        <button onClick={() => setOpen(!open)} className="text-green-700 font-semibold cursor-pointer">💬 কমেন্ট</button>
+        <button onClick={share} className="text-green-700 font-semibold cursor-pointer">{copied ? "✅ লিংক কপি হয়েছে" : "↗ শেয়ার"}</button>
         <a href={`https://wa.me/?text=${encodeURIComponent(n.title + " " + link)}`} target="_blank" rel="noopener noreferrer" className="text-gray-600">WhatsApp</a>
         <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`} target="_blank" rel="noopener noreferrer" className="text-gray-600">Facebook</a>
       </div>
@@ -237,45 +243,69 @@ export default function NoticesPage() {
   const count = (k: string) => (k === "all" ? list.length : list.filter((n) => n.branch === k).length)
 
   const tabCls = (on: boolean) =>
-    `shrink-0 rounded-xl px-3 py-2 text-sm ${on ? "bg-green-700 text-white" : "bg-white border"}`
+    `shrink-0 rounded-xl px-3 py-2 text-sm cursor-pointer transition-colors ${on ? "bg-green-700 text-white font-semibold" : "bg-white border text-gray-700 hover:bg-gray-50"}`
 
   return (
-    <main className="min-h-screen bg-gray-50 p-4 pb-16">
-      <div className="max-w-xl mx-auto space-y-4">
-        <h1 className="text-2xl font-bold text-green-800 text-center">ডিজিটাল নোটিশ বোর্ড</h1>
+    <>
+      <TopBar />
+      <SiteHeader />
+      <main className="min-h-screen bg-gray-50 py-8 px-4 pb-20">
+        <div className="max-w-2xl mx-auto space-y-5">
+          
+          {/* দ্রুত হোমপেজে ফেরার বাটন */}
+          <div className="flex items-center justify-between">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline cursor-pointer"
+            >
+              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
+            </Link>
+          </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <button onClick={() => setBranch("all")} className={tabCls(branch === "all")}>সব ({count("all")})</button>
-          {BRANCHES.map((b) => (
-            <button key={b.key} onClick={() => setBranch(b.key)} className={tabCls(branch === b.key)}>
-              {b.bn} ({count(b.key)})
-            </button>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-green-800 text-center">
+            ডিজিটাল নোটিশ বোর্ড
+          </h1>
+
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <button onClick={() => setBranch("all")} className={tabCls(branch === "all")}>সব ({count("all")})</button>
+            {BRANCHES.map((b) => (
+              <button key={b.key} onClick={() => setBranch(b.key)} className={tabCls(branch === b.key)}>
+                {b.bn} ({count(b.key)})
+              </button>
+            ))}
+          </div>
+
+          <input className={inp} placeholder="🔍 নোটিশ খুঁজুন..." value={q} onChange={(e) => setQ(e.target.value)} />
+
+          {loading && <p className="text-center text-sm text-gray-500 py-6">লোড হচ্ছে...</p>}
+          {!loading && shown.length === 0 && (
+            <p className="text-center text-sm text-gray-500 py-6 bg-white rounded-2xl border">কোনো নোটিশ পাওয়া যায়নি।</p>
+          )}
+
+          {shown.map((n) => (
+            <NoticeCard
+              key={n.id}
+              n={n}
+              highlight={n.id === hl}
+              items={imgs[n.id] || []}
+              layout={layouts[n.id] || "grid"}
+              deptName={n.department_id ? departments[n.department_id]?.name : undefined}
+            />
           ))}
+
+          {/* ফুটার নেভিগেশন লিংকসমূহ (SPA Link যুক্ত) */}
+          <div className="flex justify-center gap-6 pt-4 text-sm border-t">
+            <Link href="/" className="font-semibold text-gray-700 hover:text-brand underline cursor-pointer">
+              হোমপেজে ফিরুন
+            </Link>
+            <Link href="/admin" className="font-semibold text-green-800 hover:underline cursor-pointer">
+              নোটিশ দিন (সদস্য)
+            </Link>
+          </div>
         </div>
-
-        <input className={inp} placeholder="🔍 নোটিশ খুঁজুন..." value={q} onChange={(e) => setQ(e.target.value)} />
-
-        {loading && <p className="text-center text-sm text-gray-500">লোড হচ্ছে...</p>}
-        {!loading && shown.length === 0 && (
-          <p className="text-center text-sm text-gray-500">কোনো নোটিশ পাওয়া যায়নি।</p>
-        )}
-
-        {shown.map((n) => (
-          <NoticeCard
-            key={n.id}
-            n={n}
-            highlight={n.id === hl}
-            items={imgs[n.id] || []}
-            layout={layouts[n.id] || "grid"}
-            deptName={n.department_id ? departments[n.department_id]?.name : undefined}
-          />
-        ))}
-
-        <div className="flex justify-center gap-4 text-sm">
-          <a href="/" className="underline">সাইটে ফিরুন</a>
-          <a href="/admin" className="underline text-green-800">নোটিশ দিন (সদস্য)</a>
-        </div>
-      </div>
-    </main>
+      </main>
+      <SiteFooter />
+      <BackToTop />
+    </>
   )
 }
