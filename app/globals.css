@@ -96,7 +96,6 @@
     min-height: 100%;
   }
   
-  /* ⭐⭐⭐ আপনার নতুন ছবির মতো ভেলভেট-ম্যাজেন্টা ও মিডনাইট পার্পল মেশ ব্যাকগ্রাউন্ড ⭐⭐⭐ */
   body {
     font-family: var(--font-hind), ui-sans-serif, system-ui, sans-serif !important;
     min-height: 100vh;
@@ -165,7 +164,6 @@
 /* ==================== থিমসমূহ ==================== */
 body { transition: background-color .25s ease, color .25s ease; }
 
-/* ⭐⭐⭐ আপনার নতুন ছবির মতো "GlassPay" লিকুইড গ্লাস কার্ড ডিজাইন ⭐⭐⭐ */
 article:not(#club-news *),
 .bg-white:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
 .bg-card:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
@@ -181,7 +179,6 @@ article:not(#club-news *),
   color: #ffffff !important;
 }
 
-/* কাঁচের কার্ডের ভেতরের টাইটেল ও হেডিং (সলিড ও উজ্জ্বল সাদা) */
 article:not(#club-news *) h1,
 article:not(#club-news *) h2,
 article:not(#club-news *) h3,
@@ -192,7 +189,6 @@ h1, h2, h3 {
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* প্যারাগ্রাফ ও টেক্সট */
 article:not(#club-news *) p,
 article:not(#club-news *) span:not(.bg-brand),
 .text-gray-800,
@@ -210,7 +206,6 @@ article:not(#club-news *) .text-slate-500 {
   color: #cbd5e1 !important;
 }
 
-/* ⭐ ছবির "Email / Password / Sign In" বাটনগুলোর মতো গ্লাস পিল স্টাইল ⭐ */
 article:not(#club-news *) .bg-slate-100,
 article:not(#club-news *) .bg-gray-100,
 article:not(#club-news *) .bg-emerald-50,
@@ -224,7 +219,6 @@ article:not(#club-news *) .border-slate-200\/80 {
   backdrop-filter: blur(12px) !important;
 }
 
-/* সেকশন হেডিংস ও অ্যাকসেন্ট */
 .section-heading p {
   color: #e2e8f0 !important;
 }
@@ -233,7 +227,6 @@ article:not(#club-news *) .border-slate-200\/80 {
   color: #e879f9 !important;
 }
 
-/* টপ বার, হেডার ও টিকারের গ্লাসি লুক */
 .bg-navy {
   background: rgba(12, 7, 28, 0.6) !important;
   backdrop-filter: blur(20px) !important;
@@ -253,7 +246,6 @@ header nav button {
   color: #ffffff !important;
 }
 
-/* সেকশন ব্যাকগ্রাউন্ড ট্রান্সপারেন্ট রাখা যাতে পুরো ব্যাকগ্রাউন্ড ভেসে ওঠে */
 #leadership,
 #general-news,
 #student-corner,
@@ -262,7 +254,6 @@ section[id^="cat-"] {
   background-color: transparent !important;
 }
 
-/* ফুটার গ্লাস */
 footer {
   background: rgba(10, 5, 24, 0.8) !important;
   backdrop-filter: blur(25px) !important;
@@ -270,7 +261,7 @@ footer {
   border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
-/* ⭐⭐⭐ ক্লাবগুলোর ব্যাকগ্রাউন্ড ও নিয়ন বাতি পূর্বের মতোই সম্পূর্ণ অক্ষত ⭐⭐⭐ */
+/* ⭐⭐⭐ ক্লাবের হোম সেকশন ব্যাকগ্রাউন্ড ও নিয়ন বাতি ⭐⭐⭐ */
 #club-news {
   background: radial-gradient(circle at 85% 15%, rgba(0, 210, 255, 0.45), transparent 50%),
               radial-gradient(circle at 15% 85%, rgba(30, 27, 75, 0.6), transparent 55%),
@@ -283,7 +274,6 @@ footer {
   color: #cbd5e1 !important;
 }
 
-/* চারপাশের বর্ডারে ঘূর্ণায়মান নিয়ন বাতি */
 @keyframes rotate_neon_beam {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -340,15 +330,7 @@ footer {
   box-shadow: inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.4);
 }
 
-/* ক্লাব পপ-আপ ডায়ালগ (Popup Dialog) */
-[role="dialog"],
-.club-dialog-font {
-  color: #0f172a !important;
-}
-[role="dialog"] p,
-.club-dialog-font p {
-  color: #1e293b !important;
-}
+/* ⭐⭐⭐ ক্লাবের ভেতরের পপ-আপ পেজ (Dialog) যাতে সম্পূর্ণ উজ্জ্বল সাদা ও সিয়ান দেখায় ⭐⭐⭐ */
 [role="dialog"] h1,
 [role="dialog"] h2,
 [role="dialog"] h3,
@@ -357,19 +339,13 @@ footer {
 .club-dialog-font h2,
 .club-dialog-font h3,
 .club-dialog-font h4 {
-  color: #0f172a !important;
+  color: #ffffff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
-[role="dialog"] .text-\[\#65676B\],
-.club-dialog-font .text-\[\#65676B\],
-[role="dialog"] .text-gray-500,
-.club-dialog-font .text-gray-500 {
-  color: #475569 !important;
-}
-[role="dialog"] .text-\[\#050505\],
-.club-dialog-font .text-\[\#050505\],
-[role="dialog"] .text-slate-800,
-.club-dialog-font .text-slate-800 {
-  color: #0f172a !important;
+
+[role="dialog"] p,
+.club-dialog-font p {
+  color: #f1f5f9 !important;
 }
 
 /* ==================== ট্রানজিশন ও অ্যানিমেশনসমূহ ==================== */
@@ -387,7 +363,6 @@ footer {
 @keyframes tr_zoom_in { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 .tr_zoom-in { animation: tr_zoom_in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-/* টেক্সট অ্যানিমেশন */
 @keyframes anim_fade_up { 0% { opacity: 0; transform: translateY(22px); } 100% { opacity: 1; transform: translateY(0); } }
 .anim_fade-up { animation: anim_fade_up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
 
