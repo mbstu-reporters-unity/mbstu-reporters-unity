@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { ArrowUpRight, ArrowRight, Award, BookOpen, Feather, GraduationCap, MessageSquareQuote } from 'lucide-react'
 import { getStudentItems, type StudentItem } from '@/lib/sb'
 import { SectionHeading } from './section-heading'
@@ -48,6 +49,7 @@ export function StudentCorner() {
                 <img
                   src={featured.image_url}
                   alt=""
+                  loading="lazy"
                   className="absolute inset-0 h-full w-full object-cover opacity-85 transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
@@ -88,7 +90,7 @@ export function StudentCorner() {
             </div>
           </article>
 
-          {/* বাকি কার্ডগুলো (এখন প্রতিটিতে ছবি দৃশ্যমান থাকবে) */}
+          {/* বাকি কার্ডগুলো */}
           <ul className="grid gap-4 sm:grid-cols-2">
             {rest.map((item) => {
               const Icon = typeIcon[item.kind] || MessageSquareQuote
@@ -105,6 +107,7 @@ export function StudentCorner() {
                         <img
                           src={item.image_url}
                           alt=""
+                          loading="lazy"
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       </div>
@@ -146,15 +149,15 @@ export function StudentCorner() {
           </ul>
         </div>
 
-        {/* স্টুডেন্ট কর্নারের সব পোস্ট দেখার বাটন */}
+        {/* স্টুডেন্ট কর্নারের সব পোস্ট দেখার বাটন (SPA Link যুক্ত) */}
         <div className="mt-8 text-center">
-          <a
+          <Link
             href="/student-corner"
-            className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-brand-dark transition-all active:scale-95"
+            className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-brand-dark transition-all active:scale-95 cursor-pointer"
           >
             <span>স্টুডেন্ট কর্নারের সব লেখা ও ক্যাটাগরি দেখুন</span>
             <ArrowRight className="size-4" />
-          </a>
+          </Link>
         </div>
       </div>
 
