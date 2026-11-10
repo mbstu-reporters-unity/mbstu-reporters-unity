@@ -151,27 +151,28 @@ function SingleMediaCard({
 
   return (
     <>
-      <div className={`w-full rounded-2xl border border-border/80 bg-white shadow-sm transition-all overflow-hidden ${compact ? 'p-2 space-y-2' : 'p-3 sm:p-4 space-y-3'}`}>
+      {/* ⭐ সলিড সাদা বর্ডার সরিয়ে গ্লাসমর্ফিজম (Glassmorphism) কার্ড যুক্ত করা হয়েছে ⭐ */}
+      <div className={`w-full rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md shadow-lg transition-all overflow-hidden ${compact ? 'p-2 space-y-2' : 'p-3.5 sm:p-4 space-y-3'}`}>
         
         {/* শিরোনাম ও উপশিরোনাম */}
         {(item.title || item.subtitle) && (
-          <div className="space-y-0.5 border-b border-gray-100 pb-1.5">
+          <div className="space-y-0.5 border-b border-white/15 pb-2">
             {item.title && (
-              <h4 className="font-serif text-xs sm:text-sm font-bold text-navy leading-snug line-clamp-1">
+              <h4 className="font-serif text-sm font-bold text-white leading-snug line-clamp-1 drop-shadow-md">
                 {item.title}
               </h4>
             )}
             {item.subtitle && (
-              <p className="text-[11px] font-semibold text-brand line-clamp-1">
+              <p className="text-[11px] font-bold text-cyan-300 line-clamp-1 drop-shadow-sm">
                 {item.subtitle}
               </p>
             )}
           </div>
         )}
 
-        {/* ⭐ আন্তর্জাতিক ১৬:৯ স্ট্যান্ডার্ড মিডিয়া ফ্রেম ⭐ */}
+        {/* আন্তর্জাতিক ১৬:৯ স্ট্যান্ডার্ড মিডিয়া ফ্রেম */}
         {item.url && (
-          <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden bg-slate-950 shadow-inner flex items-center justify-center group/player">
+          <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-black/60 shadow-inner flex items-center justify-center group/player border border-white/10">
             
             {/* বড় পর্দা / ফুলস্ক্রিন বাটন */}
             <button
@@ -181,13 +182,12 @@ function SingleMediaCard({
                 setIsTheaterOpen(true)
               }}
               title="বড় পর্দায় দেখুন"
-              className="absolute top-2 right-2 z-30 flex items-center gap-1 rounded-lg bg-black/80 hover:bg-black px-2 py-1 text-[11px] font-bold text-white backdrop-blur border border-white/20 active:scale-95 cursor-pointer shadow-md"
+              className="absolute top-2 right-2 z-30 flex items-center gap-1 rounded-xl bg-black/60 hover:bg-black/80 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur border border-white/20 active:scale-95 cursor-pointer shadow-md transition-all"
             >
-              <Maximize2 className="size-3 text-gold" />
+              <Maximize2 className="size-3 text-cyan-400" />
               <span>বড় পর্দা</span>
             </button>
 
-            {/* ১. ইউটিউব প্লেয়ার */}
             {media.type === 'youtube' && (
               <iframe
                 src={media.embedSrc}
@@ -198,7 +198,6 @@ function SingleMediaCard({
               />
             )}
 
-            {/* ২. ফেসবুক ভিডিও */}
             {media.type === 'facebook' && (
               <iframe
                 src={media.embedSrc}
@@ -209,7 +208,6 @@ function SingleMediaCard({
               />
             )}
 
-            {/* ৩. সরাসরি ভিডিও ফাইল */}
             {media.type === 'video' && (
               <video
                 src={media.src}
@@ -219,7 +217,6 @@ function SingleMediaCard({
               />
             )}
 
-            {/* ৪. ছবি — ১৬:৯ ফ্রেমিং ও ট্যাপ-টু-জুম */}
             {media.type === 'image' && (
               <div
                 className="size-full cursor-pointer relative"
@@ -229,14 +226,14 @@ function SingleMediaCard({
                 <img
                   src={media.src}
                   alt={displayTitle}
-                  className="size-full object-cover select-none transition-transform duration-300 group-hover/player:scale-105"
+                  className="size-full object-cover select-none transition-transform duration-500 group-hover/player:scale-105"
                   onError={(e) => {
                     ;(e.target as HTMLElement).style.display = 'none'
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur border border-white/20">
-                  <ZoomIn className="size-3 text-gold" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+                <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-lg bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur border border-white/20">
+                  <ZoomIn className="size-3 text-cyan-400" />
                   <span>জুম করুন</span>
                 </span>
               </div>
@@ -244,15 +241,15 @@ function SingleMediaCard({
           </div>
         )}
 
-        {/* ⭐ ক্যাপশন বার: শুধুমাত্র ক্যাপশন থাকলে তবেই দেখাবে, ফাঁকা বক্স তৈরি হবে না ⭐ */}
+        {/* ক্যাপশন বার (গ্লাসি লুক) */}
         {!compact && item.caption && item.caption.trim() !== '' && (
-          <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-gray-700 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200">
-            <span className="flex items-center gap-1 font-semibold text-gray-800 truncate">
-              <Camera className="size-3.5 text-emerald-700 shrink-0" /> {item.caption}
+          <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-white/90 bg-black/20 px-3 py-2 rounded-xl border border-white/10 shadow-inner">
+            <span className="flex items-center gap-1.5 font-bold truncate">
+              <Camera className="size-3.5 text-cyan-400 shrink-0" /> {item.caption}
             </span>
             {item.date && (
-              <span className="flex items-center gap-1 ml-auto text-[10px] text-gray-500 font-medium">
-                <Calendar className="size-2.5 text-emerald-700" /> {formatBanglaDate(item.date)}
+              <span className="flex items-center gap-1 ml-auto text-[10px] text-cyan-200 font-semibold bg-white/10 px-2 py-0.5 rounded-full">
+                <Calendar className="size-2.5 text-cyan-400" /> {formatBanglaDate(item.date)}
               </span>
             )}
           </div>
@@ -260,23 +257,23 @@ function SingleMediaCard({
 
         {/* বিবরণ */}
         {!compact && item.description && (
-          <p className="whitespace-pre-line text-xs text-gray-700 leading-relaxed line-clamp-3">
+          <p className="whitespace-pre-line text-xs text-white/90 leading-relaxed line-clamp-3">
             {item.description}
           </p>
         )}
 
-        {/* শেয়ার বার */}
+        {/* শেয়ার বার (গ্লাসি পিল বাটন) */}
         {!compact && (
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-gray-100 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/15 text-xs">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-semibold text-gray-400 flex items-center gap-1">
+              <span className="text-[10px] font-bold text-white/60 flex items-center gap-1">
                 <Share2 className="size-2.5" /> শেয়ার:
               </span>
               <a
                 href={`https://wa.me/?text=${shareText}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded bg-emerald-600 text-white px-1.5 py-0.5 text-[10px] font-semibold hover:bg-emerald-700 transition"
+                className="rounded-full bg-emerald-500/80 text-white px-2.5 py-0.5 text-[10px] font-bold hover:bg-emerald-500 transition backdrop-blur-md border border-emerald-400/50"
               >
                 WhatsApp
               </a>
@@ -284,16 +281,16 @@ function SingleMediaCard({
                 href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded bg-blue-600 text-white px-1.5 py-0.5 text-[10px] font-semibold hover:bg-blue-700 transition"
+                className="rounded-full bg-blue-600/80 text-white px-2.5 py-0.5 text-[10px] font-bold hover:bg-blue-500 transition backdrop-blur-md border border-blue-400/50"
               >
                 Facebook
               </a>
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className="rounded border bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 hover:bg-gray-100 transition inline-flex items-center gap-1 cursor-pointer"
+                className="rounded-full border border-white/30 bg-white/15 px-2.5 py-0.5 text-[10px] font-bold text-white hover:bg-white/25 transition inline-flex items-center gap-1 cursor-pointer backdrop-blur-md"
               >
-                {copied ? <Check className="size-2.5 text-green-600" /> : null}
+                {copied ? <Check className="size-2.5 text-cyan-300" /> : null}
                 <span>{copied ? 'কপি হয়েছে' : 'লিংক'}</span>
               </button>
             </div>
@@ -301,7 +298,7 @@ function SingleMediaCard({
             <button
               type="button"
               onClick={handleScrollToComments}
-              className="inline-flex items-center gap-1 text-[10px] font-bold text-brand hover:underline cursor-pointer"
+              className="inline-flex items-center gap-1 text-[10px] font-bold text-cyan-300 hover:text-cyan-200 hover:underline cursor-pointer"
             >
               <MessageSquare className="size-3" />
               <span>মন্তব্য</span>
@@ -313,16 +310,16 @@ function SingleMediaCard({
       {/* বড় পর্দা / ফুলস্ক্রিন থিয়েটার মোডাল */}
       {isTheaterOpen && (
         <div
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-md p-2 sm:p-6 animate-in fade-in"
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl p-2 sm:p-6 animate-in fade-in"
           onClick={() => setIsTheaterOpen(false)}
         >
           <button
             type="button"
             onClick={() => setIsTheaterOpen(false)}
-            className="absolute top-4 right-4 z-[110] flex size-11 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 backdrop-blur transition-all cursor-pointer shadow-lg active:scale-95"
+            className="absolute top-4 right-4 z-[110] flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-md border border-white/20 transition-all cursor-pointer shadow-lg active:scale-95"
             aria-label="বন্ধ করুন"
           >
-            <X className="size-6" />
+            <X className="size-5" />
           </button>
 
           <div
@@ -330,7 +327,7 @@ function SingleMediaCard({
             onClick={(e) => e.stopPropagation()}
           >
             {media.type === 'youtube' && (
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black">
+              <div className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-black">
                 <iframe
                   src={`${media.embedSrc}&autoplay=1`}
                   className="absolute inset-0 size-full border-0"
@@ -342,7 +339,7 @@ function SingleMediaCard({
             )}
 
             {media.type === 'facebook' && (
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black">
+              <div className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-black">
                 <iframe
                   src={`${media.embedSrc}&autoplay=true`}
                   className="absolute inset-0 size-full border-0"
@@ -354,7 +351,7 @@ function SingleMediaCard({
             )}
 
             {media.type === 'video' && (
-              <div className="relative w-full max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black flex items-center justify-center">
+              <div className="relative w-full max-h-[85vh] rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-black flex items-center justify-center">
                 <video
                   src={media.src}
                   controls
@@ -371,13 +368,13 @@ function SingleMediaCard({
                 <img
                   src={media.src}
                   alt={displayTitle}
-                  className="max-h-[85vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl bg-black"
+                  className="max-h-[85vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl border border-white/10 bg-black"
                 />
               </div>
             )}
 
             {displayTitle && (
-              <p className="mt-3 text-center text-xs sm:text-sm text-white/90 font-medium">
+              <p className="mt-4 text-center text-sm font-bold text-white/90 drop-shadow-md">
                 {displayTitle}
               </p>
             )}
@@ -405,7 +402,7 @@ export function UniversalMediaEmbed({
   if (items.length === 0) return null
 
   return (
-    <div className={`space-y-2.5 my-2 w-full ${className}`}>
+    <div className={`space-y-3 w-full ${className}`}>
       {items.map((item, idx) => (
         <SingleMediaCard
           key={item.id || idx}
