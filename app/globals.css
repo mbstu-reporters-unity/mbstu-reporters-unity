@@ -97,7 +97,8 @@
   
   body {
     font-family: var(--font-hind), ui-sans-serif, system-ui, sans-serif !important;
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
     font-weight: 500;
     letter-spacing: 0.012em;
     line-height: 1.65;
@@ -150,198 +151,147 @@
   }
 }
 
-/* ==================== থিম / চোখের আরামের মোড ==================== */
+/* ==================== ৯টি সম্পূর্ণ উজ্জ্বল আলোর থিমসমূহ (Light Daylight Themes) ==================== */
 body { transition: background-color .25s ease, color .25s ease; }
 
-html[data-theme="dark"] {
-  color-scheme: dark;
-  --background: #0c1311;
-  --foreground: #f1f5f3;
-  --navy: #f1f5f3;
-  --card: #131d1a;
-  --card-foreground: #f1f5f3;
-  --popover: #131d1a;
-  --popover-foreground: #f1f5f3;
-  --secondary: #17231f;
-  --secondary-foreground: #f1f5f3;
-  --muted: #17231f;
-  --muted-foreground: #a7b9b3;
-  --accent: #163128;
-  --accent-foreground: #8fe0b5;
-  --border: #26362f;
-  --input: #2d3f38;
-  --ring: #2a9d62;
-  --brand: #2a9d62;
-  --primary: #2a9d62;
-  --brand-dark: #1f7d4d;
-  --brand-soft: #17332a;
-  --crimson: #f0566f;
-  --gold: #e0b030;
-  --chrome: #060b09;
-  --g50: #131d1a;
-  --g100: #1a2823;
-  --g400: #8c9e99;
-  --g500: #a7b9b3;
-  --g600: #c1cfca;
-  --g700: #d8e3df;
-  --green100: #17332a;
-  --greentext: #6fd6a0;
-}
-
-html[data-theme="sepia"] {
+/* ১. ডিফল্ট আলো */
+html[data-theme="light"] {
   color-scheme: light;
-  --background: #f3ead3;
-  --foreground: #34281a;
-  --navy: #34281a;
-  --card: #fbf4e1;
-  --card-foreground: #34281a;
-  --popover: #fbf4e1;
-  --popover-foreground: #34281a;
-  --secondary: #eadfc2;
-  --secondary-foreground: #34281a;
-  --muted: #eadfc2;
-  --muted-foreground: #63533c;
-  --accent: #e4dfbd;
-  --accent-foreground: #2c5a34;
-  --border: #d9ccaa;
-  --input: #d2c4a0;
-  --ring: #3d6e3a;
-  --brand: #3d6e3a;
-  --primary: #3d6e3a;
-  --brand-dark: #2f5a2d;
-  --brand-soft: #e3e2bf;
-  --crimson: #a63a2a;
-  --gold: #b8860b;
-  --chrome: #3a2e1f;
-  --g50: #f7efdb;
-  --g100: #ece1c5;
-  --g400: #948366;
-  --g500: #736248;
-  --g600: #5c4e38;
-  --g700: #463b2a;
-  --green100: #e3e2bf;
-  --greentext: #2f5a2d;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --navy: #0f172a;
+  --card: #ffffff;
+  --border: #e2e8e5;
+  --brand: #046a38;
 }
 
+/* ২. আকাশী আলো (Sky Breeze) */
+html[data-theme="sky"] {
+  color-scheme: light;
+  --background: #f0f7ff;
+  --foreground: #082f49;
+  --navy: #082f49;
+  --card: #ffffff;
+  --border: #bae6fd;
+  --brand: #0284c7;
+  --brand-dark: #0369a1;
+  --brand-soft: #e0f2fe;
+}
+
+/* ৩. স্বর্ণালী রোদ (Golden Sun) */
+html[data-theme="sunshine"] {
+  color-scheme: light;
+  --background: #fffbeb;
+  --foreground: #291804;
+  --navy: #291804;
+  --card: #ffffff;
+  --border: #fde68a;
+  --brand: #b45309;
+  --brand-dark: #92400e;
+  --brand-soft: #fef3c7;
+  --gold: #b45309;
+}
+
+/* ৪. গোলাপী প্রভাত (Morning Rose) */
+html[data-theme="rose"] {
+  color-scheme: light;
+  --background: #fff1f2;
+  --foreground: #370614;
+  --navy: #370614;
+  --card: #ffffff;
+  --border: #fecdd3;
+  --brand: #e11d48;
+  --brand-dark: #be123c;
+  --brand-soft: #ffe4e6;
+}
+
+/* ৫. ল্যাভেন্ডার স্নিগ্ধ (Royal Lavender) */
+html[data-theme="lavender"] {
+  color-scheme: light;
+  --background: #f5f3ff;
+  --foreground: #1e1338;
+  --navy: #1e1338;
+  --card: #ffffff;
+  --border: #ddd6fe;
+  --brand: #7c3aed;
+  --brand-dark: #6d28d9;
+  --brand-soft: #ede9fe;
+}
+
+/* ৬. ক্যাম্পাস বসন্ত (Spring Emerald) */
+html[data-theme="spring"] {
+  color-scheme: light;
+  --background: #f0fdf4;
+  --foreground: #052e16;
+  --navy: #052e16;
+  --card: #ffffff;
+  --border: #bbf7d0;
+  --brand: #15803d;
+  --brand-dark: #166534;
+  --brand-soft: #dcfce7;
+}
+
+/* ৭. মিন্ট আরাম (Soft Mint) */
 html[data-theme="mint"] {
   color-scheme: light;
-  --background: #d5ead8;
-  --foreground: #102617;
-  --navy: #102617;
-  --card: #e6f4e8;
-  --card-foreground: #102617;
-  --popover: #e6f4e8;
-  --popover-foreground: #102617;
-  --secondary: #c8e0cc;
-  --secondary-foreground: #102617;
-  --muted: #c8e0cc;
-  --muted-foreground: #334d3d;
-  --accent: #bfdcc5;
-  --accent-foreground: #0f4a26;
-  --border: #aacdb1;
-  --input: #a0c5a8;
-  --ring: #18683a;
-  --brand: #18683a;
-  --primary: #18683a;
-  --brand-dark: #115029;
-  --brand-soft: #bfdcc5;
-  --crimson: #b3261e;
-  --gold: #9a7b0a;
-  --chrome: #143b27;
-  --g50: #e0f0e3;
-  --g100: #cfe5d3;
-  --g400: #6d8f78;
-  --g500: #4d6d58;
-  --g600: #385542;
-  --g700: #263e2f;
-  --green100: #bfdcc5;
-  --greentext: #0f4a26;
+  --background: #f0fdf9;
+  --foreground: #062b25;
+  --navy: #062b25;
+  --card: #ffffff;
+  --border: #99f6e4;
+  --brand: #0d9488;
+  --brand-dark: #0f766e;
+  --brand-soft: #ccfbf1;
 }
 
-html[data-theme="night"] {
-  color-scheme: dark;
-  --background: #15100c;
-  --foreground: #faebd7;
-  --navy: #faebd7;
-  --card: #1e1712;
-  --card-foreground: #faebd7;
-  --popover: #1e1712;
-  --popover-foreground: #faebd7;
-  --secondary: #251d16;
-  --secondary-foreground: #faebd7;
-  --muted: #251d16;
-  --muted-foreground: #bda78c;
-  --accent: #2c2218;
-  --accent-foreground: #f0c27a;
-  --border: #382c20;
-  --input: #43362a;
-  --ring: #b7791f;
-  --brand: #b7791f;
-  --primary: #b7791f;
-  --brand-dark: #96610f;
-  --brand-soft: #2e2314;
-  --crimson: #e0705a;
-  --gold: #e3b04b;
-  --chrome: #0b0805;
-  --g50: #1e1712;
-  --g100: #2a2018;
-  --g400: #9e8d75;
-  --g500: #bda78c;
-  --g600: #d1beaa;
-  --g700: #e6d5c2;
-  --green100: #2e2314;
-  --greentext: #f0c27a;
+/* ৮. সেপিয়া পেপার (Warm Sepia) */
+html[data-theme="sepia"] {
+  color-scheme: light;
+  --background: #fbf7ee;
+  --foreground: #2d241e;
+  --navy: #2d241e;
+  --card: #ffffff;
+  --border: #e7dfcf;
+  --brand: #854d0e;
+  --brand-dark: #713f12;
+  --brand-soft: #fef3c7;
 }
 
+/* ৯. হাই কনট্রাস্ট (Monochrome High Contrast) */
 html[data-theme="contrast"] {
   color-scheme: light;
   --background: #ffffff;
   --foreground: #000000;
   --navy: #000000;
   --card: #ffffff;
-  --card-foreground: #000000;
-  --popover: #ffffff;
-  --popover-foreground: #000000;
-  --secondary: #f2f2f2;
-  --secondary-foreground: #000000;
-  --muted: #f2f2f2;
-  --muted-foreground: #000000;
-  --accent: #e6f2ea;
-  --accent-foreground: #00331a;
   --border: #000000;
-  --input: #000000;
-  --ring: #004d25;
-  --brand: #004d25;
-  --primary: #004d25;
-  --brand-dark: #00331a;
-  --brand-soft: #e6f2ea;
-  --crimson: #a00000;
-  --gold: #7a5a00;
-  --chrome: #000000;
-  --g50: #f2f2f2;
-  --g100: #e6e6e6;
-  --g400: #000000;
-  --g500: #000000;
-  --g600: #000000;
-  --g700: #000000;
-  --green100: #e6f2ea;
-  --greentext: #00331a;
+  --brand: #000000;
+  --brand-dark: #1f2937;
+  --brand-soft: #f3f4f6;
 }
 
-html[data-theme]:not([data-theme="light"]) .bg-white { background-color: var(--card); }
-html[data-theme]:not([data-theme="light"]) .bg-gray-50 { background-color: var(--g50); }
-html[data-theme]:not([data-theme="light"]) .bg-gray-100 { background-color: var(--g100); }
-html[data-theme]:not([data-theme="light"]) .bg-green-100 { background-color: var(--green100); }
-html[data-theme]:not([data-theme="light"]) .bg-navy { background-color: var(--chrome); }
-html[data-theme]:not([data-theme="light"]) .text-gray-400 { color: var(--g400); }
-html[data-theme]:not([data-theme="light"]) .text-gray-500 { color: var(--g500); }
-html[data-theme]:not([data-theme="light"]) .text-gray-600 { color: var(--g600); }
-html[data-theme]:not([data-theme="light"]) .text-gray-700 { color: var(--g700); }
-html[data-theme]:not([data-theme="light"]) .text-green-700 { color: var(--greentext); }
-html[data-theme]:not([data-theme="light"]) .text-green-800 { color: var(--greentext); }
+/* ⭐ কার্ড, পোস্ট, নোটিশ ও লেখার উচ্চ দৃশ্যমানতা ব্যালান্স ⭐ */
+html[data-theme] .bg-white { background-color: #ffffff !important; }
+html[data-theme] .text-navy { color: var(--navy) !important; }
+html[data-theme] .text-gray-800 { color: #1e293b !important; }
+html[data-theme] .text-gray-700 { color: #334155 !important; }
+html[data-theme] .text-gray-600 { color: #475569 !important; }
 
-/* ==================== অপ্টিমাইজড গ্লোবাল কিফ্রেম ও অ্যানিমেশনসমূহ ==================== */
+/* ⭐ ক্লাব সেকশনের লেখা সব থিমেই ১০০% স্পষ্ট থাকার বিশেষ স্টাইল ⭐ */
+#club-news {
+  background: linear-gradient(to bottom, #09121d, #0f1c2e, #09121d) !important;
+}
+#club-news h3 {
+  color: #ffffff !important;
+}
+#club-news p {
+  color: #e2e8f0 !important;
+}
+#club-news .text-slate-400 {
+  color: #cbd5e1 !important;
+}
 
+/* ==================== ট্রানজিশন ও অ্যানিমেশনসমূহ ==================== */
 @keyframes heroTimer { from { width: 0%; } to { width: 100%; } }
 
 @keyframes tr_slide_left { 0% { transform: translateX(70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
@@ -350,80 +300,16 @@ html[data-theme]:not([data-theme="light"]) .text-green-800 { color: var(--greent
 @keyframes tr_slide_right { 0% { transform: translateX(-70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 .tr_slide-right { animation: tr_slide_right 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-@keyframes tr_slide_up { 0% { transform: translateY(60px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-.tr_slide-up { animation: tr_slide_up 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-@keyframes tr_slide_down { 0% { transform: translateY(-60px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-.tr_slide-down { animation: tr_slide_down 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
 @keyframes tr_fade { 0% { opacity: 0; filter: blur(4px); } 100% { opacity: 1; filter: blur(0); } }
 .tr_fade { animation: tr_fade 0.8s ease-in-out both; }
 
 @keyframes tr_zoom_in { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 .tr_zoom-in { animation: tr_zoom_in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-@keyframes tr_zoom_out { 0% { transform: scale(1.15); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-.tr_zoom-out { animation: tr_zoom_out 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-@keyframes tr_flip_h { 0% { transform: perspective(800px) rotateY(65deg); opacity: 0; } 100% { transform: perspective(800px) rotateY(0deg); opacity: 1; } }
-.tr_flip-h { animation: tr_flip_h 0.85s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-@keyframes tr_flip_v { 0% { transform: perspective(800px) rotateX(65deg); opacity: 0; } 100% { transform: perspective(800px) rotateX(0deg); opacity: 1; } }
-.tr_flip-v { animation: tr_flip_v 0.85s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-@keyframes tr_blur_fade { 0% { filter: blur(16px); opacity: 0; transform: scale(0.96); } 100% { filter: blur(0); opacity: 1; transform: scale(1); } }
-.tr_blur-fade { animation: tr_blur_fade 0.8s ease-out both; }
-
-@keyframes tr_push_left { 0% { transform: translateX(80px) scale(0.92); opacity: 0; } 100% { transform: translateX(0) scale(1); opacity: 1; } }
-.tr_push-left { animation: tr_push_left 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-@keyframes tr_push_right { 0% { transform: translateX(-80px) scale(0.92); opacity: 0; } 100% { transform: translateX(0) scale(1); opacity: 1; } }
-.tr_push-right { animation: tr_push_right 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-@keyframes tr_circle_reveal { 0% { clip-path: circle(0% at 50% 50%); opacity: 0; } 100% { clip-path: circle(100% at 50% 50%); opacity: 1; } }
-.tr_circle-reveal { animation: tr_circle_reveal 0.85s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-@keyframes tr_twist_spin { 0% { transform: rotate(-8deg) scale(0.88); opacity: 0; } 100% { transform: rotate(0deg) scale(1); opacity: 1; } }
-.tr_twist-spin { animation: tr_twist_spin 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-@keyframes tr_elastic { 0% { transform: scale(0.7); opacity: 0; } 65% { transform: scale(1.03); opacity: 1; } 85% { transform: scale(0.98); } 100% { transform: scale(1); opacity: 1; } }
-.tr_elastic { animation: tr_elastic 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-
 /* টেক্সট অ্যানিমেশন */
 @keyframes anim_fade_up { 0% { opacity: 0; transform: translateY(22px); } 100% { opacity: 1; transform: translateY(0); } }
 .anim_fade-up { animation: anim_fade_up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
 
-@keyframes anim_typewriter { 0% { opacity: 0; clip-path: inset(0 100% 0 0); } 100% { opacity: 1; clip-path: inset(0 0 0 0); } }
-.anim_typewriter { animation: anim_typewriter 1s ease-out forwards; display: inline-flex; }
-
-@keyframes anim_zoom_pop { 0% { opacity: 0; transform: scale(0.6); } 100% { opacity: 1; transform: scale(1); } }
-.anim_zoom-pop { animation: anim_zoom-pop 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; display: inline-flex; }
-
-@keyframes anim_neon_pulse { 0%, 100% { text-shadow: 0 0 4px #fff, 0 0 14px #38bdf8; } 50% { text-shadow: 0 0 2px #fff, 0 0 6px #0284c7; } }
-.anim_neon-pulse { animation: anim_neon-pulse 1.4s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_bounce_in { 0% { opacity: 0; transform: translateY(-40px); } 60% { opacity: 1; transform: translateY(8px); } 80% { transform: translateY(-3px); } 100% { transform: translateY(0); } }
-.anim_bounce-in { animation: anim_bounce_in 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards; display: inline-flex; }
-
-@keyframes anim_flip_x { 0% { opacity: 0; transform: perspective(400px) rotateX(90deg); } 100% { opacity: 1; transform: perspective(400px) rotateX(0deg); } }
-.anim_flip-x { animation: anim_flip_x 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-flex; }
-
-@keyframes anim_flip_y { 0% { opacity: 0; transform: perspective(400px) rotateY(90deg); } 100% { opacity: 1; transform: perspective(400px) rotateY(0deg); } }
-.anim_flip-y { animation: anim_flip_y 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-flex; }
-
-@keyframes anim_cyber_glitch { 0%, 100% { transform: translate(0); } 20% { transform: translate(-3px, 2px); } 40% { transform: translate(3px, -2px); } 60% { transform: translate(-2px, -1px); } 80% { transform: translate(2px, 1px); } }
-.anim_cyber-glitch { animation: anim_cyber-glitch 2s infinite; display: inline-flex; }
-
-@keyframes anim_smoke_fade { 0% { opacity: 0; filter: blur(14px); transform: scale(1.08); } 100% { opacity: 1; filter: blur(0); transform: scale(1); } }
-.anim_smoke-fade { animation: anim_smoke-fade 0.9s ease-out forwards; display: inline-flex; }
-
-@keyframes anim_slide_left { 0% { opacity: 0; transform: translateX(60px); } 100% { opacity: 1; transform: translateX(0); } }
-.anim_slide-left { animation: anim_slide_left 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
-
-@keyframes anim_slide_right { 0% { opacity: 0; transform: translateX(-60px); } 100% { opacity: 1; transform: translateX(0); } }
-.anim_slide-right { animation: anim_slide_right 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
-
-/* টিকার অ্যানিমেশন */
 @keyframes anim_pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.18); opacity: 0.82; } }
 .anim_pulse { animation: anim_pulse 1.4s ease-in-out infinite; display: inline-flex; }
 
@@ -432,20 +318,3 @@ html[data-theme]:not([data-theme="light"]) .text-green-800 { color: var(--greent
 
 @keyframes anim_heartbeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.22); } 28% { transform: scale(1); } 42% { transform: scale(1.15); } 70% { transform: scale(1); } }
 .anim_heartbeat { animation: anim_heartbeat 1.5s ease-in-out infinite; display: inline-flex; }
-
-@keyframes anim_radar { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); } 70% { box-shadow: 0 0 0 8px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
-.anim_radar { animation: anim_radar 1.5s infinite; display: inline-flex; border-radius: 9999px; }
-
-/* টিকার ব্যাকগ্রাউন্ড অ্যানিমেশন */
-@keyframes bg_pulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3) contrast(1.1); } }
-.anim_bg_pulse { animation: bg_pulse 2s ease-in-out infinite; }
-
-@keyframes bg_shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-.anim_bg_shimmer {
-  background-size: 200% 100% !important;
-  background-image: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0) 100%) !important;
-  animation: bg_shimmer 2.5s infinite;
-}
-
-@keyframes bg_glow { 0%, 100% { box-shadow: 0 0 4px rgba(255,255,255,0.3); } 50% { box-shadow: 0 0 16px rgba(255,255,255,0.7); } }
-.anim_bg_glow { animation: bg_glow 2s ease-in-out infinite; }
