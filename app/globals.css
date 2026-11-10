@@ -2,32 +2,10 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-/* ⭐ প্রিমিয়াম সোলাইমান লিপি ফন্ট (বাংলা সংখ্যার জন্য Hind Siliguri-তে অটো-ফলব্যাক) ⭐ */
-@font-face {
-  font-family: 'SolaimanLipi';
-  src: url('https://cdn.jsdelivr.net/gh/maateen/bangla-fonts@master/SolaimanLipi/SolaimanLipi.woff2') format('woff2'),
-       url('https://cdn.jsdelivr.net/gh/maateen/bangla-fonts@master/SolaimanLipi/SolaimanLipi.woff') format('woff');
-  font-weight: 400 500;
-  font-style: normal;
-  font-display: swap;
-  /* বাংলা সংখ্যা ০-৯ (U+09E6-09EF) সোলাইমান লিপি এড়িয়ে স্পষ্ট Hind Siliguri দিয়ে রেন্ডার হবে */
-  unicode-range: U+0000-09E5, U+09F0-FFFF;
-}
-
-@font-face {
-  font-family: 'SolaimanLipi';
-  src: url('https://cdn.jsdelivr.net/gh/maateen/bangla-fonts@master/SolaimanLipi/SolaimanLipi_Bold.woff2') format('woff2'),
-       url('https://cdn.jsdelivr.net/gh/maateen/bangla-fonts@master/SolaimanLipi/SolaimanLipi_Bold.woff') format('woff');
-  font-weight: 600 700 800;
-  font-style: normal;
-  font-display: swap;
-  unicode-range: U+0000-09E5, U+09F0-FFFF;
-}
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: 'SolaimanLipi', var(--font-hind), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-hind), 'SolaimanLipi', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-noto-serif), Georgia, serif;
 
   --color-brand: var(--brand);
@@ -118,6 +96,7 @@
   }
   
   body {
+    font-family: var(--font-hind), ui-sans-serif, system-ui, sans-serif !important;
     @apply bg-background text-foreground font-sans;
     font-weight: 500;
     letter-spacing: 0.012em;
@@ -157,7 +136,7 @@
   .text-left, .text-left * {
     text-align: left !important;
     text-align-last: left !important;
-    font-family: var(--font-serif), 'SolaimanLipi', sans-serif;
+    font-family: var(--font-serif), var(--font-hind), sans-serif;
     letter-spacing: -0.01em;
   }
 
@@ -434,7 +413,7 @@ html[data-theme]:not([data-theme="light"]) .text-green-800 { color: var(--greent
 .anim_flip-y { animation: anim_flip_y 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-flex; }
 
 @keyframes anim_cyber_glitch { 0%, 100% { transform: translate(0); } 20% { transform: translate(-3px, 2px); } 40% { transform: translate(3px, -2px); } 60% { transform: translate(-2px, -1px); } 80% { transform: translate(2px, 1px); } }
-.anim_cyber-glitch { animation: anim_cyber_glitch 2s infinite; display: inline-flex; }
+.anim_cyber-glitch { animation: anim_cyber-glitch 2s infinite; display: inline-flex; }
 
 @keyframes anim_smoke_fade { 0% { opacity: 0; filter: blur(14px); transform: scale(1.08); } 100% { opacity: 1; filter: blur(0); transform: scale(1); } }
 .anim_smoke-fade { animation: anim_smoke-fade 0.9s ease-out forwards; display: inline-flex; }
