@@ -37,7 +37,6 @@ import {
 import { cn } from '@/lib/utils'
 import { SectionHeading } from './section-heading'
 import { ClubReportsDialog } from './club-reports-dialog'
-import { UniversalMediaEmbed } from './universal-media-embed'
 
 export const clubIcons: Record<string, LucideIcon> = {
   megaphone: Megaphone,
@@ -189,10 +188,10 @@ export function ClubNews() {
     setAnimKey((k) => k + 1)
   }, [total])
 
-  // ⭐ নেভিগেশন বাটন: সামনে এবং পেছনে মসৃণভাবে যাওয়ার হ্যান্ডলার ⭐
+  // বাটন চেপে ডানে বা বামে ম্যানুয়াল নেভিগেশন (স্কয়ার কার্ডের সাথে মানানসই ৩০০px স্টেপ)
   const handleNext = () => {
     if (config.effect === 'continuous') {
-      setManualOffset((prev) => prev - 340)
+      setManualOffset((prev) => prev - 300)
     } else {
       nextSlide()
     }
@@ -200,7 +199,7 @@ export function ClubNews() {
 
   const handlePrev = () => {
     if (config.effect === 'continuous') {
-      setManualOffset((prev) => prev + 340)
+      setManualOffset((prev) => prev + 300)
     } else {
       prevSlide()
     }
@@ -241,7 +240,7 @@ export function ClubNews() {
     const absX = Math.abs(diffX)
     const absY = Math.abs(diffY)
 
-    if (absX >= 50 && absX > absY * 1.3) {
+    if (absX >= 45 && absX > absY * 1.3) {
       if (diffX < 0) handleNext()
       else handlePrev()
     }
@@ -250,7 +249,6 @@ export function ClubNews() {
     touchStartY.current = null
   }
 
-  // নিরবচ্ছিন্ন মসৃণ স্ক্রলের জন্য মাল্টিপল সেট
   const marqueeClubs = useMemo(() => {
     if (visible.length === 0) return []
     let arr = [...visible]
@@ -270,6 +268,7 @@ export function ClubNews() {
 
   const animDuration = `${config.anim_speed_ms || 600}ms`
 
+  // ⭐ কমপ্যাক্ট স্কয়ার শেপ কার্ড রেন্ডারার (আকার আগের অর্ধেক) ⭐
   const renderCard = (club: Club) => {
     const Icon = clubIcons[club.icon] || Star
     const raw = dbMap[club.id]
@@ -278,78 +277,103 @@ export function ClubNews() {
     return (
       <div
         id={`club-${club.id}`}
-        className="group relative flex flex-col justify-between rounded-3xl border border-slate-800/80 bg-gradient-to-b from-slate-900/95 via-slate-900/80 to-slate-950 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all duration-300 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-950/40 w-full min-w-0 overflow-hidden select-none"
+        className="group relative flex flex-col justify-between rounded-2xl border border-slate-800/80 bg-gradient-to-b from-slate-900/95 via-slate-900/80 to-slate-950 p-3.5 sm:p-4 shadow-xl backdrop-blur-md transition-all duration-300 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-950/40 w-full min-w-0 overflow-hidden select-none h-[345px] sm:h-[365px]"
       >
         <div>
-          <div className="flex items-start justify-between gap-3 border-b border-slate-800/60 pb-4">
+          {/* ১. লোগো ও ক্যাটাগরি ট্যাগ */}
+          <div className="flex items-center justify-between gap-2 border-b border-slate-800/60 pb-2">
             <div className="relative">
               {raw?.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={raw.logo_url}
                   alt={club.name}
-                  className="size-16 rounded-full object-cover ring-2 ring-emerald-500/40 p-0.5 bg-white shadow-md select-none pointer-events-none"
+                  className="size-9 sm:size-10 rounded-full object-cover ring-2 ring-emerald-500/40 p-0.5 bg-white shadow-md select-none pointer-events-none"
                   onError={(e) => {
                     ;(e.target as HTMLElement).style.display = 'none'
                   }}
                 />
               ) : (
-                <div className="size-16 rounded-full bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center text-white ring-2 ring-emerald-500/40 shadow-md">
-                  <Icon className="size-7 text-white" aria-hidden="true" />
+                <div className="size-9 sm:size-10 rounded-full bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center text-white ring-2 ring-emerald-500/40 shadow-md">
+                  <Icon className="size-4 sm:size-5 text-white" aria-hidden="true" />
                 </div>
               )}
-              <span className="absolute -bottom-1 -right-1 size-4 rounded-full bg-emerald-500 ring-2 ring-slate-900" title="সক্রিয় ক্যাম্পাস ক্লাব" />
+              <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-1 ring-slate-900" />
             </div>
 
-            <span className="rounded-full bg-emerald-950/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-400 border border-emerald-800/60 shadow-xs">
+            <span className="rounded-full bg-emerald-950/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400 border border-emerald-800/60 shadow-xs truncate max-w-[150px]">
               {club.tag}
             </span>
           </div>
 
-          <div className="mt-4">
-            <h3 className="font-serif text-lg sm:text-xl font-bold leading-snug text-white group-hover:text-emerald-400 transition-colors truncate">
+          {/* ২. ক্লাবের নাম (বাংলা ও ইংরেজি) */}
+          <div className="mt-2">
+            <h3 className="font-serif text-sm sm:text-base font-bold leading-tight text-white group-hover:text-emerald-400 transition-colors truncate">
               {club.nameBn || club.name}
             </h3>
             {club.nameBn && (
-              <p className="text-xs font-medium text-slate-400 truncate mt-0.5">{club.name}</p>
+              <p className="text-[10px] sm:text-[11px] font-medium text-slate-400 truncate mt-0.5">
+                {club.name}
+              </p>
             )}
           </div>
 
-          <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/80 p-4 space-y-2">
-            <div className="flex items-center justify-between text-[11px] border-b border-slate-800/80 pb-1.5">
-              <span className="font-bold text-emerald-400 flex items-center gap-1.5">
-                <Sparkles className="size-3.5 text-gold" />
+          {/* ৩. সাম্প্রতিক কার্যক্রম ও মিডিয়া বক্স (কমপ্যাক্ট স্কয়ার ফিট) */}
+          <div className="mt-2 rounded-xl border border-slate-800/90 bg-slate-950/80 p-2 space-y-1">
+            <div className="flex items-center justify-between text-[10px] border-b border-slate-800/60 pb-1">
+              <span className="font-bold text-emerald-400 flex items-center gap-1">
+                <Sparkles className="size-3 text-gold" />
                 <span>সাম্প্রতিক কার্যক্রম</span>
               </span>
               {club.date && (
-                <span className="text-slate-400 font-mono flex items-center gap-1 text-[10px]">
-                  <CalendarDays className="size-3 text-gold" /> {club.date}
+                <span className="text-slate-400 font-mono text-[9px]">
+                  {club.date}
                 </span>
               )}
             </div>
 
-            <p className="text-xs sm:text-sm leading-relaxed text-slate-300 line-clamp-3">
+            <p className="text-[10px] sm:text-[11px] leading-snug text-slate-300 line-clamp-1">
               {club.activityBn || club.activity}
             </p>
 
+            {/* কমপ্যাক্ট থাম্বনেইল প্রিভিউ */}
             {activityMediaList.length > 0 && (
-              <div className="pt-2 border-t border-slate-800/80 overflow-hidden rounded-xl">
-                <UniversalMediaEmbed url={activityMediaList[0].url} title={club.name} compact />
+              <div className="relative h-20 sm:h-22 w-full rounded-lg overflow-hidden bg-slate-900 border border-slate-800 mt-1">
+                {activityMediaList[0].url.includes('youtube') ||
+                activityMediaList[0].url.includes('facebook') ||
+                activityMediaList[0].url.includes('.mp4') ? (
+                  <div className="size-full flex items-center justify-center bg-slate-950 text-emerald-400 gap-1 text-[11px] font-semibold">
+                    <Play className="size-3.5 fill-emerald-400" />
+                    <span>ভিডিও ক্লিপ</span>
+                  </div>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={activityMediaList[0].url}
+                    alt=""
+                    loading="lazy"
+                    className="size-full object-cover select-none pointer-events-none"
+                    onError={(e) => {
+                      ;(e.target as HTMLElement).style.display = 'none'
+                    }}
+                  />
+                )}
               </div>
             )}
           </div>
         </div>
 
-        <div className="mt-5 space-y-3 pt-3 border-t border-slate-800/60">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
+        {/* ৪. সোশ্যাল লিংক, সদস্য সংখ্যা ও বাটন */}
+        <div className="mt-2 pt-2 border-t border-slate-800/60 space-y-2">
+          <div className="flex items-center justify-between gap-1 text-[10px]">
+            <div className="flex items-center gap-1">
               {raw?.fb_url && (
                 <a
                   href={safeExternalUrl(raw.fb_url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="size-7 rounded-lg bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white flex items-center justify-center transition shadow-xs text-[11px] font-bold"
-                  title="Facebook Page"
+                  className="size-5 sm:size-6 rounded bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white flex items-center justify-center transition text-[9px] font-bold"
+                  title="Facebook"
                 >
                   FB
                 </a>
@@ -359,8 +383,8 @@ export function ClubNews() {
                   href={safeExternalUrl(raw.yt_url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="size-7 rounded-lg bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white flex items-center justify-center transition shadow-xs text-[11px] font-bold"
-                  title="YouTube Channel"
+                  className="size-5 sm:size-6 rounded bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white flex items-center justify-center transition text-[9px] font-bold"
+                  title="YouTube"
                 >
                   YT
                 </a>
@@ -370,17 +394,17 @@ export function ClubNews() {
                   href={safeExternalUrl(raw.web_url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="size-7 rounded-lg bg-slate-800 hover:bg-emerald-600 text-slate-300 hover:text-white flex items-center justify-center transition shadow-xs"
-                  title="Official Website"
+                  className="size-5 sm:size-6 rounded bg-slate-800 hover:bg-emerald-600 text-slate-300 hover:text-white flex items-center justify-center transition"
+                  title="Website"
                 >
-                  <Globe className="size-3.5" />
+                  <Globe className="size-2.5 sm:size-3" />
                 </a>
               )}
             </div>
 
             {raw?.committee_members && raw.committee_members.length > 0 && (
-              <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
-                <Users className="size-3.5 text-emerald-400" />
+              <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                <Users className="size-3 text-emerald-400" />
                 <span>{raw.committee_members.length} জন</span>
               </span>
             )}
@@ -389,11 +413,11 @@ export function ClubNews() {
           <button
             type="button"
             onClick={() => handleOpenClub(club)}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-950/60 transition-all active:scale-[0.98] cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 py-1.5 sm:py-2 text-xs font-bold text-white shadow-md transition active:scale-[0.98] cursor-pointer"
           >
-            <FileText className="size-4" />
+            <FileText className="size-3.5" />
             <span>প্রতিবেদন ও কমিটি দেখুন</span>
-            <ArrowRight className="size-3.5" />
+            <ArrowRight className="size-3" />
           </button>
         </div>
       </div>
@@ -403,11 +427,10 @@ export function ClubNews() {
   return (
     <section
       id="club-news"
-      className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-16 sm:py-24"
+      className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-12 sm:py-16"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))]" />
 
-      {/* ⭐ খাঁটি সিএসএস জিপিইউ ইঞ্জিন: ১০০% স্বয়ংক্রিয় মসৃণ চলাচল নিশ্চিত করে ⭐ */}
       <style>{`
         @keyframes continuous_marquee_glide {
           0% { transform: translateX(0); }
@@ -432,26 +455,8 @@ export function ClubNews() {
         }
         .anim_left-to-right { animation: tr_left_to_right ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-        @keyframes tr_bottom_to_top {
-          0% { transform: translateY(35px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
-        }
-        .anim_bottom-to-top { animation: tr_bottom_to_top ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-        @keyframes tr_top_to_bottom {
-          0% { transform: translateY(-35px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
-        }
-        .anim_top-to-bottom { animation: tr_top_to_bottom ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
-
         @keyframes tr_fade { 0% { opacity: 0; } 100% { opacity: 1; } }
         .anim_effect_fade { animation: tr_fade ${animDuration} ease-in-out both; }
-
-        @keyframes tr_zoom { 0% { transform: scale(0.92); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        .anim_effect_zoom { animation: tr_zoom ${animDuration} cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-
-        @keyframes tr_flip { 0% { transform: perspective(700px) rotateY(25deg); opacity: 0; } 100% { transform: perspective(700px) rotateY(0deg); opacity: 1; } }
-        .anim_effect_flip { animation: tr_flip ${animDuration} cubic-bezier(0.16, 1, 0.3, 1) both; }
       `}</style>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -463,7 +468,7 @@ export function ClubNews() {
           subtitle="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের সাম্প্রতিক অর্জন, কার্যক্রম এবং পূর্ণাঙ্গ পরিচিতি।"
         />
 
-        <div className="mb-8 flex gap-2 overflow-x-auto pb-2 scrollbar-none" role="group">
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none" role="group">
           {tags.map((tag) => (
             <button
               key={tag}
@@ -475,14 +480,14 @@ export function ClubNews() {
                 setAnimKey((k) => k + 1)
               }}
               className={cn(
-                'shrink-0 rounded-full border px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer flex items-center gap-1.5',
+                'shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center gap-1.5',
                 filter === tag
                   ? 'border-emerald-500 bg-emerald-600 text-white shadow-lg shadow-emerald-950/60 font-bold'
                   : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700 hover:text-white',
               )}
             >
               <span>{tag === 'All' ? 'সব ক্লাব' : tag}</span>
-              <span className={cn('text-[11px] px-1.5 py-0.2 rounded-full', filter === tag ? 'bg-emerald-800 text-white' : 'bg-slate-800 text-slate-400')}>
+              <span className={cn('text-[10px] px-1.5 py-0.2 rounded-full', filter === tag ? 'bg-emerald-800 text-white' : 'bg-slate-800 text-slate-400')}>
                 {tag === 'All' ? list.length : list.filter((c) => c.tag === tag).length}
               </span>
             </button>
@@ -499,7 +504,7 @@ export function ClubNews() {
         >
           {total > 0 ? (
             config.effect === 'continuous' ? (
-              /* ⭐ স্বয়ংক্রিয়ভাবে ভিডিওর মতো স্ক্রল হবে + নেভিগেশন চাপলে তাৎক্ষণিক সামনে/পিছে যাবে ⭐ */
+              /* ⭐ কমপ্যাক্ট স্কয়ার কার্ড ট্র‍্যাক ⭐ */
               <div className="py-2 overflow-hidden w-full select-none">
                 <div
                   style={{
@@ -508,7 +513,7 @@ export function ClubNews() {
                   }}
                 >
                   <div
-                    className="anim_marquee_track flex gap-6"
+                    className="anim_marquee_track flex gap-4 sm:gap-5"
                     style={{
                       animationDuration: `${Math.max(16, (config.duration_sec || 4) * 8)}s`,
                       animationDirection: config.direction === 'left-to-right' ? 'reverse' : 'normal',
@@ -516,7 +521,7 @@ export function ClubNews() {
                     }}
                   >
                     {marqueeClubs.map((club, idx) => (
-                      <div key={`${club.id}_${idx}`} className="w-[290px] sm:w-[340px] shrink-0">
+                      <div key={`${club.id}_${idx}`} className="w-[270px] sm:w-[295px] shrink-0">
                         {renderCard(club)}
                       </div>
                     ))}
@@ -524,89 +529,85 @@ export function ClubNews() {
                 </div>
               </div>
             ) : (
-              /* সাধারণ গ্রিড ট্রানজিশন মোড */
+              /* সাধারণ গ্রিড মোড */
               <div
                 key={animKey}
                 className={cn(
-                  "grid gap-6 w-full min-w-0",
-                  cardsCount === 1 ? "grid-cols-1 max-w-lg mx-auto" :
-                  cardsCount === 2 ? "grid-cols-1 md:grid-cols-2" :
-                  cardsCount === 3 ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" :
-                  "grid-cols-1 md:grid-cols-2 lg:grid-cols-4",
-                  config.effect === 'fade' ? 'anim_effect_fade' :
-                  config.effect === 'zoom' ? 'anim_effect_zoom' :
-                  config.effect === 'flip' ? 'anim_effect_flip' :
-                  `anim_${config.direction || 'right-to-left'}`
+                  "grid gap-4 w-full min-w-0",
+                  cardsCount === 1 ? "grid-cols-1 max-w-xs mx-auto" :
+                  cardsCount === 2 ? "grid-cols-1 sm:grid-cols-2" :
+                  cardsCount === 3 ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" :
+                  "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
+                  config.effect === 'fade' ? 'anim_effect_fade' : `anim_${config.direction || 'right-to-left'}`
                 )}
               >
                 {displayedClubs.map((club) => renderCard(club))}
               </div>
             )
           ) : (
-            <p className="text-center text-sm text-slate-400 py-12 bg-slate-900/50 rounded-2xl border border-slate-800">
+            <p className="text-center text-xs text-slate-400 py-10 bg-slate-900/50 rounded-2xl border border-slate-800">
               কোনো ক্লাব পাওয়া যায়নি।
             </p>
           )}
 
-          {/* ⭐ ১. দুই পাশের বড় ফ্লোটিং নেভিগেশন তীর বাটন (Floating Side Arrows) ⭐ */}
+          {/* বড় ফ্লোটিং সাইড নেভিগেশন বাটন */}
           {total > 1 && config.enabled && (
             <>
               <button
                 type="button"
                 onClick={handlePrev}
                 aria-label="Previous Club"
-                className="absolute -left-2 sm:left-2 top-1/2 -translate-y-1/2 z-30 size-11 sm:size-12 rounded-full bg-slate-950/90 hover:bg-emerald-600 text-white flex items-center justify-center transition-all border border-slate-700 shadow-2xl cursor-pointer active:scale-95"
+                className="absolute -left-2 sm:left-2 top-1/2 -translate-y-1/2 z-30 size-10 sm:size-11 rounded-full bg-slate-950/90 hover:bg-emerald-600 text-white flex items-center justify-center transition-all border border-slate-700 shadow-2xl cursor-pointer active:scale-95"
               >
-                <ChevronLeft className="size-6 text-white" />
+                <ChevronLeft className="size-5 sm:size-6 text-white" />
               </button>
 
               <button
                 type="button"
                 onClick={handleNext}
                 aria-label="Next Club"
-                className="absolute -right-2 sm:right-2 top-1/2 -translate-y-1/2 z-30 size-11 sm:size-12 rounded-full bg-slate-950/90 hover:bg-emerald-600 text-white flex items-center justify-center transition-all border border-slate-700 shadow-2xl cursor-pointer active:scale-95"
+                className="absolute -right-2 sm:right-2 top-1/2 -translate-y-1/2 z-30 size-10 sm:size-11 rounded-full bg-slate-950/90 hover:bg-emerald-600 text-white flex items-center justify-center transition-all border border-slate-700 shadow-2xl cursor-pointer active:scale-95"
               >
-                <ChevronRight className="size-6 text-white" />
+                <ChevronRight className="size-5 sm:size-6 text-white" />
               </button>
             </>
           )}
 
-          {/* ⭐ ২. নিচে স্থায়ী কন্ট্রোল ও নেভিগেশন কি বার ⭐ */}
+          {/* নিচে স্থায়ী কন্ট্রোল বার */}
           {total > 1 && config.enabled && (
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-slate-800/80 pt-5">
-              <div className="flex items-center gap-2.5">
-                <span className="text-xs font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
-                  <Sparkles className="size-3.5 text-gold" />
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/80 pt-4">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-sm">
+                  <Sparkles className="size-3 text-gold" />
                   <span>ক্যাম্পাস ক্লাব ({total}টি)</span>
                 </span>
 
                 <button
                   type="button"
                   onClick={() => setIsPaused(!isPaused)}
-                  className="h-8 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-1.5 text-xs font-bold transition border border-slate-800 cursor-pointer shadow-xs active:scale-95"
+                  className="h-7 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-1 text-[11px] font-bold transition border border-slate-800 cursor-pointer shadow-xs active:scale-95"
                 >
-                  {isPaused ? <Play className="size-3.5 text-emerald-400" /> : <Pause className="size-3.5 text-gold" />}
+                  {isPaused ? <Play className="size-3 text-emerald-400" /> : <Pause className="size-3 text-gold" />}
                   <span>{isPaused ? 'চালান' : 'থামান'}</span>
                 </button>
               </div>
 
-              {/* ম্যানুয়াল সামনে ও পেছনের নেভিগেশন কি */}
-              <div className="flex items-center gap-2 ml-auto">
+              <div className="flex items-center gap-1.5 ml-auto">
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white flex items-center gap-1.5 text-xs font-bold transition border border-slate-700 cursor-pointer active:scale-95 shadow-md"
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white flex items-center gap-1 text-[11px] font-bold transition border border-slate-700 cursor-pointer active:scale-95 shadow-md"
                 >
-                  <ChevronLeft className="size-4" />
+                  <ChevronLeft className="size-3.5" />
                   <span>আগেরটি</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white flex items-center gap-1.5 text-xs font-bold transition border border-slate-700 cursor-pointer active:scale-95 shadow-md"
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white flex items-center gap-1 text-[11px] font-bold transition border border-slate-700 cursor-pointer active:scale-95 shadow-md"
                 >
                   <span>পরেরটি</span>
-                  <ChevronRight className="size-4" />
+                  <ChevronRight className="size-3.5" />
                 </button>
               </div>
             </div>
