@@ -48,7 +48,6 @@ function formatUrl(u?: string | null): string | null {
   return `https://${t}`
 }
 
-// মোবাইলের জন্য নিরাপদ ইমেজ প্রসেসর
 async function safeShrink(file: File): Promise<Blob> {
   try {
     if (!file.type.startsWith("image/")) return file
@@ -96,12 +95,10 @@ export default function ClubManager({ token }: { token: string }) {
   const [list, setList] = useState<ClubItem[]>([])
   const [editId, setEditId] = useState<string | null>(null)
 
-  // স্লাইডার কনফিগারেশন স্টেট
   const [sliderCfg, setSliderCfg] = useState<ClubCarouselConfig>(DEFAULT_CLUB_CAROUSEL_CONFIG)
   const [sliderBusy, setSliderBusy] = useState(false)
   const [sliderMsg, setSliderMsg] = useState("")
 
-  // ক্লাব ফিল্ডসমূহ
   const [name, setName] = useState("")
   const [nameBn, setNameBn] = useState("")
   const [tag, setTag] = useState("Social")
@@ -115,11 +112,9 @@ export default function ClubManager({ token }: { token: string }) {
   const [webUrl, setWebUrl] = useState("")
   const [contactInfo, setContactInfo] = useState("")
 
-  // লগো ছবি
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
 
-  // কভার ফটো (Facebook Cover)
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
   const [coverFile, setCoverFile] = useState<File | null>(null)
 
@@ -173,13 +168,11 @@ export default function ClubManager({ token }: { token: string }) {
     setCoverUrl(c.cover_url || null)
     setCoverFile(null)
 
-    // অ্যাক্টিভিটি মিডিয়া উদ্ধার
     setActivityMediaList(parseActivityMedia(c.embed_media_url))
     setCommitteeTerm(c.committee_term || "")
     setMembers(c.committee_members || [])
     setReportsTitle(c.reports_title || "ক্লাব প্রতিবেদন / Club Reports")
 
-    // পুরোনো রিপোর্টের ভেতরের মিডিয়া থাকলে তাও উদ্ধার করা
     const normalizedReports: ClubReportItem[] = (c.reports || []).map((r) => {
       let mList = r.media_items || []
       if ((!mList || mList.length === 0) && r.embed_media_url) {
@@ -196,7 +189,6 @@ export default function ClubManager({ token }: { token: string }) {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  // কার্যক্রমের মিডিয়া হ্যান্ডলার
   function addActivityMedia() {
     setActivityMediaList([...activityMediaList, { title: "", subtitle: "", description: "", url: "" }])
   }
@@ -209,7 +201,6 @@ export default function ClubManager({ token }: { token: string }) {
     setActivityMediaList(activityMediaList.filter((_, i) => i !== index))
   }
 
-  // আনলিমিটেড অ্যাক্টিভিটি মিডিয়া ব্যাচ আপলোড
   async function batchUploadActivityFiles(files: File[]) {
     if (files.length === 0) return
     setBusy(true)
@@ -262,7 +253,6 @@ export default function ClubManager({ token }: { token: string }) {
     }
   }
 
-  // কমিটি হ্যান্ডলার
   function addMember() {
     setMembers([...members, { name: "", role: "", photo_url: "" }])
   }
@@ -285,7 +275,6 @@ export default function ClubManager({ token }: { token: string }) {
     setMembers(members.filter((_, i) => i !== index))
   }
 
-  // প্রতিবেদন হ্যান্ডলার
   function addReport() {
     setReports([
       ...reports,
@@ -607,12 +596,14 @@ export default function ClubManager({ token }: { token: string }) {
             </div>
           </div>
 
+          {/* ⭐ নতুন অ্যানিমেশন ইফেক্ট: ভিডিওর মতো নিরবচ্ছিন্ন স্মুথ স্ক্রল যুক্ত করা হলো ⭐ */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-700 block">
               ২. ট্রানজিশনের অ্যানিমেশন ইফেক্ট (Animation Effect):
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
               {[
+                { key: "continuous", label: "🌊 নিরবচ্ছিন্ন স্মুথ স্ক্রল (ভিডিওর মতো)" },
                 { key: "slide", label: "স্মুথ স্লাইড (Slide)" },
                 { key: "fade", label: "সফট ফেড (Soft Fade)" },
                 { key: "zoom", label: "জুম পপ (Zoom Pop)" },
@@ -632,12 +623,17 @@ export default function ClubManager({ token }: { token: string }) {
                 </button>
               ))}
             </div>
+            {sliderCfg.effect === "continuous" && (
+              <p className="text-[11px] text-green-700 font-semibold bg-green-50 p-2 rounded-lg border border-green-200 mt-1">
+                💡 ভিডিওতে যেভাবে জুতার কার্ডগুলো গড়িয়ে চলছিল, সেভাবে ক্লাবগুলো কোনো থামা ছাড়াই নিরবচ্ছিন্নভাবে ডান থেকে বামে স্ক্রল করবে।
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border text-xs">
             <div className="space-y-1">
               <div className="flex justify-between items-center">
-                <span className="font-semibold text-gray-700">⏱️ প্রতিটি স্লাইডের বিরতি:</span>
+                <span className="font-semibold text-gray-700">⏱️ স্ক্রলের গতি ও বিরতি:</span>
                 <span className="font-bold text-green-800 bg-green-100 px-2 py-0.5 rounded">
                   {sliderCfg.duration_sec} সেকেন্ড
                 </span>
@@ -769,7 +765,6 @@ export default function ClubManager({ token }: { token: string }) {
               <span>হোমপেজে এই ক্লাবটি সক্রিয় (Active) রাখুন</span>
             </label>
 
-            {/* লগো আপলোড */}
             <div className="rounded-2xl border-2 border-emerald-200 p-3.5 bg-emerald-50/40 space-y-2">
               <label className="block text-xs font-bold text-emerald-950">
                 🖼️ ক্লাবের লগো / অফিসিয়াল ছবি:
@@ -802,7 +797,6 @@ export default function ClubManager({ token }: { token: string }) {
               )}
             </div>
 
-            {/* কভার ফটো আপলোড (Facebook Page Cover) */}
             <div className="rounded-2xl border-2 border-blue-200 p-3.5 bg-blue-50/40 space-y-2">
               <label className="block text-xs font-bold text-blue-950">
                 🏞️ ক্লাবের কভার ফটো (Facebook Page Cover):
@@ -839,7 +833,6 @@ export default function ClubManager({ token }: { token: string }) {
             <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ বা সাম্প্রতিক কার্যক্রম (বাংলা)" value={activityBn} onChange={(e) => setActivityBn(e.target.value)} />
             <input className={inp} placeholder="কার্যক্রমের তারিখ (যেমন: 27 Oct 2026)" value={date} onChange={(e) => setDate(e.target.value)} />
 
-            {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া */}
             <div className="space-y-3 rounded-2xl border-2 border-blue-200 bg-blue-50/50 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
@@ -852,7 +845,7 @@ export default function ClubManager({ token }: { token: string }) {
                 <div className="flex items-center gap-1.5 shrink-0">
                   <label className="text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl px-3 py-1.5 shadow flex items-center gap-1 cursor-pointer">
                     <Upload className="size-3.5" />
-                    <span>📁 একসাথে একাধিক ফাইল যোগ (আনলিমিটেড)</span>
+                    <span>📁 একাধিক ফাইল যোগ</span>
                     <input
                       type="file"
                       accept="image/*,video/*"
@@ -890,7 +883,7 @@ export default function ClubManager({ token }: { token: string }) {
                       className="text-red-600 font-bold hover:underline cursor-pointer flex items-center gap-1 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded-lg border border-red-200"
                     >
                       <Trash2 className="size-3.5" />
-                      <span>মুছুন / বাদ দিন</span>
+                      <span>মুছুন</span>
                     </button>
                   </div>
 
@@ -949,7 +942,7 @@ export default function ClubManager({ token }: { token: string }) {
                       onChange={(e) => updateActivityMedia(idx, "url", e.target.value)}
                     />
                     <div className="flex items-center gap-2 pt-1">
-                      <span className="text-[10px] text-gray-500">ফাইল পরিবর্তন করতে চান?:</span>
+                      <span className="text-[10px] text-gray-500">ফাইল পরিবর্তন:</span>
                       <input
                         type="file"
                         accept="image/*,video/*"
@@ -963,12 +956,6 @@ export default function ClubManager({ token }: { token: string }) {
                   </div>
                 </div>
               ))}
-
-              {activityMediaList.length === 0 && (
-                <p className="text-xs text-gray-500 text-center py-3 bg-white/80 rounded-xl border border-dashed border-blue-200">
-                  এখনো কোনো কার্যক্রমের মিডিয়া যুক্ত করা হয়নি। উপরে <b>"ফাইল যোগ"</b> বা <b>"লিংক বক্স"</b> চাপুন।
-                </p>
-              )}
             </div>
 
             <div className="space-y-2 border-t pt-2">
@@ -1026,12 +1013,10 @@ export default function ClubManager({ token }: { token: string }) {
               ))}
             </div>
 
-            {/* ক্লাব প্রতিবেদন / Reports */}
             <div className="rounded-2xl border p-3.5 bg-gray-50 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-gray-800">ক্লাব প্রতিবেদন / Reports ({reports.length}টি):</p>
-                  <p className="text-[11px] text-gray-500">প্রতিবেদনে শিরোনাম, বিস্তারিত এবং ছবি/ভিডিও লিংক দেওয়া যাবে।</p>
                 </div>
                 <button
                   type="button"
@@ -1064,7 +1049,7 @@ export default function ClubManager({ token }: { token: string }) {
                       className="text-xs text-red-600 font-bold hover:underline cursor-pointer flex items-center gap-1 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg border border-red-200"
                     >
                       <Trash2 className="size-3.5" />
-                      <span>সম্পূর্ণ প্রতিবেদন ডিলিট</span>
+                      <span>মুছুন</span>
                     </button>
                   </div>
 
@@ -1086,7 +1071,7 @@ export default function ClubManager({ token }: { token: string }) {
                       <div className="flex items-center gap-1.5">
                         <label className="text-[11px] bg-emerald-700 hover:bg-emerald-800 text-white px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow cursor-pointer">
                           <Upload className="size-3" />
-                          <span>📁 একাধিক ফাইল যোগ (আনলিমিটেড)</span>
+                          <span>📁 ফাইল যোগ</span>
                           <input
                             type="file"
                             accept="image/*,video/*"
@@ -1121,7 +1106,7 @@ export default function ClubManager({ token }: { token: string }) {
                             className="text-[11px] text-red-600 font-bold hover:underline cursor-pointer flex items-center gap-1 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded border border-red-200"
                           >
                             <Trash2 className="size-3" />
-                            <span>মুছুন / বাদ দিন</span>
+                            <span>মুছুন</span>
                           </button>
                         </div>
 
@@ -1170,21 +1155,9 @@ export default function ClubManager({ token }: { token: string }) {
                         </div>
                       </div>
                     ))}
-
-                    {(!r.media_items || r.media_items.length === 0) && (
-                      <p className="text-xs text-gray-400 text-center py-2 italic bg-white/70 rounded-lg">
-                        এই প্রতিবেদনে এখনো কোনো মিডিয়া নেই। উপরে ফাইল বা লিংক যোগ করুন।
-                      </p>
-                    )}
                   </div>
                 </div>
               ))}
-
-              {reports.length === 0 && (
-                <p className="text-xs text-gray-400 text-center py-3 bg-white rounded-xl border border-dashed">
-                  বর্তমানে কোনো প্রতিবেদন যোগ করা নেই।
-                </p>
-              )}
             </div>
 
             <input className={inp} placeholder="যোগাযোগের ইমেইল / ফোন (ঐচ্ছিক)" value={contactInfo} onChange={(e) => setContactInfo(e.target.value)} />
@@ -1196,7 +1169,6 @@ export default function ClubManager({ token }: { token: string }) {
             {msg && <p className="text-xs font-bold text-center text-green-800 bg-green-50 p-2.5 rounded-xl border border-green-200">{msg}</p>}
           </div>
 
-          {/* ক্লাব তালিকা */}
           <div className="space-y-3">
             <h2 className="font-semibold text-base text-gray-800">বর্তমান ক্লাবসমূহ ({list.length})</h2>
 
