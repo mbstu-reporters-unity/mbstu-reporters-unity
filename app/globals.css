@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-hind), 'SolaimanLipi', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-hind), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-noto-serif), Georgia, serif;
 
   --color-brand: var(--brand);
@@ -97,7 +97,7 @@
   
   body {
     font-family: var(--font-hind), ui-sans-serif, system-ui, sans-serif !important;
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
     font-weight: 500;
     letter-spacing: 0.012em;
     line-height: 1.65;
@@ -344,7 +344,6 @@ html[data-theme]:not([data-theme="light"]) .text-green-800 { color: var(--greent
 
 @keyframes heroTimer { from { width: 0%; } to { width: 100%; } }
 
-/* হিরো স্লাইডার ট্রানজিশন */
 @keyframes tr_slide_left { 0% { transform: translateX(70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 .tr_slide-left { animation: tr_slide_left 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
@@ -390,7 +389,7 @@ html[data-theme]:not([data-theme="light"]) .text-green-800 { color: var(--greent
 @keyframes tr_elastic { 0% { transform: scale(0.7); opacity: 0; } 65% { transform: scale(1.03); opacity: 1; } 85% { transform: scale(0.98); } 100% { transform: scale(1); opacity: 1; } }
 .tr_elastic { animation: tr_elastic 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
-/* টেক্সট ও টাইটেল অ্যানিমেশনসমূহ */
+/* টেক্সট অ্যানিমেশন */
 @keyframes anim_fade_up { 0% { opacity: 0; transform: translateY(22px); } 100% { opacity: 1; transform: translateY(0); } }
 .anim_fade-up { animation: anim_fade_up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
 
@@ -424,7 +423,7 @@ html[data-theme]:not([data-theme="light"]) .text-green-800 { color: var(--greent
 @keyframes anim_slide_right { 0% { opacity: 0; transform: translateX(-60px); } 100% { opacity: 1; transform: translateX(0); } }
 .anim_slide-right { animation: anim_slide_right 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
 
-/* ব্রেকিং টিকার ও বেজ অ্যানিমেশনসমূহ */
+/* টিকার অ্যানিমেশন */
 @keyframes anim_pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.18); opacity: 0.82; } }
 .anim_pulse { animation: anim_pulse 1.4s ease-in-out infinite; display: inline-flex; }
 
