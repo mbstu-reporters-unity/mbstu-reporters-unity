@@ -188,7 +188,6 @@ export function ClubNews() {
     setAnimKey((k) => k + 1)
   }, [total])
 
-  // বাটন চেপে ডানে বা বামে ম্যানুয়াল নেভিগেশন (স্কয়ার কার্ডের সাথে মানানসই ৩০০px স্টেপ)
   const handleNext = () => {
     if (config.effect === 'continuous') {
       setManualOffset((prev) => prev - 300)
@@ -205,7 +204,6 @@ export function ClubNews() {
     }
   }
 
-  // সাধারণ মোডের টাইমার
   useEffect(() => {
     if (!config.enabled || config.effect === 'continuous' || isPaused || total <= 1) return
 
@@ -217,7 +215,6 @@ export function ClubNews() {
     return () => clearInterval(timer)
   }, [config.enabled, config.duration_sec, config.effect, total, isPaused, nextSlide])
 
-  // টাচ সোয়াইপ
   const handleTouchStart = (e: React.TouchEvent) => {
     if (config.pause_on_hover) setIsPaused(true)
     touchStartX.current = e.touches[0].clientX
@@ -268,7 +265,7 @@ export function ClubNews() {
 
   const animDuration = `${config.anim_speed_ms || 600}ms`
 
-  // ⭐ কমপ্যাক্ট স্কয়ার শেপ কার্ড রেন্ডারার (আকার আগের অর্ধেক) ⭐
+  {/* ⭐ লিকুইড গ্লাস (Liquid Glass) কার্ড রেন্ডারার ⭐ */}
   const renderCard = (club: Club) => {
     const Icon = clubIcons[club.icon] || Star
     const raw = dbMap[club.id]
@@ -277,73 +274,76 @@ export function ClubNews() {
     return (
       <div
         id={`club-${club.id}`}
-        className="group relative flex flex-col justify-between rounded-2xl border border-slate-800/80 bg-gradient-to-b from-slate-900/95 via-slate-900/80 to-slate-950 p-3.5 sm:p-4 shadow-xl backdrop-blur-md transition-all duration-300 hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-950/40 w-full min-w-0 overflow-hidden select-none h-[345px] sm:h-[365px]"
+        className="group relative flex flex-col justify-between rounded-3xl border border-white/30 bg-white/[0.14] p-3.5 sm:p-4 shadow-[0_8px_32px_0_rgba(0,15,60,0.35)] backdrop-blur-2xl transition-all duration-300 hover:border-cyan-300/70 hover:bg-white/[0.22] hover:shadow-[0_12px_40px_0_rgba(0,210,255,0.35)] w-full min-w-0 overflow-hidden select-none h-[345px] sm:h-[365px]"
+        style={{
+          boxShadow: 'inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.45), 0 12px 30px -4px rgba(0, 15, 60, 0.4)',
+        }}
       >
         <div>
-          {/* ১. লোগো ও ক্যাটাগরি ট্যাগ */}
-          <div className="flex items-center justify-between gap-2 border-b border-slate-800/60 pb-2">
+          {/* ১. লোগো ও গ্লাস ট্যাগ */}
+          <div className="flex items-center justify-between gap-2 border-b border-white/20 pb-2">
             <div className="relative">
               {raw?.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={raw.logo_url}
                   alt={club.name}
-                  className="size-9 sm:size-10 rounded-full object-cover ring-2 ring-emerald-500/40 p-0.5 bg-white shadow-md select-none pointer-events-none"
+                  className="size-9 sm:size-10 rounded-full object-cover ring-2 ring-white/60 p-0.5 bg-white shadow-md select-none pointer-events-none"
                   onError={(e) => {
                     ;(e.target as HTMLElement).style.display = 'none'
                   }}
                 />
               ) : (
-                <div className="size-9 sm:size-10 rounded-full bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center text-white ring-2 ring-emerald-500/40 shadow-md">
+                <div className="size-9 sm:size-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white ring-2 ring-white/60 shadow-md">
                   <Icon className="size-4 sm:size-5 text-white" aria-hidden="true" />
                 </div>
               )}
-              <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-1 ring-slate-900" />
+              <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-cyan-400 ring-1 ring-white" />
             </div>
 
-            <span className="rounded-full bg-emerald-950/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400 border border-emerald-800/60 shadow-xs truncate max-w-[150px]">
+            <span className="rounded-full bg-white/20 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white border border-white/35 shadow-xs truncate max-w-[150px]">
               {club.tag}
             </span>
           </div>
 
-          {/* ২. ক্লাবের নাম (বাংলা ও ইংরেজি) */}
+          {/* ২. ক্লাবের নাম */}
           <div className="mt-2">
-            <h3 className="font-serif text-sm sm:text-base font-bold leading-tight text-white group-hover:text-emerald-400 transition-colors truncate">
+            <h3 className="font-serif text-sm sm:text-base font-bold leading-tight text-white group-hover:text-cyan-200 transition-colors truncate drop-shadow-sm">
               {club.nameBn || club.name}
             </h3>
             {club.nameBn && (
-              <p className="text-[10px] sm:text-[11px] font-medium text-slate-400 truncate mt-0.5">
+              <p className="text-[10px] sm:text-[11px] font-medium text-cyan-100/80 truncate mt-0.5">
                 {club.name}
               </p>
             )}
           </div>
 
-          {/* ৩. সাম্প্রতিক কার্যক্রম ও মিডিয়া বক্স (কমপ্যাক্ট স্কয়ার ফিট) */}
-          <div className="mt-2 rounded-xl border border-slate-800/90 bg-slate-950/80 p-2 space-y-1">
-            <div className="flex items-center justify-between text-[10px] border-b border-slate-800/60 pb-1">
-              <span className="font-bold text-emerald-400 flex items-center gap-1">
-                <Sparkles className="size-3 text-gold" />
+          {/* ৩. সাম্প্রতিক কার্যক্রম ও মিডিয়া বক্স (ফ্রস্টেড গ্লাস ডিজাইন) */}
+          <div className="mt-2 rounded-2xl border border-white/20 bg-white/[0.08] backdrop-blur-md p-2 space-y-1 shadow-inner">
+            <div className="flex items-center justify-between text-[10px] border-b border-white/15 pb-1">
+              <span className="font-bold text-cyan-200 flex items-center gap-1">
+                <Sparkles className="size-3 text-yellow-300" />
                 <span>সাম্প্রতিক কার্যক্রম</span>
               </span>
               {club.date && (
-                <span className="text-slate-400 font-mono text-[9px]">
-                  {club.date}
+                <span className="text-white/80 font-mono text-[9px] flex items-center gap-0.5">
+                  <CalendarDays className="size-2.5 text-cyan-300" /> {club.date}
                 </span>
               )}
             </div>
 
-            <p className="text-[10px] sm:text-[11px] leading-snug text-slate-300 line-clamp-1">
+            <p className="text-[10px] sm:text-[11px] leading-snug text-white/95 line-clamp-1">
               {club.activityBn || club.activity}
             </p>
 
-            {/* কমপ্যাক্ট থাম্বনেইল প্রিভিউ */}
+            {/* থাম্বনেইল */}
             {activityMediaList.length > 0 && (
-              <div className="relative h-20 sm:h-22 w-full rounded-lg overflow-hidden bg-slate-900 border border-slate-800 mt-1">
+              <div className="relative h-20 sm:h-22 w-full rounded-xl overflow-hidden bg-black/40 border border-white/20 mt-1">
                 {activityMediaList[0].url.includes('youtube') ||
                 activityMediaList[0].url.includes('facebook') ||
                 activityMediaList[0].url.includes('.mp4') ? (
-                  <div className="size-full flex items-center justify-center bg-slate-950 text-emerald-400 gap-1 text-[11px] font-semibold">
-                    <Play className="size-3.5 fill-emerald-400" />
+                  <div className="size-full flex items-center justify-center bg-blue-950/80 text-cyan-300 gap-1 text-[11px] font-semibold">
+                    <Play className="size-3.5 fill-cyan-400" />
                     <span>ভিডিও ক্লিপ</span>
                   </div>
                 ) : (
@@ -363,8 +363,8 @@ export function ClubNews() {
           </div>
         </div>
 
-        {/* ৪. সোশ্যাল লিংক, সদস্য সংখ্যা ও বাটন */}
-        <div className="mt-2 pt-2 border-t border-slate-800/60 space-y-2">
+        {/* ৪. সোশ্যাল লিংক ও লিকুইড গ্লাস বাটন */}
+        <div className="mt-2 pt-2 border-t border-white/20 space-y-2">
           <div className="flex items-center justify-between gap-1 text-[10px]">
             <div className="flex items-center gap-1">
               {raw?.fb_url && (
@@ -372,7 +372,7 @@ export function ClubNews() {
                   href={safeExternalUrl(raw.fb_url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="size-5 sm:size-6 rounded bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white flex items-center justify-center transition text-[9px] font-bold"
+                  className="size-5 sm:size-6 rounded-lg bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition text-[9px] font-bold border border-white/25 backdrop-blur"
                   title="Facebook"
                 >
                   FB
@@ -383,7 +383,7 @@ export function ClubNews() {
                   href={safeExternalUrl(raw.yt_url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="size-5 sm:size-6 rounded bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white flex items-center justify-center transition text-[9px] font-bold"
+                  className="size-5 sm:size-6 rounded-lg bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition text-[9px] font-bold border border-white/25 backdrop-blur"
                   title="YouTube"
                 >
                   YT
@@ -394,7 +394,7 @@ export function ClubNews() {
                   href={safeExternalUrl(raw.web_url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="size-5 sm:size-6 rounded bg-slate-800 hover:bg-emerald-600 text-slate-300 hover:text-white flex items-center justify-center transition"
+                  className="size-5 sm:size-6 rounded-lg bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition border border-white/25 backdrop-blur"
                   title="Website"
                 >
                   <Globe className="size-2.5 sm:size-3" />
@@ -403,8 +403,8 @@ export function ClubNews() {
             </div>
 
             {raw?.committee_members && raw.committee_members.length > 0 && (
-              <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
-                <Users className="size-3 text-emerald-400" />
+              <span className="text-[10px] text-white/90 font-semibold flex items-center gap-1 bg-white/15 px-2 py-0.5 rounded-full border border-white/20">
+                <Users className="size-3 text-cyan-300" />
                 <span>{raw.committee_members.length} জন</span>
               </span>
             )}
@@ -413,7 +413,7 @@ export function ClubNews() {
           <button
             type="button"
             onClick={() => handleOpenClub(club)}
-            className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 py-1.5 sm:py-2 text-xs font-bold text-white shadow-md transition active:scale-[0.98] cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500/90 via-blue-600/90 to-indigo-600/90 hover:from-cyan-400 hover:to-blue-500 py-1.5 sm:py-2 text-xs font-bold text-white shadow-lg border border-white/40 transition-all active:scale-[0.98] cursor-pointer"
           >
             <FileText className="size-3.5" />
             <span>প্রতিবেদন ও কমিটি দেখুন</span>
@@ -427,9 +427,14 @@ export function ClubNews() {
   return (
     <section
       id="club-news"
-      className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-12 sm:py-16"
+      className="relative overflow-hidden py-14 sm:py-20"
+      style={{
+        background: `radial-gradient(circle at 85% 15%, rgba(0, 210, 255, 0.42), transparent 50%),
+                     radial-gradient(circle at 15% 85%, rgba(46, 16, 101, 0.6), transparent 55%),
+                     linear-gradient(135deg, #110e4a 0%, #063489 35%, #0066cc 70%, #0096a6 100%)`,
+      }}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,210,255,0.2),transparent_60%)]" />
 
       <style>{`
         @keyframes continuous_marquee_glide {
@@ -480,14 +485,14 @@ export function ClubNews() {
                 setAnimKey((k) => k + 1)
               }}
               className={cn(
-                'shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center gap-1.5',
+                'shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center gap-1.5 backdrop-blur-md',
                 filter === tag
-                  ? 'border-emerald-500 bg-emerald-600 text-white shadow-lg shadow-emerald-950/60 font-bold'
-                  : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700 hover:text-white',
+                  ? 'border-white bg-white/30 text-white shadow-lg font-bold'
+                  : 'border-white/20 bg-white/10 text-white/80 hover:bg-white/20 hover:text-white',
               )}
             >
               <span>{tag === 'All' ? 'সব ক্লাব' : tag}</span>
-              <span className={cn('text-[10px] px-1.5 py-0.2 rounded-full', filter === tag ? 'bg-emerald-800 text-white' : 'bg-slate-800 text-slate-400')}>
+              <span className={cn('text-[10px] px-1.5 py-0.2 rounded-full', filter === tag ? 'bg-cyan-500 text-white font-bold' : 'bg-white/20 text-white/70')}>
                 {tag === 'All' ? list.length : list.filter((c) => c.tag === tag).length}
               </span>
             </button>
@@ -504,7 +509,7 @@ export function ClubNews() {
         >
           {total > 0 ? (
             config.effect === 'continuous' ? (
-              /* ⭐ কমপ্যাক্ট স্কয়ার কার্ড ট্র‍্যাক ⭐ */
+              /* ⭐ লিকুইড গ্লাস কমপ্যাক্ট ট্র‍্যাক ⭐ */
               <div className="py-2 overflow-hidden w-full select-none">
                 <div
                   style={{
@@ -545,19 +550,19 @@ export function ClubNews() {
               </div>
             )
           ) : (
-            <p className="text-center text-xs text-slate-400 py-10 bg-slate-900/50 rounded-2xl border border-slate-800">
+            <p className="text-center text-xs text-white/80 py-10 bg-white/10 rounded-2xl border border-white/20 backdrop-blur">
               কোনো ক্লাব পাওয়া যায়নি।
             </p>
           )}
 
-          {/* বড় ফ্লোটিং সাইড নেভিগেশন বাটন */}
+          {/* লিকুইড গ্লাস ফ্লোটিং তীর বাটন */}
           {total > 1 && config.enabled && (
             <>
               <button
                 type="button"
                 onClick={handlePrev}
                 aria-label="Previous Club"
-                className="absolute -left-2 sm:left-2 top-1/2 -translate-y-1/2 z-30 size-10 sm:size-11 rounded-full bg-slate-950/90 hover:bg-emerald-600 text-white flex items-center justify-center transition-all border border-slate-700 shadow-2xl cursor-pointer active:scale-95"
+                className="absolute -left-2 sm:left-2 top-1/2 -translate-y-1/2 z-30 size-10 sm:size-11 rounded-full bg-white/20 hover:bg-cyan-500/80 text-white flex items-center justify-center transition-all border border-white/40 backdrop-blur-xl shadow-2xl cursor-pointer active:scale-95"
               >
                 <ChevronLeft className="size-5 sm:size-6 text-white" />
               </button>
@@ -566,28 +571,28 @@ export function ClubNews() {
                 type="button"
                 onClick={handleNext}
                 aria-label="Next Club"
-                className="absolute -right-2 sm:right-2 top-1/2 -translate-y-1/2 z-30 size-10 sm:size-11 rounded-full bg-slate-950/90 hover:bg-emerald-600 text-white flex items-center justify-center transition-all border border-slate-700 shadow-2xl cursor-pointer active:scale-95"
+                className="absolute -right-2 sm:right-2 top-1/2 -translate-y-1/2 z-30 size-10 sm:size-11 rounded-full bg-white/20 hover:bg-cyan-500/80 text-white flex items-center justify-center transition-all border border-white/40 backdrop-blur-xl shadow-2xl cursor-pointer active:scale-95"
               >
                 <ChevronRight className="size-5 sm:size-6 text-white" />
               </button>
             </>
           )}
 
-          {/* নিচে স্থায়ী কন্ট্রোল বার */}
+          {/* নিচে লিকুইড গ্লাস কন্ট্রোল বার */}
           {total > 1 && config.enabled && (
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/80 pt-4">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/20 pt-4">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-sm">
-                  <Sparkles className="size-3 text-gold" />
+                <span className="text-[11px] font-bold text-white bg-white/20 border border-white/30 px-3 py-1 rounded-xl flex items-center gap-1 shadow-sm backdrop-blur-md">
+                  <Sparkles className="size-3 text-yellow-300" />
                   <span>ক্যাম্পাস ক্লাব ({total}টি)</span>
                 </span>
 
                 <button
                   type="button"
                   onClick={() => setIsPaused(!isPaused)}
-                  className="h-7 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-1 text-[11px] font-bold transition border border-slate-800 cursor-pointer shadow-xs active:scale-95"
+                  className="h-7 px-3 rounded-xl bg-white/20 hover:bg-white/30 text-white flex items-center gap-1 text-[11px] font-bold transition border border-white/30 cursor-pointer shadow-xs active:scale-95 backdrop-blur-md"
                 >
-                  {isPaused ? <Play className="size-3 text-emerald-400" /> : <Pause className="size-3 text-gold" />}
+                  {isPaused ? <Play className="size-3 text-cyan-300" /> : <Pause className="size-3 text-yellow-300" />}
                   <span>{isPaused ? 'চালান' : 'থামান'}</span>
                 </button>
               </div>
@@ -596,7 +601,7 @@ export function ClubNews() {
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white flex items-center gap-1 text-[11px] font-bold transition border border-slate-700 cursor-pointer active:scale-95 shadow-md"
+                  className="px-3.5 py-1.5 rounded-xl bg-white/20 hover:bg-cyan-500/80 text-white flex items-center gap-1 text-[11px] font-bold transition border border-white/30 cursor-pointer active:scale-95 shadow-md backdrop-blur-md"
                 >
                   <ChevronLeft className="size-3.5" />
                   <span>আগেরটি</span>
@@ -604,7 +609,7 @@ export function ClubNews() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white flex items-center gap-1 text-[11px] font-bold transition border border-slate-700 cursor-pointer active:scale-95 shadow-md"
+                  className="px-3.5 py-1.5 rounded-xl bg-white/20 hover:bg-cyan-500/80 text-white flex items-center gap-1 text-[11px] font-bold transition border border-white/30 cursor-pointer active:scale-95 shadow-md backdrop-blur-md"
                 >
                   <span>পরেরটি</span>
                   <ChevronRight className="size-3.5" />
