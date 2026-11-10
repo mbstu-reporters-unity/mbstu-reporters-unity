@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { ArrowLeft, Globe, Mail, MapPin, Newspaper, Phone } from 'lucide-react'
 import { getUniversityAssociations } from '@/lib/associations'
 import { TopBar } from '@/components/portal/top-bar'
@@ -23,9 +24,13 @@ export default async function AssociationsPage() {
       <main className="min-h-screen bg-gray-50/50 py-8 sm:py-12">
         <div className="mx-auto max-w-6xl px-4 space-y-8">
           
-          <a href="/" className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline">
+          {/* দ্রুত হোমপেজে ফেরার বাটন (SPA Link) */}
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline cursor-pointer"
+          >
             <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-          </a>
+          </Link>
 
           {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark via-brand to-navy text-white p-6 sm:p-10 shadow-lg text-center">
@@ -62,6 +67,7 @@ export default async function AssociationsPage() {
                               <img
                                 src={assoc.logo_url}
                                 alt={assoc.name}
+                                loading="lazy"
                                 className="size-14 rounded-2xl object-contain border p-1 bg-white shadow-sm hover:opacity-90"
                               />
                             </a>
@@ -70,6 +76,7 @@ export default async function AssociationsPage() {
                             <img
                               src={assoc.logo_url}
                               alt={assoc.name}
+                              loading="lazy"
                               className="size-14 rounded-2xl object-contain border p-1 bg-white shadow-sm shrink-0"
                             />
                           )
@@ -168,6 +175,16 @@ export default async function AssociationsPage() {
               <p className="text-xs text-muted-foreground">অ্যাডমিন প্যানেল থেকে তথ্য যুক্ত করলেই এখানে সুন্দরভাবে ফুটে উঠবে।</p>
             </div>
           )}
+
+          {/* নিচে স্ক্রল করার পর পাঠকদের জন্য ফিরতি লিংক */}
+          <div className="pt-4 text-center border-t">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline cursor-pointer"
+            >
+              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
+            </Link>
+          </div>
 
         </div>
       </main>
