@@ -114,7 +114,6 @@
     -moz-osx-font-smoothing: grayscale;
   }
   
-  /* ⭐ পুরো ওয়েবসাইটের ভরাট ও মিডিয়াম বডি ফন্ট ⭐ */
   body {
     @apply bg-background text-foreground font-sans;
     font-weight: 500;
@@ -122,13 +121,11 @@
     line-height: 1.65;
   }
 
-  /* ⭐ সাধারণ লেখা, পরিচিতি ও সাবটাইটেল স্বাভাবিক বামে থাকবে (যাতে শব্দের মাঝে কোনো অদ্ভুত ফাঁকা না হয়) ⭐ */
   p, span, li, a {
     text-rendering: optimizeLegibility;
     text-align: left;
   }
 
-  /* ⭐ সেকশন সাবটাইটেল ও পরিচিতির লেখা শতভাগ স্বাভাবিক ও সুন্দর বামে থাকবে ⭐ */
   p.text-pretty, 
   .text-pretty,
   .section-heading p {
@@ -137,7 +134,6 @@
     word-spacing: normal !important;
   }
 
-  /* ⭐ শুধুমাত্র বিস্তারিত বড় সংবাদ, নোটিশ, স্টুডেন্ট কর্নার ও ক্লাবের মূল লেখার ভেতর স্মুথ জাস্টিফাই ⭐ */
   article .formatted-text,
   article .formatted-text p,
   article .article-body,
@@ -153,7 +149,6 @@
     line-height: 1.75;
   }
 
-  /* সব হেডিং ও টাইটেল স্বাভাবিক বামে থাকবে */
   h1, h2, h3, h4, h5, h6, 
   article h1, article h2, article h3,
   .text-left, .text-left * {
@@ -163,7 +158,6 @@
     letter-spacing: -0.01em;
   }
 
-  /* সেন্টার ও রাইটের উপাদান সুরক্ষিত রাখা (যেমন: কাউন্টার 2026, 25+, ফুটার ইত্যাদি) */
   .text-center, .text-center * {
     text-align: center !important;
     text-align-last: center !important;
@@ -171,24 +165,6 @@
   .text-right, .text-right * {
     text-align: right !important;
     text-align-last: right !important;
-  }
-}
-
-/* ক্লাব ও অন্যান্য অংশের জন্য ফন্ট */
-#club-news,
-#club-latest,
-.club-font,
-.club-dialog-font,
-.club-bn-text {
-  font-family: 'SolaimanLipi', var(--font-sans), sans-serif;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-  .animate-marquee {
-    animation: none;
   }
 }
 
@@ -371,8 +347,6 @@ html[data-theme="contrast"] {
 }
 
 html[data-theme]:not([data-theme="light"]) .bg-white { background-color: var(--card); }
-html[data-theme]:not([data-theme="light"]) .bg-white\/75 { background-color: color-mix(in srgb, var(--card) 75%, transparent); }
-html[data-theme]:not([data-theme="light"]) .bg-white\/65 { background-color: color-mix(in srgb, var(--card) 65%, transparent); }
 html[data-theme]:not([data-theme="light"]) .bg-gray-50 { background-color: var(--g50); }
 html[data-theme]:not([data-theme="light"]) .bg-gray-100 { background-color: var(--g100); }
 html[data-theme]:not([data-theme="light"]) .bg-green-100 { background-color: var(--green100); }
@@ -383,39 +357,114 @@ html[data-theme]:not([data-theme="light"]) .text-gray-600 { color: var(--g600); 
 html[data-theme]:not([data-theme="light"]) .text-gray-700 { color: var(--g700); }
 html[data-theme]:not([data-theme="light"]) .text-green-700 { color: var(--greentext); }
 html[data-theme]:not([data-theme="light"]) .text-green-800 { color: var(--greentext); }
-html[data-theme]:not([data-theme="light"]) .text-slate-900 { color: var(--foreground); }
-html[data-theme]:not([data-theme="light"]) .text-emerald-700 { color: var(--brand); }
-html[data-theme]:not([data-theme="light"]) .border-gray-300 { border-color: var(--input); }
 
-html[data-theme="dark"] img { filter: brightness(0.9); }
-html[data-theme="night"] img { filter: brightness(0.88) sepia(0.12); }
-html[data-theme="night"] body { letter-spacing: 0.015em; }
+/* ==================== অপ্টিমাইজড গ্লোবাল কিফ্রেম ও অ্যানিমেশনসমূহ ==================== */
 
-html[data-theme="contrast"] :focus-visible { outline: 3px solid #000; outline-offset: 2px; }
-html[data-theme="contrast"] main a { text-decoration: underline; }
+@keyframes heroTimer { from { width: 0%; } to { width: 100%; } }
 
-/* ==================== অ্যানিমেশন কিফ্রেমসমূহ ==================== */
-@keyframes heroProgressTimer { from { width: 0%; } to { width: 100%; } }
-@keyframes anim_fade-up { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
-@keyframes anim_zoom-pop { 0% { transform: scale(0.65); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-@keyframes anim_neon-pulse { 0%, 100% { text-shadow: 0 0 4px #fff, 0 0 15px #38bdf8; } 50% { text-shadow: 0 0 2px #fff; } }
-@keyframes anim_bounce-in { 0% { transform: translateY(-40px); opacity: 0; } 60% { transform: translateY(8px); } 100% { transform: translateY(0); opacity: 1; } }
-@keyframes anim_flip-x { 0% { transform: perspective(400px) rotateX(90deg); opacity: 0; } 100% { transform: perspective(400px) rotateX(0deg); opacity: 1; } }
-@keyframes anim_flip-y { 0% { transform: perspective(400px) rotateY(90deg); opacity: 0; } 100% { transform: perspective(400px) rotateY(0deg); opacity: 1; } }
-@keyframes anim_cyber-glitch { 0%, 100% { transform: translate(0); } 20% { transform: translate(-3px, 2px); } 40% { transform: translate(3px, -2px); } }
-@keyframes anim_smoke-fade { 0% { filter: blur(12px); opacity: 0; } 100% { filter: blur(0); opacity: 1; } }
-@keyframes anim_letter-wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-@keyframes anim_slide-left { 0% { transform: translateX(60px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-@keyframes anim_slide-right { 0% { transform: translateX(-60px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-@keyframes anim_rotate-drop { 0% { transform: rotate(-10deg) translateY(-25px); opacity: 0; } 100% { transform: rotate(0) translateY(0); opacity: 1; } }
-@keyframes anim_flash-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
-@keyframes anim_shake-alert { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-@keyframes anim_rainbow-shift { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
-@keyframes anim_tracking-expand { 0% { letter-spacing: -3px; opacity: 0; } 100% { letter-spacing: normal; opacity: 1; } }
-@keyframes anim_golden-shimmer { 0%, 100% { filter: drop-shadow(0 0 2px #eab308); } 50% { filter: drop-shadow(0 0 14px #facc15) brightness(1.2); } }
-@keyframes anim_twist-3d { 0% { transform: rotate(-10deg) scale(0.85); opacity: 0; } 100% { transform: rotate(0) scale(1); opacity: 1; } }
-@keyframes anim_smooth-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-@keyframes anim_swing-in { 0% { transform: rotateZ(-12deg); opacity: 0; } 100% { transform: rotateZ(0deg); opacity: 1; } }
-@keyframes anim_rubber-band { 0% { transform: scale(1); } 30% { transform: scaleX(1.25) scaleY(0.75); } 100% { transform: scale(1); } }
-@keyframes anim_heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-@keyframes anim_pulse-expand { 0% { transform: scale(0.9); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
+/* হিরো স্লাইডার ট্রানজিশন */
+@keyframes tr_slide_left { 0% { transform: translateX(70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+.tr_slide-left { animation: tr_slide_left 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes tr_slide_right { 0% { transform: translateX(-70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+.tr_slide-right { animation: tr_slide_right 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes tr_slide_up { 0% { transform: translateY(60px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+.tr_slide-up { animation: tr_slide_up 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes tr_slide_down { 0% { transform: translateY(-60px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+.tr_slide-down { animation: tr_slide_down 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes tr_fade { 0% { opacity: 0; filter: blur(4px); } 100% { opacity: 1; filter: blur(0); } }
+.tr_fade { animation: tr_fade 0.8s ease-in-out both; }
+
+@keyframes tr_zoom_in { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.tr_zoom-in { animation: tr_zoom_in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes tr_zoom_out { 0% { transform: scale(1.15); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.tr_zoom-out { animation: tr_zoom_out 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes tr_flip_h { 0% { transform: perspective(800px) rotateY(65deg); opacity: 0; } 100% { transform: perspective(800px) rotateY(0deg); opacity: 1; } }
+.tr_flip-h { animation: tr_flip_h 0.85s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes tr_flip_v { 0% { transform: perspective(800px) rotateX(65deg); opacity: 0; } 100% { transform: perspective(800px) rotateX(0deg); opacity: 1; } }
+.tr_flip-v { animation: tr_flip_v 0.85s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes tr_blur_fade { 0% { filter: blur(16px); opacity: 0; transform: scale(0.96); } 100% { filter: blur(0); opacity: 1; transform: scale(1); } }
+.tr_blur-fade { animation: tr_blur_fade 0.8s ease-out both; }
+
+@keyframes tr_push_left { 0% { transform: translateX(80px) scale(0.92); opacity: 0; } 100% { transform: translateX(0) scale(1); opacity: 1; } }
+.tr_push-left { animation: tr_push_left 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes tr_push_right { 0% { transform: translateX(-80px) scale(0.92); opacity: 0; } 100% { transform: translateX(0) scale(1); opacity: 1; } }
+.tr_push-right { animation: tr_push_right 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes tr_circle_reveal { 0% { clip-path: circle(0% at 50% 50%); opacity: 0; } 100% { clip-path: circle(100% at 50% 50%); opacity: 1; } }
+.tr_circle-reveal { animation: tr_circle_reveal 0.85s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes tr_twist_spin { 0% { transform: rotate(-8deg) scale(0.88); opacity: 0; } 100% { transform: rotate(0deg) scale(1); opacity: 1; } }
+.tr_twist-spin { animation: tr_twist_spin 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes tr_elastic { 0% { transform: scale(0.7); opacity: 0; } 65% { transform: scale(1.03); opacity: 1; } 85% { transform: scale(0.98); } 100% { transform: scale(1); opacity: 1; } }
+.tr_elastic { animation: tr_elastic 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* টেক্সট ও টাইটেল অ্যানিমেশনসমূহ */
+@keyframes anim_fade_up { 0% { opacity: 0; transform: translateY(22px); } 100% { opacity: 1; transform: translateY(0); } }
+.anim_fade-up { animation: anim_fade_up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
+
+@keyframes anim_typewriter { 0% { opacity: 0; clip-path: inset(0 100% 0 0); } 100% { opacity: 1; clip-path: inset(0 0 0 0); } }
+.anim_typewriter { animation: anim_typewriter 1s ease-out forwards; display: inline-flex; }
+
+@keyframes anim_zoom_pop { 0% { opacity: 0; transform: scale(0.6); } 100% { opacity: 1; transform: scale(1); } }
+.anim_zoom-pop { animation: anim_zoom_pop 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; display: inline-flex; }
+
+@keyframes anim_neon_pulse { 0%, 100% { text-shadow: 0 0 4px #fff, 0 0 14px #38bdf8; } 50% { text-shadow: 0 0 2px #fff, 0 0 6px #0284c7; } }
+.anim_neon-pulse { animation: anim_neon_pulse 1.4s ease-in-out infinite; display: inline-flex; }
+
+@keyframes anim_bounce_in { 0% { opacity: 0; transform: translateY(-40px); } 60% { opacity: 1; transform: translateY(8px); } 80% { transform: translateY(-3px); } 100% { transform: translateY(0); } }
+.anim_bounce-in { animation: anim_bounce_in 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards; display: inline-flex; }
+
+@keyframes anim_flip_x { 0% { opacity: 0; transform: perspective(400px) rotateX(90deg); } 100% { opacity: 1; transform: perspective(400px) rotateX(0deg); } }
+.anim_flip-x { animation: anim_flip_x 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-flex; }
+
+@keyframes anim_flip_y { 0% { opacity: 0; transform: perspective(400px) rotateY(90deg); } 100% { opacity: 1; transform: perspective(400px) rotateY(0deg); } }
+.anim_flip-y { animation: anim_flip_y 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-flex; }
+
+@keyframes anim_cyber_glitch { 0%, 100% { transform: translate(0); } 20% { transform: translate(-3px, 2px); } 40% { transform: translate(3px, -2px); } 60% { transform: translate(-2px, -1px); } 80% { transform: translate(2px, 1px); } }
+.anim_cyber-glitch { animation: anim_cyber_glitch 2s infinite; display: inline-flex; }
+
+@keyframes anim_smoke_fade { 0% { opacity: 0; filter: blur(14px); transform: scale(1.08); } 100% { opacity: 1; filter: blur(0); transform: scale(1); } }
+.anim_smoke-fade { animation: anim_smoke_fade 0.9s ease-out forwards; display: inline-flex; }
+
+@keyframes anim_slide_left { 0% { opacity: 0; transform: translateX(60px); } 100% { opacity: 1; transform: translateX(0); } }
+.anim_slide-left { animation: anim_slide_left 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
+
+@keyframes anim_slide_right { 0% { opacity: 0; transform: translateX(-60px); } 100% { opacity: 1; transform: translateX(0); } }
+.anim_slide-right { animation: anim_slide_right 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
+
+/* ব্রেকিং টিকার ও বেজ অ্যানিমেশনসমূহ */
+@keyframes anim_pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.18); opacity: 0.82; } }
+.anim_pulse { animation: anim_pulse 1.4s ease-in-out infinite; display: inline-flex; }
+
+@keyframes anim_ping { 0% { transform: scale(1); opacity: 1; } 75%, 100% { transform: scale(1.6); opacity: 0; } }
+.anim_ping { animation: anim_ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; display: inline-flex; }
+
+@keyframes anim_heartbeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.22); } 28% { transform: scale(1); } 42% { transform: scale(1.15); } 70% { transform: scale(1); } }
+.anim_heartbeat { animation: anim_heartbeat 1.5s ease-in-out infinite; display: inline-flex; }
+
+@keyframes anim_radar { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); } 70% { box-shadow: 0 0 0 8px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
+.anim_radar { animation: anim_radar 1.5s infinite; display: inline-flex; border-radius: 9999px; }
+
+/* টিকার ব্যাকগ্রাউন্ড অ্যানিমেশন */
+@keyframes bg_pulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3) contrast(1.1); } }
+.anim_bg_pulse { animation: bg_pulse 2s ease-in-out infinite; }
+
+@keyframes bg_shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.anim_bg_shimmer {
+  background-size: 200% 100% !important;
+  background-image: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0) 100%) !important;
+  animation: bg_shimmer 2.5s infinite;
+}
+
+@keyframes bg_glow { 0%, 100% { box-shadow: 0 0 4px rgba(255,255,255,0.3); } 50% { box-shadow: 0 0 16px rgba(255,255,255,0.7); } }
+.anim_bg_glow { animation: bg_glow 2s ease-in-out infinite; }
