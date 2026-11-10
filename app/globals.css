@@ -55,31 +55,31 @@
 
 :root {
   color-scheme: light;
-  --brand: #046a38;
-  --brand-dark: #034d29;
-  --brand-soft: #e7f3ec;
+  --brand: #0284c7;
+  --brand-dark: #0369a1;
+  --brand-soft: rgba(255, 255, 255, 0.4);
   --navy: #0f172a;
   --crimson: #c8102e;
   --gold: #d4a017;
 
-  --background: #ffffff;
+  --background: #2563eb;
   --foreground: #0f172a;
-  --card: #ffffff;
+  --card: rgba(255, 255, 255, 0.78);
   --card-foreground: #0f172a;
-  --popover: #ffffff;
+  --popover: rgba(255, 255, 255, 0.92);
   --popover-foreground: #0f172a;
-  --primary: #046a38;
+  --primary: #0284c7;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f4;
+  --secondary: rgba(255, 255, 255, 0.5);
   --secondary-foreground: #0f172a;
-  --muted: #f4f6f5;
+  --muted: rgba(255, 255, 255, 0.4);
   --muted-foreground: #334155;
-  --accent: #e7f3ec;
-  --accent-foreground: #034d29;
+  --accent: rgba(255, 255, 255, 0.5);
+  --accent-foreground: #0369a1;
   --destructive: #c8102e;
-  --border: #e2e8e5;
+  --border: rgba(255, 255, 255, 0.5);
   --input: #cbd5e1;
-  --ring: #046a38;
+  --ring: #0284c7;
   --radius: 0.625rem;
 }
 
@@ -93,11 +93,21 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    min-height: 100%;
   }
   
+  /* ⭐⭐⭐ ছবির মতো পুরো ওয়েবসাইটের গ্লাসি মেশ গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড ⭐⭐⭐ */
   body {
     font-family: var(--font-hind), ui-sans-serif, system-ui, sans-serif !important;
-    background-color: var(--background);
+    min-height: 100vh;
+    background-color: #2563eb;
+    background-image: 
+      radial-gradient(circle at 6% 12%, rgba(236, 72, 153, 0.85), transparent 38%),
+      radial-gradient(circle at 94% 88%, rgba(6, 182, 212, 0.9), transparent 42%),
+      radial-gradient(circle at 50% 45%, rgba(99, 102, 241, 0.6), transparent 50%),
+      linear-gradient(135deg, #8b5cf6 0%, #2563eb 50%, #0284c7 100%);
+    background-attachment: fixed;
+    background-size: cover;
     color: var(--foreground);
     font-weight: 500;
     letter-spacing: 0.012em;
@@ -151,131 +161,109 @@
   }
 }
 
-/* ==================== ৯টি সম্পূর্ণ উজ্জ্বল আলোর থিমসমূহ (Light Daylight Themes) ==================== */
+/* ==================== থিমসমূহ ==================== */
 body { transition: background-color .25s ease, color .25s ease; }
 
 html[data-theme="light"] {
-  color-scheme: light;
-  --background: #ffffff;
   --foreground: #0f172a;
   --navy: #0f172a;
-  --card: #ffffff;
-  --border: #e2e8e5;
-  --brand: #046a38;
+  --brand: #0284c7;
 }
 
 html[data-theme="sky"] {
-  color-scheme: light;
-  --background: #f0f7ff;
   --foreground: #082f49;
   --navy: #082f49;
-  --card: #ffffff;
-  --border: #bae6fd;
   --brand: #0284c7;
   --brand-dark: #0369a1;
-  --brand-soft: #e0f2fe;
 }
 
 html[data-theme="sunshine"] {
-  color-scheme: light;
-  --background: #fffbeb;
   --foreground: #291804;
   --navy: #291804;
-  --card: #ffffff;
-  --border: #fde68a;
   --brand: #b45309;
-  --brand-dark: #92400e;
-  --brand-soft: #fef3c7;
-  --gold: #b45309;
 }
 
 html[data-theme="rose"] {
-  color-scheme: light;
-  --background: #fff1f2;
   --foreground: #370614;
   --navy: #370614;
-  --card: #ffffff;
-  --border: #fecdd3;
   --brand: #e11d48;
-  --brand-dark: #be123c;
-  --brand-soft: #ffe4e6;
 }
 
 html[data-theme="lavender"] {
-  color-scheme: light;
-  --background: #f5f3ff;
   --foreground: #1e1338;
   --navy: #1e1338;
-  --card: #ffffff;
-  --border: #ddd6fe;
   --brand: #7c3aed;
-  --brand-dark: #6d28d9;
-  --brand-soft: #ede9fe;
 }
 
 html[data-theme="spring"] {
-  color-scheme: light;
-  --background: #f0fdf4;
   --foreground: #052e16;
   --navy: #052e16;
-  --card: #ffffff;
-  --border: #bbf7d0;
   --brand: #15803d;
-  --brand-dark: #166534;
-  --brand-soft: #dcfce7;
 }
 
 html[data-theme="mint"] {
-  color-scheme: light;
-  --background: #f0fdf9;
   --foreground: #062b25;
   --navy: #062b25;
-  --card: #ffffff;
-  --border: #99f6e4;
   --brand: #0d9488;
-  --brand-dark: #0f766e;
-  --brand-soft: #ccfbf1;
 }
 
 html[data-theme="sepia"] {
-  color-scheme: light;
-  --background: #fbf7ee;
   --foreground: #2d241e;
   --navy: #2d241e;
-  --card: #ffffff;
-  --border: #e7dfcf;
   --brand: #854d0e;
-  --brand-dark: #713f12;
-  --brand-soft: #fef3c7;
 }
 
 html[data-theme="contrast"] {
-  color-scheme: light;
-  --background: #ffffff;
   --foreground: #000000;
   --navy: #000000;
-  --card: #ffffff;
-  --border: #000000;
   --brand: #000000;
-  --brand-dark: #1f2937;
-  --brand-soft: #f3f4f6;
 }
 
-/* দৃশ্যমানতা ব্যালান্স */
-html[data-theme] .bg-white { background-color: #ffffff !important; }
-html[data-theme] .text-navy { color: var(--navy) !important; }
-html[data-theme] .text-gray-800 { color: #1e293b !important; }
-html[data-theme] .text-gray-700 { color: #334155 !important; }
-html[data-theme] .text-gray-600 { color: #475569 !important; }
+/* ⭐⭐⭐ পুরো ওয়েবসাইটের কার্ড ও সারফেসে ফ্রস্টেড লিকুইড গ্লাস এফেক্ট (Glassmorphism) ⭐⭐⭐ */
+.bg-white:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
+.bg-card:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
+.bg-gray-50:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
+.bg-slate-50:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
+.bg-muted:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *) {
+  background-color: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.75), 0 10px 30px -5px rgba(0, 20, 60, 0.12) !important;
+}
 
-/* ⭐⭐⭐ শুধুমাত্র চারপাশের বর্ডারে ঘূর্ণায়মান নিয়ন বাতি (মাঝখানের আলো সম্পূর্ণ বন্ধ) ⭐⭐⭐ */
+/* সেকশন হেডিংস ও কার্ড টেক্সট স্পষ্ট রাখার রুলস */
+.text-navy { color: #0f172a !important; }
+.text-gray-800 { color: #1e293b !important; }
+.text-gray-700 { color: #334155 !important; }
+.text-gray-600 { color: #475569 !important; }
+
+/* সেকশন ব্যাকগ্রাউন্ড ট্রান্সপারেন্ট রাখা যাতে গ্লোয়িং গ্লাস দৃশ্যমান হয় */
+#leadership,
+#general-news,
+#student-corner,
+#notices,
+section[id^="cat-"] {
+  background-color: transparent !important;
+}
+
+/* ⭐⭐⭐ ক্লাবগুলোর ব্যাকগ্রাউন্ড ও নিয়ন বাতি পূর্বের মতোই সম্পূর্ণ অক্ষত ⭐⭐⭐ */
+#club-news {
+  background: radial-gradient(circle at 85% 15%, rgba(0, 210, 255, 0.45), transparent 50%),
+              radial-gradient(circle at 15% 85%, rgba(30, 27, 75, 0.6), transparent 55%),
+              linear-gradient(135deg, #0b1540 0%, #032d84 35%, #005bb5 70%, #008fa0 100%) !important;
+}
+#club-news .group h3 {
+  color: #ffffff !important;
+}
+#club-news .group p {
+  color: #cbd5e1 !important;
+}
+
+/* চারপাশের বর্ডারে ঘূর্ণায়মান নিয়ন বাতি */
 @keyframes rotate_neon_beam {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .neon-glass-wrapper {
@@ -316,7 +304,6 @@ html[data-theme] .text-gray-600 { color: #475569 !important; }
   z-index: 0;
 }
 
-/* ভেতরের কার্ডটি ১০০% সলিড, ফলে মাঝখান দিয়ে কোনো আলো লিক করবে না */
 .neon-glass-inner {
   position: relative;
   z-index: 10;
@@ -377,6 +364,7 @@ html[data-theme] .text-gray-600 { color: #475569 !important; }
 @keyframes tr_zoom_in { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 .tr_zoom-in { animation: tr_zoom_in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
+/* টেক্সট অ্যানিমেশন */
 @keyframes anim_fade_up { 0% { opacity: 0; transform: translateY(22px); } 100% { opacity: 1; transform: translateY(0); } }
 .anim_fade-up { animation: anim_fade_up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
 
