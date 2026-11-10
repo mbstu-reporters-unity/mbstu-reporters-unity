@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { ArrowLeft, Building2, Mail, Phone, Search, UserCheck } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowLeft, Building2, Mail, Phone, UserCheck } from 'lucide-react'
 import { getAdministrationOfficials, ADMIN_CATEGORIES, type AdministrationOfficial } from '@/lib/administration'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
@@ -29,9 +30,13 @@ export default async function AdministrationPage() {
       <main className="min-h-screen bg-gray-50/50 py-8 sm:py-12">
         <div className="mx-auto max-w-7xl px-4 space-y-8">
           
-          <a href="/" className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline">
+          {/* দ্রুত হোমপেজে ফেরার বাটন (SPA Link) */}
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline cursor-pointer"
+          >
             <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-          </a>
+          </Link>
 
           {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark via-brand to-navy text-white p-6 sm:p-10 shadow-lg text-center">
@@ -135,6 +140,16 @@ export default async function AdministrationPage() {
               <p className="text-xs text-muted-foreground">অ্যাডমিন প্যানেল থেকে তথ্য যুক্ত করলেই এখানে সুন্দরভাবে ফুটে উঠবে।</p>
             </div>
           )}
+
+          {/* নিচে স্ক্রল করার পর পাঠকদের জন্য ফিরতি লিংক */}
+          <div className="pt-4 text-center border-t">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline cursor-pointer"
+            >
+              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
+            </Link>
+          </div>
 
         </div>
       </main>
