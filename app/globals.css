@@ -270,25 +270,54 @@ html[data-theme="contrast"] {
   --brand-soft: #f3f4f6;
 }
 
-/* ⭐ কার্ড, পোস্ট, নোটিশ ও লেখার উচ্চ দৃশ্যমানতা ব্যালান্স ⭐ */
+/* ⭐ কার্ড, পোস্ট, নোটিশ ও লেখার দৃশ্যমানতা ব্যালান্স ⭐ */
 html[data-theme] .bg-white { background-color: #ffffff !important; }
 html[data-theme] .text-navy { color: var(--navy) !important; }
 html[data-theme] .text-gray-800 { color: #1e293b !important; }
 html[data-theme] .text-gray-700 { color: #334155 !important; }
 html[data-theme] .text-gray-600 { color: #475569 !important; }
 
-/* ⭐ ক্লাব সেকশনের লেখা সব থিমেই ১০০% স্পষ্ট থাকার বিশেষ স্টাইল ⭐ */
+/* শুধুমাত্র হোমপেজের ক্লাব কার্ডের লেখা (ডার্ক ব্যাকগ্রাউন্ডের জন্য) */
 #club-news {
   background: linear-gradient(to bottom, #09121d, #0f1c2e, #09121d) !important;
 }
-#club-news h3 {
+#club-news .group h3 {
   color: #ffffff !important;
 }
-#club-news p {
-  color: #e2e8f0 !important;
-}
-#club-news .text-slate-400 {
+#club-news .group p {
   color: #cbd5e1 !important;
+}
+
+/* ⭐⭐⭐ চূড়ান্ত ফিক্স: ক্লাব পপ-আপ ডায়ালগ (Popup Dialog)-এর ভেতরের সব লেখা ১০০% স্পষ্ট ও গাঢ় কালো ⭐⭐⭐ */
+[role="dialog"],
+.club-dialog-font {
+  color: #0f172a !important;
+}
+[role="dialog"] p,
+.club-dialog-font p {
+  color: #1e293b !important;
+}
+[role="dialog"] h1,
+[role="dialog"] h2,
+[role="dialog"] h3,
+[role="dialog"] h4,
+.club-dialog-font h1,
+.club-dialog-font h2,
+.club-dialog-font h3,
+.club-dialog-font h4 {
+  color: #0f172a !important;
+}
+[role="dialog"] .text-\[\#65676B\],
+.club-dialog-font .text-\[\#65676B\],
+[role="dialog"] .text-gray-500,
+.club-dialog-font .text-gray-500 {
+  color: #475569 !important;
+}
+[role="dialog"] .text-\[\#050505\],
+.club-dialog-font .text-\[\#050505\],
+[role="dialog"] .text-slate-800,
+.club-dialog-font .text-slate-800 {
+  color: #0f172a !important;
 }
 
 /* ==================== ট্রানজিশন ও অ্যানিমেশনসমূহ ==================== */
