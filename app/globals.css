@@ -8,31 +8,31 @@
   --font-sans: var(--font-hind), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-noto-serif), Georgia, serif;
 
-  --color-brand: #06b6d4;
-  --color-brand-dark: #0891b2;
-  --color-brand-soft: rgba(255, 255, 255, 0.1);
+  --color-brand: #e879f9;
+  --color-brand-dark: #c026d3;
+  --color-brand-soft: rgba(255, 255, 255, 0.12);
   --color-navy: #ffffff;
-  --color-crimson: #ec4899;
+  --color-crimson: #f43f5e;
   --color-gold: #facc15;
 
-  --color-ring: #06b6d4;
+  --color-ring: #e879f9;
   --color-input: rgba(255, 255, 255, 0.15);
-  --color-border: rgba(255, 255, 255, 0.2);
-  --color-destructive: #ec4899;
+  --color-border: rgba(255, 255, 255, 0.22);
+  --color-destructive: #f43f5e;
   --color-accent-foreground: #ffffff;
   --color-accent: rgba(255, 255, 255, 0.15);
   --color-muted-foreground: #cbd5e1;
   --color-muted: rgba(255, 255, 255, 0.08);
   --color-secondary-foreground: #ffffff;
-  --color-secondary: rgba(255, 255, 255, 0.1);
+  --color-secondary: rgba(255, 255, 255, 0.12);
   --color-primary-foreground: #ffffff;
-  --color-primary: #06b6d4;
+  --color-primary: #e879f9;
   --color-popover-foreground: #ffffff;
-  --color-popover: rgba(8, 15, 37, 0.85);
+  --color-popover: rgba(30, 28, 26, 0.9);
   --color-card-foreground: #ffffff;
-  --color-card: rgba(255, 255, 255, 0.05);
+  --color-card: rgba(255, 255, 255, 0.09);
   --color-foreground: #ffffff;
-  --color-background: #080f25;
+  --color-background: #2a2723;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -44,38 +44,42 @@
   --animate-marquee: marquee 40s linear infinite;
 
   @keyframes marquee {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
   }
 }
 
 :root {
   color-scheme: dark;
-  --brand: #06b6d4;
-  --brand-dark: #0891b2;
-  --brand-soft: rgba(255, 255, 255, 0.1);
+  --brand: #e879f9;
+  --brand-dark: #c026d3;
+  --brand-soft: rgba(255, 255, 255, 0.12);
   --navy: #ffffff;
-  --crimson: #ec4899;
+  --crimson: #f43f5e;
   --gold: #facc15;
 
-  --background: #080f25;
+  --background: #2a2723;
   --foreground: #ffffff;
-  --card: rgba(255, 255, 255, 0.05);
+  --card: rgba(255, 255, 255, 0.09);
   --card-foreground: #ffffff;
-  --popover: rgba(8, 15, 37, 0.85);
+  --popover: rgba(30, 28, 26, 0.9);
   --popover-foreground: #ffffff;
-  --primary: #06b6d4;
+  --primary: #e879f9;
   --primary-foreground: #ffffff;
-  --secondary: rgba(255, 255, 255, 0.1);
+  --secondary: rgba(255, 255, 255, 0.12);
   --secondary-foreground: #ffffff;
   --muted: rgba(255, 255, 255, 0.08);
   --muted-foreground: #cbd5e1;
   --accent: rgba(255, 255, 255, 0.15);
   --accent-foreground: #ffffff;
-  --destructive: #ec4899;
-  --border: rgba(255, 255, 255, 0.2);
+  --destructive: #f43f5e;
+  --border: rgba(255, 255, 255, 0.22);
   --input: rgba(255, 255, 255, 0.15);
-  --ring: #06b6d4;
+  --ring: #e879f9;
   --radius: 0.625rem;
 }
 
@@ -92,16 +96,16 @@
     min-height: 100%;
   }
   
-  /* ⭐⭐⭐ আপনার পাঠানো ছবির মতো হুবহু ডিপ ব্লু, সিয়ান ও ম্যাজেন্টা মেশ ব্যাকগ্রাউন্ড ⭐⭐⭐ */
+  /* ⭐⭐⭐ আপনার পাঠানো ছবির মতো প্রিমিয়াম ওয়ার্ম ডার্ক-গ্রে / টাউপ (Apple VisionOS) ব্যাকগ্রাউন্ড ⭐⭐⭐ */
   body {
     font-family: var(--font-hind), ui-sans-serif, system-ui, sans-serif !important;
     min-height: 100vh;
-    background-color: #06102b;
+    background-color: #2c2925;
     background-image: 
-      radial-gradient(circle at 0% 10%, rgba(236, 72, 153, 0.45), transparent 45%),   /* Top Left Pink/Magenta */
-      radial-gradient(circle at 100% 70%, rgba(6, 182, 212, 0.4), transparent 50%),    /* Bottom Right Cyan */
-      radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.3), transparent 60%),    /* Center Blue */
-      linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #082f49 100%);                 /* Base Deep Navy */
+      radial-gradient(circle at 80% 20%, rgba(105, 98, 89, 0.65), transparent 45%),
+      radial-gradient(circle at 20% 85%, rgba(60, 56, 51, 0.75), transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(80, 75, 68, 0.4), transparent 60%),
+      linear-gradient(135deg, #181614 0%, #34302b 40%, #4a453e 80%, #1c1a18 100%);
     background-attachment: fixed;
     background-size: cover;
     color: #ffffff;
@@ -114,13 +118,22 @@
     text-rendering: optimizeLegibility;
     text-align: left;
   }
-  p.text-pretty, .text-pretty, .section-heading p {
+
+  p.text-pretty, 
+  .text-pretty,
+  .section-heading p {
     text-align: left !important;
     text-align-last: left !important;
     word-spacing: normal !important;
   }
-  article .formatted-text, article .formatted-text p, article .article-body,
-  .prose p, .notice-body, .student-dialog-body, .whitespace-pre-line:not(.text-pretty) {
+
+  article .formatted-text,
+  article .formatted-text p,
+  article .article-body,
+  .prose p,
+  .notice-body,
+  .student-dialog-body,
+  .whitespace-pre-line:not(.text-pretty) {
     text-align: justify;
     text-justify: inter-word;
     text-align-last: left;
@@ -128,12 +141,16 @@
     overflow-wrap: break-word;
     line-height: 1.75;
   }
-  h1, h2, h3, h4, h5, h6, article h1, article h2, article h3, .text-left, .text-left * {
+
+  h1, h2, h3, h4, h5, h6, 
+  article h1, article h2, article h3,
+  .text-left, .text-left * {
     text-align: left !important;
     text-align-last: left !important;
     font-family: var(--font-serif), var(--font-hind), sans-serif;
     letter-spacing: -0.01em;
   }
+
   .text-center, .text-center * {
     text-align: center !important;
     text-align-last: center !important;
@@ -144,29 +161,23 @@
   }
 }
 
-/* ==================== থিম ট্রানজিশন ==================== */
+/* ==================== থিমসমূহ ==================== */
 body { transition: background-color .25s ease, color .25s ease; }
 
-/* ⭐⭐⭐ iOS 26 Liquid Glassmorphism Effect (For Cards & Containers) ⭐⭐⭐ */
+/* ⭐⭐⭐ রেফারেন্স ছবির মতো খাঁটি ফ্রস্টেড লিকুইড গ্লাস কার্ড (True Glassmorphism) ⭐⭐⭐ */
 article:not(#club-news *),
 .bg-white:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
 .bg-card:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
 .bg-gray-50:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
 .bg-slate-50:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
 .bg-muted:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *) {
-  background: rgba(255, 255, 255, 0.05) !important;
-  backdrop-filter: blur(32px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
-  
-  /* ছবির মতো কাঁচের চকচকে রিম বা বর্ডার */
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important;
-  border-left: 1.5px solid rgba(255, 255, 255, 0.25) !important;
-  
+  background: rgba(255, 255, 255, 0.09) !important;
+  backdrop-filter: blur(24px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(170%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
   border-radius: 1.75rem !important;
-  box-shadow: 0 24px 40px -12px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.45), inset 0 1px 1px 0 rgba(255, 255, 255, 0.35) !important;
   color: #ffffff !important;
-  overflow: hidden;
 }
 
 /* কাঁচের কার্ডের ভেতরের টাইটেল ও হেডিং (সলিড ও উজ্জ্বল সাদা) */
@@ -198,50 +209,61 @@ article:not(#club-news *) .text-slate-500 {
   color: #cbd5e1 !important;
 }
 
-/* ⭐ ছবির "Email / Password / Sign In" বাটনগুলোর মতো গ্লাস পিল স্টাইল ⭐ */
+/* ⭐ গ্লাস পিল স্টাইল (বাটন ও ইনপুট) ⭐ */
 article:not(#club-news *) .bg-slate-100,
 article:not(#club-news *) .bg-gray-100,
 article:not(#club-news *) .bg-emerald-50,
 article:not(#club-news *) .border-emerald-200\/80,
 article:not(#club-news *) .border-slate-200\/80 {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.35) !important;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.25) !important;
   border-radius: 9999px !important;
   color: #ffffff !important;
   backdrop-filter: blur(12px) !important;
 }
 
 /* সেকশন হেডিংস ও অ্যাকসেন্ট */
-.section-heading p { color: #cbd5e1 !important; }
+.section-heading p {
+  color: #e2e8f0 !important;
+}
 .section-heading span,
-.section-heading p:first-child { color: #06b6d4 !important; }
+.section-heading p:first-child {
+  color: #e879f9 !important;
+}
 
 /* টপ বার, হেডার ও টিকারের গ্লাসি লুক */
 .bg-navy {
-  background: rgba(10, 15, 30, 0.65) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(30, 28, 26, 0.6) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 header {
   background: rgba(255, 255, 255, 0.06) !important;
-  backdrop-filter: blur(28px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.16) !important;
 }
-header nav a, header nav button { color: #ffffff !important; }
+
+header nav a,
+header nav button {
+  color: #ffffff !important;
+}
 
 /* সেকশন ব্যাকগ্রাউন্ড ট্রান্সপারেন্ট রাখা যাতে পুরো ব্যাকগ্রাউন্ড ভেসে ওঠে */
-#leadership, #general-news, #student-corner, #notices, section[id^="cat-"] {
+#leadership,
+#general-news,
+#student-corner,
+#notices,
+section[id^="cat-"] {
   background-color: transparent !important;
 }
 
 /* ফুটার গ্লাস */
 footer {
-  background: rgba(10, 15, 35, 0.8) !important;
+  background: rgba(20, 18, 16, 0.8) !important;
   backdrop-filter: blur(25px) !important;
   -webkit-backdrop-filter: blur(25px) !important;
   border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -253,9 +275,14 @@ footer {
               radial-gradient(circle at 15% 85%, rgba(30, 27, 75, 0.6), transparent 55%),
               linear-gradient(135deg, #0b1540 0%, #032d84 35%, #005bb5 70%, #008fa0 100%) !important;
 }
-#club-news .group h3 { color: #ffffff !important; }
-#club-news .group p { color: #cbd5e1 !important; }
+#club-news .group h3 {
+  color: #ffffff !important;
+}
+#club-news .group p {
+  color: #cbd5e1 !important;
+}
 
+/* চারপাশের বর্ডারে ঘূর্ণায়মান নিয়ন বাতি */
 @keyframes rotate_neon_beam {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -283,11 +310,16 @@ footer {
   width: 200%;
   height: 200%;
   background: conic-gradient(
-    from 0deg, transparent 0deg, transparent 70deg,
-    rgba(0, 210, 255, 0.4) 110deg, #00e5ff 140deg,
-    #ffffff 180deg, #0077ff 220deg,
+    from 0deg,
+    transparent 0deg,
+    transparent 70deg,
+    rgba(0, 210, 255, 0.4) 110deg,
+    #00e5ff 140deg,
+    #ffffff 180deg,
+    #0077ff 220deg,
     rgba(0, 100, 255, 0.4) 250deg,
-    transparent 290deg, transparent 360deg
+    transparent 290deg,
+    transparent 360deg
   );
   animation: rotate_neon_beam 4.5s linear infinite;
   will-change: transform;
@@ -308,31 +340,61 @@ footer {
 }
 
 /* ক্লাব পপ-আপ ডায়ালগ (Popup Dialog) */
-[role="dialog"], .club-dialog-font { color: #0f172a !important; }
-[role="dialog"] p, .club-dialog-font p { color: #1e293b !important; }
-[role="dialog"] h1, [role="dialog"] h2, [role="dialog"] h3, [role="dialog"] h4,
-.club-dialog-font h1, .club-dialog-font h2, .club-dialog-font h3, .club-dialog-font h4 { color: #0f172a !important; }
-[role="dialog"] .text-\[\#65676B\], .club-dialog-font .text-\[\#65676B\],
-[role="dialog"] .text-gray-500, .club-dialog-font .text-gray-500 { color: #475569 !important; }
-[role="dialog"] .text-\[\#050505\], .club-dialog-font .text-\[\#050505\],
-[role="dialog"] .text-slate-800, .club-dialog-font .text-slate-800 { color: #0f172a !important; }
+[role="dialog"],
+.club-dialog-font {
+  color: #0f172a !important;
+}
+[role="dialog"] p,
+.club-dialog-font p {
+  color: #1e293b !important;
+}
+[role="dialog"] h1,
+[role="dialog"] h2,
+[role="dialog"] h3,
+[role="dialog"] h4,
+.club-dialog-font h1,
+.club-dialog-font h2,
+.club-dialog-font h3,
+.club-dialog-font h4 {
+  color: #0f172a !important;
+}
+[role="dialog"] .text-\[\#65676B\],
+.club-dialog-font .text-\[\#65676B\],
+[role="dialog"] .text-gray-500,
+.club-dialog-font .text-gray-500 {
+  color: #475569 !important;
+}
+[role="dialog"] .text-\[\#050505\],
+.club-dialog-font .text-\[\#050505\],
+[role="dialog"] .text-slate-800,
+.club-dialog-font .text-slate-800 {
+  color: #0f172a !important;
+}
 
 /* ==================== ট্রানজিশন ও অ্যানিমেশনসমূহ ==================== */
 @keyframes heroTimer { from { width: 0%; } to { width: 100%; } }
+
 @keyframes tr_slide_left { 0% { transform: translateX(70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 .tr_slide-left { animation: tr_slide_left 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
 @keyframes tr_slide_right { 0% { transform: translateX(-70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 .tr_slide-right { animation: tr_slide_right 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
 @keyframes tr_fade { 0% { opacity: 0; filter: blur(4px); } 100% { opacity: 1; filter: blur(0); } }
 .tr_fade { animation: tr_fade 0.8s ease-in-out both; }
+
 @keyframes tr_zoom_in { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 .tr_zoom-in { animation: tr_zoom_in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
+/* টেক্সট অ্যানিমেশন */
 @keyframes anim_fade_up { 0% { opacity: 0; transform: translateY(22px); } 100% { opacity: 1; transform: translateY(0); } }
 .anim_fade-up { animation: anim_fade_up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
+
 @keyframes anim_pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.18); opacity: 0.82; } }
 .anim_pulse { animation: anim_pulse 1.4s ease-in-out infinite; display: inline-flex; }
+
 @keyframes anim_ping { 0% { transform: scale(1); opacity: 1; } 75%, 100% { transform: scale(1.6); opacity: 0; } }
 .anim_ping { animation: anim_ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; display: inline-flex; }
+
 @keyframes anim_heartbeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.22); } 28% { transform: scale(1); } 42% { transform: scale(1.15); } 70% { transform: scale(1); } }
 .anim_heartbeat { animation: anim_heartbeat 1.5s ease-in-out infinite; display: inline-flex; }
