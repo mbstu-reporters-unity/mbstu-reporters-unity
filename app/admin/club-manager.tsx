@@ -48,7 +48,7 @@ function formatUrl(u?: string | null): string | null {
   return `https://${t}`
 }
 
-// ⭐ মোবাইলের জন্য নিরাপদ ইমেজ প্রসেসর (কখনোই ক্র্যাশ করবে না) ⭐
+// মোবাইলের জন্য নিরাপদ ইমেজ প্রসেসর
 async function safeShrink(file: File): Promise<Blob> {
   try {
     if (!file.type.startsWith("image/")) return file
@@ -115,8 +115,13 @@ export default function ClubManager({ token }: { token: string }) {
   const [webUrl, setWebUrl] = useState("")
   const [contactInfo, setContactInfo] = useState("")
 
+  // লগো ছবি
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
+
+  // কভার ফটো (Facebook Cover)
+  const [coverUrl, setCoverUrl] = useState<string | null>(null)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
 
   const [activityMediaList, setActivityMediaList] = useState<ClubMediaItem[]>([])
   const [committeeTerm, setCommitteeTerm] = useState("")
@@ -143,12 +148,12 @@ export default function ClubManager({ token }: { token: string }) {
     setActivity(""); setActivityBn(""); setDate(""); setFbUrl(""); setYtUrl("")
     setWebUrl(""); setContactInfo("")
     setLogoUrl(null); setLogoFile(null)
+    setCoverUrl(null); setCoverFile(null)
     setActivityMediaList([])
     setCommitteeTerm(""); setMembers([])
     setReportsTitle("ক্লাব প্রতিবেদন / Club Reports"); setReports([])
   }
 
-  // ⭐ এডিট শুরু করার সময় পুরোনো মিডিয়া ও প্রতিবেদন ঠিকমতো লোড করা ⭐
   function startEdit(c: ClubItem) {
     setEditId(c.id)
     setName(c.name)
@@ -165,6 +170,8 @@ export default function ClubManager({ token }: { token: string }) {
     setContactInfo(c.contact_info || "")
     setLogoUrl(c.logo_url || null)
     setLogoFile(null)
+    setCoverUrl(c.cover_url || null)
+    setCoverFile(null)
 
     // অ্যাক্টিভিটি মিডিয়া উদ্ধার
     setActivityMediaList(parseActivityMedia(c.embed_media_url))
@@ -202,7 +209,7 @@ export default function ClubManager({ token }: { token: string }) {
     setActivityMediaList(activityMediaList.filter((_, i) => i !== index))
   }
 
-  // ⭐ আনলিমিটেড অ্যাক্টিভিটি মিডিয়া ব্যাচ আপলোড ⭐
+  // আনলিমিটেড অ্যাক্টিভিটি মিডিয়া ব্যাচ আপলোড
   async function batchUploadActivityFiles(files: File[]) {
     if (files.length === 0) return
     setBusy(true)
@@ -318,7 +325,6 @@ export default function ClubManager({ token }: { token: string }) {
     updateReport(reportIdx, "media_items", currentList)
   }
 
-  // ⭐ প্রতিবেদনের আনলিমিটেড ব্যাচ আপলোড ⭐
   async function batchUploadReportMediaFiles(reportIdx: number, files: File[]) {
     if (files.length === 0) return
     setBusy(true)
@@ -424,6 +430,12 @@ export default function ClubManager({ token }: { token: string }) {
         finalLogo = await uploadImage(token, await safeShrink(logoFile))
       }
 
+      let finalCover = coverUrl
+      if (coverFile) {
+        setMsg("কভার ফটো আপলোড হচ্ছে...")
+        finalCover = await uploadImage(token, await safeShrink(coverFile))
+      }
+
       const finalEmbedMedia = stringifyActivityMedia(activityMediaList)
 
       const data = {
@@ -433,6 +445,7 @@ export default function ClubManager({ token }: { token: string }) {
         icon,
         is_active: isActive,
         logo_url: finalLogo,
+        cover_url: finalCover,
         activity: activity.trim() || null,
         activity_bn: activityBn.trim() || null,
         date: date.trim() || null,
@@ -729,7 +742,7 @@ export default function ClubManager({ token }: { token: string }) {
         <>
           <div className="bg-white rounded-2xl shadow p-4 space-y-4">
             <h2 className="font-bold text-lg text-gray-800">{editId ? "✏️ ক্লাব এডিট করুন" : "➕ নতুন ক্লাব যুক্ত করুন"}</h2>
-            <p className="text-xs text-gray-500">সব তথ্য ঐচ্ছিক। লগো, ভিডিও, কমিটি ও প্রতিবেদন আপনার পছন্দমতো যোগ/বিয়োগ করুন।</p>
+            <p className="text-xs text-gray-500">সব তথ্য ঐচ্ছিক। লগো, কভার, ভিডিও, কমিটি ও প্রতিবেদন আপনার পছন্দমতো যোগ/বিয়োগ করুন।</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <input className={inp} placeholder="ক্লাবের নাম (English) *" value={name} onChange={(e) => setName(e.target.value)} />
@@ -756,6 +769,7 @@ export default function ClubManager({ token }: { token: string }) {
               <span>হোমপেজে এই ক্লাবটি সক্রিয় (Active) রাখুন</span>
             </label>
 
+            {/* লগো আপলোড */}
             <div className="rounded-2xl border-2 border-emerald-200 p-3.5 bg-emerald-50/40 space-y-2">
               <label className="block text-xs font-bold text-emerald-950">
                 🖼️ ক্লাবের লগো / অফিসিয়াল ছবি:
@@ -788,11 +802,44 @@ export default function ClubManager({ token }: { token: string }) {
               )}
             </div>
 
+            {/* কভার ফটো আপলোড (Facebook Page Cover) */}
+            <div className="rounded-2xl border-2 border-blue-200 p-3.5 bg-blue-50/40 space-y-2">
+              <label className="block text-xs font-bold text-blue-950">
+                🏞️ ক্লাবের কভার ফটো (Facebook Page Cover):
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                className="block text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-700 file:text-white hover:file:bg-blue-800 cursor-pointer"
+                onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
+              />
+              {(coverFile || coverUrl) && (
+                <div className="flex flex-col gap-2 pt-2 bg-white p-3 rounded-xl border border-blue-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={coverFile ? URL.createObjectURL(coverFile) : coverUrl || ""}
+                    alt="Cover preview"
+                    className="w-full h-32 sm:h-40 object-cover rounded-xl border-2 border-blue-500/40 shadow-sm"
+                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-gray-800">কভার ফটোর প্রিভিউ</p>
+                    <button
+                      type="button"
+                      onClick={() => { setCoverFile(null); setCoverUrl(null) }}
+                      className="text-xs text-red-600 font-semibold underline hover:text-red-700 cursor-pointer"
+                    >
+                      ✕ কভার সরান
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ বা সাম্প্রতিক কার্যক্রম (English)" value={activity} onChange={(e) => setActivity(e.target.value)} />
             <textarea className={inp} rows={2} placeholder="সংক্ষিপ্ত বিবরণ বা সাম্প্রতিক কার্যক্রম (বাংলা)" value={activityBn} onChange={(e) => setActivityBn(e.target.value)} />
             <input className={inp} placeholder="কার্যক্রমের তারিখ (যেমন: 27 Oct 2026)" value={date} onChange={(e) => setDate(e.target.value)} />
 
-            {/* ⭐ পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া (থাম্বনেইল প্রিভিউ ও ডিলিট অপশন সহ) ⭐ */}
+            {/* পরিচিতি ও সাম্প্রতিক কার্যক্রমের মিডিয়া */}
             <div className="space-y-3 rounded-2xl border-2 border-blue-200 bg-blue-50/50 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
@@ -847,7 +894,6 @@ export default function ClubManager({ token }: { token: string }) {
                     </button>
                   </div>
 
-                  {/* ছবি/ভিডিওর লাইভ থাম্বনেইল প্রিভিউ */}
                   {m.url && (
                     <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-xl border border-gray-200">
                       {m.url.includes("youtube.com") || m.url.includes("youtu.be") ? (
@@ -980,7 +1026,7 @@ export default function ClubManager({ token }: { token: string }) {
               ))}
             </div>
 
-            {/* ⭐ ক্লাব প্রতিবেদন / Reports (পূর্ণাঙ্গ এডিট, লাইভ থাম্বনেইল ও ডিলিট অপশন সহ) ⭐ */}
+            {/* ক্লাব প্রতিবেদন / Reports */}
             <div className="rounded-2xl border p-3.5 bg-gray-50 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -1031,7 +1077,6 @@ export default function ClubManager({ token }: { token: string }) {
                     <input className={smallInp} placeholder="প্রতিবেদকের নাম" value={r.reporter} onChange={(e) => updateReport(idx, "reporter", e.target.value)} />
                   </div>
 
-                  {/* ⭐ প্রতিবেদনের মিডিয়া সেকশন (থাম্বনেইল ও ডিলিট অপশন সহ) ⭐ */}
                   <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3 space-y-2.5">
                     <div className="flex flex-wrap items-center justify-between gap-1.5 border-b pb-1.5">
                       <span className="text-[11px] font-bold text-gray-700">
@@ -1080,7 +1125,6 @@ export default function ClubManager({ token }: { token: string }) {
                           </button>
                         </div>
 
-                        {/* লাইভ থাম্বনেইল প্রিভিউ */}
                         {rm.url && (
                           <div className="flex items-center gap-2.5 p-1.5 bg-gray-50 rounded-lg border border-gray-200">
                             {rm.url.includes("youtube.com") || rm.url.includes("youtu.be") ? (
