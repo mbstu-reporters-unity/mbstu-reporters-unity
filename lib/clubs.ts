@@ -32,6 +32,7 @@ export type ClubItem = {
   tag: string
   icon: string
   logo_url?: string | null
+  cover_url?: string | null // কভার ফটোর ফিল্ড যুক্ত হলো
   activity: string | null
   activity_bn: string | null
   date: string | null
@@ -137,6 +138,21 @@ export async function getCampusClubs(token?: string): Promise<ClubItem[]> {
   }
 }
 
+// নির্দিষ্ট ক্লাবের তথ্য আনার ফাংশন
+export async function getClubById(id: string): Promise<ClubItem | null> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/campus_clubs?select=*&id=eq.${encodeURIComponent(id)}&limit=1`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return null
+    const rows: ClubItem[] = await res.json()
+    return rows[0] || null
+  } catch {
+    return null
+  }
+}
+
 export async function createCampusClub(token: string, data: Partial<ClubInput>) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/campus_clubs`, {
@@ -213,17 +229,4 @@ export async function saveClubCarouselConfig(token: string, config: ClubCarousel
       }),
     })
   )
-}
-export async function getClubById(id: string): Promise<ClubItem | null> {
-  try {
-    const res = await fetch(
-      `${SB_URL}/rest/v1/campus_clubs?select=*&id=eq.${encodeURIComponent(id)}&limit=1`,
-      { headers: hdr(), cache: "no-store" }
-    )
-    if (!res.ok) return null
-    const rows: ClubItem[] = await res.json()
-    return rows[0] || null
-  } catch {
-    return null
-  }
 }
