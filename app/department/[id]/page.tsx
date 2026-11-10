@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, BookOpen, CalendarDays, Mail, MapPin, Megaphone, Phone, Users, Share2, Award } from 'lucide-react'
 import { getDepartmentById, getFaculties, getTeachers, getDeptNotices, getDeptEvents } from '@/lib/faculties'
@@ -50,9 +51,13 @@ export default async function DepartmentDetailPage({
       <main className="min-h-screen bg-gray-50/50 py-8 sm:py-12">
         <div className="mx-auto max-w-6xl px-4 space-y-8">
           
-          <a href="/" className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline">
+          {/* দ্রুত হোমপেজে ফেরার বাটন (SPA Link) */}
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline cursor-pointer"
+          >
             <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-          </a>
+          </Link>
 
           {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark via-brand to-navy text-white p-6 sm:p-10 shadow-lg">
@@ -102,7 +107,7 @@ export default async function DepartmentDetailPage({
             </div>
           </div>
 
-          {/* শিক্ষকবৃন্দ (চেয়ারম্যান হাইলাইট ও ক্লিকেবল কল/মেইল) */}
+          {/* শিক্ষকবৃন্দ (চেয়ারম্যান হাইলাইট ও কল/মেইল) */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b border-border pb-2">
               <Users className="size-5 text-brand" />
@@ -126,7 +131,7 @@ export default async function DepartmentDetailPage({
 
                     {t.photo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={t.photo_url} alt={t.name} className="size-16 rounded-2xl object-cover border shrink-0 bg-gray-50 shadow-inner" />
+                      <img src={t.photo_url} alt={t.name} loading="lazy" className="size-16 rounded-2xl object-cover border shrink-0 bg-gray-50 shadow-inner" />
                     ) : (
                       <div className="size-16 rounded-2xl bg-brand text-white flex items-center justify-center font-bold text-xl shrink-0">
                         {t.name.charAt(0)}
@@ -139,7 +144,7 @@ export default async function DepartmentDetailPage({
                       {t.qualifications && <p className="text-[11px] text-gray-500 line-clamp-1">{t.qualifications}</p>}
                       {t.bio && <p className="text-[11px] text-gray-600 line-clamp-2">{t.bio}</p>}
                       
-                      {/* ক্লিকেবল কল ও ইমেইল */}
+                      {/* কল ও ইমেইল */}
                       {(t.email || t.phone) && (
                         <div className="pt-1.5 flex flex-wrap gap-2 text-[11px]">
                           {t.phone && (
@@ -201,7 +206,7 @@ export default async function DepartmentDetailPage({
                           {n.image_urls.map((img, i) => (
                             <a key={i} href={img} target="_blank" rel="noopener noreferrer">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={img} alt="" className="size-20 w-full object-cover rounded-lg border hover:opacity-90" />
+                              <img src={img} alt="" loading="lazy" className="size-20 w-full object-cover rounded-lg border hover:opacity-90" />
                             </a>
                           ))}
                         </div>
@@ -263,7 +268,7 @@ export default async function DepartmentDetailPage({
                           {ev.image_urls.map((img, i) => (
                             <a key={i} href={img} target="_blank" rel="noopener noreferrer">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={img} alt="" className="size-20 w-full object-cover rounded-lg border hover:opacity-90" />
+                              <img src={img} alt="" loading="lazy" className="size-20 w-full object-cover rounded-lg border hover:opacity-90" />
                             </a>
                           ))}
                         </div>
@@ -299,6 +304,16 @@ export default async function DepartmentDetailPage({
               )}
             </div>
 
+          </div>
+
+          {/* নিচে স্ক্রল করার পর পাঠকদের জন্য ফিরতি লিংক */}
+          <div className="pt-4 text-center border-t">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline cursor-pointer"
+            >
+              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
+            </Link>
           </div>
 
         </div>
