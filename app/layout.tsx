@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#046A38',
+  themeColor: '#0284c7',
   width: 'device-width',
   initialScale: 1,
 }
@@ -85,8 +85,8 @@ const organizationJsonLd = {
   },
 }
 
-/* ⭐ শুধুমাত্র উজ্জ্বল থিমসমূহ সক্রিয় এবং ডিফল্ট থিম সবসময় উজ্জ্বল 'light' ⭐ */
-const themeScript = `(function(){try{var ok=['light','sky','sunshine','rose','lavender','spring','mint','sepia','contrast'];var t=localStorage.getItem('mbstu_theme');if(ok.indexOf(t)<0){t='light';}document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('mbstu_lang');if(l==='en'||l==='bn'){document.documentElement.lang=l;}}catch(e){}})();`
+/* ⭐ নতুন ১৩টি 3D লিকুইড গ্লাস থিম স্ক্রিপ্ট (ডিফল্ট: ocean-glass) ⭐ */
+const themeScript = `(function(){try{var ok=['ocean-glass','sunset-peach','pure-frost','pastel-lilac','midnight-neon','glass-pay','pastel-dashboard','neon-wireframe','visionos-taupe','cyan-daylight','chromatic-liquid','aurora-teal','bubble-pop'];var t=localStorage.getItem('mbstu_theme');if(!t||ok.indexOf(t)<0){t='ocean-glass';}document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('mbstu_lang');if(l==='en'||l==='bn'){document.documentElement.lang=l;}}catch(e){}})();`
 
 export default function RootLayout({
   children,
