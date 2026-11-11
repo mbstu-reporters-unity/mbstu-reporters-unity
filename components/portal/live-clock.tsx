@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Clock } from 'lucide-react'
 import { useLang } from '@/lib/i18n'
 
-// বাংলায় বাংলা সংখ্যা ও মাসের নাম, ইংরেজিতে আগের মতো
 function makeFormatters(lang: 'bn' | 'en') {
   const locale = lang === 'bn' ? 'bn-BD' : 'en-GB'
   return {
@@ -37,14 +36,16 @@ export function LiveClock() {
   }, [])
 
   return (
-    <div className="flex items-center gap-3 text-white/80" aria-live="off">
-      <span className="inline-flex items-center gap-1.5">
-        <CalendarDays className="size-3.5 text-gold" aria-hidden="true" />
-        <span className="min-w-[10ch]">{now ? fmt.date.format(now) : ' '}</span>
+    <div className="flex items-center justify-between w-full text-white/90 text-[11px] sm:text-xs font-medium" aria-live="off">
+      {/* বামে: ক্যালেন্ডার আইকন ও তারিখ */}
+      <span className="inline-flex items-center gap-1.5 text-slate-200">
+        <CalendarDays className="size-3.5 text-amber-400 shrink-0" aria-hidden="true" />
+        <span>{now ? fmt.date.format(now) : 'লোড হচ্ছে...'}</span>
       </span>
-      <span className="hidden h-3 w-px bg-white/25 sm:block" aria-hidden="true" />
-      <span className="inline-flex items-center gap-1.5 tabular-nums">
-        <Clock className="size-3.5 text-gold" aria-hidden="true" />
+
+      {/* ডানে: ঘড়ির আইকন ও সময় */}
+      <span className="inline-flex items-center gap-1.5 tabular-nums text-cyan-200 font-semibold">
+        <Clock className="size-3.5 text-amber-400 shrink-0" aria-hidden="true" />
         <time>{now ? fmt.time.format(now) : '--:--:--'}</time>
       </span>
     </div>
