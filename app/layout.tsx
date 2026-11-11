@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from 'next'
 import { Noto_Sans_Bengali, Noto_Serif_Bengali } from 'next/font/google'
 import './globals.css'
 import { LangProvider } from '@/lib/i18n'
-import { GlobalTextStudio } from '@/components/portal/global-text-studio'
 
 const notoSans = Noto_Sans_Bengali({
   subsets: ['bengali', 'latin'],
@@ -85,7 +84,7 @@ const organizationJsonLd = {
   },
 }
 
-/* ⭐ নতুন ১৩টি 3D লিকুইড গ্লাস থিম স্ক্রিপ্ট (ডিফল্ট: ocean-glass) ⭐ */
+/* ১৩টি থিমের রিলোডহীন এক্সিকিউশন */
 const themeScript = `(function(){try{var ok=['ocean-glass','sunset-peach','pure-frost','pastel-lilac','midnight-neon','glass-pay','pastel-dashboard','neon-wireframe','visionos-taupe','cyan-daylight','chromatic-liquid','aurora-teal','bubble-pop'];var t=localStorage.getItem('mbstu_theme');if(!t||ok.indexOf(t)<0){t='ocean-glass';}document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('mbstu_lang');if(l==='en'||l==='bn'){document.documentElement.lang=l;}}catch(e){}})();`
 
 export default function RootLayout({
@@ -100,7 +99,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://pdualebabnvkoaqaqcut.supabase.co" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="antialiased font-sans font-medium">
+      <body className="antialiased font-sans font-normal selection:bg-brand/20 selection:text-brand">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
@@ -111,7 +110,6 @@ export default function RootLayout({
         />
         <LangProvider>
           {children}
-          <GlobalTextStudio />
         </LangProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
