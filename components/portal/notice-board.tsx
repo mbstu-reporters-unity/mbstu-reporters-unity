@@ -28,83 +28,83 @@ export function NoticeBoard() {
     <section id="notices" className="py-16 sm:py-20">
       <div className="mx-auto max-w-5xl px-4">
         <SectionHeading
+          inverted
           eyebrow="Digital Notice Board"
           title="ডিজিটাল নোটিশ বোর্ড"
-          subtitle="Latest notices from the university, halls, departments and MBSTU Reporters' Unity."
+          subtitle="বিশ্ববিদ্যালয়, বিভিন্ন হল, বিভাগ ও মাভাবিপ্রবি রিপোর্টার্স ইউনিটির সর্বশেষ নোটিশসমূহ।"
         />
 
-        <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
-          <div className="flex items-center gap-2 bg-brand px-5 py-3 text-sm font-semibold text-white">
-            <Megaphone className="size-4" aria-hidden="true" />
-            Latest Notices / সর্বশেষ নোটিশ
+        <div className="glass-card overflow-hidden">
+          <div className="flex items-center gap-2 bg-gradient-to-r from-blue-700/80 to-indigo-800/80 px-5 py-3 text-sm font-bold text-white border-b border-white/20 backdrop-blur">
+            <Megaphone className="size-4 text-cyan-300" aria-hidden="true" />
+            <span>Latest Notices / সর্বশেষ নোটিশ</span>
           </div>
 
-          {loading && <p className="p-5 text-sm text-muted-foreground">লোড হচ্ছে...</p>}
+          {loading && <p className="p-5 text-sm text-slate-300">লোড হচ্ছে...</p>}
           {!loading && list.length === 0 && (
-            <p className="p-5 text-sm text-muted-foreground">এখনো কোনো নোটিশ দেওয়া হয়নি।</p>
+            <p className="p-5 text-sm text-slate-300">এখনো কোনো নোটিশ দেওয়া হয়নি।</p>
           )}
 
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-white/10">
             {list.map((n) => {
               const branch = BRANCHES.find((b) => b.key === n.branch)?.bn || n.branch
               return (
                 <li
                   key={n.id}
-                  className="flex flex-col gap-4 p-5 transition-colors hover:bg-brand-soft/50 sm:flex-row sm:items-center"
+                  className="flex flex-col gap-4 p-5 transition-colors hover:bg-white/10 sm:flex-row sm:items-center"
                 >
-                  <div className="flex size-16 shrink-0 flex-col items-center justify-center rounded-full border-2 border-brand bg-brand-soft text-brand">
-                    <span className="font-serif text-xl font-bold leading-none">{day(n.created_at)}</span>
-                    <span className="text-[10px] font-bold uppercase">{month(n.created_at)}</span>
+                  <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-2xl border border-white/30 bg-white/15 text-white shadow-md">
+                    <span className="font-serif text-lg font-bold leading-none">{day(n.created_at)}</span>
+                    <span className="text-[10px] font-bold uppercase text-cyan-300">{month(n.created_at)}</span>
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       {n.is_pinned && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-gold/30 px-2 py-0.5 text-[11px] font-semibold text-navy">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 border border-amber-400/40 px-2 py-0.5 text-[11px] font-bold text-amber-300">
                           <Pin className="size-3" aria-hidden="true" />
                           পিন করা
                         </span>
                       )}
-                      <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-semibold text-brand">
+                      <span className="rounded-full bg-white/15 border border-white/25 px-2.5 py-0.5 text-[11px] font-bold text-cyan-200">
                         {branch}
                       </span>
                       {n.ref_number && (
-                        <p className="inline-flex items-center gap-1.5 rounded bg-muted px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
+                        <p className="inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2.5 py-0.5 font-mono text-[11px] text-slate-300">
                           <FileText className="size-3" aria-hidden="true" />
                           Ref: {n.ref_number}
                         </p>
                       )}
                     </div>
                     
-                    {/* নোটিশ শিরোনামে SPA Link */}
                     <Link
                       href={`/notices?n=${n.id}`}
-                      className="mt-1.5 block text-pretty font-semibold text-navy hover:text-brand cursor-pointer"
+                      className="mt-1.5 block font-serif font-bold text-base text-white hover:text-cyan-300 transition-colors"
                     >
                       {n.title}
                     </Link>
 
-                    {n.heading && <p className="text-sm text-muted-foreground">{n.heading}</p>}
-                    <p className="text-xs text-muted-foreground">{timeAgo(n.created_at)}</p>
+                    {n.heading && <p className="text-xs text-slate-300 mt-0.5">{n.heading}</p>}
+                    <p className="text-[11px] text-cyan-200/80 mt-1">{timeAgo(n.created_at)}</p>
                   </div>
 
                   {n.file_url ? (
                     <a
                       href={downloadUrl(n.file_url, n.file_name)}
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-crimson/30 bg-crimson/5 px-4 py-2 text-sm font-semibold text-crimson transition-colors hover:bg-crimson hover:text-white"
+                      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white border border-white/30 px-4 py-2 text-xs font-bold transition-all shadow-md active:scale-95"
                     >
-                      <Download className="size-4" aria-hidden="true" />
-                      Download / ডাউনলোড
+                      <Download className="size-3.5" aria-hidden="true" />
+                      <span>Download</span>
                     </a>
                   ) : safeUrl(n.link_url) ? (
                     <a
                       href={n.link_url!}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-brand/30 bg-brand-soft px-4 py-2 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
+                      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white border border-white/30 px-4 py-2 text-xs font-bold transition-all shadow-md active:scale-95 backdrop-blur"
                     >
-                      <ExternalLink className="size-4" aria-hidden="true" />
-                      Open Link / লিংক
+                      <ExternalLink className="size-3.5" aria-hidden="true" />
+                      <span>লিংক</span>
                     </a>
                   ) : null}
                 </li>
@@ -112,13 +112,12 @@ export function NoticeBoard() {
             })}
           </ul>
 
-          {/* সব নোটিশ দেখুন বাটনে SPA Link */}
           <Link
             href="/notices"
-            className="flex items-center justify-center gap-2 border-t border-border bg-muted px-5 py-4 text-sm font-semibold text-brand transition-colors hover:bg-brand-soft cursor-pointer"
+            className="flex items-center justify-center gap-2 border-t border-white/15 bg-white/10 px-5 py-3.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
           >
-            সব নোটিশ দেখুন
-            <ArrowRight className="size-4" aria-hidden="true" />
+            <span>সব নোটিশ দেখুন</span>
+            <ArrowRight className="size-3.5" aria-hidden="true" />
           </Link>
         </div>
       </div>
