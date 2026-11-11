@@ -10,24 +10,23 @@
 
   --color-brand: var(--theme-brand, #0284c7);
   --color-brand-dark: var(--theme-brand-dark, #0369a1);
-  --color-brand-soft: var(--theme-brand-soft, rgba(2, 132, 199, 0.15));
-  --color-navy: var(--theme-text-title, #061a3e);
-  --color-crimson: #e11d48;
+  --color-brand-soft: var(--theme-brand-soft, rgba(2, 132, 199, 0.1));
+  --color-navy: var(--theme-text-title, #0f172a);
+  --color-crimson: #dc2626;
   --color-gold: #d97706;
 
   --color-ring: var(--theme-brand, #0284c7);
-  --color-input: var(--theme-input-bg, rgba(255, 255, 255, 0.3));
-  --color-border: var(--theme-card-border, rgba(255, 255, 255, 0.6));
-  --color-foreground: var(--theme-text-body, #0f274a);
-  --color-background: var(--theme-bg-solid, #2563eb);
+  --color-input: var(--theme-input-bg, rgba(255, 255, 255, 0.5));
+  --color-border: var(--theme-card-border, rgba(226, 232, 240, 0.8));
+  --color-foreground: var(--theme-text-body, #1e293b);
+  --color-background: var(--theme-bg-solid, #f8fafc);
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
-  --radius-3xl: 2.5rem;
-  --radius-4xl: 3rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
 
   --animate-marquee: marquee 40s linear infinite;
 
@@ -47,7 +46,7 @@
   }
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 6rem;
+    scroll-padding-top: 5rem;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -55,16 +54,16 @@
   }
 
   body {
-    font-family: var(--font-hind), ui-sans-serif, system-ui, sans-serif !important;
+    font-family: var(--font-hind), ui-sans-serif, system-ui, sans-serif;
     min-height: 100vh;
     background-color: var(--theme-bg-solid);
     background-image: var(--theme-bg-gradient);
     background-attachment: fixed;
     background-size: cover;
     color: var(--theme-text-body);
-    font-weight: 500;
-    line-height: 1.68;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    font-weight: 400;
+    line-height: 1.7;
+    transition: background 0.3s ease, color 0.3s ease;
   }
 
   p, span, li, a {
@@ -76,8 +75,7 @@
   article .article-body,
   .prose p,
   .notice-body,
-  .student-dialog-body,
-  .whitespace-pre-line:not(.text-pretty) {
+  .student-dialog-body {
     text-align: justify;
     text-justify: inter-word;
     text-align-last: left;
@@ -88,606 +86,308 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-serif), var(--font-hind), sans-serif;
     color: var(--theme-text-title);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
   }
 }
 
 /* ========================================================
-   ⭐⭐⭐ ১৩টি থিমের স্বয়ংক্রিয় কালার, কনট্রাস্ট ও গ্লাস ভ্যারিয়েবলস ⭐⭐⭐
+   ১৩টি ক্লিন, হাই-কনট্রাস্ট ও আধুনিক গ্লাস থিম
    ======================================================== */
 
-/* ডিফল্ট এবং ১. ocean-glass (লাইট: ব্লু লিকুইড পিল বাটন গ্লাস) */
+/* ১. ocean-glass (ডিফল্ট: মার্জিত ব্লু গ্লাস) */
 html,
 html[data-theme='ocean-glass'] {
-  --theme-bg-solid: #2563eb;
-  --theme-bg-gradient: radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.65), transparent 42%),
-                       radial-gradient(circle at 88% 22%, rgba(186, 230, 253, 0.75), transparent 50%),
-                       linear-gradient(135deg, #60a5fa 0%, #3b82f6 32%, #2563eb 68%, #1d4ed8 100%);
-  --theme-card-bg: rgba(255, 255, 255, 0.65);
-  --theme-card-border: rgba(255, 255, 255, 0.9);
-  --theme-card-shadow: 0 20px 45px -10px rgba(10, 45, 110, 0.22), inset 0 2.5px 4px rgba(255, 255, 255, 0.95), inset 0 -2px 4px rgba(0, 35, 90, 0.08);
-  --theme-pill-bg: rgba(255, 255, 255, 0.7);
-  --theme-pill-border: rgba(255, 255, 255, 0.95);
-  --theme-pill-text: #051a3e;
-  --theme-text-title: #051a3e;
-  --theme-text-body: #0d2854;
-  --theme-text-muted: #1e3a5f;
-  --theme-text-shadow: 0 1px 1px rgba(255, 255, 255, 0.6);
-  --theme-action-bg: rgba(255, 255, 255, 0.75);
-  --theme-action-text: #051a3e;
-  --theme-action-border: rgba(255, 255, 255, 0.95);
+  --theme-bg-solid: #f0f7ff;
+  --theme-bg-gradient: radial-gradient(circle at 15% 15%, rgba(191, 219, 254, 0.45), transparent 40%),
+                       radial-gradient(circle at 85% 85%, rgba(224, 242, 254, 0.5), transparent 45%),
+                       linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+  --theme-card-bg: rgba(255, 255, 255, 0.88);
+  --theme-card-border: rgba(191, 219, 254, 0.8);
+  --theme-card-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  --theme-pill-bg: #e0f2fe;
+  --theme-pill-border: #bae6fd;
+  --theme-pill-text: #0369a1;
+  --theme-text-title: #0f172a;
+  --theme-text-body: #334155;
+  --theme-text-muted: #64748b;
   --theme-brand: #0284c7;
   --theme-brand-dark: #0369a1;
-  --theme-divider: rgba(10, 45, 110, 0.12);
+  --theme-brand-soft: rgba(2, 132, 199, 0.1);
+  --theme-divider: rgba(226, 232, 240, 0.8);
 }
 
-/* ২. sunset-peach (ডার্ক: সানসেট বিচ উইজেট গ্লাস) */
+/* ২. sunset-peach (ডার্ক: সানসেট বিচ) */
 html[data-theme='sunset-peach'] {
-  --theme-bg-solid: #1c1114;
-  --theme-bg-gradient: radial-gradient(circle at 75% 20%, rgba(249, 115, 22, 0.42), transparent 45%),
-                       radial-gradient(circle at 20% 80%, rgba(244, 63, 94, 0.3), transparent 50%),
-                       linear-gradient(135deg, #180d10 0%, #30181c 35%, #46201e 70%, #1a0f12 100%);
-  --theme-card-bg: rgba(45, 24, 28, 0.72);
-  --theme-card-border: rgba(255, 205, 190, 0.25);
-  --theme-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), inset 0 1.5px 2px rgba(255, 220, 205, 0.35);
-  --theme-pill-bg: rgba(255, 255, 255, 0.12);
-  --theme-pill-border: rgba(255, 200, 185, 0.3);
-  --theme-pill-text: #fed7aa;
-  --theme-text-title: #ffffff;
-  --theme-text-body: #ffedd5;
-  --theme-text-muted: #fdba74;
-  --theme-text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
-  --theme-action-bg: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-  --theme-action-text: #ffffff;
-  --theme-action-border: rgba(255, 255, 255, 0.4);
-  --theme-brand: #f97316;
-  --theme-brand-dark: #ea580c;
-  --theme-divider: rgba(255, 255, 255, 0.15);
-}
-
-/* ৩. pure-frost (লাইট: স্নো হোয়াইট ফ্রস্টেড গ্লাস) */
-html[data-theme='pure-frost'] {
-  --theme-bg-solid: #e2e8f0;
-  --theme-bg-gradient: radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.95), transparent 50%),
-                       linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
-  --theme-card-bg: rgba(255, 255, 255, 0.85);
-  --theme-card-border: rgba(255, 255, 255, 0.98);
-  --theme-card-shadow: 0 18px 40px -10px rgba(51, 65, 85, 0.18), inset 0 2px 4px rgba(255, 255, 255, 1);
-  --theme-pill-bg: rgba(241, 245, 249, 0.9);
-  --theme-pill-border: rgba(203, 213, 225, 0.8);
-  --theme-pill-text: #0f172a;
-  --theme-text-title: #090d16;
-  --theme-text-body: #1e293b;
-  --theme-text-muted: #475569;
-  --theme-text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
-  --theme-action-bg: #0f172a;
-  --theme-action-text: #ffffff;
-  --theme-action-border: #1e293b;
-  --theme-brand: #475569;
-  --theme-brand-dark: #334155;
-  --theme-divider: rgba(0, 0, 0, 0.08);
-}
-
-/* ৪. pastel-lilac (লাইট: ল্যাভেন্ডার প্যাস্টেল ফ্রস্টেড) */
-html[data-theme='pastel-lilac'] {
-  --theme-bg-solid: #e0e7ff;
-  --theme-bg-gradient: radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.8), transparent 45%),
-                       radial-gradient(circle at 85% 75%, rgba(245, 208, 254, 0.7), transparent 50%),
-                       linear-gradient(135deg, #dbeafe 0%, #e0e7ff 45%, #f5d0fe 80%, #fdf2f8 100%);
-  --theme-card-bg: rgba(255, 255, 255, 0.72);
-  --theme-card-border: rgba(255, 255, 255, 0.95);
-  --theme-card-shadow: 0 20px 42px -10px rgba(88, 28, 135, 0.16), inset 0 2px 3px rgba(255, 255, 255, 1);
-  --theme-pill-bg: rgba(255, 255, 255, 0.8);
-  --theme-pill-border: rgba(216, 180, 254, 0.7);
-  --theme-pill-text: #170c3d;
-  --theme-text-title: #170c3d;
-  --theme-text-body: #2e1065;
-  --theme-text-muted: #581c87;
-  --theme-text-shadow: 0 1px 1px rgba(255, 255, 255, 0.6);
-  --theme-action-bg: rgba(255, 255, 255, 0.85);
-  --theme-action-text: #170c3d;
-  --theme-action-border: rgba(216, 180, 254, 0.8);
-  --theme-brand: #9333ea;
-  --theme-brand-dark: #7e22ce;
-  --theme-divider: rgba(88, 28, 135, 0.1);
-}
-
-/* ৫. midnight-neon (ডার্ক: কালো ব্যাকগ্রাউন্ডে নিয়ন অরেঞ্জ গ্লাস) */
-html[data-theme='midnight-neon'] {
-  --theme-bg-solid: #050811;
-  --theme-bg-gradient: radial-gradient(circle at 18% 18%, rgba(255, 87, 34, 0.45), transparent 42%),
-                       radial-gradient(circle at 85% 25%, rgba(59, 130, 246, 0.25), transparent 48%),
-                       linear-gradient(135deg, #050811 0%, #0a1122 50%, #060b16 100%);
-  --theme-card-bg: rgba(10, 16, 30, 0.78);
-  --theme-card-border: rgba(255, 255, 255, 0.2);
-  --theme-card-shadow: 0 25px 55px -12px rgba(0, 0, 0, 0.9), inset 0 1.5px 2px rgba(255, 255, 255, 0.32);
-  --theme-pill-bg: rgba(255, 255, 255, 0.1);
-  --theme-pill-border: rgba(255, 255, 255, 0.18);
-  --theme-pill-text: #fed7aa;
-  --theme-text-title: #ffffff;
-  --theme-text-body: #f1f5f9;
-  --theme-text-muted: #94a3b8;
-  --theme-text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-  --theme-action-bg: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
-  --theme-action-text: #ffffff;
-  --theme-action-border: rgba(255, 255, 255, 0.4);
-  --theme-brand: #f97316;
-  --theme-brand-dark: #ea580c;
-  --theme-divider: rgba(255, 255, 255, 0.14);
-}
-
-/* ৬. glass-pay (ডার্ক: গ্লাসপে রয়্যাল ভায়োলেট ও ম্যাজেন্টা) */
-html[data-theme='glass-pay'] {
-  --theme-bg-solid: #15041c;
-  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.4), transparent 45%),
-                       radial-gradient(circle at 20% 80%, rgba(147, 51, 234, 0.4), transparent 50%),
-                       linear-gradient(135deg, #15041c 0%, #3e0442 35%, #260c54 70%, #0a0724 100%);
-  --theme-card-bg: rgba(36, 12, 48, 0.75);
-  --theme-card-border: rgba(255, 185, 230, 0.25);
-  --theme-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), inset 0 1.5px 2px rgba(255, 210, 245, 0.35);
-  --theme-pill-bg: rgba(255, 255, 255, 0.1);
-  --theme-pill-border: rgba(244, 114, 182, 0.3);
-  --theme-pill-text: #fce7f3;
-  --theme-text-title: #ffffff;
-  --theme-text-body: #fce7f3;
-  --theme-text-muted: #f472b6;
-  --theme-text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
-  --theme-action-bg: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
-  --theme-action-text: #ffffff;
-  --theme-action-border: rgba(255, 255, 255, 0.4);
-  --theme-brand: #ec4899;
-  --theme-brand-dark: #db2777;
-  --theme-divider: rgba(255, 255, 255, 0.14);
-}
-
-/* ৭. pastel-dashboard (লাইট: সফট প্যাস্টেল ব্লু ও ইনডিগো পিল) */
-html[data-theme='pastel-dashboard'] {
-  --theme-bg-solid: #cdd5ed;
-  --theme-bg-gradient: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.22), transparent 40%),
-                       radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.18), transparent 40%),
-                       linear-gradient(135deg, #dce3f5 0%, #cdd5ed 50%, #b8c5e6 100%);
-  --theme-card-bg: rgba(255, 255, 255, 0.82);
-  --theme-card-border: rgba(255, 255, 255, 0.98);
-  --theme-card-shadow: 0 18px 40px -8px rgba(79, 70, 229, 0.16), inset 0 2px 3px rgba(255, 255, 255, 1);
-  --theme-pill-bg: rgba(255, 255, 255, 0.85);
-  --theme-pill-border: rgba(199, 210, 254, 0.8);
-  --theme-pill-text: #0a1128;
-  --theme-text-title: #0a1128;
-  --theme-text-body: #1e293b;
-  --theme-text-muted: #4338ca;
-  --theme-text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
-  --theme-action-bg: #4f46e5;
-  --theme-action-text: #ffffff;
-  --theme-action-border: #4338ca;
-  --theme-brand: #4f46e5;
-  --theme-brand-dark: #4338ca;
-  --theme-divider: rgba(79, 70, 229, 0.12);
-}
-
-/* ৮. neon-wireframe (ডার্ক: নিয়ন সাইবার ব্ল্যাক ও গোল্ডেন আভা) */
-html[data-theme='neon-wireframe'] {
-  --theme-bg-solid: #030308;
-  --theme-bg-gradient: radial-gradient(circle at 80% 15%, rgba(245, 158, 11, 0.35), transparent 45%),
-                       radial-gradient(circle at 20% 85%, rgba(168, 85, 247, 0.35), transparent 50%),
-                       linear-gradient(135deg, #000000 0%, #0c0a14 50%, #05050a 100%);
-  --theme-card-bg: rgba(16, 12, 24, 0.82);
-  --theme-card-border: rgba(255, 255, 255, 0.2);
-  --theme-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95), inset 0 1.5px 2px rgba(255, 255, 255, 0.3);
-  --theme-pill-bg: rgba(255, 255, 255, 0.08);
-  --theme-pill-border: rgba(245, 158, 11, 0.3);
-  --theme-pill-text: #fef3c7;
-  --theme-text-title: #ffffff;
-  --theme-text-body: #fef3c7;
-  --theme-text-muted: #f59e0b;
-  --theme-text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-  --theme-action-bg: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  --theme-action-text: #000000;
-  --theme-action-border: rgba(255, 255, 255, 0.4);
-  --theme-brand: #f59e0b;
-  --theme-brand-dark: #d97706;
-  --theme-divider: rgba(255, 255, 255, 0.12);
-}
-
-/* ৯. visionos-taupe (ডার্ক: অ্যাপল ভিশনওএস ফ্রস্টেড ডার্ক টাউপ) */
-html[data-theme='visionos-taupe'] {
-  --theme-bg-solid: #201d1a;
-  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(120, 110, 100, 0.4), transparent 45%),
-                       radial-gradient(circle at 20% 85%, rgba(60, 56, 50, 0.5), transparent 50%),
-                       linear-gradient(135deg, #1f1d1b 0%, #36322d 40%, #262320 80%, #171514 100%);
-  --theme-card-bg: rgba(45, 40, 36, 0.78);
-  --theme-card-border: rgba(255, 255, 255, 0.2);
-  --theme-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), inset 0 1.5px 2px rgba(255, 255, 255, 0.32);
-  --theme-pill-bg: rgba(255, 255, 255, 0.12);
-  --theme-pill-border: rgba(255, 255, 255, 0.2);
-  --theme-pill-text: #f8fafc;
+  --theme-bg-solid: #181113;
+  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.2), transparent 40%),
+                       linear-gradient(135deg, #181113 0%, #261619 100%);
+  --theme-card-bg: rgba(38, 22, 25, 0.85);
+  --theme-card-border: rgba(255, 255, 255, 0.12);
+  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.6);
+  --theme-pill-bg: rgba(249, 115, 22, 0.15);
+  --theme-pill-border: rgba(249, 115, 22, 0.3);
+  --theme-pill-text: #fdba74;
   --theme-text-title: #ffffff;
   --theme-text-body: #f8fafc;
   --theme-text-muted: #cbd5e1;
-  --theme-text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
-  --theme-action-bg: rgba(255, 255, 255, 0.2);
-  --theme-action-text: #ffffff;
-  --theme-action-border: rgba(255, 255, 255, 0.35);
-  --theme-brand: #facc15;
-  --theme-brand-dark: #eab308;
-  --theme-divider: rgba(255, 255, 255, 0.15);
+  --theme-brand: #f97316;
+  --theme-brand-dark: #ea580c;
+  --theme-brand-soft: rgba(249, 115, 22, 0.15);
+  --theme-divider: rgba(255, 255, 255, 0.1);
 }
 
-/* ১০. cyan-daylight (লাইট: আকাশী সায়ান ডেলাইট ফ্রস্টেড প্যানেল) */
+/* ৩. pure-frost (মিনিমালিস্ট স্নো হোয়াইট) */
+html[data-theme='pure-frost'] {
+  --theme-bg-solid: #f8fafc;
+  --theme-bg-gradient: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  --theme-card-bg: #ffffff;
+  --theme-card-border: #e2e8f0;
+  --theme-card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  --theme-pill-bg: #f1f5f9;
+  --theme-pill-border: #e2e8f0;
+  --theme-pill-text: #0f172a;
+  --theme-text-title: #090d16;
+  --theme-text-body: #334155;
+  --theme-text-muted: #64748b;
+  --theme-brand: #2563eb;
+  --theme-brand-dark: #1d4ed8;
+  --theme-brand-soft: rgba(37, 99, 235, 0.08);
+  --theme-divider: #e2e8f0;
+}
+
+/* ৪. pastel-lilac (ল্যাভেন্ডার প্যাস্টেল) */
+html[data-theme='pastel-lilac'] {
+  --theme-bg-solid: #f5f3ff;
+  --theme-bg-gradient: radial-gradient(circle at 15% 15%, rgba(233, 213, 255, 0.5), transparent 45%),
+                       linear-gradient(135deg, #fbfbfe 0%, #f3e8ff 100%);
+  --theme-card-bg: rgba(255, 255, 255, 0.9);
+  --theme-card-border: rgba(216, 180, 254, 0.6);
+  --theme-card-shadow: 0 10px 25px -5px rgba(147, 51, 234, 0.07);
+  --theme-pill-bg: #f3e8ff;
+  --theme-pill-border: #e9d5ff;
+  --theme-pill-text: #7e22ce;
+  --theme-text-title: #1e1b4b;
+  --theme-text-body: #312e81;
+  --theme-text-muted: #6b21a8;
+  --theme-brand: #9333ea;
+  --theme-brand-dark: #7e22ce;
+  --theme-brand-soft: rgba(147, 51, 234, 0.1);
+  --theme-divider: rgba(233, 213, 255, 0.7);
+}
+
+/* ৫. midnight-neon (ডার্ক অবসিডিয়ান) */
+html[data-theme='midnight-neon'] {
+  --theme-bg-solid: #090d16;
+  --theme-bg-gradient: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.18), transparent 45%),
+                       linear-gradient(135deg, #090d16 0%, #111827 100%);
+  --theme-card-bg: rgba(17, 24, 39, 0.85);
+  --theme-card-border: rgba(255, 255, 255, 0.12);
+  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.7);
+  --theme-pill-bg: rgba(255, 255, 255, 0.08);
+  --theme-pill-border: rgba(255, 255, 255, 0.16);
+  --theme-pill-text: #93c5fd;
+  --theme-text-title: #ffffff;
+  --theme-text-body: #e2e8f0;
+  --theme-text-muted: #94a3b8;
+  --theme-brand: #3b82f6;
+  --theme-brand-dark: #2563eb;
+  --theme-brand-soft: rgba(59, 130, 246, 0.15);
+  --theme-divider: rgba(255, 255, 255, 0.1);
+}
+
+/* ৬. glass-pay (রয়্যাল ভায়োলেট) */
+html[data-theme='glass-pay'] {
+  --theme-bg-solid: #150a21;
+  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(219, 39, 119, 0.22), transparent 45%),
+                       linear-gradient(135deg, #150a21 0%, #2a0845 100%);
+  --theme-card-bg: rgba(37, 12, 58, 0.85);
+  --theme-card-border: rgba(255, 255, 255, 0.12);
+  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.7);
+  --theme-pill-bg: rgba(236, 72, 153, 0.15);
+  --theme-pill-border: rgba(236, 72, 153, 0.3);
+  --theme-pill-text: #fbcfe8;
+  --theme-text-title: #ffffff;
+  --theme-text-body: #fce7f3;
+  --theme-text-muted: #f472b6;
+  --theme-brand: #ec4899;
+  --theme-brand-dark: #db2777;
+  --theme-brand-soft: rgba(236, 72, 153, 0.15);
+  --theme-divider: rgba(255, 255, 255, 0.1);
+}
+
+/* ৭. pastel-dashboard (লাইট ইনডিগো) */
+html[data-theme='pastel-dashboard'] {
+  --theme-bg-solid: #f1f5f9;
+  --theme-bg-gradient: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15), transparent 40%),
+                       linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+  --theme-card-bg: rgba(255, 255, 255, 0.92);
+  --theme-card-border: rgba(199, 210, 254, 0.8);
+  --theme-card-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.08);
+  --theme-pill-bg: #e0e7ff;
+  --theme-pill-border: #c7d2fe;
+  --theme-pill-text: #4338ca;
+  --theme-text-title: #0f172a;
+  --theme-text-body: #334155;
+  --theme-text-muted: #64748b;
+  --theme-brand: #4f46e5;
+  --theme-brand-dark: #4338ca;
+  --theme-brand-soft: rgba(79, 70, 229, 0.1);
+  --theme-divider: rgba(226, 232, 240, 0.8);
+}
+
+/* ৮. neon-wireframe (মিনিমালিস্ট ডার্ক) */
+html[data-theme='neon-wireframe'] {
+  --theme-bg-solid: #09090b;
+  --theme-bg-gradient: linear-gradient(180deg, #09090b 0%, #18181b 100%);
+  --theme-card-bg: rgba(24, 24, 27, 0.85);
+  --theme-card-border: rgba(255, 255, 255, 0.1);
+  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.8);
+  --theme-pill-bg: rgba(245, 158, 11, 0.15);
+  --theme-pill-border: rgba(245, 158, 11, 0.3);
+  --theme-pill-text: #fde68a;
+  --theme-text-title: #ffffff;
+  --theme-text-body: #e4e4e7;
+  --theme-text-muted: #a1a1aa;
+  --theme-brand: #f59e0b;
+  --theme-brand-dark: #d97706;
+  --theme-brand-soft: rgba(245, 158, 11, 0.15);
+  --theme-divider: rgba(255, 255, 255, 0.1);
+}
+
+/* ৯. visionos-taupe (ভিশন ওএস ডার্ক) */
+html[data-theme='visionos-taupe'] {
+  --theme-bg-solid: #1c1917;
+  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(120, 113, 108, 0.2), transparent 45%),
+                       linear-gradient(135deg, #1c1917 0%, #292524 100%);
+  --theme-card-bg: rgba(41, 37, 36, 0.85);
+  --theme-card-border: rgba(255, 255, 255, 0.12);
+  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.7);
+  --theme-pill-bg: rgba(255, 255, 255, 0.1);
+  --theme-pill-border: rgba(255, 255, 255, 0.15);
+  --theme-pill-text: #f5f5f4;
+  --theme-text-title: #ffffff;
+  --theme-text-body: #e7e5e4;
+  --theme-text-muted: #a8a29e;
+  --theme-brand: #eab308;
+  --theme-brand-dark: #ca8a04;
+  --theme-brand-soft: rgba(234, 179, 8, 0.15);
+  --theme-divider: rgba(255, 255, 255, 0.1);
+}
+
+/* ১০. cyan-daylight (আকাশী ডেলাইট) */
 html[data-theme='cyan-daylight'] {
-  --theme-bg-solid: #0284c7;
-  --theme-bg-gradient: radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.85), transparent 45%),
-                       radial-gradient(circle at 85% 75%, rgba(14, 165, 233, 0.55), transparent 50%),
-                       linear-gradient(135deg, #7dd3fc 0%, #38bdf8 35%, #0284c7 70%, #0369a1 100%);
-  --theme-card-bg: rgba(255, 255, 255, 0.75);
-  --theme-card-border: rgba(255, 255, 255, 0.98);
-  --theme-card-shadow: 0 20px 45px -10px rgba(3, 105, 161, 0.24), inset 0 2px 3px rgba(255, 255, 255, 1);
-  --theme-pill-bg: rgba(255, 255, 255, 0.85);
-  --theme-pill-border: rgba(186, 230, 253, 0.9);
-  --theme-pill-text: #021d3f;
-  --theme-text-title: #021d3f;
-  --theme-text-body: #08336d;
-  --theme-text-muted: #0c4a6e;
-  --theme-text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
-  --theme-action-bg: rgba(255, 255, 255, 0.85);
-  --theme-action-text: #021d3f;
-  --theme-action-border: rgba(186, 230, 253, 0.95);
+  --theme-bg-solid: #f0fdfa;
+  --theme-bg-gradient: radial-gradient(circle at 15% 15%, rgba(153, 246, 228, 0.45), transparent 45%),
+                       linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+  --theme-card-bg: rgba(255, 255, 255, 0.9);
+  --theme-card-border: rgba(186, 230, 253, 0.8);
+  --theme-card-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.08);
+  --theme-pill-bg: #e0f2fe;
+  --theme-pill-border: #bae6fd;
+  --theme-pill-text: #0284c7;
+  --theme-text-title: #0f172a;
+  --theme-text-body: #334155;
+  --theme-text-muted: #64748b;
   --theme-brand: #0284c7;
   --theme-brand-dark: #0369a1;
-  --theme-divider: rgba(3, 105, 161, 0.12);
+  --theme-brand-soft: rgba(2, 132, 199, 0.1);
+  --theme-divider: rgba(226, 232, 240, 0.8);
 }
 
-/* ১১. chromatic-liquid (ডার্ক: আইওএস ২৬ ইরিডিসেন্ট রেইনবো লিকুইড) */
+/* ১১. chromatic-liquid (ডিপ ব্লু গ্লাস) */
 html[data-theme='chromatic-liquid'] {
-  --theme-bg-solid: #0c204c;
-  --theme-bg-gradient: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.42), transparent 45%),
-                       radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.38), transparent 50%),
-                       linear-gradient(135deg, #091a3e 0%, #173582 45%, #024e88 80%, #062238 100%);
-  --theme-card-bg: rgba(14, 32, 68, 0.76);
-  --theme-card-border: rgba(255, 255, 255, 0.32);
-  --theme-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), inset 0 2px 3px rgba(255, 255, 255, 0.5), 0 0 25px rgba(56, 189, 248, 0.25);
-  --theme-pill-bg: rgba(255, 255, 255, 0.12);
-  --theme-pill-border: rgba(56, 189, 248, 0.4);
-  --theme-pill-text: #e0f2fe;
+  --theme-bg-solid: #0b1528;
+  --theme-bg-gradient: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.2), transparent 45%),
+                       linear-gradient(135deg, #0b1528 0%, #172554 100%);
+  --theme-card-bg: rgba(15, 23, 42, 0.85);
+  --theme-card-border: rgba(255, 255, 255, 0.14);
+  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.7);
+  --theme-pill-bg: rgba(56, 189, 248, 0.15);
+  --theme-pill-border: rgba(56, 189, 248, 0.3);
+  --theme-pill-text: #bae6fd;
   --theme-text-title: #ffffff;
-  --theme-text-body: #e0f2fe;
-  --theme-text-muted: #7dd3fc;
-  --theme-text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
-  --theme-action-bg: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-  --theme-action-text: #ffffff;
-  --theme-action-border: rgba(255, 255, 255, 0.5);
+  --theme-text-body: #e2e8f0;
+  --theme-text-muted: #94a3b8;
   --theme-brand: #38bdf8;
   --theme-brand-dark: #0284c7;
-  --theme-divider: rgba(255, 255, 255, 0.18);
+  --theme-brand-soft: rgba(56, 189, 248, 0.15);
+  --theme-divider: rgba(255, 255, 255, 0.1);
 }
 
-/* ১২. aurora-teal (ডার্ক: অরোরা পার্পল-টিয়াল আলোর গ্লাস) */
+/* ১২. aurora-teal (অরোরা টিয়াল ডার্ক) */
 html[data-theme='aurora-teal'] {
-  --theme-bg-solid: #092636;
-  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.48), transparent 50%),
-                       radial-gradient(circle at 20% 80%, rgba(6, 182, 212, 0.45), transparent 50%),
-                       linear-gradient(135deg, #3b1373 0%, #581c87 30%, #0e7490 70%, #0891b2 100%);
-  --theme-card-bg: rgba(12, 34, 58, 0.78);
-  --theme-card-border: rgba(255, 255, 255, 0.28);
-  --theme-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), inset 0 1.5px 2px rgba(255, 255, 255, 0.4);
-  --theme-pill-bg: rgba(255, 255, 255, 0.12);
-  --theme-pill-border: rgba(6, 182, 212, 0.4);
-  --theme-pill-text: #cffafe;
+  --theme-bg-solid: #081d24;
+  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(147, 51, 234, 0.22), transparent 50%),
+                       radial-gradient(circle at 20% 80%, rgba(20, 184, 166, 0.2), transparent 50%),
+                       linear-gradient(135deg, #081d24 0%, #132f38 100%);
+  --theme-card-bg: rgba(19, 47, 56, 0.85);
+  --theme-card-border: rgba(255, 255, 255, 0.14);
+  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.7);
+  --theme-pill-bg: rgba(20, 184, 166, 0.15);
+  --theme-pill-border: rgba(20, 184, 166, 0.3);
+  --theme-pill-text: #99f6e4;
   --theme-text-title: #ffffff;
-  --theme-text-body: #cffafe;
-  --theme-text-muted: #22d3ee;
-  --theme-text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
-  --theme-action-bg: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  --theme-action-text: #ffffff;
-  --theme-action-border: rgba(255, 255, 255, 0.4);
-  --theme-brand: #06b6d4;
-  --theme-brand-dark: #0891b2;
-  --theme-divider: rgba(255, 255, 255, 0.16);
+  --theme-text-body: #ccfbf1;
+  --theme-text-muted: #5eead4;
+  --theme-brand: #14b8a6;
+  --theme-brand-dark: #0f766e;
+  --theme-brand-soft: rgba(20, 184, 166, 0.15);
+  --theme-divider: rgba(255, 255, 255, 0.1);
 }
 
-/* ১৩. bubble-pop (লাইট: রঙিন ভাসমান বাবল ও স্বচ্ছ শুভ্র কাঁচ) */
+/* ১৩. bubble-pop (ক্লিন হোয়াইট বাবল) */
 html[data-theme='bubble-pop'] {
   --theme-bg-solid: #f8fafc;
-  --theme-bg-gradient: radial-gradient(circle at 15% 20%, rgba(147, 51, 234, 0.38), transparent 35%),
-                       radial-gradient(circle at 85% 30%, rgba(249, 115, 22, 0.38), transparent 40%),
-                       radial-gradient(circle at 45% 85%, rgba(6, 182, 212, 0.38), transparent 45%),
+  --theme-bg-gradient: radial-gradient(circle at 15% 20%, rgba(147, 51, 234, 0.12), transparent 35%),
+                       radial-gradient(circle at 85% 30%, rgba(249, 115, 22, 0.12), transparent 40%),
                        linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-  --theme-card-bg: rgba(255, 255, 255, 0.85);
-  --theme-card-border: rgba(255, 255, 255, 0.98);
-  --theme-card-shadow: 0 18px 45px -8px rgba(0, 0, 0, 0.12), inset 0 2px 4px rgba(255, 255, 255, 1);
-  --theme-pill-bg: rgba(248, 250, 252, 0.95);
-  --theme-pill-border: rgba(203, 213, 225, 0.8);
-  --theme-pill-text: #090d16;
-  --theme-text-title: #090d16;
-  --theme-text-body: #1e293b;
-  --theme-text-muted: #475569;
-  --theme-text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
-  --theme-action-bg: #4338ca;
-  --theme-action-text: #ffffff;
-  --theme-action-border: #3730a3;
+  --theme-card-bg: #ffffff;
+  --theme-card-border: #e2e8f0;
+  --theme-card-shadow: 0 8px 25px -4px rgba(0, 0, 0, 0.05);
+  --theme-pill-bg: #eef2ff;
+  --theme-pill-border: #e0e7ff;
+  --theme-pill-text: #4338ca;
+  --theme-text-title: #0f172a;
+  --theme-text-body: #334155;
+  --theme-text-muted: #64748b;
   --theme-brand: #4338ca;
   --theme-brand-dark: #3730a3;
-  --theme-divider: rgba(0, 0, 0, 0.08);
+  --theme-brand-soft: rgba(67, 56, 202, 0.08);
+  --theme-divider: #e2e8f0;
 }
 
 /* ========================================================
-   ⭐⭐⭐ গ্লোবাল অটোমেটিক টেক্সট ও গ্লাস রিডারিবিলিটি রুলস ⭐⭐⭐
+   উপাদানসমূহের মার্জিত ন্যাচারাল স্টাইলিং (No !important hacks)
    ======================================================== */
 
-/* ১. সব কার্ড ও কন্টেইনার (ক্লাব সেকশন ও ডায়ালগ বাদে) */
-article:not(#club-news *):not([role="dialog"] *),
-.bg-white:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
-.bg-card:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
-.bg-gray-50:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
-.bg-slate-50:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *),
-.bg-muted:not([role="dialog"] *):not(.club-dialog-font *):not(#club-news *) {
-  background: var(--theme-card-bg) !important;
-  backdrop-filter: blur(28px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
-  border: 1.5px solid var(--theme-card-border) !important;
-  border-radius: 2rem !important;
-  box-shadow: var(--theme-card-shadow) !important;
-  color: var(--theme-text-body) !important;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease !important;
-}
-
-article:not(#club-news *):hover {
-  transform: translateY(-3px) !important;
-}
-
-/* ২. সব শিরোনাম ও টাইটেল স্বয়ংক্রিয়ভাবে থিম অনুযায়ী হাই-কনট্রাস্ট হবে */
-article:not(#club-news *) h1,
-article:not(#club-news *) h2,
-article:not(#club-news *) h3,
-article:not(#club-news *) h4,
-article:not(#club-news *) h5,
-article:not(#club-news *) h6,
-.text-navy,
-h1:not(#club-news *),
-h2:not(#club-news *),
-h3:not(#club-news *),
-[class*="text-[#071739]"],
-[class*="text-[#091e42]"],
-[class*="text-[#0f172a]"],
-[class*="text-[#050505]"],
-[class*="text-[#111827]"] {
-  color: var(--theme-text-title) !important;
-  text-shadow: var(--theme-text-shadow) !important;
-  font-weight: 700 !important;
-}
-
-/* ৩. সমস্ত বডি টেক্সট ও প্যারাগ্রাফ স্বয়ংক্রিয়ভাবে স্পষ্ট হবে */
-article:not(#club-news *) p,
-article:not(#club-news *) .formatted-text,
-.section-heading p,
-.text-gray-800,
-.text-gray-700,
-.text-slate-800,
-.text-slate-700,
-[class*="text-[#0f274a]"],
-[class*="text-[#1e293b]"],
-[class*="text-[#334155]"] {
-  color: var(--theme-text-body) !important;
-}
-
-/* ৪. সাবটেক্সট, তারিখ ও ক্যাপশন */
-article:not(#club-news *) .text-gray-600,
-article:not(#club-news *) .text-gray-500,
-article:not(#club-news *) .text-slate-600,
-article:not(#club-news *) .text-slate-500,
-article:not(#club-news *) .text-muted-foreground,
-.text-muted-foreground {
-  color: var(--theme-text-muted) !important;
-}
-
-/* ৫. তারিখ ও রিপোর্টার পিল চিপস */
-[class*="text-sky-950"],
-[class*="text-emerald-950"],
-[class*="text-orange-200"],
-article:not(#club-news *) .bg-white\/55,
-article:not(#club-news *) .bg-white\/50,
-article:not(#club-news *) .bg-white\/45,
-article:not(#club-news *) .bg-white\/60,
-article:not(#club-news *) .bg-white\/\[0\.08\],
-article:not(#club-news *) .bg-white\/\[0\.06\] {
-  background: var(--theme-pill-bg) !important;
-  color: var(--theme-pill-text) !important;
-  border-color: var(--theme-pill-border) !important;
-}
-
-/* ৬. অ্যাকশন বাটন ("বিস্তারিত পড়ুন" / Liquid Glass Button) */
-.liquid-glass-pill,
-[class*="rounded-full"][class*="bg-white\/45"],
-[class*="rounded-full"][class*="bg-white\/50"],
-[class*="rounded-xl"][class*="bg-gradient-to-r"] {
-  background: var(--theme-action-bg) !important;
-  color: var(--theme-action-text) !important;
-  border-color: var(--theme-action-border) !important;
-  box-shadow: 0 8px 20px -3px rgba(0, 0, 0, 0.25) !important;
-}
-
-/* ৭. কার্ডের ভেতরের বর্ডার ও ডিভাইডার লাইন */
-article:not(#club-news *) .border-white\/40,
-article:not(#club-news *) .border-white\/10,
-article:not(#club-news *) .border-white\/20,
-article:not(#club-news *) .border-border,
-article:not(#club-news *) .border-border\/60,
-article:not(#club-news *) .border-border\/70,
-article:not(#club-news *) .border-border\/80 {
-  border-color: var(--theme-divider) !important;
-}
-
-/* ৮. সংবাদ টিকার বার (News Ticker Bar) */
-[role="region"][aria-label="সর্বশেষ সংবাদ"] > div {
-  background: var(--theme-card-bg) !important;
-  border-color: var(--theme-card-border) !important;
-  box-shadow: var(--theme-card-shadow) !important;
-}
-[role="region"][aria-label="সর্বশেষ সংবাদ"] span,
-[role="region"][aria-label="সর্বশেষ সংবাদ"] a {
-  color: var(--theme-text-title) !important;
-}
-
-/* ৯. গ্লাস হেডার ও টপ বার */
-.bg-navy {
-  background: rgba(10, 20, 40, 0.78) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important;
-  color: #ffffff !important;
-}
-
-header {
-  background: var(--theme-card-bg) !important;
-  backdrop-filter: blur(28px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
-  border-bottom: 1.5px solid var(--theme-card-border) !important;
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15) !important;
-}
-
-header nav a,
-header nav button {
-  color: var(--theme-text-title) !important;
-  font-weight: 600 !important;
-}
-
-/* ১০. ট্রান্সপারেন্ট সেকশনসমূহ */
-#leadership,
-#general-news,
-#student-corner,
-#notices,
-#community-pages,
-section[id^="cat-"] {
-  background-color: transparent !important;
-}
-
-/* ১১. ফুটার */
-footer {
-  background: rgba(8, 15, 30, 0.92) !important;
-  backdrop-filter: blur(28px) !important;
-  -webkit-backdrop-filter: blur(28px) !important;
-  border-top: 1.5px solid rgba(255, 255, 255, 0.2) !important;
-  color: #cbd5e1 !important;
-}
-
-/* ========================================================
-   ⭐⭐⭐ আপনার নির্দেশ মোতাবেক: ক্যাম্পাস ক্লাবসমূহ সম্পূর্ণ অক্ষত ⭐⭐⭐
-   ======================================================== */
-#club-news {
-  background: radial-gradient(circle at 85% 15%, rgba(0, 210, 255, 0.45), transparent 50%),
-              radial-gradient(circle at 15% 85%, rgba(30, 27, 75, 0.6), transparent 55%),
-              linear-gradient(135deg, #0b1540 0%, #032d84 35%, #005bb5 70%, #008fa0 100%) !important;
-}
-#club-news .group h3 {
-  color: #ffffff !important;
-}
-#club-news .group p {
-  color: #cbd5e1 !important;
-}
-
-@keyframes rotate_neon_beam {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.neon-glass-wrapper {
-  position: relative;
+.theme-card {
+  background: var(--theme-card-bg);
+  border: 1px solid var(--theme-card-border);
+  box-shadow: var(--theme-card-shadow);
   border-radius: 1.5rem;
-  padding: 2px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px -5px rgba(0, 15, 60, 0.65), 0 0 15px 0 rgba(0, 180, 255, 0.25);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.neon-glass-wrapper:hover {
+.theme-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 40px -5px rgba(0, 20, 80, 0.85), 0 0 25px 2px rgba(0, 220, 255, 0.45);
 }
 
-.neon-glass-wrapper::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    transparent 70deg,
-    rgba(0, 210, 255, 0.4) 110deg,
-    #00e5ff 140deg,
-    #ffffff 180deg,
-    #0077ff 220deg,
-    rgba(0, 100, 255, 0.4) 250deg,
-    transparent 290deg,
-    transparent 360deg
-  );
-  animation: rotate_neon_beam 4.5s linear infinite;
-  will-change: transform;
-  z-index: 0;
+/* হেডার ও নেভিগেশন */
+header {
+  background: var(--theme-card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--theme-card-border);
 }
 
-.neon-glass-inner {
-  position: relative;
-  z-index: 10;
-  width: 100%;
-  height: 100%;
-  border-radius: calc(1.5rem - 2px);
-  background-color: #03174d !important;
-  background-image: 
-    linear-gradient(125deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.02) 36%, transparent 36.5%),
-    linear-gradient(135deg, #04246c 0%, #021038 100%) !important;
-  box-shadow: inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.4);
+.bg-navy {
+  background: #091325;
 }
 
-/* ক্লাব পপ-আপ ডায়ালগ */
-[role="dialog"],
-.club-dialog-font {
-  color: #0f172a !important;
+footer {
+  background: #060e1a;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
 }
-[role="dialog"] p,
-.club-dialog-font p {
-  color: #1e293b !important;
-}
-[role="dialog"] h1,
-[role="dialog"] h2,
-[role="dialog"] h3,
-[role="dialog"] h4,
-.club-dialog-font h1,
-.club-dialog-font h2,
-.club-dialog-font h3,
-.club-dialog-font h4 {
-  color: #0f172a !important;
-}
-[role="dialog"] .text-\[\#65676B\],
-.club-dialog-font .text-\[\#65676B\],
-[role="dialog"] .text-gray-500,
-.club-dialog-font .text-gray-500 {
-  color: #475569 !important;
-}
-[role="dialog"] .text-\[\#050505\],
-.club-dialog-font .text-\[\#050505\],
-[role="dialog"] .text-slate-800,
-.club-dialog-font .text-slate-800 {
-  color: #0f172a !important;
-}
-
-/* ট্রানজিশন ও অ্যানিমেশনসমূহ */
-@keyframes heroTimer { from { width: 0%; } to { width: 100%; } }
-@keyframes tr_slide_left { 0% { transform: translateX(70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-.tr_slide-left { animation: tr_slide_left 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-@keyframes tr_slide_right { 0% { transform: translateX(-70px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-.tr_slide-right { animation: tr_slide_right 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-@keyframes tr_fade { 0% { opacity: 0; filter: blur(4px); } 100% { opacity: 1; filter: blur(0); } }
-.tr_fade { animation: tr_fade 0.8s ease-in-out both; }
-@keyframes tr_zoom_in { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-.tr_zoom-in { animation: tr_zoom_in 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-@keyframes anim_fade_up { 0% { opacity: 0; transform: translateY(22px); } 100% { opacity: 1; transform: translateY(0); } }
-.anim_fade-up { animation: anim_fade_up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
-@keyframes anim_pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.18); opacity: 0.82; } }
-.anim_pulse { animation: anim_pulse 1.4s ease-in-out infinite; display: inline-flex; }
-@keyframes anim_ping { 0% { transform: scale(1); opacity: 1; } 75%, 100% { transform: scale(1.6); opacity: 0; } }
-.anim_ping { animation: anim_ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; display: inline-flex; }
-@keyframes anim_heartbeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.22); } 28% { transform: scale(1); } 42% { transform: scale(1.15); } 70% { transform: scale(1); } }
-.anim_heartbeat { animation: anim_heartbeat 1.5s ease-in-out infinite; display: inline-flex; }
