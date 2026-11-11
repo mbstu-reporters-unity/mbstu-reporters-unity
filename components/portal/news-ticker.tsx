@@ -38,7 +38,7 @@ import {
 } from '@/lib/ticker'
 
 const POLL = 20000
-const MASK = 'linear-gradient(to right, transparent 0, #000 40px, #000 calc(100% - 40px), transparent 100%)'
+const MASK = 'linear-gradient(to right, transparent 0, #000 30px, #000 calc(100% - 30px), transparent 100%)'
 
 export function renderTickerBadgeIcon(key?: string, className = "size-4 shrink-0") {
   switch (key) {
@@ -114,14 +114,10 @@ function Slide({
   const external = !!item.url && /^https?:\/\//i.test(item.url)
   const animKey = `tk_anim_${item.id.replace(/[^a-zA-Z0-9]/g, '_')}_${cycle}`
 
-  const briefAnimClass = badgeConfig.brief_animation && badgeConfig.brief_animation !== "none"
-    ? `anim_${badgeConfig.brief_animation.replace(/-/g, '_')}`
-    : ""
-
   return (
     <div
       ref={boxRef}
-      className="relative h-12 w-full overflow-hidden"
+      className="relative h-10 w-full overflow-hidden"
       style={{ WebkitMaskImage: MASK, maskImage: MASK }}
     >
       <style>{`
@@ -138,10 +134,10 @@ function Slide({
       <div
         ref={textRef}
         onAnimationEnd={handleFinish}
-        className={`absolute left-0 top-0 flex h-full items-center whitespace-nowrap text-sm font-bold text-white drop-shadow-md ${animKey}`}
+        className={`absolute left-0 top-0 flex h-full items-center whitespace-nowrap text-xs sm:text-sm font-semibold text-foreground ${animKey}`}
       >
         <span
-          className="mr-3 size-2.5 shrink-0 rounded-full shadow-[0_0_12px_#f97316] ring-2 ring-orange-500/80 bg-orange-500"
+          className="mr-2.5 size-2 shrink-0 rounded-full bg-crimson"
           aria-hidden="true"
         />
 
@@ -151,14 +147,14 @@ function Slide({
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-orange-400 hover:underline focus-visible:underline focus-visible:outline-none transition-colors"
+              className="hover:text-brand hover:underline transition-colors"
             >
               {item.title}
             </a>
           ) : (
             <Link
               href={item.url}
-              className="hover:text-orange-400 hover:underline focus-visible:underline focus-visible:outline-none transition-colors"
+              className="hover:text-brand hover:underline transition-colors"
             >
               {item.title}
             </Link>
@@ -166,9 +162,7 @@ function Slide({
         ) : (
           <div className="flex items-center gap-2">
             {badgeConfig.show_brief && badgeConfig.brief_text && (
-              <span
-                className={`px-2.5 py-0.5 rounded-full text-xs font-bold shrink-0 border border-white/20 bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-md ${briefAnimClass}`}
-              >
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 bg-crimson/10 text-crimson border border-crimson/20">
                 {badgeConfig.brief_text}
               </span>
             )}
@@ -207,7 +201,7 @@ export function NewsTicker() {
       o.frequency.setValueAtTime(880, t)
       o.frequency.exponentialRampToValueAtTime(660, t + 0.35)
       g.gain.setValueAtTime(0.0001, t)
-      g.gain.exponentialRampToValueAtTime(0.15, t + 0.02)
+      g.gain.exponentialRampToValueAtTime(0.12, t + 0.02)
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4)
       o.connect(g)
       g.connect(ctx.destination)
@@ -277,41 +271,14 @@ export function NewsTicker() {
 
   const cur = list[idx]
 
-  const iconAnimClass = badgeConfig.icon_animation && badgeConfig.icon_animation !== "none"
-    ? `anim_${badgeConfig.icon_animation.replace(/-/g, '_')}`
-    : ""
-
-  const textAnimClass = badgeConfig.text_animation && badgeConfig.text_animation !== "none"
-    ? `anim_${badgeConfig.text_animation.replace(/-/g, '_')}`
-    : ""
-
-  const bgAnimClass = badgeConfig.bg_animation && badgeConfig.bg_animation !== "none"
-    ? `anim_${badgeConfig.bg_animation.replace(/-/g, '_')}`
-    : ""
-
   return (
-    <div className="relative z-20 mx-auto max-w-7xl px-3 sm:px-4 py-2.5" role="region" aria-label="সর্বশেষ সংবাদ">
-      
-      {/* ডার্ক লিকুইড গ্লাস টিকার বার */}
-      <div className="flex items-center rounded-full border border-white/20 bg-slate-950/70 backdrop-blur-2xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.85),inset_0_1.5px_2px_rgba(255,255,255,0.25)] p-1.5 transition-all">
+    <div className="relative z-20 mx-auto max-w-7xl px-3 sm:px-4 py-2" role="region" aria-label="সর্বশেষ সংবাদ">
+      <div className="flex items-center rounded-2xl border border-border bg-card/90 shadow-xs p-1">
         
-        {/* ব্রেকিং বেজ (ছবির মতো অরেঞ্জ-রেড নিয়ন গ্রেডিয়েন্ট) */}
-        <div
-          className={`relative z-10 flex shrink-0 items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs font-bold sm:text-sm select-none rounded-full shadow-[0_0_20px_rgba(249,115,22,0.4)] border border-white/30 bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white ${bgAnimClass}`}
-        >
-          <span className={iconAnimClass}>
-            {renderTickerBadgeIcon(badgeConfig.icon, 'size-3.5 sm:size-4 shrink-0')}
-          </span>
-          <span
-            className={`${textAnimClass} flex items-center gap-1 leading-none font-bold`}
-          >
-            <span>{badgeConfig.badge_text || 'সর্বশেষ'}</span>
-            {badgeConfig.show_subtext && badgeConfig.badge_subtext && (
-              <span className="hidden md:inline font-semibold opacity-90 text-[11px] sm:text-xs">
-                / {badgeConfig.badge_subtext}
-              </span>
-            )}
-          </span>
+        {/* ব্রেকিং বেজ */}
+        <div className="flex shrink-0 items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white rounded-xl bg-crimson shadow-2xs">
+          <span>{renderTickerBadgeIcon(badgeConfig.icon, 'size-3.5 shrink-0')}</span>
+          <span>{badgeConfig.badge_text || 'সর্বশেষ'}</span>
         </div>
 
         {/* স্ক্রলিং সংবাদ বক্স */}
@@ -332,31 +299,31 @@ export function NewsTicker() {
           />
         </div>
 
-        {/* ডার্ক গ্লাস সার্কুলার অ্যারো বাটন */}
+        {/* অ্যারো বাটন */}
         {total > 1 && (
-          <div className="flex items-center gap-1 sm:gap-1.5 px-2 text-xs text-white select-none shrink-0 font-bold">
+          <div className="flex items-center gap-1 px-1.5 text-xs select-none shrink-0 font-medium text-muted-foreground">
             <button
               type="button"
               onClick={prevSlide}
-              className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-white/[0.08] hover:bg-white/[0.18] border border-white/20 text-white shadow-inner cursor-pointer active:scale-95 transition-all"
+              className="flex size-7 items-center justify-center rounded-lg hover:bg-muted transition cursor-pointer"
               title="আগের ব্রেকিং"
-              aria-label="Previous Breaking News"
+              aria-label="Previous"
             >
-              <ChevronLeft className="size-3.5 sm:size-4" />
+              <ChevronLeft className="size-4" />
             </button>
             
-            <span className="tabular-nums text-[10px] sm:text-[11px] px-1 font-bold text-orange-400">
+            <span className="tabular-nums text-[11px] px-1 font-semibold">
               {bn(idx + 1)}/{bn(total)}
             </span>
 
             <button
               type="button"
               onClick={nextSlide}
-              className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-white/[0.08] hover:bg-white/[0.18] border border-white/20 text-white shadow-inner cursor-pointer active:scale-95 transition-all"
+              className="flex size-7 items-center justify-center rounded-lg hover:bg-muted transition cursor-pointer"
               title="পরের ব্রেকিং"
-              aria-label="Next Breaking News"
+              aria-label="Next"
             >
-              <ChevronRight className="size-3.5 sm:size-4" />
+              <ChevronRight className="size-4" />
             </button>
           </div>
         )}
@@ -366,10 +333,10 @@ export function NewsTicker() {
           type="button"
           onClick={toggleSound}
           aria-pressed={soundOn}
-          aria-label={soundOn ? 'অ্যালার্ট শব্দ বন্ধ করুন' : 'অ্যালার্ট শব্দ চালু করুন'}
-          className="hidden size-8 sm:flex shrink-0 items-center justify-center rounded-full bg-white/[0.08] hover:bg-white/[0.18] border border-white/20 text-white cursor-pointer mr-1 active:scale-95 transition-all"
+          aria-label={soundOn ? 'অ্যালার্ট বন্ধ' : 'অ্যালার্ট চালু'}
+          className="hidden size-7 sm:flex shrink-0 items-center justify-center rounded-lg hover:bg-muted text-muted-foreground cursor-pointer mr-1 transition"
         >
-          {soundOn ? <Volume2 className="size-3.5 text-orange-400" /> : <VolumeX className="size-3.5 opacity-40" />}
+          {soundOn ? <Volume2 className="size-3.5 text-brand" /> : <VolumeX className="size-3.5 opacity-40" />}
         </button>
       </div>
     </div>
