@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   Baby,
@@ -79,6 +79,8 @@ function formatClub(c: ClubItem): Club {
   }
 }
 
+const bn = (n: number | string) => String(n).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[Number(d)])
+
 export function ClubNews() {
   const [list, setList] = useState<Club[]>(fallbackClubs)
   const [dbMap, setDbMap] = useState<Record<string, ClubItem>>({})
@@ -88,8 +90,7 @@ export function ClubNews() {
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
-  const [animKey, setAnimKey] = useState(0)
-  const [manualOffset, setManualOffset] = useState(0)
+  const [itemsPerView, setItemsPerView] = useState(1)
 
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
@@ -169,80 +170,67 @@ export function ClubNews() {
   const visible = filter === 'All' ? list : list.filter((c) => c.tag === filter)
   const total = visible.length
 
+  // রেসপনসিভ স্ক্রিন ক্যালকুলেশন (মোবাইলে ১টি সম্পূর্ণ কার্ড, ট্যাবলেটে ২টি, ডেস্কটপে ৩টি)
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window === 'undefined') return
+      if (window.innerWidth >= 1024) {
+        setItemsPerView(Math.min(config.cards_desktop || 3, total || 1))
+      } else if (window.innerWidth >= 640) {
+        setItemsPerView(Math.min(2, total || 1))
+      } else {
+        setItemsPerView(1) // মোবাইলে ১টি করে সম্পূর্ণ কার্ড
+      }
+    }
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [config.cards_desktop, total])
+
+  const maxIndex = Math.max(0, total - itemsPerView)
+
   const nextSlide = useCallback(() => {
     if (total <= 1) return
-    setCurrentIndex((prev) => (prev + 1) % total)
-    setAnimKey((k) => k + 1)
-  }, [total])
+    setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1))
+  }, [total, maxIndex])
 
   const prevSlide = useCallback(() => {
     if (total <= 1) return
-    setCurrentIndex((prev) => (prev - 1 + total) % total)
-    setAnimKey((k) => k + 1)
-  }, [total])
+    setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1))
+  }, [maxIndex, total])
 
-  const handleNext = () => {
-    if (config.effect === 'continuous') setManualOffset((prev) => prev - 300)
-    else nextSlide()
-  }
-
-  const handlePrev = () => {
-    if (config.effect === 'continuous') setManualOffset((prev) => prev + 300)
-    else prevSlide()
-  }
-
+  // স্বয়ংক্রিয় স্লাইডার টাইমার (৪ সেকেন্ড)
   useEffect(() => {
-    if (!config.enabled || config.effect === 'continuous' || isPaused || total <= 1) return
-    const intervalMs = Math.max(2, config.duration_sec || 4) * 1000
+    if (isPaused || total <= itemsPerView) return
+    const intervalMs = Math.max(3, config.duration_sec || 4) * 1000
     const timer = setInterval(() => { nextSlide() }, intervalMs)
     return () => clearInterval(timer)
-  }, [config.enabled, config.duration_sec, config.effect, total, isPaused, nextSlide])
+  }, [isPaused, total, itemsPerView, config.duration_sec, nextSlide])
 
+  // মোবাইল সোয়াইপ হ্যান্ডলার
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (config.pause_on_hover) setIsPaused(true)
+    setIsPaused(true)
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
   }
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (config.pause_on_hover) setTimeout(() => setIsPaused(false), 2500)
-
-    if (touchStartX.current === null || touchStartY.current === null || total <= 1) {
-      touchStartX.current = null
-      touchStartY.current = null
-      return
-    }
+    setTimeout(() => setIsPaused(false), 2000)
+    if (touchStartX.current === null || touchStartY.current === null || total <= 1) return
 
     const diffX = e.changedTouches[0].clientX - touchStartX.current
     const diffY = e.changedTouches[0].clientY - touchStartY.current
-    const absX = Math.abs(diffX)
-    const absY = Math.abs(diffY)
 
-    if (absX >= 45 && absX > absY * 1.3) {
-      if (diffX < 0) handleNext()
-      else handlePrev()
+    if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+      if (diffX < 0) nextSlide()
+      else prevSlide()
     }
 
     touchStartX.current = null
     touchStartY.current = null
   }
 
-  const marqueeClubs = useMemo(() => {
-    if (visible.length === 0) return []
-    let arr = [...visible]
-    while (arr.length < 12) { arr = [...arr, ...visible] }
-    return [...arr, ...arr, ...arr]
-  }, [visible])
-
-  const cardsCount = Math.min(config.cards_desktop || 3, total || 1)
-  const displayedClubs: Club[] = []
-  if (total > 0) {
-    for (let i = 0; i < cardsCount; i++) {
-      displayedClubs.push(visible[(currentIndex + i) % total])
-    }
-  }
-
-  // লিকুইড গ্লাস কার্ড রেন্ডারার
   const renderCard = (club: Club) => {
     const Icon = clubIcons[club.icon] || Star
     const raw = dbMap[club.id]
@@ -251,12 +239,12 @@ export function ClubNews() {
     return (
       <div
         id={`club-${club.id}`}
-        className="glass-card group relative flex flex-col justify-between p-4 sm:p-5 select-none min-h-[340px] text-white"
+        className="glass-card flex flex-col justify-between p-4 sm:p-5 select-none text-white h-full min-h-[300px] transition-all"
       >
-        <div>
+        <div className="space-y-3">
           {/* লোগো ও ট্যাগ */}
           <div className="flex items-center justify-between gap-2 border-b border-white/15 pb-2.5">
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
               {raw?.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -281,7 +269,7 @@ export function ClubNews() {
           </div>
 
           {/* সাম্প্রতিক কার্যক্রম */}
-          <div className="mt-3 space-y-1.5">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[11px] text-cyan-200/80">
               <span className="font-semibold flex items-center gap-1">
                 <Sparkles className="size-3 text-amber-300" /> সাম্প্রতিক কার্যক্রম
@@ -293,14 +281,14 @@ export function ClubNews() {
               {club.activityBn || club.activity}
             </p>
 
-            {/* মিডিয়া প্রিভিউ */}
+            {/* থাম্বনেইল ছবি */}
             {activityMediaList.length > 0 && (
-              <div className="relative h-20 w-full rounded-xl overflow-hidden bg-black/40 border border-white/15 mt-2">
+              <div className="relative h-24 w-full rounded-2xl overflow-hidden bg-black/40 border border-white/15 mt-2">
                 {activityMediaList[0].url.includes('youtube') ||
                 activityMediaList[0].url.includes('facebook') ||
                 activityMediaList[0].url.includes('.mp4') ? (
                   <div className="size-full flex items-center justify-center bg-black/60 text-white gap-1 text-[11px] font-semibold">
-                    <Play className="size-3.5 fill-current text-cyan-400" />
+                    <Play className="size-4 fill-current text-cyan-400" />
                     <span>ভিডিও ক্লিপ</span>
                   </div>
                 ) : (
@@ -318,8 +306,8 @@ export function ClubNews() {
           </div>
         </div>
 
-        {/* ফুটার লিংক ও বাটন */}
-        <div className="mt-3 pt-2.5 border-t border-white/15 space-y-2">
+        {/* ফুটার বাটন */}
+        <div className="mt-4 pt-2.5 border-t border-white/15 space-y-2">
           <div className="flex items-center justify-between gap-1 text-[11px]">
             <div className="flex items-center gap-1.5">
               {raw?.fb_url && (
@@ -327,7 +315,7 @@ export function ClubNews() {
                   href={safeExternalUrl(raw.fb_url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-2 py-0.5 rounded-full bg-blue-600/80 border border-blue-400/40 text-white font-bold hover:bg-blue-600 transition"
+                  className="px-2.5 py-0.5 rounded-full bg-blue-600/80 border border-blue-400/40 text-white font-bold hover:bg-blue-600 transition"
                 >
                   FB
                 </a>
@@ -356,7 +344,7 @@ export function ClubNews() {
           <button
             type="button"
             onClick={() => handleOpenClub(club)}
-            className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 py-2 text-xs font-bold text-white transition active:scale-95 cursor-pointer shadow-md border border-white/20"
+            className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 py-2.5 text-xs font-bold text-white transition active:scale-95 cursor-pointer shadow-md border border-white/20"
           >
             <FileText className="size-3.5" />
             <span>প্রতিবেদন ও কমিটি দেখুন</span>
@@ -368,20 +356,7 @@ export function ClubNews() {
   }
 
   return (
-    <section id="club-news" className="relative py-14 sm:py-20 border-b border-white/10">
-      <style>{`
-        @keyframes continuous_marquee_glide {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-33.333%); }
-        }
-        .anim_marquee_track {
-          display: flex;
-          width: max-content;
-          will-change: transform;
-          animation: continuous_marquee_glide 40s linear infinite;
-        }
-      `}</style>
-
+    <section id="club-news" className="relative py-14 sm:py-20 border-b border-white/10 overflow-hidden">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
         <SectionHeading
@@ -399,8 +374,6 @@ export function ClubNews() {
               onClick={() => {
                 setFilter(tag)
                 setCurrentIndex(0)
-                setManualOffset(0)
-                setAnimKey((k) => k + 1)
               }}
               className={cn(
                 'shrink-0 rounded-full border px-4 py-1.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
@@ -417,77 +390,63 @@ export function ClubNews() {
           ))}
         </div>
 
-        {/* স্লাইডার কনটেইনার */}
+        {/* স্মুথ টাচ স্লাইডার কনটেইনার */}
         <div
-          onMouseEnter={() => config.pause_on_hover && setIsPaused(true)}
-          onMouseLeave={() => config.pause_on_hover && setIsPaused(false)}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           className="relative w-full"
         >
           {total > 0 ? (
-            config.effect === 'continuous' ? (
-              <div className="py-2 overflow-hidden w-full select-none">
-                <div
-                  style={{
-                    transform: `translateX(${manualOffset}px)`,
-                    transition: 'transform 0.4s ease',
-                  }}
-                >
-                  <div
-                    className="anim_marquee_track flex gap-4"
-                    style={{
-                      animationDuration: `${Math.max(16, (config.duration_sec || 4) * 8)}s`,
-                      animationDirection: config.direction === 'left-to-right' ? 'reverse' : 'normal',
-                      animationPlayState: isPaused ? 'paused' : 'running',
-                    }}
-                  >
-                    {marqueeClubs.map((club, idx) => (
-                      <div key={`${club.id}_${idx}`} className="w-[280px] shrink-0">
-                        {renderCard(club)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
+            <div className="overflow-hidden w-full py-1">
               <div
-                key={animKey}
-                className={cn(
-                  "grid gap-4 w-full min-w-0",
-                  cardsCount === 1 ? "grid-cols-1 max-w-sm mx-auto" :
-                  cardsCount === 2 ? "grid-cols-1 sm:grid-cols-2" :
-                  cardsCount === 3 ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" :
-                  "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
-                )}
+                className="flex transition-transform duration-500 ease-out"
+                style={{
+                  transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
+                }}
               >
-                {displayedClubs.map((club) => renderCard(club))}
+                {visible.map((club) => (
+                  <div
+                    key={club.id}
+                    className="shrink-0 px-2 sm:px-2.5"
+                    style={{ width: `${100 / itemsPerView}%` }}
+                  >
+                    {renderCard(club)}
+                  </div>
+                ))}
               </div>
-            )
+            </div>
           ) : (
             <p className="text-center text-xs text-white/60 py-10 glass-card">
               কোনো ক্লাব পাওয়া যায়নি।
             </p>
           )}
 
-          {/* কন্ট্রোল বার */}
-          {total > 1 && config.enabled && (
-            <div className="mt-6 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsPaused(!isPaused)}
-                  className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 text-xs font-semibold border border-white/20 transition cursor-pointer active:scale-95"
-                >
-                  {isPaused ? <Play className="size-3 text-cyan-400" /> : <Pause className="size-3 text-amber-400" />}
-                  <span>{isPaused ? 'চালান' : 'থামান'}</span>
-                </button>
-              </div>
+          {/* কন্ট্রোল বার (মোবাইলে এবং ডেস্কটপে শতভাগ কার্যকর) */}
+          {total > itemsPerView && (
+            <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+              
+              {/* প্লে/পজ বাটন */}
+              <button
+                type="button"
+                onClick={() => setIsPaused(!isPaused)}
+                className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 text-xs font-semibold border border-white/20 transition cursor-pointer active:scale-95"
+              >
+                {isPaused ? <Play className="size-3 text-cyan-400" /> : <Pause className="size-3 text-amber-400" />}
+                <span>{isPaused ? 'চালান' : 'থামান'}</span>
+              </button>
 
-              <div className="flex items-center gap-1.5 ml-auto">
+              {/* ক্লাব নম্বর কাউন্টার (যেমন: ১/১১) */}
+              <span className="text-xs font-bold text-cyan-300 bg-white/10 px-3 py-1 rounded-full border border-white/15">
+                ক্লাব {bn(currentIndex + 1)} / {bn(total)}
+              </span>
+
+              {/* তীর বাটন */}
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={handlePrev}
+                  onClick={prevSlide}
                   className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
                   aria-label="Previous"
                 >
@@ -495,13 +454,14 @@ export function ClubNews() {
                 </button>
                 <button
                   type="button"
-                  onClick={handleNext}
+                  onClick={nextSlide}
                   className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
                   aria-label="Next"
                 >
                   <ChevronRight className="size-4" />
                 </button>
               </div>
+
             </div>
           )}
         </div>
