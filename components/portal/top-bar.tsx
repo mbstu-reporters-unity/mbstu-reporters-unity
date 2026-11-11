@@ -10,8 +10,13 @@ export function TopBar() {
     <div className="bg-[#071030]/95 text-white border-b border-white/10 backdrop-blur-xl relative z-50">
       <div className="mx-auto max-w-7xl px-3 sm:px-4 py-2 space-y-2">
         
-        {/* ১ম সারি: বামে ভাষা (বাংলা/EN) | মাঝে লোকেশন (সন্তোষ, টাঙ্গাইল) | ডানে থিম (হুবহু আপনার ড্রয়িং অনুযায়ী) */}
-        <div className="flex items-center justify-between gap-1.5 sm:gap-3">
+        {/* ১ম সারি (উপরে): বামে ক্যালেন্ডার ও তারিখ | ডানে ঘড়ি ও লাইভ সময় */}
+        <div className="w-full">
+          <LiveClock />
+        </div>
+
+        {/* ২য় সারি (নিচে): বামে ভাষা (বাংলা/EN) | মাঝে লোকেশন (সন্তোষ, টাঙ্গাইল) | ডানে ৪টি থিম */}
+        <div className="pt-1.5 border-t border-white/10 flex items-center justify-between gap-1.5 sm:gap-3">
           <div className="shrink-0">
             <LangSwitcher />
           </div>
@@ -29,11 +34,6 @@ export function TopBar() {
               <SocialLinks size="sm" tooltip="bottom" />
             </div>
           </div>
-        </div>
-
-        {/* ২য় সারি: বামে তারিখ | ডানে লাইভ সময় */}
-        <div className="pt-1.5 border-t border-white/10">
-          <LiveClock />
         </div>
 
       </div>
