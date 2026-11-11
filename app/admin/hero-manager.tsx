@@ -37,12 +37,11 @@ import {
   User,
 } from "lucide-react"
 
-const inp = "w-full border border-slate-700 rounded-xl px-3.5 py-2 text-xs bg-slate-950 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
-const selectInp = "w-full border border-slate-700 rounded-xl px-3 py-2 text-xs bg-slate-950 text-white focus:outline-none focus:border-green-500 transition-all"
-const btnSave = "w-full bg-green-700 hover:bg-green-600 text-white rounded-xl py-3.5 font-bold text-sm transition-all disabled:opacity-50 shadow-lg cursor-pointer"
-const cardBox = "bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4"
+const inp = "w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs bg-slate-50 text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-cyan-500 transition-all"
+const selectInp = "w-full border border-slate-200 rounded-xl px-3 py-2 text-xs bg-slate-50 text-slate-800 focus:bg-white focus:outline-none focus:border-cyan-500 transition-all"
+const btnSave = "w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl py-3.5 font-bold text-sm transition-all disabled:opacity-50 shadow-md cursor-pointer active:scale-98"
+const cardBox = "bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4 text-slate-800"
 
-// ডিফল্ট ৫টি স্বাধীন টেক্সট বক্স
 const DEFAULT_TEXT_ITEMS: IndependentTextItem[] = [
   {
     id: "txt_title",
@@ -134,10 +133,8 @@ export default function HeroManager({
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState("")
 
-  // পোস্টের ধরন
   const [slideType, setSlideType] = useState<HeroPostType>("color")
 
-  // কালার ব্যানার
   const [bannerMode, setBannerMode] = useState<"solid" | "gradient">("gradient")
   const [bannerAngle, setBannerAngle] = useState(135)
   const [gradientStops, setGradientStops] = useState<GradientStop[]>([
@@ -148,24 +145,19 @@ export default function HeroManager({
   const [bannerHeight, setBannerHeight] = useState(480)
   const [bannerWidth, setBannerWidth] = useState(100)
 
-  // ছবি ও ভিডিও
   const [imgUrl, setImgUrl] = useState("")
   const [imgFile, setImgFile] = useState<File | null>(null)
   const [videoUrl, setVideoUrl] = useState("")
   const [videoFile, setVideoFile] = useState<File | null>(null)
-  const [fitMode] = useState<"contain" | "cover">("contain")
 
-  // ৫টি সম্পূর্ণ স্বাধীন টেক্সট বক্স
   const [textItems, setTextItems] = useState<IndependentTextItem[]>(DEFAULT_TEXT_ITEMS)
 
-  // লিঙ্ক ও সেটিংস
   const [linkUrl, setLinkUrl] = useState("")
   const [btnText] = useState("বিস্তারিত")
   const [slideDuration, setSlideDuration] = useState(5)
   const [transitionEffect, setTransitionEffect] = useState("slide-left")
   const [desktopSplits, setDesktopSplits] = useState(1)
 
-  // ডাটা লোড
   async function loadData() {
     try {
       const [slidesData, settingsData] = await Promise.all([
@@ -180,9 +172,7 @@ export default function HeroManager({
     } catch {}
   }
 
-  useEffect(() => {
-    loadData()
-  }, [token])
+  useEffect(() => { loadData() }, [token])
 
   const addColorStop = () => {
     if (gradientStops.length >= 5) return
@@ -210,7 +200,7 @@ export default function HeroManager({
   const addNewCustomBox = () => {
     const newBox: IndependentTextItem = {
       id: `txt_custom_${Date.now()}`,
-      label: `অতিরিক্ত লেখা বক্স #${textItems.length + 1}`,
+      label: `অতিরিক্ত লেখা #${textItems.length + 1}`,
       text: "নতুন লেখা",
       enabled: true,
       x: 50,
@@ -265,15 +255,6 @@ export default function HeroManager({
     if (s.text_layers && s.text_layers.length > 0) {
       if (s.text_layers[0]?.label) {
         setTextItems(s.text_layers as IndependentTextItem[])
-      } else {
-        const t1 = s.text_layers[0]?.title || s.title || ""
-        const t2 = s.text_layers[0]?.subtitle || ""
-        const t3 = s.text_layers[0]?.description || s.summary || ""
-        const converted = [...DEFAULT_TEXT_ITEMS]
-        converted[0].text = t1
-        converted[1].text = t2
-        converted[2].text = t3
-        setTextItems(converted)
       }
     }
 
@@ -282,10 +263,9 @@ export default function HeroManager({
     setLinkUrl(s.link_url || "")
     setSlideDuration(s.slide_duration ? Math.round(s.slide_duration / 1000) : 5)
     setTransitionEffect(s.transition_effect || "slide-left")
-    window.scrollTo({ top: 300, behavior: "smooth" })
+    window.scrollTo({ top: 100, behavior: "smooth" })
   }
 
-  // স্লাইড সংরক্ষণ (স্মার্ট সেশন হ্যান্ডলিং সহ)
   const handleSaveSlide = async () => {
     setBusy(true)
     setMsg("")
@@ -344,36 +324,24 @@ export default function HeroManager({
       } else {
         const safeOrder = Math.floor(Date.now() / 1000)
         await createHeroSlide(token, { ...payload, sort_order: safeOrder })
-        setMsg("✅ নতুন পোস্ট সফলভাবে প্রকাশিত হয়েছে এবং হোমপেজে দৃশ্যমান")
+        setMsg("✅ নতুন পোস্ট সফলভাবে প্রকাশিত হয়েছে")
       }
 
       resetForm()
       await loadData()
     } catch (e: any) {
-      const errStr = e?.message || ""
-      // সেশনের মেয়াদ সংক্রান্ত এরর শনাক্তকরণ
-      if (/exp|claim|jwt|expired|token/i.test(errStr)) {
-        setMsg("⚠️ আপনার লগইন সেশনের মেয়াদ শেষ হয়েছে! অনুগ্রহ করে ড্যাশবোর্ডের উপরে 'লগআউট' করে আবার লগইন করুন।")
-      } else {
-        setMsg("❌ " + (errStr || "পোস্ট করতে সমস্যা হয়েছে"))
-      }
+      setMsg("❌ " + (e?.message || "পোস্ট করতে সমস্যা হয়েছে"))
     }
     setBusy(false)
   }
 
-  // স্প্লিট লেআউট পরিবর্তন
   const handleSaveSplits = async (splits: number) => {
     setDesktopSplits(splits)
     try {
       await saveHeroSettings(token, { desktop_splits: splits })
       setMsg(`✅ হোমপেজে ${splits}টি স্প্লিট ভিউ সেট হয়েছে`)
-    } catch (e: any) {
-      const errStr = e?.message || ""
-      if (/exp|claim|jwt|expired|token/i.test(errStr)) {
-        setMsg("⚠️ সেশনের মেয়াদ শেষ। অনুগ্রহ করে আবার লগইন করুন।")
-      } else {
-        setMsg("❌ স্প্লিট সেভ করা যায়নি")
-      }
+    } catch {
+      setMsg("❌ স্প্লিট সেভ করা যায়নি")
     }
   }
 
@@ -386,20 +354,21 @@ export default function HeroManager({
           .join(", ")})`
 
   return (
-    <div className="space-y-6 text-white max-w-4xl mx-auto pb-20">
+    <div className="space-y-5 text-slate-800">
+      
       {msg && (
-        <div className="p-3 bg-blue-950/90 border border-blue-500/50 text-blue-200 rounded-xl text-xs font-semibold text-center shadow-lg">
+        <div className="p-3 bg-cyan-50 border border-cyan-300 text-cyan-900 rounded-2xl text-xs font-bold text-center shadow-xs">
           {msg}
         </div>
       )}
 
-      {/* ১. লাইভ প্রিভিউ বক্স */}
+      {/* ১. লাইভ প্রিভিউ */}
       <div className={cardBox}>
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-          <span className="text-xs font-bold text-green-400 flex items-center gap-1.5">
-            <Eye className="size-4" /> 👁️ লাইভ প্রিভিউ (হোমপেজে হুবহু যেমন দেখাবে):
+        <div className="flex items-center justify-between border-b pb-2">
+          <span className="text-xs font-bold text-cyan-700 flex items-center gap-1.5">
+            <Eye className="size-4" /> 👁️ লাইভ প্রিভিউ (হোমপেজে যেমন দেখাবে):
           </span>
-          <span className="text-[10px] text-gray-400">প্রস্থ, দৈর্ঘ্য ও প্রতিটি লেখার অবস্থান সরাসরি দেখুন</span>
+          <span className="text-[10px] text-slate-500">প্রস্থ ও উচ্চতা সরাসরি দেখুন</span>
         </div>
 
         <div className="w-full flex items-center justify-center p-2 bg-slate-950 rounded-2xl border border-slate-800">
@@ -416,7 +385,7 @@ export default function HeroManager({
               <img
                 src={imgFile ? URL.createObjectURL(imgFile) : imgUrl || "/images/hero-1.png"}
                 alt="Preview"
-                className={`w-full h-full ${fitMode === "cover" ? "object-cover" : "object-contain"}`}
+                className="w-full h-full object-contain"
               />
             )}
 
@@ -437,7 +406,6 @@ export default function HeroManager({
               </div>
             )}
 
-            {/* ৫টি সম্পূর্ণ স্বাধীন টেক্সট বক্স লাইভ প্রিভিউ */}
             <div className="absolute inset-0 pointer-events-none">
               {textItems.map((item) => {
                 if (!item.enabled || !item.text) return null
@@ -490,68 +458,68 @@ export default function HeroManager({
 
       {/* ২. হিরো কন্ট্রোল ও ফর্ম */}
       <div className={cardBox}>
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <h2 className="font-bold text-sm sm:text-base text-gray-200">
+        <div className="flex items-center justify-between border-b pb-3">
+          <h2 className="font-bold text-sm sm:text-base text-slate-800">
             {editId ? "✏️ হিরো পোস্ট এডিট করুন" : "➕ নতুন হিরো পোস্ট তৈরি করুন"}
           </h2>
           {editId && (
-            <button onClick={resetForm} className="text-xs text-red-400 hover:underline">
+            <button onClick={resetForm} className="text-xs text-rose-600 hover:underline">
               বাতিল
             </button>
           )}
         </div>
 
         {/* পোস্টের ধরন */}
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-300 block">১. পোস্টের ধরন বেছে নিন:</label>
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-slate-700 block">১. পোস্টের ধরন বেছে নিন:</label>
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => setSlideType("color")}
-              className={`py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 slideType === "color"
-                  ? "bg-emerald-700 border-emerald-500 text-white shadow-lg"
-                  : "bg-slate-950 border-slate-800 text-gray-400 hover:text-white"
+                  ? "bg-cyan-600 border-cyan-600 text-white shadow-sm"
+                  : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
               }`}
             >
-              <Palette className="size-3.5" /> ১. কালার ব্যানার
+              <Palette className="size-3.5" /> কালার ব্যানার
             </button>
             <button
               type="button"
               onClick={() => setSlideType("image")}
-              className={`py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 slideType === "image"
-                  ? "bg-emerald-700 border-emerald-500 text-white shadow-lg"
-                  : "bg-slate-950 border-slate-800 text-gray-400 hover:text-white"
+                  ? "bg-cyan-600 border-cyan-600 text-white shadow-sm"
+                  : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
               }`}
             >
-              <ImageIcon className="size-3.5" /> ২. ছবি
+              <ImageIcon className="size-3.5" /> ছবি
             </button>
             <button
               type="button"
               onClick={() => setSlideType("video")}
-              className={`py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 slideType === "video"
-                  ? "bg-emerald-700 border-emerald-500 text-white shadow-lg"
-                  : "bg-slate-950 border-slate-800 text-gray-400 hover:text-white"
+                  ? "bg-cyan-600 border-cyan-600 text-white shadow-sm"
+                  : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
               }`}
             >
-              <Video className="size-3.5" /> ৩. ভিডিও / লিঙ্ক
+              <Video className="size-3.5" /> ভিডিও
             </button>
           </div>
         </div>
 
         {/* কালার ব্যানার সেটিংস */}
         {slideType === "color" && (
-          <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-3">
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-400">🎨 কালার ব্যানার সেটিংস:</span>
+              <span className="text-xs font-bold text-slate-700">🎨 কালার ব্যানার সেটিংস:</span>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setBannerMode("solid")}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
-                    bannerMode === "solid" ? "bg-emerald-700 border-emerald-500 text-white" : "border-slate-800 text-gray-400"
+                  className={`px-3 py-1 rounded-lg text-xs font-bold border cursor-pointer ${
+                    bannerMode === "solid" ? "bg-cyan-600 border-cyan-600 text-white" : "bg-white border-slate-200 text-slate-600"
                   }`}
                 >
                   সলিড রঙ
@@ -559,11 +527,11 @@ export default function HeroManager({
                 <button
                   type="button"
                   onClick={() => setBannerMode("gradient")}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
-                    bannerMode === "gradient" ? "bg-emerald-700 border-emerald-500 text-white" : "border-slate-800 text-gray-400"
+                  className={`px-3 py-1 rounded-lg text-xs font-bold border cursor-pointer ${
+                    bannerMode === "gradient" ? "bg-cyan-600 border-cyan-600 text-white" : "bg-white border-slate-200 text-slate-600"
                   }`}
                 >
-                  গ্রেডিয়েন্ট রঙ (৩-৫টি)
+                  গ্রেডিয়েন্ট রঙ
                 </button>
               </div>
             </div>
@@ -571,60 +539,28 @@ export default function HeroManager({
             {bannerMode === "gradient" && (
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">গ্রেডিয়েন্টের দিক: {bannerAngle}°</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="360"
-                    value={bannerAngle}
-                    onChange={(e) => setBannerAngle(Number(e.target.value))}
-                    className="w-36 accent-emerald-500 cursor-pointer"
-                  />
+                  <span className="text-slate-600">গ্রেডিয়েন্টের দিক: {bannerAngle}°</span>
+                  <input type="range" min="0" max="360" value={bannerAngle} onChange={(e) => setBannerAngle(Number(e.target.value))} className="w-36 accent-cyan-600 cursor-pointer" />
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-300 font-semibold">রঙের প্যালেট ({gradientStops.length}টি রঙ):</span>
+                    <span className="text-slate-700 font-semibold">রঙের প্যালেট:</span>
                     {gradientStops.length < 5 && (
-                      <button
-                        type="button"
-                        onClick={addColorStop}
-                        className="text-xs text-emerald-400 hover:underline flex items-center gap-1"
-                      >
-                        <Plus className="size-3" /> + রঙ যোগ করুন
+                      <button type="button" onClick={addColorStop} className="text-xs text-cyan-600 font-bold hover:underline flex items-center gap-1 cursor-pointer">
+                        <Plus className="size-3" /> + রঙ যোগ
                       </button>
                     )}
                   </div>
 
                   {gradientStops.map((st, i) => (
-                    <div key={i} className="flex items-center gap-2 bg-slate-900 p-2 rounded-lg border border-slate-800 text-xs">
-                      <input
-                        type="color"
-                        value={st.color}
-                        onChange={(e) => updateColorStop(i, "color", e.target.value)}
-                        className="size-7 rounded border border-slate-700 bg-transparent cursor-pointer"
-                      />
-                      <input
-                        className="w-20 border border-slate-700 rounded px-1.5 py-1 text-xs bg-slate-950 font-mono"
-                        value={st.color}
-                        onChange={(e) => updateColorStop(i, "color", e.target.value)}
-                      />
-                      <span className="text-[11px] text-gray-400">অবস্থান:</span>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={st.stop}
-                        onChange={(e) => updateColorStop(i, "stop", Number(e.target.value))}
-                        className="flex-1 accent-emerald-500 cursor-pointer"
-                      />
-                      <span className="w-8 text-[11px] text-emerald-400 font-bold">{st.stop}%</span>
+                    <div key={i} className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 text-xs">
+                      <input type="color" value={st.color} onChange={(e) => updateColorStop(i, "color", e.target.value)} className="size-7 rounded border bg-transparent cursor-pointer" />
+                      <input className="w-20 border border-slate-200 rounded px-1.5 py-1 text-xs font-mono" value={st.color} onChange={(e) => updateColorStop(i, "color", e.target.value)} />
+                      <input type="range" min="0" max="100" value={st.stop} onChange={(e) => updateColorStop(i, "stop", Number(e.target.value))} className="flex-1 accent-cyan-600 cursor-pointer" />
+                      <span className="w-8 text-[11px] text-cyan-700 font-bold">{st.stop}%</span>
                       {gradientStops.length > 2 && (
-                        <button
-                          type="button"
-                          onClick={() => removeColorStop(i)}
-                          className="text-red-400 hover:text-red-300 p-1"
-                        >
+                        <button type="button" onClick={() => removeColorStop(i)} className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer">
                           <Trash2 className="size-3.5" />
                         </button>
                       )}
@@ -634,293 +570,107 @@ export default function HeroManager({
               </div>
             )}
 
-            {bannerMode === "solid" && (
-              <div className="flex items-center gap-3 pt-2">
-                <span className="text-xs text-gray-400">রঙ বেছে নিন:</span>
-                <input
-                  type="color"
-                  value={gradientStops[0]?.color || "#064e3b"}
-                  onChange={(e) => updateColorStop(0, "color", e.target.value)}
-                  className="size-9 rounded border border-slate-700 bg-transparent cursor-pointer"
-                />
-              </div>
-            )}
-
             {/* দৈর্ঘ্য ও প্রস্থ স্লাইডার */}
-            <div className="pt-3 border-t border-slate-800 space-y-3">
+            <div className="pt-2 border-t border-slate-200 space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-300 font-medium">↔️ ব্যানারের প্রস্থ (Width): {bannerWidth}%</span>
-                <input
-                  type="range"
-                  min="50"
-                  max="100"
-                  value={bannerWidth}
-                  onChange={(e) => setBannerWidth(Number(e.target.value))}
-                  className="w-48 accent-emerald-500 cursor-pointer"
-                />
+                <span className="text-slate-700 font-medium">↔️ প্রস্থ (Width): {bannerWidth}%</span>
+                <input type="range" min="50" max="100" value={bannerWidth} onChange={(e) => setBannerWidth(Number(e.target.value))} className="w-44 accent-cyan-600 cursor-pointer" />
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-300 font-medium">↕️ ব্যানারের দৈর্ঘ্য/উচ্চতা (Height): {bannerHeight}px</span>
-                <input
-                  type="range"
-                  min="300"
-                  max="700"
-                  value={bannerHeight}
-                  onChange={(e) => setBannerHeight(Number(e.target.value))}
-                  className="w-48 accent-emerald-500 cursor-pointer"
-                />
+                <span className="text-slate-700 font-medium">↕️ উচ্চতা (Height): {bannerHeight}px</span>
+                <input type="range" min="300" max="700" value={bannerHeight} onChange={(e) => setBannerHeight(Number(e.target.value))} className="w-44 accent-cyan-600 cursor-pointer" />
               </div>
             </div>
           </div>
         )}
 
-        {/* ছবি আপলোড */}
+        {/* ছবি */}
         {slideType === "image" && (
-          <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
-            <label className="text-xs font-bold text-blue-400 block">🖼️ ছবি আপলোড বা সরাসরি লিঙ্ক:</label>
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+            <label className="text-xs font-bold text-slate-700 block">🖼️ ছবি আপলোড বা সরাসরি লিঙ্ক:</label>
             <div className="flex flex-col sm:flex-row gap-2">
-              <label className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-gray-300 hover:bg-slate-800 cursor-pointer shrink-0">
-                <Upload className="size-3.5 text-blue-400" />
+              <label className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-700 hover:bg-slate-100 cursor-pointer shrink-0">
+                <Upload className="size-3.5 text-cyan-600" />
                 <span>ফাইল বাছাই করুন</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImgFile(e.target.files?.[0] || null)}
-                  className="hidden"
-                />
+                <input type="file" accept="image/*" onChange={(e) => setImgFile(e.target.files?.[0] || null)} className="hidden" />
               </label>
-              <input
-                className={inp}
-                placeholder="অথবা ছবির সরাসরি লিঙ্ক পেস্ট করুন (https://...)"
-                value={imgUrl}
-                onChange={(e) => setImgUrl(e.target.value)}
-              />
+              <input className={inp} placeholder="ছবির সরাসরি লিঙ্ক পেস্ট করুন (https://...)" value={imgUrl} onChange={(e) => setImgUrl(e.target.value)} />
             </div>
-            {imgFile && <p className="text-[11px] text-green-400">বাছাইকৃত ফাইল: {imgFile.name}</p>}
+            {imgFile && <p className="text-[11px] text-emerald-700 font-semibold">ফাইল: {imgFile.name}</p>}
           </div>
         )}
 
-        {/* ভিডিও আপলোড বা লিঙ্ক */}
+        {/* ভিডিও */}
         {slideType === "video" && (
-          <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
-            <label className="text-xs font-bold text-red-400 block">🎥 ভিডিও ফাইল বা ইউটিউব/ফেসবুক লিঙ্ক:</label>
-            <input
-              className={inp}
-              placeholder="ইউটিউব, ফেসবুক বা সরাসরি MP4 লিঙ্ক পেস্ট করুন (https://...)"
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-            />
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-gray-300 hover:bg-slate-800 cursor-pointer">
-                <Upload className="size-3 text-red-400" />
-                <span>মোবাইল/পিসি থেকে ভিডিও ফাইল দিন</span>
-                <input
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-                  className="hidden"
-                />
-              </label>
-              {videoFile && <span className="text-[10px] text-green-400 truncate">{videoFile.name}</span>}
-            </div>
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+            <label className="text-xs font-bold text-slate-700 block">🎥 ভিডিও ফাইল বা ইউটিউব লিঙ্ক:</label>
+            <input className={inp} placeholder="ইউটিউব বা সরাসরি MP4 লিঙ্ক পেস্ট করুন (https://...)" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
+            <label className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-700 hover:bg-slate-100 cursor-pointer w-fit">
+              <Upload className="size-3 text-red-500" />
+              <span>ভিডিও ফাইল আপলোড করুন</span>
+              <input type="file" accept="video/*" onChange={(e) => setVideoFile(e.target.files?.[0] || null)} className="hidden" />
+            </label>
+            {videoFile && <span className="text-[10px] text-emerald-700 font-bold">{videoFile.name}</span>}
           </div>
         )}
 
-        {/* ৫টি সম্পূর্ণ স্বাধীন টেক্সট বক্স */}
-        <div className="p-3.5 bg-slate-950/90 border border-slate-800 rounded-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-850 pb-2">
-            <div>
-              <span className="text-xs font-bold text-yellow-400 flex items-center gap-1.5">
-                <Type className="size-4" /> ২. লেখার স্বাধীন বক্সসমূহ:
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={addNewCustomBox}
-              className="text-xs bg-emerald-700 hover:bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shrink-0"
-            >
+        {/* টেক্সট লেয়ারসমূহ */}
+        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+          <div className="flex items-center justify-between border-b pb-2">
+            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Type className="size-4 text-cyan-600" /> ২. লেখার স্বাধীন বক্সসমূহ:
+            </span>
+            <button type="button" onClick={addNewCustomBox} className="text-xs bg-cyan-600 hover:bg-cyan-700 text-white px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shrink-0">
               <Plus className="size-3" /> নতুন বক্স যোগ
             </button>
           </div>
 
-          <div className="space-y-3.5">
+          <div className="space-y-3">
             {textItems.map((item, idx) => (
-              <div
-                key={item.id}
-                className="p-3.5 bg-slate-900 border border-slate-800 rounded-xl space-y-3 transition-all"
-              >
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-white">
-                      <input
-                        type="checkbox"
-                        checked={item.enabled}
-                        onChange={(e) => updateTextItem(idx, "enabled", e.target.checked)}
-                        className="accent-emerald-500 rounded"
-                      />
-                      <span>{item.label}</span>
-                    </label>
-                  </div>
+              <div key={item.id} className="p-3 bg-white border border-slate-200 rounded-xl space-y-2.5">
+                <div className="flex items-center justify-between border-b pb-1.5">
+                  <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-800">
+                    <input type="checkbox" checked={item.enabled} onChange={(e) => updateTextItem(idx, "enabled", e.target.checked)} className="accent-cyan-600 rounded" />
+                    <span>{item.label}</span>
+                  </label>
                   {idx >= 5 && (
-                    <button
-                      type="button"
-                      onClick={() => removeCustomBox(item.id)}
-                      className="text-red-400 hover:text-red-300 p-1"
-                    >
+                    <button type="button" onClick={() => removeCustomBox(item.id)} className="text-rose-500 hover:text-rose-700 p-1">
                       <Trash2 className="size-3.5" />
                     </button>
                   )}
                 </div>
 
                 {item.enabled && (
-                  <div className="space-y-2.5 pt-1">
-                    <input
-                      className={inp}
-                      placeholder={`${item.label}-এর লেখা লিখুন...`}
-                      value={item.text}
-                      onChange={(e) => updateTextItem(idx, "text", e.target.value)}
-                    />
-
-                    {/* X ও Y পজিশন */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-2.5 bg-slate-950 rounded-xl border border-slate-850">
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[11px] text-gray-300">
-                          <span>↔️ ডানে-বামে (X পজিশন):</span>
-                          <span className="text-emerald-400 font-bold">{item.x}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={item.x}
-                          onChange={(e) => updateTextItem(idx, "x", Number(e.target.value))}
-                          className="w-full accent-emerald-500 cursor-pointer"
-                        />
+                  <div className="space-y-2 pt-1">
+                    <input className={inp} placeholder={`${item.label}-এর লেখা...`} value={item.text} onChange={(e) => updateTextItem(idx, "text", e.target.value)} />
+                    
+                    <div className="grid grid-cols-2 gap-3 p-2 bg-slate-50 rounded-lg text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-600 block">↔️ ডানে-বামে (X): {item.x}%</span>
+                        <input type="range" min="0" max="100" value={item.x} onChange={(e) => updateTextItem(idx, "x", Number(e.target.value))} className="w-full accent-cyan-600 cursor-pointer" />
                       </div>
-
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[11px] text-gray-300">
-                          <span>↕️ উপরে-নিচে (Y পজিশন):</span>
-                          <span className="text-emerald-400 font-bold">{item.y}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={item.y}
-                          onChange={(e) => updateTextItem(idx, "y", Number(e.target.value))}
-                          className="w-full accent-emerald-500 cursor-pointer"
-                        />
+                      <div>
+                        <span className="text-[10px] text-slate-600 block">↕️ উপরে-নিচে (Y): {item.y}%</span>
+                        <input type="range" min="0" max="100" value={item.y} onChange={(e) => updateTextItem(idx, "y", Number(e.target.value))} className="w-full accent-cyan-600 cursor-pointer" />
                       </div>
                     </div>
 
-                    {/* এলাইনমেন্ট বোতাম */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-950 rounded-xl border border-slate-850 text-xs">
-                      <span className="text-[11px] text-gray-300 font-medium">📐 এলাইনমেন্ট:</span>
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => updateTextItem(idx, "align", "left")}
-                          className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 ${
-                            item.align === "left" ? "bg-emerald-700 border-emerald-500 text-white" : "border-slate-800 text-gray-400"
-                          }`}
-                        >
-                          <AlignLeft className="size-3" /> বামে
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => updateTextItem(idx, "align", "center")}
-                          className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 ${
-                            item.align === "center" ? "bg-emerald-700 border-emerald-500 text-white" : "border-slate-800 text-gray-400"
-                          }`}
-                        >
-                          <AlignCenter className="size-3" /> মাঝে
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => updateTextItem(idx, "align", "right")}
-                          className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 ${
-                            item.align === "right" ? "bg-emerald-700 border-emerald-500 text-white" : "border-slate-800 text-gray-400"
-                          }`}
-                        >
-                          <AlignRight className="size-3" /> ডানে
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => updateTextItem(idx, "align", "justify")}
-                          className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 ${
-                            item.align === "justify" ? "bg-emerald-700 border-emerald-500 text-white" : "border-slate-800 text-gray-400"
-                          }`}
-                        >
-                          <AlignJustify className="size-3" /> জাস্টিফাই
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* সাইজ স্কেল, বোল্ড, ইটালিক, রঙ ও অ্যানিমেশন */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                       <div>
-                        <span className="text-[10px] text-gray-400 block mb-1">সাইজ স্কেল: {item.size_scale}x</span>
-                        <input
-                          type="range"
-                          min="0.5"
-                          max="2.0"
-                          step="0.05"
-                          value={item.size_scale}
-                          onChange={(e) => updateTextItem(idx, "size_scale", Number(e.target.value))}
-                          className="w-full accent-emerald-500 cursor-pointer"
-                        />
+                        <span className="text-[10px] text-slate-600 block">সাইজ: {item.size_scale}x</span>
+                        <input type="range" min="0.5" max="2.0" step="0.05" value={item.size_scale} onChange={(e) => updateTextItem(idx, "size_scale", Number(e.target.value))} className="w-full accent-cyan-600 cursor-pointer" />
                       </div>
-
-                      <div>
-                        <span className="text-[10px] text-gray-400 block mb-1">রঙ ও স্টাইল:</span>
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="color"
-                            value={item.color}
-                            onChange={(e) => updateTextItem(idx, "color", e.target.value)}
-                            className="size-7 rounded border border-slate-700 bg-transparent cursor-pointer"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => updateTextItem(idx, "weight", item.weight === "bold" ? "normal" : "bold")}
-                            className={`px-2 py-1 rounded text-xs font-bold border ${item.weight === "bold" ? "bg-white text-black" : "border-slate-700 text-gray-400"}`}
-                          >
-                            B
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateTextItem(idx, "italic", !item.italic)}
-                            className={`px-2 py-1 rounded text-xs italic font-bold border ${item.italic ? "bg-white text-black" : "border-slate-700 text-gray-400"}`}
-                          >
-                            I
-                          </button>
-                        </div>
+                      <div className="flex items-center gap-1.5 pt-3">
+                        <input type="color" value={item.color} onChange={(e) => updateTextItem(idx, "color", e.target.value)} className="size-6 rounded border bg-transparent cursor-pointer" title="লেখার রঙ" />
                       </div>
-
                       <div>
-                        <span className="text-[10px] text-gray-400 block mb-1">ফন্ট:</span>
-                        <select
-                          className={selectInp}
-                          value={item.font}
-                          onChange={(e) => updateTextItem(idx, "font", e.target.value)}
-                        >
-                          {FONTS.map((f) => (
-                            <option key={f.value} value={f.value}>{f.label}</option>
-                          ))}
+                        <select className={selectInp} value={item.font} onChange={(e) => updateTextItem(idx, "font", e.target.value)}>
+                          {FONTS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
                         </select>
                       </div>
-
                       <div>
-                        <span className="text-[10px] text-gray-400 block mb-1">অ্যানিমেশন:</span>
-                        <select
-                          className={selectInp}
-                          value={item.animation}
-                          onChange={(e) => updateTextItem(idx, "animation", e.target.value)}
-                        >
-                          {TEXT_EFFECTS_35.map((ef) => (
-                            <option key={ef.value} value={ef.value}>{ef.label}</option>
-                          ))}
+                        <select className={selectInp} value={item.animation} onChange={(e) => updateTextItem(idx, "animation", e.target.value)}>
+                          {TEXT_EFFECTS_35.map((ef) => <option key={ef.value} value={ef.value}>{ef.label}</option>)}
                         </select>
                       </div>
                     </div>
@@ -931,64 +681,42 @@ export default function HeroManager({
           </div>
         </div>
 
-        {/* স্লাইডার সময়কাল ও ট্রানজিশন */}
-        <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
-          <span className="text-xs font-bold text-gray-300 block">৩. স্লাইডার স্পিড ও ট্রানজিশন ইফেক্ট:</span>
+        {/* স্লাইডার গতি ও ট্রানজিশন */}
+        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+          <span className="text-xs font-bold text-slate-700 block">৩. স্লাইডার স্পিড ও ট্রানজিশন:</span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <div className="flex justify-between text-xs text-gray-400 mb-1">
-                <span>স্লাইড প্রদর্শনের সময়:</span>
-                <span className="text-emerald-400 font-bold">{slideDuration} সেকেন্ড</span>
+              <div className="flex justify-between text-xs text-slate-600 mb-1">
+                <span>প্রদর্শনের সময়:</span>
+                <span className="text-cyan-700 font-bold">{slideDuration} সেকেন্ড</span>
               </div>
-              <input
-                type="range"
-                min="1"
-                max="60"
-                value={slideDuration}
-                onChange={(e) => setSlideDuration(Number(e.target.value))}
-                className="w-full accent-emerald-500 cursor-pointer"
-              />
+              <input type="range" min="1" max="60" value={slideDuration} onChange={(e) => setSlideDuration(Number(e.target.value))} className="w-full accent-cyan-600 cursor-pointer" />
             </div>
-
             <div>
-              <span className="text-xs text-gray-400 block mb-1">ট্রানজিশন ইফেক্ট:</span>
-              <select
-                className={selectInp}
-                value={transitionEffect}
-                onChange={(e) => setTransitionEffect(e.target.value)}
-              >
-                {TRANSITIONS_30.map((tr) => (
-                  <option key={tr.value} value={tr.value}>{tr.label}</option>
-                ))}
+              <select className={selectInp} value={transitionEffect} onChange={(e) => setTransitionEffect(e.target.value)}>
+                {TRANSITIONS_30.map((tr) => <option key={tr.value} value={tr.value}>{tr.label}</option>)}
               </select>
             </div>
           </div>
         </div>
 
-        {/* লিঙ্ক */}
         <div>
-          <label className="text-xs font-bold text-gray-400 block mb-1">ক্লিক লিঙ্ক (ঐচ্ছিক):</label>
-          <input
-            className={inp}
-            placeholder="যেমন: https://... অথবা /post/..."
-            value={linkUrl}
-            onChange={(e) => setLinkUrl(e.target.value)}
-          />
+          <label className="text-xs font-bold text-slate-700 block mb-1">ক্লিক লিঙ্ক (ঐচ্ছিক):</label>
+          <input className={inp} placeholder="https://... অথবা /post/..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
         </div>
 
-        {/* সেভ বাটন */}
         <button className={btnSave} onClick={handleSaveSlide} disabled={busy}>
-          {busy ? "সংরক্ষণ হচ্ছে..." : editId ? "পোস্ট আপডেট করুন" : "🚀 নতুন পোস্ট প্রকাশ করুন (সবার উপরে লাইভ হবে)"}
+          {busy ? "সংরক্ষণ হচ্ছে..." : editId ? "পোস্ট আপডেট করুন" : "🚀 নতুন পোস্ট প্রকাশ করুন"}
         </button>
       </div>
 
-      {/* ৩. হোমপেজ স্প্লিট লেআউট */}
+      {/* ৩. স্প্লিট লেআউট নিয়ন্ত্রণ */}
       <div className={cardBox}>
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-          <span className="text-xs font-bold text-white flex items-center gap-1.5">
-            <Layers className="size-4 text-emerald-400" /> হোমপেজ স্প্লিট ভিউ:
+        <div className="flex items-center justify-between border-b pb-2">
+          <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <Layers className="size-4 text-cyan-600" /> হোমপেজ স্প্লিট ভিউ:
           </span>
-          <span className="text-[11px] text-emerald-400 font-bold">বর্তমান: {desktopSplits} স্প্লিট</span>
+          <span className="text-[11px] text-cyan-700 font-bold">বর্তমান: {desktopSplits} স্প্লিট</span>
         </div>
         <div className="grid grid-cols-3 gap-2">
           {[1, 2, 3].map((num) => (
@@ -996,10 +724,10 @@ export default function HeroManager({
               key={num}
               type="button"
               onClick={() => handleSaveSplits(num)}
-              className={`py-2 rounded-xl border text-xs font-bold transition-all ${
+              className={`py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                 desktopSplits === num
-                  ? "bg-emerald-700 border-emerald-500 text-white shadow"
-                  : "bg-slate-950 border-slate-800 text-gray-400 hover:text-white"
+                  ? "bg-cyan-600 border-cyan-600 text-white shadow-sm"
+                  : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
               }`}
             >
               {num === 1 ? "১টি স্প্লিট" : `${num}টি স্প্লিট`}
@@ -1008,41 +736,30 @@ export default function HeroManager({
         </div>
       </div>
 
-      {/* ৪. বর্তমান পোস্টসমূহের তালিকা */}
+      {/* ৪. বর্তমান পোস্টের তালিকা */}
       <div className={cardBox}>
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-          <h2 className="font-bold text-xs sm:text-sm text-gray-200">বর্তমান হিরো স্লাইডসমূহ ({list.length})</h2>
-          <span className="text-[10px] text-green-400 font-semibold">সর্বশেষ পোস্ট সবার শীর্ষে থাকবে</span>
+        <div className="flex items-center justify-between border-b pb-2">
+          <h2 className="font-bold text-xs sm:text-sm text-slate-800">বর্তমান হিরো স্লাইডসমূহ ({list.length})</h2>
+          <span className="text-[10px] text-cyan-700 font-semibold">সর্বশেষ পোস্ট সবার শীর্ষে থাকবে</span>
         </div>
 
         <div className="space-y-2">
           {list.map((slide, idx) => (
-            <div
-              key={slide.id}
-              className="bg-slate-950/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3 text-xs"
-            >
+            <div key={slide.id} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="size-6 rounded-full bg-emerald-950 border border-emerald-800 text-emerald-300 font-bold flex items-center justify-center shrink-0">
+                <span className="size-6 rounded-full bg-cyan-100 text-cyan-800 font-bold flex items-center justify-center shrink-0">
                   {idx + 1}
                 </span>
                 <div className="min-w-0">
-                  <p className="font-bold text-gray-200 truncate">
-                    {slide.title || "শিরোনামহীন পোস্ট"}
-                  </p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="font-bold text-slate-800 truncate">{slide.title || "শিরোনামহীন পোস্ট"}</p>
+                  <p className="text-[10px] text-slate-500">
                     ধরণ: {slide.slide_type === "color" ? "কালার ব্যানার" : slide.slide_type === "image" ? "ছবি" : "ভিডিও"}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => startEdit(slide)}
-                  className="px-2.5 py-1 bg-emerald-950 text-emerald-300 border border-emerald-800 rounded-lg hover:bg-emerald-900"
-                >
-                  এডিট
-                </button>
+              <div className="flex items-center gap-2 shrink-0 font-bold">
+                <button type="button" onClick={() => startEdit(slide)} className="text-cyan-700 hover:underline">এডিট</button>
                 <button
                   type="button"
                   onClick={() => {
@@ -1050,7 +767,7 @@ export default function HeroManager({
                       deleteHeroSlide(token, slide.id).then(loadData)
                     }
                   }}
-                  className="px-2.5 py-1 bg-red-950 text-red-300 border border-red-800 rounded-lg hover:bg-red-900"
+                  className="text-rose-600 hover:underline"
                 >
                   মুছুন
                 </button>
