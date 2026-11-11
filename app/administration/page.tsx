@@ -17,7 +17,6 @@ export const metadata: Metadata = {
 export default async function AdministrationPage() {
   const officials = await getAdministrationOfficials()
 
-  // ক্যাটাগরি অনুযায়ী গ্রুপিং
   const grouped: Record<string, AdministrationOfficial[]> = {}
   ADMIN_CATEGORIES.forEach((cat) => {
     grouped[cat] = officials.filter((o) => o.category === cat)
@@ -27,23 +26,22 @@ export default async function AdministrationPage() {
     <>
       <TopBar />
       <SiteHeader />
-      <main className="min-h-screen bg-gray-50/50 py-8 sm:py-12">
+      <main className="min-h-screen py-8 sm:py-12">
         <div className="mx-auto max-w-7xl px-4 space-y-8">
           
-          {/* দ্রুত হোমপেজে ফেরার বাটন (SPA Link) */}
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
           >
             <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
           </Link>
 
           {/* হেডার ব্যানার */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark via-brand to-navy text-white p-6 sm:p-10 shadow-lg text-center">
-            <span className="inline-block px-3.5 py-1 rounded-full bg-gold/90 text-navy font-bold text-xs uppercase tracking-wider mb-2">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center">
+            <span className="inline-block px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider mb-2 shadow">
               Mawlana Bhashani Science and Technology University
             </span>
-            <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight">
+            <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
               MBSTU Administration (মাভাবিপ্রবি প্রশাসন)
             </h1>
             <p className="text-white/80 text-xs sm:text-sm font-medium mt-1.5 max-w-2xl mx-auto">
@@ -58,10 +56,10 @@ export default async function AdministrationPage() {
 
             return (
               <section key={cat} className="space-y-4">
-                <div className="flex items-center gap-2 border-b-2 border-brand/20 pb-2">
-                  <Building2 className="size-5 text-brand" />
-                  <h2 className="font-serif text-xl sm:text-2xl font-bold text-navy">{cat}</h2>
-                  <span className="ml-auto text-xs bg-brand/10 text-brand font-bold px-2.5 py-0.5 rounded-full">
+                <div className="flex items-center gap-2 border-b border-white/20 pb-2">
+                  <Building2 className="size-5 text-cyan-400" />
+                  <h2 className="font-serif text-xl sm:text-2xl font-bold text-white drop-shadow">{cat}</h2>
+                  <span className="ml-auto text-xs bg-white/15 text-cyan-300 font-bold px-3 py-0.5 rounded-full border border-white/20">
                     {list.length} জন
                   </span>
                 </div>
@@ -70,7 +68,7 @@ export default async function AdministrationPage() {
                   {list.map((official) => (
                     <div
                       key={official.id}
-                      className="flex flex-col justify-between rounded-2xl border border-border bg-white p-5 shadow-sm hover:border-brand hover:shadow-md transition-all"
+                      className="glass-card flex flex-col justify-between p-5 text-white"
                     >
                       <div className="space-y-3">
                         <div className="flex items-start gap-3.5">
@@ -79,39 +77,38 @@ export default async function AdministrationPage() {
                             <img
                               src={official.photo_url}
                               alt={official.name}
-                              className="size-16 rounded-full object-cover border-2 border-brand/30 shadow-sm shrink-0 bg-gray-50"
+                              className="size-16 rounded-full object-cover border-2 border-cyan-400/50 shadow-md shrink-0 bg-slate-900"
                             />
                           ) : (
-                            <div className="size-16 rounded-full bg-brand/10 text-brand flex items-center justify-center text-2xl font-bold border shrink-0">
+                            <div className="size-16 rounded-full bg-white/10 text-cyan-300 flex items-center justify-center text-2xl font-bold border border-white/20 shrink-0">
                               👤
                             </div>
                           )}
 
                           <div className="min-w-0 flex-1">
-                            <span className="text-[10px] bg-green-50 text-green-800 font-bold px-2 py-0.5 rounded-full border border-green-200 truncate block max-w-fit">
+                            <span className="text-[10px] bg-white/15 text-cyan-200 font-bold px-2 py-0.5 rounded-full border border-white/20 truncate block max-w-fit">
                               {official.office_name}
                             </span>
-                            <h3 className="font-serif text-base font-bold text-navy mt-1 leading-snug">
+                            <h3 className="font-serif text-base font-bold text-white mt-1 leading-snug">
                               {official.name}
                             </h3>
-                            <p className="text-xs font-semibold text-brand">{official.designation}</p>
+                            <p className="text-xs font-semibold text-cyan-300">{official.designation}</p>
                           </div>
                         </div>
 
                         {official.bio && (
-                          <p className="text-xs text-gray-600 whitespace-pre-line leading-relaxed border-t border-gray-100 pt-2 line-clamp-3">
+                          <p className="text-xs text-slate-200 whitespace-pre-line leading-relaxed border-t border-white/10 pt-2 line-clamp-3">
                             {official.bio}
                           </p>
                         )}
                       </div>
 
-                      {/* যোগাযোগ বাটন (কল ও ইমেইল) */}
                       {(official.email || official.phone) && (
-                        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3 text-xs">
+                        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3 text-xs">
                           {official.phone && (
                             <a
                               href={`tel:${official.phone}`}
-                              className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 text-white px-2.5 py-1 hover:bg-emerald-700 transition font-medium"
+                              className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-3 py-1 font-semibold hover:opacity-90 transition shadow-sm"
                             >
                               <Phone className="size-3" /> কল করুন
                             </a>
@@ -119,9 +116,9 @@ export default async function AdministrationPage() {
                           {official.email && (
                             <a
                               href={`mailto:${official.email}`}
-                              className="inline-flex items-center gap-1 rounded-lg bg-slate-800 text-white px-2.5 py-1 hover:bg-slate-900 transition font-medium truncate max-w-[160px]"
+                              className="inline-flex items-center gap-1 rounded-full bg-white/15 border border-white/20 text-white px-3 py-1 hover:bg-white/25 transition font-semibold truncate max-w-[170px]"
                             >
-                              <Mail className="size-3 shrink-0" /> <span className="truncate">{official.email}</span>
+                              <Mail className="size-3 shrink-0 text-cyan-300" /> <span className="truncate">{official.email}</span>
                             </a>
                           )}
                         </div>
@@ -134,18 +131,16 @@ export default async function AdministrationPage() {
           })}
 
           {officials.length === 0 && (
-            <div className="rounded-3xl border border-dashed p-12 text-center bg-white shadow-sm space-y-2">
-              <UserCheck className="size-10 text-gray-400 mx-auto" />
-              <p className="text-base font-bold text-navy">এখনো প্রশাসনিক কর্মকর্তাদের তথ্য যুক্ত করা হয়নি।</p>
-              <p className="text-xs text-muted-foreground">অ্যাডমিন প্যানেল থেকে তথ্য যুক্ত করলেই এখানে সুন্দরভাবে ফুটে উঠবে।</p>
+            <div className="glass-card p-12 text-center space-y-2">
+              <UserCheck className="size-10 text-white/50 mx-auto" />
+              <p className="text-base font-bold text-white">এখনো প্রশাসনিক কর্মকর্তাদের তথ্য যুক্ত করা হয়নি।</p>
             </div>
           )}
 
-          {/* নিচে স্ক্রল করার পর পাঠকদের জন্য ফিরতি লিংক */}
-          <div className="pt-4 text-center border-t">
+          <div className="pt-4 text-center border-t border-white/15">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
             >
               <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
             </Link>
