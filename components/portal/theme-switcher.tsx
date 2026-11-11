@@ -35,94 +35,13 @@ export const THEMES = [
     dot: '#475569',
   },
   {
-    id: 'pastel-lilac',
-    bn: '৪. ল্যাভেন্ডার প্যাস্টেল',
-    en: 'Pastel Lilac Glass',
-    dbn: 'স্নিগ্ধ ল্যাভেন্ডার ফ্রস্টেড গ্লাস',
-    den: 'Soft lilac-blue frosted pastel',
-    bg: '#e0e7ff',
-    dot: '#9333ea',
-  },
-  {
     id: 'midnight-neon',
-    bn: '৫. মিডনাইট নিয়ন গ্লাস',
+    bn: '৪. মিডনাইট নিয়ন গ্লাস',
     en: 'Midnight Neon Glass',
     dbn: 'কালো গ্লাসের পেছনে জ্বলজ্বলে নিয়ন আভা',
     den: 'Dark obsidian glass with neon glow',
-    bg: '#0a1122',
-    dot: '#f97316',
-  },
-  {
-    id: 'glass-pay',
-    bn: '৬. গ্লাসপে রয়্যাল ভায়োলেট',
-    en: 'GlassPay Royal Violet',
-    dbn: 'রয়্যাল ভায়োলেট ও ম্যাজেন্টা গ্লাস',
-    den: 'Royal magenta-violet frosted glass',
-    bg: '#2e1065',
-    dot: '#ec4899',
-  },
-  {
-    id: 'pastel-dashboard',
-    bn: '৭. লাইট প্যাস্টেল ড্যাশবোর্ড',
-    en: 'Pastel Dashboard',
-    dbn: 'নরম নীল-বেগুনি ড্যাশবোর্ড গ্লাস',
-    den: 'Soft pastel UI with indigo glass',
-    bg: '#cdd5ed',
-    dot: '#4f46e5',
-  },
-  {
-    id: 'neon-wireframe',
-    bn: '৮. নিয়ন সাইবার ব্ল্যাক',
-    en: 'Neon Wireframe Dark',
-    dbn: 'কালো ব্যাকগ্রাউন্ডে নিয়ন তারজালি গ্লাস',
-    den: 'Cyber dark glass with neon waves',
-    bg: '#05050a',
-    dot: '#f59e0b',
-  },
-  {
-    id: 'visionos-taupe',
-    bn: '৯. ভিশন ওএস টাউপ গ্লাস',
-    en: 'VisionOS Taupe Glass',
-    dbn: 'অ্যাপল ভিশনওএস মিউজিক প্লেয়ার গ্লাস',
-    den: 'Apple VisionOS frosted taupe glass',
-    bg: '#2b2724',
-    dot: '#facc15',
-  },
-  {
-    id: 'cyan-daylight',
-    bn: '১০. আকাশী ক্লিয়ার গ্লাস',
-    en: 'Cyan Sky Daylight',
-    dbn: 'আকাশী নীল ডেলাইট গ্লাস প্যানেল',
-    den: 'Bright sky cyan frosted glass',
-    bg: '#38bdf8',
-    dot: '#0284c7',
-  },
-  {
-    id: 'chromatic-liquid',
-    bn: '১১. ইরিডিসেন্ট লিকুইড গ্লাস',
-    en: 'Chromatic Liquid Glass',
-    dbn: 'আইওএস ২৬ রেইনবো রিফ্লেকশন গ্লাস',
-    den: 'Iridescent liquid glass on deep blue',
-    bg: '#1e40af',
-    dot: '#38bdf8',
-  },
-  {
-    id: 'aurora-teal',
-    bn: '১২. অরোরা পার্পল-টিয়াল',
-    en: 'Aurora Teal & Purple',
-    dbn: 'অরোরা আলোর বেগুনি-ফিরোজা গ্লাস',
-    den: 'Aurora borealis purple to teal glass',
-    bg: '#0e7490',
-    dot: '#06b6d4',
-  },
-  {
-    id: 'bubble-pop',
-    bn: '১৩. ফ্লোটিং বাবল পপ',
-    en: 'Floating Bubble Pop',
-    dbn: 'রঙিন বুদবুদ এবং স্বচ্ছ শুভ্র গ্লাস',
-    den: 'Colorful floating orbs behind glass',
-    bg: '#f8fafc',
-    dot: '#4338ca',
+    bg: '#030712',
+    dot: '#22c55e',
   },
 ] as const
 
@@ -176,22 +95,22 @@ export function ThemeSwitcher() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="true"
-        className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/15 px-3 py-1.5 text-xs font-bold text-white shadow-xs backdrop-blur-md transition-all hover:bg-white/25 active:scale-95 cursor-pointer"
+        className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/15 px-3 py-1 text-xs font-bold text-white shadow-xs backdrop-blur-md transition-all hover:bg-white/25 active:scale-95 cursor-pointer"
       >
         <Palette className="size-3.5" aria-hidden="true" />
-        <span>{pick('১৩টি গ্লাস থিম', '13 Glass Themes')}</span>
+        <span>{pick('৪টি গ্লাস থিম', '4 Glass Themes')}</span>
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-3xl border border-white/20 bg-slate-950/85 p-2 text-left shadow-2xl backdrop-blur-2xl animate-in zoom-in-95 fade-in max-h-[75vh] overflow-y-auto scrollbar-none"
+          className="absolute right-0 z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-3xl border border-white/20 bg-slate-950/90 p-2 text-left shadow-2xl backdrop-blur-2xl animate-in zoom-in-95 fade-in max-h-[75vh] overflow-y-auto scrollbar-none"
         >
           <div className="px-3 pb-2 pt-2 border-b border-white/10 mb-1 flex items-center justify-between">
             <p className="text-[11px] font-bold uppercase tracking-wider text-white/70">
-              {pick('১৩টি 3D লিকুইড গ্লাস থিম', '13 Liquid Glass Themes')}
+              {pick('৪টি প্রিমিয়াম গ্লাস থিম', '4 Premium Glass Themes')}
             </p>
-            <span className="text-[10px] text-sky-400 font-bold">১৩টি শৈলী</span>
+            <span className="text-[10px] text-cyan-400 font-bold">৪টি শৈলী</span>
           </div>
 
           <div className="space-y-1">
@@ -217,7 +136,7 @@ export function ThemeSwitcher() {
                   <span className="block text-xs font-bold leading-tight truncate">{pick(t.bn, t.en)}</span>
                   <span className="block text-[10px] text-white/60 truncate mt-0.5">{pick(t.dbn, t.den)}</span>
                 </span>
-                {theme === t.id && <Check className="size-4 shrink-0 text-sky-400" aria-hidden="true" />}
+                {theme === t.id && <Check className="size-4 shrink-0 text-cyan-400" aria-hidden="true" />}
               </button>
             ))}
           </div>
