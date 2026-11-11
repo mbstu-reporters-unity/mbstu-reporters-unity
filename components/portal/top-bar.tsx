@@ -8,24 +8,32 @@ import { Tx } from '@/lib/i18n'
 export function TopBar() {
   return (
     <div className="bg-[#071030]/95 text-white border-b border-white/10 backdrop-blur-xl relative z-50">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-y-1.5 gap-x-2 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 py-2 space-y-2">
         
-        {/* লোকেশন ও লাইভ ঘড়ি */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span className="inline-flex items-center gap-1 rounded-full bg-cyan-600/80 border border-cyan-400/30 px-2.5 py-0.5 font-semibold text-white shadow-xs">
-            <MapPin className="size-3 text-cyan-200" aria-hidden="true" />
-            <Tx bn="সন্তোষ, টাঙ্গাইল" en="Santosh, Tangail" />
-          </span>
-          <LiveClock />
+        {/* ১ম সারি: বামে ভাষা (বাংলা/EN) | মাঝে লোকেশন (সন্তোষ, টাঙ্গাইল) | ডানে থিম (হুবহু আপনার ড্রয়িং অনুযায়ী) */}
+        <div className="flex items-center justify-between gap-1.5 sm:gap-3">
+          <div className="shrink-0">
+            <LangSwitcher />
+          </div>
+
+          <div className="flex justify-center flex-1 min-w-0">
+            <span className="inline-flex items-center gap-1 rounded-full bg-cyan-600/80 border border-cyan-400/30 px-2.5 sm:px-3 py-1 font-semibold text-white shadow-xs text-[11px] sm:text-xs whitespace-nowrap">
+              <MapPin className="size-3 text-cyan-200 shrink-0" aria-hidden="true" />
+              <Tx bn="সন্তোষ, টাঙ্গাইল" en="Santosh, Tangail" />
+            </span>
+          </div>
+
+          <div className="shrink-0 flex items-center gap-2">
+            <ThemeSwitcher />
+            <div className="hidden lg:block">
+              <SocialLinks size="sm" tooltip="bottom" />
+            </div>
+          </div>
         </div>
 
-        {/* ভাষা, থিম ও সোশ্যাল লিঙ্ক */}
-        <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-          <LangSwitcher />
-          <ThemeSwitcher />
-          <div className="hidden sm:block">
-            <SocialLinks size="sm" tooltip="bottom" />
-          </div>
+        {/* ২য় সারি: বামে তারিখ | ডানে লাইভ সময় */}
+        <div className="pt-1.5 border-t border-white/10">
+          <LiveClock />
         </div>
 
       </div>
