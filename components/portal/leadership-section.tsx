@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CalendarCheck, Globe2, Newspaper, Quote, Users } from "lucide-react"
+import { CalendarCheck, Globe2, Newspaper, Quote, Users, Sparkles } from "lucide-react"
 import { stats } from "@/lib/data"
 import { getLeaders, POSITIONS } from "@/lib/sb"
 import { DEFAULT_STYLE, getGlobalStyle, styleFor } from "@/lib/photo-style"
@@ -34,6 +34,7 @@ export function LeadershipSection() {
         <div id="about" className="-mt-20 pt-20" />
         
         <SectionHeading
+          inverted
           eyebrow="Executive Council & At a Glance"
           title="কার্যনির্বাহী পরিষদ"
           subtitle="মাভাবিপ্রবি রিপোর্টার্স ইউনিটির কার্যনির্বাহী পরিষদ — নির্ভীক, নিরপেক্ষ ও তথ্যনির্ভর ক্যাম্পাস সাংবাদিকতায় অঙ্গীকারবদ্ধ।"
@@ -47,9 +48,9 @@ export function LeadershipSection() {
             return (
               <article
                 key={leader.id}
-                className="theme-card relative p-6 sm:p-8"
+                className="glass-card relative p-6 sm:p-8"
               >
-                <Quote className="absolute right-6 top-6 size-12 text-slate-200 dark:text-slate-800 pointer-events-none" aria-hidden="true" />
+                <Quote className="absolute right-6 top-6 size-12 text-white/10 pointer-events-none" aria-hidden="true" />
                 
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-4">
                   
@@ -61,29 +62,28 @@ export function LeadershipSection() {
                       style={ps}
                       fallback={
                         <div
-                          className="flex h-full w-full items-center justify-center bg-brand text-white font-serif text-2xl font-bold shadow-inner"
+                          className="flex h-full w-full items-center justify-center bg-gradient-to-br from-cyan-400 to-blue-600 text-white font-serif text-2xl font-bold shadow-inner"
                           role="img"
-                          aria-label={`Portrait placeholder for ${leader.display_name}`}
                         >
                           {initials(leader.display_name)}
                         </div>
                       }
                     />
-                    <span className="absolute -bottom-2 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-brand px-3 py-0.5 text-[11px] font-bold text-white shadow-xs">
+                    <span className="absolute -bottom-2 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-3 py-0.5 text-[11px] font-bold text-white shadow-md border border-white/30">
                       {pos?.bn}
                     </span>
                   </div>
 
                   {/* নাম ও পদবি */}
                   <div className="min-w-0 flex-1 basis-40">
-                    <span className="inline-block rounded-full bg-brand-soft px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-brand mb-1">
+                    <span className="inline-block rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-cyan-200 border border-white/20 mb-1">
                       {pos?.en}
                     </span>
-                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-[var(--theme-text-title)]">
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white drop-shadow-sm">
                       {leader.display_name}
                     </h3>
                     {leader.department && (
-                      <p className="text-xs sm:text-sm text-[var(--theme-text-muted)] font-medium mt-0.5">
+                      <p className="text-xs sm:text-sm text-cyan-100/90 font-medium mt-0.5">
                         {leader.department}
                       </p>
                     )}
@@ -92,16 +92,16 @@ export function LeadershipSection() {
 
                 {/* বার্তা */}
                 {leader.message && (
-                  <p className="mt-6 whitespace-pre-line text-sm sm:text-base leading-relaxed text-[var(--theme-text-body)] text-justify">
+                  <p className="mt-6 whitespace-pre-line text-sm sm:text-base leading-relaxed text-slate-100 text-justify">
                     {leader.message}
                   </p>
                 )}
 
                 {/* ফুটার সাইন-অফ */}
-                <div className="mt-6 border-t border-[var(--theme-divider)] pt-4 flex items-center justify-between">
+                <div className="mt-6 border-t border-white/15 pt-4 flex items-center justify-between">
                   <div>
-                    <p className="font-serif text-base font-bold italic text-brand">— {leader.display_name}</p>
-                    <p className="text-xs text-[var(--theme-text-muted)]">
+                    <p className="font-serif text-base font-bold italic text-cyan-300">— {leader.display_name}</p>
+                    <p className="text-xs text-slate-300">
                       {pos?.en}, {"MBSTU Reporters' Unity"}
                     </p>
                   </div>
@@ -111,12 +111,6 @@ export function LeadershipSection() {
           })}
         </div>
 
-        {leaders.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-6">
-            কার্যনির্বাহী পরিষদের তথ্য শীঘ্রই যুক্ত করা হবে।
-          </p>
-        )}
-
         {/* পরিসংখ্যান কার্ডসমূহ */}
         <ul className="mt-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {stats.map((stat) => {
@@ -124,17 +118,17 @@ export function LeadershipSection() {
             return (
               <li
                 key={stat.label}
-                className="theme-card p-5 sm:p-6"
+                className="glass-card p-5 sm:p-6"
               >
-                <span className="flex size-11 items-center justify-center rounded-xl bg-brand-soft text-brand shadow-xs">
+                <span className="flex size-11 items-center justify-center rounded-xl bg-white/15 border border-white/20 text-cyan-300 shadow-md">
                   <Icon className="size-5" aria-hidden="true" />
                 </span>
 
-                <p className="mt-4 font-serif text-3xl sm:text-4xl font-extrabold text-[var(--theme-text-title)]">
+                <p className="mt-4 font-serif text-3xl sm:text-4xl font-extrabold text-white drop-shadow-md">
                   {stat.value}
                 </p>
-                <p className="mt-1 text-sm font-bold text-[var(--theme-text-title)]">{stat.label}</p>
-                <p className="text-xs text-[var(--theme-text-muted)]">{stat.bn}</p>
+                <p className="mt-1 text-sm font-bold text-white">{stat.label}</p>
+                <p className="text-xs font-semibold text-cyan-200">{stat.bn}</p>
               </li>
             )
           })}
