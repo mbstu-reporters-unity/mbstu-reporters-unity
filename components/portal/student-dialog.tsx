@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X, Share2, Check, GraduationCap, CalendarDays, MessageSquareQuote, Feather, Award, BookOpen } from 'lucide-react'
+import { X, Share2, Check, GraduationCap, CalendarDays, MessageSquareQuote, Feather, Award, BookOpen, Send } from 'lucide-react'
 import type { StudentItem } from '@/lib/sb'
 import { getImages } from '@/lib/sb'
 import { ReactionBar } from './reaction-bar'
@@ -35,7 +35,6 @@ export function StudentDialog({
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
 
-    // ইমেজ লোড
     getImages('student', item.id).then((rows) => {
       if (rows.length > 0) {
         setImages(rows.map((r) => r.url))
@@ -46,7 +45,6 @@ export function StudentDialog({
       }
     })
 
-    // লোকাল কমেন্ট লোড
     try {
       const saved = localStorage.getItem(`student_comments_${item.id}`)
       if (saved) setComments(JSON.parse(saved))
@@ -103,55 +101,52 @@ export function StudentDialog({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="animate-in fade-in absolute inset-0 bg-navy/80 backdrop-blur-md"
+        className="animate-in fade-in absolute inset-0 bg-slate-950/85 backdrop-blur-md cursor-default"
       />
 
       <div
         role="dialog"
         aria-modal="true"
-        className="animate-in zoom-in-95 fade-in relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white shadow-2xl border border-border"
+        className="animate-in zoom-in-95 fade-in relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-white/20 bg-slate-950/95 text-white shadow-2xl backdrop-blur-2xl scrollbar-none"
       >
         {/* হেডার */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white/95 px-5 py-3.5 backdrop-blur">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-crimson/10 px-2.5 py-1 text-xs font-bold text-crimson">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/15 bg-slate-900/90 px-5 py-3.5 backdrop-blur">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 px-3 py-1 text-xs font-bold">
             <Icon className="size-3.5" />
             {item.kind}
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="flex size-8 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
+            className="flex size-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 cursor-pointer"
           >
             <X className="size-4" />
           </button>
         </div>
 
         <div className="p-5 sm:p-6 space-y-4">
-          {/* ১. প্রধান শিরোনাম */}
-          <h2 className="font-serif text-xl sm:text-2xl font-bold leading-snug text-navy">
+          <h2 className="font-serif text-xl sm:text-2xl font-bold leading-snug text-white drop-shadow-md">
             {item.title}
           </h2>
 
-          {/* লেখক পরিচিতি ও তারিখ */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 pb-3 text-xs text-muted-foreground">
-            {item.author && <span className="font-bold text-navy text-sm">{item.author}</span>}
+          <div className="flex flex-wrap items-center gap-2 border-b border-white/15 pb-3 text-xs text-slate-300">
+            {item.author && <span className="font-bold text-white text-sm">{item.author}</span>}
             {item.dept && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-0.5 font-semibold text-brand">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/15 border border-white/20 px-2.5 py-0.5 font-semibold text-cyan-200">
                 <GraduationCap className="size-3" /> {item.dept}
               </span>
             )}
             {item.batch && (
-              <span className="rounded-full bg-gold/15 px-2.5 py-0.5 font-semibold text-[#8a6a0a]">
+              <span className="rounded-full bg-white/10 px-2.5 py-0.5 font-semibold text-amber-300 border border-white/15">
                 {item.batch}
               </span>
             )}
-            <span className="ml-auto inline-flex items-center gap-1">
-              <CalendarDays className="size-3 text-gold" />
+            <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-cyan-200/80">
+              <CalendarDays className="size-3 text-cyan-400" />
               {new Date(item.created_at).toLocaleDateString('bn-BD')}
             </span>
           </div>
 
-          {/* আপলোড করা ছবিসমূহ */}
           {images.length > 0 && (
             <div className="space-y-2">
               {images.map((src, i) => (
@@ -160,32 +155,29 @@ export function StudentDialog({
                   key={i}
                   src={src}
                   alt={item.title}
-                  className="w-full max-h-96 rounded-2xl object-cover bg-gray-100 shadow-sm"
+                  className="w-full max-h-96 rounded-2xl object-cover bg-black/40 border border-white/15 shadow-sm"
                 />
               ))}
             </div>
           )}
 
-          {/* ২. বিস্তারিত লেখা */}
           {item.excerpt && (
-            <div className="whitespace-pre-line text-sm sm:text-base leading-relaxed text-navy/90 py-2">
+            <div className="whitespace-pre-line text-sm sm:text-base leading-relaxed text-slate-100 py-1">
               {item.excerpt}
             </div>
           )}
 
-          {/* ⭐ ৩. লেখার ঠিক নিচে স্বয়ংক্রিয়ভাবে ভিডিও চলবে বা ছবির প্রিভিউ দেখাবে ⭐ */}
           {item.embed_media_url && (
             <UniversalMediaEmbed url={item.embed_media_url} title={item.title} />
           )}
 
-          {/* বহিঃস্থ লিংক (যদি থাকে) */}
           {item.link_url && (
             <div className="pt-1">
               <a
                 href={item.link_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:underline"
               >
                 🔗 মূল প্রকাশিত লিংক দেখুন →
               </a>
@@ -193,22 +185,22 @@ export function StudentDialog({
           )}
 
           {/* শেয়ার বার */}
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-gray-50 p-3 border">
-            <span className="text-xs font-bold text-gray-700">শেয়ার করুন:</span>
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white/10 p-3 border border-white/15">
+            <span className="text-xs font-bold text-white/80">শেয়ার করুন:</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleShare}
-                className="inline-flex items-center gap-1 rounded-lg bg-white border px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-soft"
+                className="inline-flex items-center gap-1 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 px-3 py-1 text-xs font-bold text-white cursor-pointer"
               >
-                {copied ? <Check className="size-3 text-green-600" /> : <Share2 className="size-3" />}
+                {copied ? <Check className="size-3 text-cyan-300" /> : <Share2 className="size-3" />}
                 {copied ? 'কপি হয়েছে!' : 'লিংক'}
               </button>
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(item.title + ' ' + shareUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-lg bg-emerald-600 text-white px-2.5 py-1 text-xs font-semibold hover:bg-emerald-700"
+                className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 text-xs font-semibold"
               >
                 WhatsApp
               </a>
@@ -216,42 +208,41 @@ export function StudentDialog({
                 href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-lg bg-blue-600 text-white px-2.5 py-1 text-xs font-semibold hover:bg-blue-700"
+                className="rounded-full bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 text-xs font-semibold"
               >
                 Facebook
               </a>
             </div>
           </div>
 
-          {/* রিঅ্যাকশন বার */}
           <ReactionBar postId={item.id} title={item.title} />
 
           {/* কমেন্ট সেকশন */}
-          <div className="space-y-3 pt-3 border-t">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-navy">
+          <div className="space-y-3 pt-3 border-t border-white/15">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-300">
               মন্তব্য ({comments.length})
             </h4>
 
             {comments.map((c, i) => (
-              <div key={i} className="rounded-xl bg-gray-50 p-2.5 text-xs space-y-1">
-                <p className="font-bold text-navy flex justify-between">
+              <div key={i} className="rounded-xl bg-white/5 border border-white/10 p-2.5 text-xs space-y-1">
+                <p className="font-bold text-white flex justify-between">
                   <span>{c.name}</span>
-                  <span className="text-[10px] text-gray-400 font-normal">{c.time}</span>
+                  <span className="text-[10px] text-white/50">{c.time}</span>
                 </p>
-                <p className="text-gray-700 leading-relaxed">{c.text}</p>
+                <p className="text-slate-200 leading-relaxed">{c.text}</p>
               </div>
             ))}
 
             <div className="space-y-2 pt-1">
               <input
-                className="w-full rounded-xl border px-3 py-1.5 text-xs bg-white"
+                className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400"
                 placeholder="আপনার নাম (ঐচ্ছিক)"
                 value={cName}
                 onChange={(e) => setCName(e.target.value)}
               />
               <textarea
                 rows={2}
-                className="w-full rounded-xl border px-3 py-1.5 text-xs bg-white"
+                className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400"
                 placeholder="এই লেখার ওপর আপনার মন্তব্য লিখুন..."
                 value={cText}
                 onChange={(e) => setCText(e.target.value)}
@@ -259,9 +250,10 @@ export function StudentDialog({
               <button
                 type="button"
                 onClick={handleAddComment}
-                className="rounded-xl bg-green-700 text-white px-4 py-1.5 text-xs font-bold hover:bg-green-800"
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-4 py-1.5 text-xs font-bold cursor-pointer shadow"
               >
-                মন্তব্য পাঠান
+                <Send className="size-3" />
+                <span>মন্তব্য পাঠান</span>
               </button>
             </div>
           </div>
