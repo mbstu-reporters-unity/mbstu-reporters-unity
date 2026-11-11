@@ -134,10 +134,10 @@ function Slide({
       <div
         ref={textRef}
         onAnimationEnd={handleFinish}
-        className={`absolute left-0 top-0 flex h-full items-center whitespace-nowrap text-xs sm:text-sm font-semibold text-foreground ${animKey}`}
+        className={`absolute left-0 top-0 flex h-full items-center whitespace-nowrap text-xs sm:text-sm font-bold text-white drop-shadow ${animKey}`}
       >
         <span
-          className="mr-2.5 size-2 shrink-0 rounded-full bg-crimson"
+          className="mr-2.5 size-2 shrink-0 rounded-full bg-cyan-400 shadow-[0_0_8px_#00e5ff]"
           aria-hidden="true"
         />
 
@@ -147,14 +147,14 @@ function Slide({
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-brand hover:underline transition-colors"
+              className="hover:text-cyan-300 hover:underline transition-colors"
             >
               {item.title}
             </a>
           ) : (
             <Link
               href={item.url}
-              className="hover:text-brand hover:underline transition-colors"
+              className="hover:text-cyan-300 hover:underline transition-colors"
             >
               {item.title}
             </Link>
@@ -162,7 +162,7 @@ function Slide({
         ) : (
           <div className="flex items-center gap-2">
             {badgeConfig.show_brief && badgeConfig.brief_text && (
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 bg-crimson/10 text-crimson border border-crimson/20">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 bg-red-600/80 text-white border border-red-400/40 shadow-xs">
                 {badgeConfig.brief_text}
               </span>
             )}
@@ -258,26 +258,17 @@ export function NewsTicker() {
     }
   }
 
-  function onTouchStart() {
-    if (touchTimer.current) clearTimeout(touchTimer.current)
-    setPaused(true)
-  }
-  function onTouchEnd() {
-    if (touchTimer.current) clearTimeout(touchTimer.current)
-    touchTimer.current = setTimeout(() => setPaused(false), 2000)
-  }
-
   if (!loaded || total === 0) return null
 
   const cur = list[idx]
 
   return (
     <div className="relative z-20 mx-auto max-w-7xl px-3 sm:px-4 py-2" role="region" aria-label="সর্বশেষ সংবাদ">
-      <div className="flex items-center rounded-2xl border border-border bg-card/90 shadow-xs p-1">
+      <div className="flex items-center rounded-full border border-white/20 bg-slate-950/70 backdrop-blur-2xl shadow-xl p-1.5">
         
         {/* ব্রেকিং বেজ */}
-        <div className="flex shrink-0 items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white rounded-xl bg-crimson shadow-2xs">
-          <span>{renderTickerBadgeIcon(badgeConfig.icon, 'size-3.5 shrink-0')}</span>
+        <div className="flex shrink-0 items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs font-bold sm:text-sm select-none rounded-full shadow-lg border border-white/30 bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 text-white">
+          <span>{renderTickerBadgeIcon(badgeConfig.icon, 'size-3.5 sm:size-4 shrink-0')}</span>
           <span>{badgeConfig.badge_text || 'সর্বশেষ'}</span>
         </div>
 
@@ -286,8 +277,8 @@ export function NewsTicker() {
           className="min-w-0 flex-1 overflow-hidden px-2"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
+          onTouchStart={() => setPaused(true)}
+          onTouchEnd={() => setPaused(false)}
         >
           <Slide
             key={`${cur.id}-${cycle}`}
@@ -301,25 +292,25 @@ export function NewsTicker() {
 
         {/* অ্যারো বাটন */}
         {total > 1 && (
-          <div className="flex items-center gap-1 px-1.5 text-xs select-none shrink-0 font-medium text-muted-foreground">
+          <div className="flex items-center gap-1 px-1.5 text-xs select-none shrink-0 font-bold text-white">
             <button
               type="button"
               onClick={prevSlide}
-              className="flex size-7 items-center justify-center rounded-lg hover:bg-muted transition cursor-pointer"
+              className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white cursor-pointer active:scale-95 transition"
               title="আগের ব্রেকিং"
               aria-label="Previous"
             >
               <ChevronLeft className="size-4" />
             </button>
             
-            <span className="tabular-nums text-[11px] px-1 font-semibold">
+            <span className="tabular-nums text-[11px] px-1 font-bold text-cyan-300">
               {bn(idx + 1)}/{bn(total)}
             </span>
 
             <button
               type="button"
               onClick={nextSlide}
-              className="flex size-7 items-center justify-center rounded-lg hover:bg-muted transition cursor-pointer"
+              className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white cursor-pointer active:scale-95 transition"
               title="পরের ব্রেকিং"
               aria-label="Next"
             >
@@ -334,9 +325,9 @@ export function NewsTicker() {
           onClick={toggleSound}
           aria-pressed={soundOn}
           aria-label={soundOn ? 'অ্যালার্ট বন্ধ' : 'অ্যালার্ট চালু'}
-          className="hidden size-7 sm:flex shrink-0 items-center justify-center rounded-lg hover:bg-muted text-muted-foreground cursor-pointer mr-1 transition"
+          className="hidden size-7 sm:flex shrink-0 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white cursor-pointer mr-1 transition active:scale-95"
         >
-          {soundOn ? <Volume2 className="size-3.5 text-brand" /> : <VolumeX className="size-3.5 opacity-40" />}
+          {soundOn ? <Volume2 className="size-3.5 text-cyan-300" /> : <VolumeX className="size-3.5 opacity-40" />}
         </button>
       </div>
     </div>
