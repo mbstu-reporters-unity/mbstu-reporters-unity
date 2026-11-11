@@ -51,10 +51,10 @@ import {
   CheckCircle2,
 } from "lucide-react"
 
-const inp = "w-full border border-slate-700 rounded-xl px-3.5 py-2 text-xs bg-slate-950 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
-const selectInp = "w-full border border-slate-700 rounded-xl px-3 py-2 text-xs bg-slate-950 text-white focus:outline-none focus:border-green-500 transition-all"
-const btnSave = "w-full bg-green-700 hover:bg-green-600 text-white rounded-xl py-3.5 font-bold text-sm transition-all disabled:opacity-50 shadow-lg cursor-pointer"
-const cardBox = "bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4"
+const inp = "w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs bg-slate-50 text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-cyan-500 transition-all"
+const selectInp = "w-full border border-slate-200 rounded-xl px-3 py-2 text-xs bg-slate-50 text-slate-800 focus:bg-white focus:outline-none focus:border-cyan-500 transition-all"
+const btnSave = "w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl py-3.5 font-bold text-sm transition-all disabled:opacity-50 shadow-md cursor-pointer active:scale-98"
+const cardBox = "bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4 text-slate-800"
 
 function renderBadgeIcon(key?: string, className = "size-3.5 mr-1.5 inline-block") {
   switch (key) {
@@ -185,9 +185,7 @@ export default function HeroBannerManager({
     } catch {}
   }
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  useEffect(() => { loadData() }, [])
 
   const addColorStop = () => {
     if (gradientStops.length >= 5) return
@@ -294,7 +292,7 @@ export default function HeroBannerManager({
     setLinkUrl(s.link_url || "")
     setSlideDuration(s.slide_duration ? Math.round(s.slide_duration / 1000) : 5)
     setTransitionEffect(s.transition_effect || "slide-left")
-    window.scrollTo({ top: 300, behavior: "smooth" })
+    window.scrollTo({ top: 100, behavior: "smooth" })
   }
 
   const handleSaveSlide = async () => {
@@ -374,120 +372,35 @@ export default function HeroBannerManager({
           .join(", ")})`
 
   return (
-    <div className="space-y-6 text-white max-w-4xl mx-auto pb-20">
-      {/* ⭐ ৩৫টি অ্যানিমেশন সিএসএস প্রিভিউ ইঞ্জিন ⭐ */}
+    <div className="space-y-5 text-slate-800">
+      
+      {/* অ্যানিমেশন ইঞ্জিন */}
       <style>{`
         @keyframes anim_fade-up { 0% { opacity: 0; transform: translateY(22px); } 100% { opacity: 1; transform: translateY(0); } }
         .anim_fade-up { animation: anim_fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
-
         @keyframes anim_typewriter { 0% { opacity: 0; clip-path: inset(0 100% 0 0); } 100% { opacity: 1; clip-path: inset(0 0 0 0); } }
         .anim_typewriter { animation: anim_typewriter 1s ease-out forwards; display: inline-flex; }
-
         @keyframes anim_zoom-pop { 0% { opacity: 0; transform: scale(0.6); } 100% { opacity: 1; transform: scale(1); } }
         .anim_zoom-pop { animation: anim_zoom-pop 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; display: inline-flex; }
-
         @keyframes anim_neon-pulse { 0%, 100% { text-shadow: 0 0 4px #fff, 0 0 14px #38bdf8; } 50% { text-shadow: 0 0 2px #fff, 0 0 6px #0284c7; } }
         .anim_neon-pulse { animation: anim_neon-pulse 1.4s ease-in-out infinite; display: inline-flex; }
-
         @keyframes anim_bounce-in { 0% { opacity: 0; transform: translateY(-40px); } 60% { opacity: 1; transform: translateY(8px); } 80% { transform: translateY(-3px); } 100% { transform: translateY(0); } }
         .anim_bounce-in { animation: anim_bounce-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards; display: inline-flex; }
-
-        @keyframes anim_flip-x { 0% { opacity: 0; transform: perspective(400px) rotateX(90deg); } 100% { opacity: 1; transform: perspective(400px) rotateX(0deg); } }
-        .anim_flip-x { animation: anim_flip-x 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-flex; }
-
-        @keyframes anim_flip-y { 0% { opacity: 0; transform: perspective(400px) rotateY(90deg); } 100% { opacity: 1; transform: perspective(400px) rotateY(0deg); } }
-        .anim_flip-y { animation: anim_flip-y 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-flex; }
-
-        @keyframes anim_cyber-glitch { 0%, 100% { transform: translate(0); } 20% { transform: translate(-3px, 2px); } 40% { transform: translate(3px, -2px); } 60% { transform: translate(-2px, -1px); } 80% { transform: translate(2px, 1px); } }
-        .anim_cyber-glitch { animation: anim_cyber-glitch 2s infinite; display: inline-flex; }
-
-        @keyframes anim_smoke-fade { 0% { opacity: 0; filter: blur(14px); transform: scale(1.08); } 100% { opacity: 1; filter: blur(0); transform: scale(1); } }
-        .anim_smoke-fade { animation: anim_smoke-fade 0.9s ease-out forwards; display: inline-flex; }
-
-        @keyframes anim_letter-wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        .anim_letter-wave { animation: anim_letter-wave 2s ease-in-out infinite; display: inline-flex; }
-
-        @keyframes anim_slide-left { 0% { opacity: 0; transform: translateX(60px); } 100% { opacity: 1; transform: translateX(0); } }
-        .anim_slide-left { animation: anim_slide-left 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
-
-        @keyframes anim_slide-right { 0% { opacity: 0; transform: translateX(-60px); } 100% { opacity: 1; transform: translateX(0); } }
-        .anim_slide-right { animation: anim_slide-right 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: inline-flex; }
-
-        @keyframes anim_rotate-drop { 0% { opacity: 0; transform: rotate(-12deg) translateY(-30px); } 100% { opacity: 1; transform: rotate(0) translateY(0); } }
-        .anim_rotate-drop { animation: anim_rotate-drop 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-flex; }
-
-        @keyframes anim_flash-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
-        .anim_flash-blink { animation: anim_flash-blink 0.8s 2 ease-in-out forwards; display: inline-flex; }
-
-        @keyframes anim_shake-alert { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
-        .anim_shake-alert { animation: anim_shake-alert 0.6s ease-in-out forwards; display: inline-flex; }
-
-        @keyframes anim_rainbow-shift { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
-        .anim_rainbow-shift { animation: anim_rainbow-shift 4s linear infinite; display: inline-flex; }
-
-        @keyframes anim_tracking-expand { 0% { opacity: 0; letter-spacing: -4px; } 100% { opacity: 1; letter-spacing: normal; } }
-        .anim_tracking-expand { animation: anim_tracking-expand 0.9s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-flex; }
-
-        @keyframes anim_golden-shimmer { 0%, 100% { filter: drop-shadow(0 0 2px #eab308); } 50% { filter: drop-shadow(0 0 16px #facc15) brightness(1.25); } }
-        .anim_golden-shimmer { animation: anim_golden-shimmer 2s ease-in-out infinite; display: inline-flex; }
-
-        @keyframes anim_twist-3d { 0% { opacity: 0; transform: rotate(-10deg) scale(0.85); } 100% { opacity: 1; transform: rotate(0) scale(1); } }
-        .anim_twist-3d { animation: anim_twist-3d 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; display: inline-flex; }
-
-        @keyframes anim_swing-in { 0% { opacity: 0; transform: rotateZ(-15deg); } 60% { transform: rotateZ(5deg); } 100% { opacity: 1; transform: rotateZ(0deg); } }
-        .anim_swing-in { animation: anim_swing-in 0.85s ease-out forwards; display: inline-flex; transform-origin: top center; }
-
-        @keyframes anim_rubber-band { 0% { transform: scale(1); } 30% { transform: scaleX(1.25) scaleY(0.75); } 40% { transform: scaleX(0.75) scaleY(1.25); } 60% { transform: scaleX(1.15) scaleY(0.85); } 100% { transform: scale(1); } }
-        .anim_rubber-band { animation: anim_rubber-band 0.9s ease-out forwards; display: inline-flex; }
-
-        @keyframes anim_pulse-expand { 0% { transform: scale(0.92); opacity: 0; } 50% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
-        .anim_pulse-expand { animation: anim_pulse-expand 0.8s ease-out forwards; display: inline-flex; }
-
-        /* অটো-লুপ অ্যানিমেশনসমূহ */
-        @keyframes anim_auto-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
-        .anim_auto-float { animation: anim_auto-float 3s ease-in-out infinite; display: inline-flex; }
-
-        @keyframes anim_auto-heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
-        .anim_auto-heartbeat { animation: anim_auto-heartbeat 1.6s ease-in-out infinite; display: inline-flex; }
-
-        @keyframes anim_auto-neon { 0%, 100% { text-shadow: 0 0 3px #fff, 0 0 10px #22c55e; } 50% { text-shadow: 0 0 7px #fff, 0 0 20px #4ade80; } }
-        .anim_auto-neon { animation: anim_auto-neon 2s ease-in-out infinite; display: inline-flex; }
-
-        @keyframes anim_auto-jello { 0%, 100% { transform: scale(1); } 30% { transform: scaleX(1.15) scaleY(0.85); } 40% { transform: scaleX(0.85) scaleY(1.15); } }
-        .anim_auto-jello { animation: anim_auto-jello 2.2s ease-in-out infinite; display: inline-flex; }
-
-        @keyframes anim_auto-golden { 0%, 100% { filter: drop-shadow(0 0 2px #eab308); } 50% { filter: drop-shadow(0 0 14px #facc15) brightness(1.2); } }
-        .anim_auto-golden { animation: anim_auto-golden 2s ease-in-out infinite; display: inline-flex; }
-
-        @keyframes anim_auto-gradient { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
-        .anim_auto-gradient { animation: anim_auto-gradient 5s linear infinite; display: inline-flex; }
-
-        @keyframes anim_auto-breathe { 0%, 100% { opacity: 0.85; transform: scale(0.98); } 50% { opacity: 1; transform: scale(1.03); } }
-        .anim_auto-breathe { animation: anim_auto-breathe 3s ease-in-out infinite; display: inline-flex; }
-
-        @keyframes anim_auto-glitch { 0%, 100% { transform: translate(0); } 10% { transform: translate(-2px, 1px); } 20% { transform: translate(2px, -1px); } 30% { transform: translate(0); } }
-        .anim_auto-glitch { animation: anim_auto-glitch 3s infinite; display: inline-flex; }
-
-        @keyframes anim_auto-swing { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(3deg); } 75% { transform: rotate(-3deg); } }
-        .anim_auto-swing { animation: anim_auto-swing 3s ease-in-out infinite; display: inline-flex; transform-origin: top center; }
-
-        @keyframes anim_auto-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        .anim_auto-bounce { animation: anim_auto-bounce 1.8s ease-in-out infinite; display: inline-flex; }
       `}</style>
 
       {msg && (
-        <div className="p-3 bg-blue-950/90 border border-blue-500/50 text-blue-200 rounded-xl text-xs font-semibold text-center shadow-lg">
+        <div className="p-3 bg-cyan-50 border border-cyan-300 text-cyan-900 rounded-2xl text-xs font-bold text-center shadow-xs">
           {msg}
         </div>
       )}
 
-      {/* ১. লাইভ প্রিভিউ */}
+      {/* ১. লাইভ প্রিভিউ বক্স */}
       <div className={cardBox}>
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-          <span className="text-xs font-bold text-green-400 flex items-center gap-1.5">
-            <Eye className="size-4" /> 👁️ লাইভ প্রিভিউ (অ্যানিমেশনসহ সরাসরি দেখুন):
+        <div className="flex items-center justify-between border-b pb-2">
+          <span className="text-xs font-bold text-cyan-700 flex items-center gap-1.5">
+            <Eye className="size-4" /> 👁️ লাইভ প্রিভিউ (হোমপেজে যেমন দেখাবে):
           </span>
-          <span className="text-[10px] text-gray-400">লেখা ও ব্যাজের জীবন্ত নড়াচড়া দেখুন</span>
+          <span className="text-[10px] text-slate-500">লেখা ও ব্যাজের নড়াচড়া সরাসরি দেখুন</span>
         </div>
 
         <div className="w-full flex items-center justify-center p-2 bg-slate-950 rounded-2xl border border-slate-800">
@@ -528,7 +441,7 @@ export default function HeroBannerManager({
               </div>
             )}
 
-            {/* টেক্সট ও ব্যাজ লেয়ার প্রিভিউ */}
+            {/* টেক্সট ও ব্যাজ লেয়ার প্রিভিউ */}
             <div className="absolute inset-0 pointer-events-none">
               {textItems.map((item) => {
                 if (!item.enabled || !item.text) return null
@@ -563,7 +476,6 @@ export default function HeroBannerManager({
                           gap: "4px",
                         }}
                       >
-                        {/* লাইভ পালসিং ডট প্রিভিউ */}
                         {showPulse && (
                           <span className="relative flex size-2 mr-1.5 shrink-0">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-85" />
@@ -591,7 +503,6 @@ export default function HeroBannerManager({
               })}
             </div>
 
-            {/* বাটন প্রিভিউ */}
             {showBtn && btnText.trim() && (
               <div className="absolute bottom-4 left-6 pointer-events-none">
                 <span className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-white text-red-700 font-bold text-xs shadow-lg">
@@ -603,70 +514,70 @@ export default function HeroBannerManager({
         </div>
       </div>
 
-      {/* ২. ফরম */}
+      {/* ২. ব্যানার এডিট ও ক্রিয়েট ফর্ম */}
       <div className={cardBox}>
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <h2 className="font-bold text-sm sm:text-base text-gray-200">
+        <div className="flex items-center justify-between border-b pb-3">
+          <h2 className="font-bold text-sm sm:text-base text-slate-800">
             {editId ? "✏️ হিরো ব্যানার স্লাইড এডিট করুন" : "➕ নতুন ব্যানার স্লাইড তৈরি করুন"}
           </h2>
           {editId && (
-            <button onClick={resetForm} className="text-xs text-red-400 hover:underline cursor-pointer">
+            <button onClick={resetForm} className="text-xs text-rose-600 hover:underline cursor-pointer">
               বাতিল
             </button>
           )}
         </div>
 
         {/* ব্যাকগ্রাউন্ড ধরন */}
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-300 block">১. ব্যাকগ্রাউন্ড ধরন:</label>
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-slate-700 block">১. ব্যাকগ্রাউন্ড ধরন:</label>
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => setSlideType("color")}
-              className={`py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`py-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 slideType === "color"
-                  ? "bg-indigo-700 border-indigo-500 text-white shadow-lg"
-                  : "bg-slate-950 border-slate-800 text-gray-400 hover:text-white"
+                  ? "bg-cyan-600 border-cyan-600 text-white shadow-sm"
+                  : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
               }`}
             >
-              <Palette className="size-3.5" /> ১. কালার
+              <Palette className="size-3.5" /> কালার
             </button>
             <button
               type="button"
               onClick={() => setSlideType("image")}
-              className={`py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`py-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 slideType === "image"
-                  ? "bg-indigo-700 border-indigo-500 text-white shadow-lg"
-                  : "bg-slate-950 border-slate-800 text-gray-400 hover:text-white"
+                  ? "bg-cyan-600 border-cyan-600 text-white shadow-sm"
+                  : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
               }`}
             >
-              <ImageIcon className="size-3.5" /> ২. ছবি
+              <ImageIcon className="size-3.5" /> ছবি
             </button>
             <button
               type="button"
               onClick={() => setSlideType("video")}
-              className={`py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`py-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 slideType === "video"
-                  ? "bg-indigo-700 border-indigo-500 text-white shadow-lg"
-                  : "bg-slate-950 border-slate-800 text-gray-400 hover:text-white"
+                  ? "bg-cyan-600 border-cyan-600 text-white shadow-sm"
+                  : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
               }`}
             >
-              <Video className="size-3.5" /> ৩. ভিডিও
+              <Video className="size-3.5" /> ভিডিও
             </button>
           </div>
         </div>
 
         {/* কালার ব্যানার সেটিংস */}
         {slideType === "color" && (
-          <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-3">
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-indigo-400">🎨 কালার ও গ্রেডিয়েন্ট:</span>
+              <span className="text-xs font-bold text-slate-700">🎨 কালার ও গ্রেডিয়েন্ট:</span>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setBannerMode("solid")}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold border cursor-pointer ${
-                    bannerMode === "solid" ? "bg-indigo-700 border-indigo-500 text-white" : "border-slate-800 text-gray-400"
+                  className={`px-3 py-1 rounded-lg text-xs font-bold border cursor-pointer ${
+                    bannerMode === "solid" ? "bg-cyan-600 border-cyan-600 text-white" : "bg-white border-slate-200 text-slate-600"
                   }`}
                 >
                   সলিড
@@ -674,8 +585,8 @@ export default function HeroBannerManager({
                 <button
                   type="button"
                   onClick={() => setBannerMode("gradient")}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold border cursor-pointer ${
-                    bannerMode === "gradient" ? "bg-indigo-700 border-indigo-500 text-white" : "border-slate-800 text-gray-400"
+                  className={`px-3 py-1 rounded-lg text-xs font-bold border cursor-pointer ${
+                    bannerMode === "gradient" ? "bg-cyan-600 border-cyan-600 text-white" : "bg-white border-slate-200 text-slate-600"
                   }`}
                 >
                   গ্রেডিয়েন্ট
@@ -686,25 +597,25 @@ export default function HeroBannerManager({
             {bannerMode === "gradient" && (
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">গ্রেডিয়েন্টের দিক: {bannerAngle}°</span>
+                  <span className="text-slate-600">গ্রেডিয়েন্টের দিক: {bannerAngle}°</span>
                   <input
                     type="range"
                     min="0"
                     max="360"
                     value={bannerAngle}
                     onChange={(e) => setBannerAngle(Number(e.target.value))}
-                    className="w-36 accent-indigo-500 cursor-pointer"
+                    className="w-36 accent-cyan-600 cursor-pointer"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-300 font-semibold">রঙের প্যালেট:</span>
+                    <span className="text-slate-700 font-semibold">রঙের প্যালেট:</span>
                     {gradientStops.length < 5 && (
                       <button
                         type="button"
                         onClick={addColorStop}
-                        className="text-xs text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-xs text-cyan-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <Plus className="size-3" /> + রঙ যোগ
                       </button>
@@ -712,15 +623,15 @@ export default function HeroBannerManager({
                   </div>
 
                   {gradientStops.map((st, i) => (
-                    <div key={i} className="flex items-center gap-2 bg-slate-900 p-2 rounded-lg border border-slate-800 text-xs">
+                    <div key={i} className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 text-xs">
                       <input
                         type="color"
                         value={st.color}
                         onChange={(e) => updateColorStop(i, "color", e.target.value)}
-                        className="size-7 rounded border border-slate-700 bg-transparent cursor-pointer"
+                        className="size-7 rounded border bg-transparent cursor-pointer"
                       />
                       <input
-                        className="w-20 border border-slate-700 rounded px-1.5 py-1 text-xs bg-slate-950 font-mono"
+                        className="w-20 border border-slate-200 rounded px-1.5 py-1 text-xs font-mono"
                         value={st.color}
                         onChange={(e) => updateColorStop(i, "color", e.target.value)}
                       />
@@ -730,14 +641,14 @@ export default function HeroBannerManager({
                         max="100"
                         value={st.stop}
                         onChange={(e) => updateColorStop(i, "stop", Number(e.target.value))}
-                        className="flex-1 accent-indigo-500 cursor-pointer"
+                        className="flex-1 accent-cyan-600 cursor-pointer"
                       />
-                      <span className="w-8 text-[11px] text-indigo-400 font-bold">{st.stop}%</span>
+                      <span className="w-8 text-[11px] text-cyan-700 font-bold">{st.stop}%</span>
                       {gradientStops.length > 2 && (
                         <button
                           type="button"
                           onClick={() => removeColorStop(i)}
-                          className="text-red-400 hover:text-red-300 p-1 cursor-pointer"
+                          className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer"
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -748,27 +659,15 @@ export default function HeroBannerManager({
               </div>
             )}
 
-            {bannerMode === "solid" && (
-              <div className="flex items-center gap-3 pt-2">
-                <span className="text-xs text-gray-400">রঙ বেছে নিন:</span>
-                <input
-                  type="color"
-                  value={gradientStops[0]?.color || "#1e1b4b"}
-                  onChange={(e) => updateColorStop(0, "color", e.target.value)}
-                  className="size-9 rounded border border-slate-700 bg-transparent cursor-pointer"
-                />
-              </div>
-            )}
-
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-              <span className="text-gray-300 font-medium">↕️ ব্যানারের উচ্চতা: {bannerHeight}px</span>
+            <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs">
+              <span className="text-slate-700 font-medium">↕️ ব্যানারের উচ্চতা: {bannerHeight}px</span>
               <input
                 type="range"
                 min="140"
                 max="360"
                 value={bannerHeight}
                 onChange={(e) => setBannerHeight(Number(e.target.value))}
-                className="w-48 accent-indigo-500 cursor-pointer"
+                className="w-44 accent-cyan-600 cursor-pointer"
               />
             </div>
           </div>
@@ -776,11 +675,11 @@ export default function HeroBannerManager({
 
         {/* ছবি */}
         {slideType === "image" && (
-          <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
-            <label className="text-xs font-bold text-blue-400 block">🖼️ ছবি আপলোড বা লিংক:</label>
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+            <label className="text-xs font-bold text-slate-700 block">🖼️ ছবি আপলোড বা লিংক:</label>
             <div className="flex flex-col sm:flex-row gap-2">
-              <label className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-gray-300 hover:bg-slate-800 cursor-pointer shrink-0">
-                <Upload className="size-3.5 text-blue-400" />
+              <label className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-700 hover:bg-slate-100 cursor-pointer shrink-0">
+                <Upload className="size-3.5 text-cyan-600" />
                 <span>ফাইল বাছাই করুন</span>
                 <input
                   type="file"
@@ -796,134 +695,117 @@ export default function HeroBannerManager({
                 onChange={(e) => setImgUrl(e.target.value)}
               />
             </div>
-            {imgFile && <p className="text-[11px] text-green-400">ফাইল: {imgFile.name}</p>}
+            {imgFile && <p className="text-[11px] text-emerald-700 font-semibold">ফাইল: {imgFile.name}</p>}
           </div>
         )}
 
         {/* ভিডিও */}
         {slideType === "video" && (
-          <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
-            <label className="text-xs font-bold text-red-400 block">🎥 ভিডিও ফাইল বা ইউটিউব লিংক:</label>
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+            <label className="text-xs font-bold text-slate-700 block">🎥 ভিডিও ফাইল বা ইউটিউব লিংক:</label>
             <input
               className={inp}
-              placeholder="ইউটিউব ভিডিওর লিংক পেস্ট করুন (https://youtube.com/watch?v=...)"
+              placeholder="ইউটিউব ভিডিওর লিংক (https://youtube.com/watch?v=...)"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
             />
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-gray-300 hover:bg-slate-800 cursor-pointer">
-                <Upload className="size-3 text-red-400" />
-                <span>ভিডিও ফাইল আপলোড (সর্বোচ্চ ৫০ MB)</span>
-                <input
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-                  className="hidden"
-                />
-              </label>
-              {videoFile && <span className="text-[10px] text-green-400">{videoFile.name}</span>}
-            </div>
+            <label className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-700 hover:bg-slate-100 cursor-pointer w-fit">
+              <Upload className="size-3 text-red-500" />
+              <span>ভিডিও ফাইল আপলোড (সর্বোচ্চ ৫০ MB)</span>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                className="hidden"
+              />
+            </label>
+            {videoFile && <span className="text-[10px] text-emerald-700 font-bold">{videoFile.name}</span>}
           </div>
         )}
 
         {/* দ্রুত ব্যাজ প্রিসেট */}
-        <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
-          <span className="text-xs font-bold text-yellow-400 block">⚡ দ্রুত ব্যাজ নির্বাচন:</span>
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+          <span className="text-xs font-bold text-slate-700 block">⚡ দ্রুত ব্যাজ প্রিসেট:</span>
           <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
               onClick={() => setQuickBadgePreset("ব্রেকিং নিউজ", "siren", "#DC2626")}
-              className="px-2.5 py-1 rounded-full bg-red-600/90 hover:bg-red-600 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
             >
               <Siren className="size-3" /> ব্রেকিং নিউজ
             </button>
             <button
               type="button"
               onClick={() => setQuickBadgePreset("হট নিউজ", "flame", "#EA580C")}
-              className="px-2.5 py-1 rounded-full bg-orange-600/90 hover:bg-orange-600 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-orange-600 hover:bg-orange-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
             >
               <Flame className="size-3" /> হট নিউজ
             </button>
             <button
               type="button"
               onClick={() => setQuickBadgePreset("ফ্ল্যাশ আপডেট", "zap", "#D97706")}
-              className="px-2.5 py-1 rounded-full bg-amber-600/90 hover:bg-amber-600 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
             >
               <Zap className="size-3" /> ফ্ল্যাশ আপডেট
             </button>
             <button
               type="button"
               onClick={() => setQuickBadgePreset("লাইভ আপডেট", "radio", "#2563EB")}
-              className="px-2.5 py-1 rounded-full bg-blue-600/90 hover:bg-blue-600 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
             >
               <Radio className="size-3" /> লাইভ আপডেট
             </button>
             <button
               type="button"
-              onClick={() => setQuickBadgePreset("নতুন আপডেট", "sparkles", "#7C3AED")}
-              className="px-2.5 py-1 rounded-full bg-purple-600/90 hover:bg-purple-600 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
-            >
-              <Sparkles className="size-3" /> নতুন আপডেট
-            </button>
-            <button
-              type="button"
               onClick={() => setQuickBadgePreset("জরুরি বিজ্ঞপ্তি", "bell-ring", "#B91C1C")}
-              className="px-2.5 py-1 rounded-full bg-rose-700/90 hover:bg-rose-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-rose-700 hover:bg-rose-800 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer"
             >
               <BellRing className="size-3" /> জরুরি বিজ্ঞপ্তি
             </button>
           </div>
         </div>
 
-        {/* টেক্সট বক্সসমূহ, ১৫টি আইকন ও অ্যানিমেশন নির্বাচন */}
-        <div className="p-3.5 bg-slate-950/90 border border-slate-800 rounded-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-850 pb-2">
-            <span className="text-xs font-bold text-yellow-400 flex items-center gap-1.5">
-              <Type className="size-4" /> ২. লেখার স্বাধীন বক্সসমূহ, আইকন ও অ্যানিমেশন:
+        {/* টেক্সট লেয়ারসমূহ */}
+        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+          <div className="flex items-center justify-between border-b pb-2">
+            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Type className="size-4 text-cyan-600" /> ২. লেখার স্বাধীন বক্সসমূহ ও অ্যানিমেশন:
             </span>
             <button
               type="button"
               onClick={addNewCustomBox}
-              className="text-xs bg-indigo-700 hover:bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 cursor-pointer"
+              className="text-xs bg-cyan-600 hover:bg-cyan-700 text-white px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 cursor-pointer"
             >
               <Plus className="size-3" /> নতুন বক্স যোগ
             </button>
           </div>
 
-          <div className="space-y-3.5">
+          <div className="space-y-3">
             {textItems.map((item, idx) => {
               const isBadge = item.id === 'txt_badge' || Boolean(item.bg_color)
               return (
-                <div
-                  key={item.id}
-                  className="p-3.5 bg-slate-900 border border-slate-800 rounded-xl space-y-3 transition-all"
-                >
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-white">
+                <div key={item.id} className="p-3 bg-white border border-slate-200 rounded-xl space-y-2.5">
+                  <div className="flex items-center justify-between border-b pb-1.5">
+                    <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-800">
                       <input
                         type="checkbox"
                         checked={item.enabled}
                         onChange={(e) => updateTextItem(idx, "enabled", e.target.checked)}
-                        className="accent-indigo-500 rounded"
+                        className="accent-cyan-600 rounded"
                       />
                       <span>{item.label}</span>
                     </label>
                     {idx >= 4 && (
-                      <button
-                        type="button"
-                        onClick={() => removeCustomBox(item.id)}
-                        className="text-red-400 hover:text-red-300 p-1 cursor-pointer"
-                      >
+                      <button type="button" onClick={() => removeCustomBox(item.id)} className="text-rose-500 hover:text-rose-700 p-1">
                         <Trash2 className="size-3.5" />
                       </button>
                     )}
                   </div>
 
                   {item.enabled && (
-                    <div className="space-y-2.5 pt-1">
+                    <div className="space-y-2 pt-1">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <div className="sm:col-span-2">
-                          <label className="text-[10px] text-gray-400 block mb-0.5">লেখার বিবরণ:</label>
                           <input
                             className={inp}
                             placeholder={`${item.label}-এর লেখা লিখুন...`}
@@ -931,215 +813,50 @@ export default function HeroBannerManager({
                             onChange={(e) => updateTextItem(idx, "text", e.target.value)}
                           />
                         </div>
-
-                        {/* ১৫টি আইকন সিলেক্টর */}
                         <div>
-                          <label className="text-[10px] text-yellow-400 block mb-0.5 font-bold">
-                            আইকন (১৫টি আইকন):
-                          </label>
                           <select
                             className={selectInp}
                             value={(item as any).icon || "none"}
-                            onChange={(e) =>
-                              updateTextItem(
-                                idx,
-                                "icon" as any,
-                                e.target.value === "none" ? undefined : e.target.value
-                              )
-                            }
+                            onChange={(e) => updateTextItem(idx, "icon" as any, e.target.value === "none" ? undefined : e.target.value)}
                           >
-                            <option value="none">— কোনো আইকন নেই —</option>
-                            <optgroup label="৫টি ব্রেকিং/হট নিউজ আইকন">
-                              {BANNER_BADGE_ICONS.slice(0, 5).map((ic) => (
-                                <option key={ic.key} value={ic.key}>
-                                  {ic.label}
-                                </option>
-                              ))}
-                            </optgroup>
-                            <optgroup label="১০টি অন্যান্য ব্যাজ আইকন">
-                              {BANNER_BADGE_ICONS.slice(5).map((ic) => (
-                                <option key={ic.key} value={ic.key}>
-                                  {ic.label}
-                                </option>
-                              ))}
-                            </optgroup>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* ব্যাজের লাইভ পালসিং ডট সুইচ */}
-                      {isBadge && (
-                        <div className="p-2 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
-                          <label className="flex items-center gap-2 text-xs font-semibold text-yellow-300 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={(item as any).badge_pulse !== false}
-                              onChange={(e) => updateTextItem(idx, "badge_pulse" as any, e.target.checked)}
-                              className="accent-indigo-500 rounded size-3.5 cursor-pointer"
-                            />
-                            <span>🔴 লাইভ পালসিং ডট অ্যানিমেশন দেখান (Live Radar Pulse)</span>
-                          </label>
-                          <span className="text-[10px] text-gray-400">ব্রেকিং নিউজের মতো জ্বলবে</span>
-                        </div>
-                      )}
-
-                      {/* X ও Y অবস্থান */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-2.5 bg-slate-950 rounded-xl border border-slate-850">
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[11px] text-gray-300">
-                            <span>↔️ ডানে-বামে (X):</span>
-                            <span className="text-indigo-400 font-bold">{item.x}%</span>
-                          </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={item.x}
-                            onChange={(e) => updateTextItem(idx, "x", Number(e.target.value))}
-                            className="w-full accent-indigo-500 cursor-pointer"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[11px] text-gray-300">
-                            <span>↕️ উপরে-নিচে (Y):</span>
-                            <span className="text-indigo-400 font-bold">{item.y}%</span>
-                          </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={item.y}
-                            onChange={(e) => updateTextItem(idx, "y", Number(e.target.value))}
-                            className="w-full accent-indigo-500 cursor-pointer"
-                          />
-                        </div>
-                      </div>
-
-                      {/* এলাইনমেন্ট */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-950 rounded-xl border border-slate-850 text-xs">
-                        <span className="text-[11px] text-gray-300 font-medium">📐 এলাইনমেন্ট:</span>
-                        <div className="flex gap-1">
-                          <button
-                            type="button"
-                            onClick={() => updateTextItem(idx, "align", "left")}
-                            className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 cursor-pointer ${
-                              item.align === "left" ? "bg-indigo-700 border-indigo-500 text-white" : "border-slate-800 text-gray-400"
-                            }`}
-                          >
-                            <AlignLeft className="size-3" /> বামে
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateTextItem(idx, "align", "center")}
-                            className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 cursor-pointer ${
-                              item.align === "center" ? "bg-indigo-700 border-indigo-500 text-white" : "border-slate-800 text-gray-400"
-                            }`}
-                          >
-                            <AlignCenter className="size-3" /> মাঝে
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateTextItem(idx, "align", "right")}
-                            className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 cursor-pointer ${
-                              item.align === "right" ? "bg-indigo-700 border-indigo-500 text-white" : "border-slate-800 text-gray-400"
-                            }`}
-                          >
-                            <AlignRight className="size-3" /> ডানে
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateTextItem(idx, "align", "justify")}
-                            className={`px-2 py-1 rounded-md border text-[11px] flex items-center gap-1 cursor-pointer ${
-                              item.align === "justify" ? "bg-indigo-700 border-indigo-500 text-white" : "border-slate-800 text-gray-400"
-                            }`}
-                          >
-                            <AlignJustify className="size-3" /> জাস্টিফাই
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* সাইজ, রঙ, ফন্ট ও ৩৫টি অ্যানিমেশন নির্বাচন */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
-                        <div>
-                          <span className="text-[10px] text-gray-400 block mb-1">সাইজ: {item.size_scale}x</span>
-                          <input
-                            type="range"
-                            min="0.5"
-                            max="2.0"
-                            step="0.05"
-                            value={item.size_scale}
-                            onChange={(e) => updateTextItem(idx, "size_scale", Number(e.target.value))}
-                            className="w-full accent-indigo-500 cursor-pointer"
-                          />
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-gray-400 block mb-1">রঙ ও ব্যাকগ্রাউন্ড:</span>
-                          <div className="flex items-center gap-1.5">
-                            <input
-                              type="color"
-                              title="লেখার রঙ"
-                              value={item.color}
-                              onChange={(e) => updateTextItem(idx, "color", e.target.value)}
-                              className="size-7 rounded border border-slate-700 bg-transparent cursor-pointer"
-                            />
-                            <input
-                              type="color"
-                              title="ব্যাকগ্রাউন্ড ব্যাজ রঙ"
-                              value={item.bg_color || "#DC2626"}
-                              onChange={(e) => updateTextItem(idx, "bg_color", e.target.value)}
-                              className="size-7 rounded border border-slate-700 bg-transparent cursor-pointer"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => updateTextItem(idx, "weight", item.weight === "bold" ? "normal" : "bold")}
-                              className={`px-2 py-1 rounded text-xs font-bold border cursor-pointer ${item.weight === "bold" ? "bg-white text-black" : "border-slate-700 text-gray-400"}`}
-                            >
-                              B
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updateTextItem(idx, "italic", !item.italic)}
-                              className={`px-2 py-1 rounded text-xs italic font-bold border cursor-pointer ${item.italic ? "bg-white text-black" : "border-slate-700 text-gray-400"}`}
-                            >
-                              I
-                            </button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-gray-400 block mb-1">ফন্ট:</span>
-                          <select
-                            className={selectInp}
-                            value={item.font}
-                            onChange={(e) => updateTextItem(idx, "font", e.target.value)}
-                          >
-                            {FONTS.map((f) => (
-                              <option key={f.value} value={f.value}>{f.label}</option>
+                            <option value="none">— আইকন নেই —</option>
+                            {BANNER_BADGE_ICONS.map((ic) => (
+                              <option key={ic.key} value={ic.key}>{ic.label}</option>
                             ))}
                           </select>
                         </div>
+                      </div>
 
+                      {/* পজিশন স্লাইডার */}
+                      <div className="grid grid-cols-2 gap-3 p-2 bg-slate-50 rounded-lg text-xs">
                         <div>
-                          <span className="text-[10px] text-yellow-400 block mb-1 font-bold">
-                            অ্যানিমেশন (৩৫টি ইফেক্ট):
-                          </span>
-                          <select
-                            className={selectInp}
-                            value={item.animation}
-                            onChange={(e) => updateTextItem(idx, "animation", e.target.value)}
-                          >
-                            <optgroup label="প্রবেশ অ্যানিমেশন">
-                              {TEXT_EFFECTS_35.slice(0, 25).map((ef) => (
-                                <option key={ef.value} value={ef.value}>{ef.label}</option>
-                              ))}
-                            </optgroup>
-                            <optgroup label="অবিরাম লুপ অ্যানিমেশন">
-                              {TEXT_EFFECTS_35.slice(25).map((ef) => (
-                                <option key={ef.value} value={ef.value}>{ef.label}</option>
-                              ))}
-                            </optgroup>
+                          <span className="text-[10px] text-slate-600 block">↔️ ডানে-বামে (X): {item.x}%</span>
+                          <input type="range" min="0" max="100" value={item.x} onChange={(e) => updateTextItem(idx, "x", Number(e.target.value))} className="w-full accent-cyan-600 cursor-pointer" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-600 block">↕️ উপরে-নিচে (Y): {item.y}%</span>
+                          <input type="range" min="0" max="100" value={item.y} onChange={(e) => updateTextItem(idx, "y", Number(e.target.value))} className="w-full accent-cyan-600 cursor-pointer" />
+                        </div>
+                      </div>
+
+                      {/* স্টাইল, ফন্ট ও অ্যানিমেশন */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        <div>
+                          <span className="text-[10px] text-slate-600 block">সাইজ: {item.size_scale}x</span>
+                          <input type="range" min="0.5" max="2.0" step="0.05" value={item.size_scale} onChange={(e) => updateTextItem(idx, "size_scale", Number(e.target.value))} className="w-full accent-cyan-600 cursor-pointer" />
+                        </div>
+                        <div className="flex items-center gap-1.5 pt-3">
+                          <input type="color" value={item.color} onChange={(e) => updateTextItem(idx, "color", e.target.value)} className="size-6 rounded border bg-transparent cursor-pointer" title="লেখার রঙ" />
+                          <input type="color" value={item.bg_color || "#DC2626"} onChange={(e) => updateTextItem(idx, "bg_color", e.target.value)} className="size-6 rounded border bg-transparent cursor-pointer" title="ব্যাজের রঙ" />
+                        </div>
+                        <div>
+                          <select className={selectInp} value={item.font} onChange={(e) => updateTextItem(idx, "font", e.target.value)}>
+                            {FONTS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <select className={selectInp} value={item.animation} onChange={(e) => updateTextItem(idx, "animation", e.target.value)}>
+                            {TEXT_EFFECTS_35.map((ef) => <option key={ef.value} value={ef.value}>{ef.label}</option>)}
                           </select>
                         </div>
                       </div>
@@ -1152,152 +869,86 @@ export default function HeroBannerManager({
         </div>
 
         {/* স্লাইডারের গতি ও ট্রানজিশন */}
-        <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
-          <span className="text-xs font-bold text-gray-300 block">৩. স্লাইডারের গতি ও ট্রানজিশন:</span>
+        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+          <span className="text-xs font-bold text-slate-700 block">৩. স্লাইডারের গতি ও ট্রানজিশন:</span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <div className="flex justify-between text-xs text-gray-400 mb-1">
-                <span>স্লাইড প্রদর্শনের সময়:</span>
-                <span className="text-indigo-400 font-bold">{slideDuration} সেকেন্ড</span>
+              <div className="flex justify-between text-xs text-slate-600 mb-1">
+                <span>প্রদর্শনের সময়:</span>
+                <span className="text-cyan-700 font-bold">{slideDuration} সেকেন্ড</span>
               </div>
-              <input
-                type="range"
-                min="1"
-                max="60"
-                value={slideDuration}
-                onChange={(e) => setSlideDuration(Number(e.target.value))}
-                className="w-full accent-indigo-500 cursor-pointer"
-              />
+              <input type="range" min="1" max="60" value={slideDuration} onChange={(e) => setSlideDuration(Number(e.target.value))} className="w-full accent-cyan-600 cursor-pointer" />
             </div>
-
             <div>
-              <span className="text-xs text-gray-400 block mb-1">ট্রানজিশন ইফেক্ট:</span>
-              <select
-                className={selectInp}
-                value={transitionEffect}
-                onChange={(e) => setTransitionEffect(e.target.value)}
-              >
-                {TRANSITIONS_30.map((tr) => (
-                  <option key={tr.value} value={tr.value}>{tr.label}</option>
-                ))}
+              <select className={selectInp} value={transitionEffect} onChange={(e) => setTransitionEffect(e.target.value)}>
+                {TRANSITIONS_30.map((tr) => <option key={tr.value} value={tr.value}>{tr.label}</option>)}
               </select>
             </div>
           </div>
         </div>
 
-        {/* বিস্তারিত বাটন অন/অফ সুইচ */}
-        <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2.5">
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-xs font-bold text-gray-300 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showBtn}
-                onChange={(e) => setShowBtn(e.target.checked)}
-                className="accent-indigo-500 rounded size-4 cursor-pointer"
-              />
-              <span>৪. বিস্তারিত অ্যাকশন বাটন দেখান (ঐচ্ছিক):</span>
-            </label>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${showBtn ? 'bg-indigo-900/60 text-indigo-300 border border-indigo-700' : 'bg-gray-800 text-gray-400'}`}>
-              {showBtn ? 'বাটন চালু' : 'বাটন বন্ধ'}
-            </span>
-          </div>
-
+        {/* বিস্তারিত বাটন সুইচ */}
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+          <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+            <input type="checkbox" checked={showBtn} onChange={(e) => setShowBtn(e.target.checked)} className="accent-cyan-600 rounded size-4" />
+            <span>৪. বিস্তারিত অ্যাকশন বাটন দেখান (ঐচ্ছিক)</span>
+          </label>
           {showBtn && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div>
-                <label className="text-xs font-bold text-gray-400 block mb-1">বাটন টেক্সট:</label>
-                <input
-                  className={inp}
-                  placeholder="যেমন: বিস্তারিত --"
-                  value={btnText}
-                  onChange={(e) => setBtnText(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-400 block mb-1">ক্লিক লিংক:</label>
-                <input
-                  className={inp}
-                  placeholder="https://... অথবা /post/..."
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                />
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <input className={inp} placeholder="বাটন টেক্সট (যেমন: বিস্তারিত --)" value={btnText} onChange={(e) => setBtnText(e.target.value)} />
+              <input className={inp} placeholder="লিংক (https://...)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
             </div>
           )}
         </div>
 
-        {/* সেভ বাটন */}
         <button className={btnSave} onClick={handleSaveSlide} disabled={busy}>
           {busy ? "সংরক্ষণ হচ্ছে..." : editId ? "ব্যানার স্লাইড আপডেট করুন" : "🚀 ব্যানার স্লাইড সংরক্ষণ ও লাইভ করুন"}
         </button>
       </div>
 
-      {/* ৩. বর্তমান ব্যানার স্লাইডসমূহের তালিকা ও ডিলিট অপশন */}
+      {/* ৩. বর্তমান ব্যানার স্লাইডসমূহের তালিকা */}
       <div className={cardBox}>
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-          <h2 className="font-bold text-xs sm:text-sm text-gray-200">বর্তমান ব্যানার স্লাইডসমূহ ({list.length})</h2>
-          <span className="text-[10px] text-green-400 font-semibold">সব মুছে ফেললে হোমপেজে ব্যানার থাকবে না</span>
+        <div className="flex items-center justify-between border-b pb-2">
+          <h2 className="font-bold text-xs sm:text-sm text-slate-800">বর্তমান ব্যানার স্লাইডসমূহ ({list.length})</h2>
+          <span className="text-[10px] text-cyan-700 font-semibold">সব মুছে ফেললে হোমপেজে ব্যানার বন্ধ থাকবে</span>
         </div>
 
         <div className="space-y-2">
           {list.map((slide, idx) => (
-            <div
-              key={slide.id}
-              className="bg-slate-950/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3 text-xs"
-            >
+            <div key={slide.id} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="size-6 rounded-full bg-indigo-950 border border-indigo-800 text-indigo-300 font-bold flex items-center justify-center shrink-0">
+                <span className="size-6 rounded-full bg-cyan-100 text-cyan-800 font-bold flex items-center justify-center shrink-0">
                   {idx + 1}
                 </span>
                 <div className="min-w-0">
-                  <p className="font-bold text-gray-200 truncate">
-                    {slide.title || "শিরোনামহীন ব্যানার"}
-                  </p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="font-bold text-slate-800 truncate">{slide.title || "শিরোনামহীন ব্যানার"}</p>
+                  <p className="text-[10px] text-slate-500">
                     ধরণ: {slide.slide_type === "color" ? "কালার" : slide.slide_type === "image" ? "ছবি" : "ভিডিও"}
-                    {slide.button_text ? ` · বাটন: "${slide.button_text}"` : " · বাটন বন্ধ"}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => startEdit(slide)}
-                  className="px-2.5 py-1 bg-indigo-950 text-indigo-300 border border-indigo-800 rounded-lg hover:bg-indigo-900 cursor-pointer"
-                >
-                  এডিট
-                </button>
+              <div className="flex items-center gap-2 shrink-0 font-bold">
+                <button type="button" onClick={() => startEdit(slide)} className="text-cyan-700 hover:underline">এডিট</button>
                 <button
                   type="button"
                   onClick={async () => {
-                    if (confirm(`"${slide.title || 'এই ব্যানার স্লাইড'}" মুছে ফেলতে চান? এটি মুছে ফেললে হোমপেজ থেকেও সরে যাবে।`)) {
+                    if (confirm("এই ব্যানার স্লাইডটি মুছে ফেলতে চান?")) {
                       setBusy(true)
-                      try {
-                        await deleteHeroBannerSlide(token, slide.id)
-                        await loadData()
-                        setMsg("✅ স্লাইড মুছে ফেলা হয়েছে")
-                        if (editId === slide.id) resetForm()
-                      } catch {
-                        setMsg("❌ মুছতে সমস্যা হয়েছে")
-                      }
+                      await deleteHeroBannerSlide(token, slide.id)
+                      await loadData()
+                      if (editId === slide.id) resetForm()
                       setBusy(false)
                     }
                   }}
-                  className="px-2.5 py-1 bg-red-950 text-red-300 border border-red-800 rounded-lg hover:bg-red-900 cursor-pointer"
+                  className="text-rose-600 hover:underline"
                 >
                   মুছুন
                 </button>
               </div>
             </div>
           ))}
-
-          {list.length === 0 && (
-            <div className="text-center py-6 border border-dashed border-slate-800 rounded-xl bg-slate-950/60 space-y-1">
-              <p className="text-sm font-bold text-gray-300">বর্তমানে কোনো ব্যানার স্লাইড নেই</p>
-              <p className="text-xs text-gray-500">হোমপেজে এই ব্যানারটি সম্পূর্ণ বন্ধ আছে। অ্যাডমিন চাইলে নতুন স্লাইড সেভ করলে আবার লাইভ হবে।</p>
-            </div>
-          )}
+          {list.length === 0 && <p className="text-xs text-slate-400 text-center py-4">বর্তমানে কোনো ব্যানার নেই।</p>}
         </div>
       </div>
     </div>
