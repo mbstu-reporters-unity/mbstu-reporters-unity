@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, Globe, Mail, MapPin, Newspaper, Phone } from 'lucide-react'
+import { ArrowLeft, Globe, Newspaper } from 'lucide-react'
 import { getUniversityAssociations } from '@/lib/associations'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
@@ -21,23 +21,22 @@ export default async function AssociationsPage() {
     <>
       <TopBar />
       <SiteHeader />
-      <main className="min-h-screen bg-gray-50/50 py-8 sm:py-12">
+      <main className="min-h-screen py-8 sm:py-12">
         <div className="mx-auto max-w-6xl px-4 space-y-8">
           
-          {/* দ্রুত হোমপেজে ফেরার বাটন (SPA Link) */}
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
           >
             <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
           </Link>
 
           {/* হেডার ব্যানার */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark via-brand to-navy text-white p-6 sm:p-10 shadow-lg text-center">
-            <span className="inline-block px-3 py-1 rounded-full bg-gold/90 text-navy font-bold text-xs uppercase tracking-wider mb-2">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center">
+            <span className="inline-block px-3 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider mb-2 shadow">
               University Press & Reporters
             </span>
-            <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight">
+            <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
               অন্যান্য সাংবাদিক সমিতি
             </h1>
             <p className="text-white/80 text-xs sm:text-sm font-medium mt-1">
@@ -45,20 +44,17 @@ export default async function AssociationsPage() {
             </p>
           </div>
 
-          {/* গ্রিড তালিকা */}
           {associations.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {associations.map((assoc) => {
-                // লগো বা নামে ক্লিক করলে যে লিঙ্কে যাবে (ওয়েবসাইট, না থাকলে ফেসবুক)
                 const targetLink = assoc.website_url || assoc.fb_url || assoc.yt_url || null
 
                 return (
                   <div
                     key={assoc.id}
-                    className="flex flex-col justify-between rounded-2xl border border-border bg-white p-5 shadow-sm hover:border-brand hover:shadow-md transition-all"
+                    className="glass-card flex flex-col justify-between p-5 text-white"
                   >
                     <div className="space-y-3">
-                      {/* লগো ও বিশ্ববিদ্যালয়ের নাম */}
                       <div className="flex items-start gap-3">
                         {assoc.logo_url ? (
                           targetLink ? (
@@ -68,7 +64,7 @@ export default async function AssociationsPage() {
                                 src={assoc.logo_url}
                                 alt={assoc.name}
                                 loading="lazy"
-                                className="size-14 rounded-2xl object-contain border p-1 bg-white shadow-sm hover:opacity-90"
+                                className="size-14 rounded-2xl object-contain border border-white/30 p-1 bg-white shadow-md hover:opacity-90"
                               />
                             </a>
                           ) : (
@@ -77,28 +73,28 @@ export default async function AssociationsPage() {
                               src={assoc.logo_url}
                               alt={assoc.name}
                               loading="lazy"
-                              className="size-14 rounded-2xl object-contain border p-1 bg-white shadow-sm shrink-0"
+                              className="size-14 rounded-2xl object-contain border border-white/30 p-1 bg-white shadow-md shrink-0"
                             />
                           )
                         ) : (
-                          <div className="size-14 rounded-2xl bg-brand/10 text-brand flex items-center justify-center text-xl font-bold border shrink-0">
+                          <div className="size-14 rounded-2xl bg-white/10 text-cyan-300 flex items-center justify-center text-xl font-bold border border-white/20 shrink-0">
                             📰
                           </div>
                         )}
 
                         <div className="min-w-0 flex-1">
                           {assoc.university_name && (
-                            <span className="text-[10px] bg-green-50 text-green-800 font-bold px-2 py-0.5 rounded-full border border-green-200">
+                            <span className="text-[10px] bg-white/15 text-cyan-200 font-bold px-2.5 py-0.5 rounded-full border border-white/20">
                               {assoc.university_name}
                             </span>
                           )}
-                          <h2 className="font-serif text-base font-bold text-navy mt-1 leading-snug">
+                          <h2 className="font-serif text-base font-bold text-white mt-1 leading-snug">
                             {targetLink ? (
                               <a
                                 href={targetLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="hover:text-brand transition-colors"
+                                className="hover:text-cyan-300 transition-colors"
                               >
                                 {assoc.name}
                               </a>
@@ -107,36 +103,33 @@ export default async function AssociationsPage() {
                             )}
                           </h2>
                           {assoc.name_en && (
-                            <p className="text-xs text-gray-500">{assoc.name_en}</p>
+                            <p className="text-xs text-slate-300 mt-0.5">{assoc.name_en}</p>
                           )}
                         </div>
                       </div>
 
-                      {/* সংক্ষিপ্ত বিবরণ (ঐচ্ছিক - থাকলে তবেই দেখাবে) */}
                       {assoc.description && (
-                        <p className="text-xs text-gray-600 whitespace-pre-line leading-relaxed border-t border-gray-100 pt-2">
+                        <p className="text-xs text-slate-200 whitespace-pre-line leading-relaxed border-t border-white/10 pt-2 line-clamp-3">
                           {assoc.description}
                         </p>
                       )}
 
-                      {/* যোগাযোগের তথ্য (ঐচ্ছিক) */}
                       {assoc.contact_info && (
-                        <div className="text-xs text-gray-500 bg-gray-50 p-2.5 rounded-xl border border-gray-100 space-y-1">
-                          <p className="font-bold text-gray-700 text-[11px]">যোগাযোগের তথ্য:</p>
+                        <div className="text-xs text-slate-300 bg-white/10 p-2.5 rounded-2xl border border-white/15 space-y-1">
+                          <p className="font-bold text-cyan-300 text-[11px]">যোগাযোগের তথ্য:</p>
                           <p className="whitespace-pre-line">{assoc.contact_info}</p>
                         </div>
                       )}
                     </div>
 
-                    {/* সোশ্যাল ও ওয়েব লিঙ্ক বোতাম */}
                     {(assoc.website_url || assoc.fb_url || assoc.yt_url) && (
-                      <div className="mt-4 flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-3 text-xs font-semibold">
+                      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3 text-xs font-semibold">
                         {assoc.website_url && (
                           <a
                             href={assoc.website_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 rounded-lg bg-brand text-white px-2.5 py-1 hover:bg-brand-dark transition-colors"
+                            className="inline-flex items-center gap-1 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1 transition-colors shadow"
                           >
                             <Globe className="size-3" />
                             Website
@@ -147,7 +140,7 @@ export default async function AssociationsPage() {
                             href={assoc.fb_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="rounded-lg bg-blue-600 text-white px-2.5 py-1 hover:bg-blue-700 transition-colors"
+                            className="rounded-full bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 transition-colors shadow"
                           >
                             Facebook
                           </a>
@@ -157,7 +150,7 @@ export default async function AssociationsPage() {
                             href={assoc.yt_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="rounded-lg bg-red-600 text-white px-2.5 py-1 hover:bg-red-700 transition-colors"
+                            className="rounded-full bg-red-600 hover:bg-red-500 text-white px-3 py-1 transition-colors shadow"
                           >
                             YouTube
                           </a>
@@ -169,18 +162,16 @@ export default async function AssociationsPage() {
               })}
             </div>
           ) : (
-            <div className="rounded-3xl border border-dashed p-12 text-center bg-white shadow-sm space-y-2">
-              <Newspaper className="size-10 text-gray-400 mx-auto" />
-              <p className="text-base font-bold text-navy">এখনো কোনো সাংবাদিক সমিতি যুক্ত করা হয়নি।</p>
-              <p className="text-xs text-muted-foreground">অ্যাডমিন প্যানেল থেকে তথ্য যুক্ত করলেই এখানে সুন্দরভাবে ফুটে উঠবে।</p>
+            <div className="glass-card p-12 text-center space-y-2">
+              <Newspaper className="size-10 text-white/50 mx-auto" />
+              <p className="text-base font-bold text-white">এখনো কোনো সাংবাদিক সমিতি যুক্ত করা হয়নি।</p>
             </div>
           )}
 
-          {/* নিচে স্ক্রল করার পর পাঠকদের জন্য ফিরতি লিংক */}
-          <div className="pt-4 text-center border-t">
+          <div className="pt-4 text-center border-t border-white/15">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
             >
               <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
             </Link>
