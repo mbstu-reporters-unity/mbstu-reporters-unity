@@ -84,8 +84,8 @@ const organizationJsonLd = {
   },
 }
 
-/* ১৩টি থিমের রিলোডহীন এক্সিকিউশন */
-const themeScript = `(function(){try{var ok=['ocean-glass','sunset-peach','pure-frost','pastel-lilac','midnight-neon','glass-pay','pastel-dashboard','neon-wireframe','visionos-taupe','cyan-daylight','chromatic-liquid','aurora-teal','bubble-pop'];var t=localStorage.getItem('mbstu_theme');if(!t||ok.indexOf(t)<0){t='ocean-glass';}document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('mbstu_lang');if(l==='en'||l==='bn'){document.documentElement.lang=l;}}catch(e){}})();`
+/* শুধুমাত্র নির্বাচিত ৪টি থিমের রিলোডহীন ফাস্ট এক্সিকিউশন */
+const themeScript = `(function(){try{var ok=['ocean-glass','sunset-peach','pure-frost','midnight-neon'];var t=localStorage.getItem('mbstu_theme');if(!t||ok.indexOf(t)<0){t='ocean-glass';}document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('mbstu_lang');if(l==='en'||l==='bn'){document.documentElement.lang=l;}}catch(e){}})();`
 
 export default function RootLayout({
   children,
