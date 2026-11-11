@@ -82,6 +82,30 @@ export function SiteHeader() {
     })
   }, [])
 
+  // ✅ নিখুঁত স্মুথ স্ক্রল ফাংশন (যতবারই ক্লিক করবেন প্রতিবারই স্ক্রল করবে)
+  function scrollToSection(sectionId: string) {
+    setMenuOpen(false)
+    if (typeof window === 'undefined') return
+
+    const isHome = window.location.pathname === '/' || window.location.pathname === ''
+
+    if (isHome) {
+      const el = document.getElementById(sectionId)
+      if (el) {
+        const headerOffset = 70 // স্টিকি হেডারের জন্য অফসেট
+        const elementPosition = el.getBoundingClientRect().top
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        })
+      }
+    } else {
+      window.location.href = `/#${sectionId}`
+    }
+  }
+
   function openClubWindow(clubId: string) {
     setMenuOpen(false)
     if (typeof window !== 'undefined') {
@@ -108,7 +132,7 @@ export function SiteHeader() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#071030]/90 shadow-lg backdrop-blur-2xl w-full">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5">
           
-          {/* বামপাশ: লোগো ও ভার্সিটি লিঙ্ক (মোবাইলে চওড়া সীমাবদ্ধ করা হয়েছে) */}
+          {/* লোগো ও বিশ্ববিদ্যালয়ের তথ্য */}
           <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 mr-2 overflow-hidden">
             <Logo inverted />
             <span className="h-5 w-px bg-white/20 shrink-0 hidden xs:block" aria-hidden="true" />
@@ -127,14 +151,13 @@ export function SiteHeader() {
                   className="size-7 sm:size-9 rounded-full object-cover shrink-0 select-none ring-1 sm:ring-2 ring-white/20 shadow-xs"
                 />
               )}
-              {/* মোবাইলে অপ্রয়োজনীয় বড় টেক্সট লুকিয়ে শুধুমাত্র লোগো রাখা হয়েছে */}
               <span className="hidden md:inline text-[11px] font-bold text-white/90 truncate max-w-[120px]">
                 {univText || "MBSTU"}
               </span>
             </a>
           </div>
 
-          {/* ==================== ডেস্কটপ মেনুবার (বৃহৎ স্ক্রিনের জন্য) ==================== */}
+          {/* ডেস্কটপ মেনুবার */}
           <nav aria-label="Main navigation" className="hidden lg:block">
             <ul className="flex items-center gap-1 xl:gap-2 text-sm font-semibold text-white/85">
               <li>
@@ -218,29 +241,41 @@ export function SiteHeader() {
                 </button>
                 <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full pt-2 w-80 z-50">
                   <div className="rounded-3xl border border-white/20 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-2xl space-y-2">
-                    <Link href="/#leadership" className="block text-xs font-bold text-cyan-300 p-2 hover:bg-white/10 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection('leadership')}
+                      className="w-full text-left text-xs font-bold text-cyan-300 p-2 hover:bg-white/10 rounded-xl cursor-pointer"
+                    >
                       👥 কার্যনির্বাহী পরিষদ একনজরে →
-                    </Link>
+                    </button>
                     <Link href="/council" className="flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs text-white/90 hover:bg-white/10 transition-colors">
                       <span>ডিরেক্টর প্যানেল</span>
                       <ChevronRight className="size-3 text-cyan-400" />
                     </Link>
-                    <Link href="/#club-news" className="block text-xs font-bold text-cyan-300 p-2 hover:bg-white/10 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection('club-news')}
+                      className="w-full text-left text-xs font-bold text-cyan-300 p-2 hover:bg-white/10 rounded-xl cursor-pointer"
+                    >
                       ⭐ ক্যাম্পাস ক্লাবসমূহ ({clubsList.length}) →
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </li>
 
               <li>
-                <Link href="/#about" className="rounded-full px-3 py-1.5 hover:bg-white/15 hover:text-cyan-300 transition-colors">
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('about')}
+                  className="rounded-full px-3 py-1.5 hover:bg-white/15 hover:text-cyan-300 transition-colors cursor-pointer"
+                >
                   {pick('পরিচিতি', 'About')}
-                </Link>
+                </button>
               </li>
             </ul>
           </nav>
 
-          {/* ডানপাশ: লগইন ও ৩-দাগের মোবাইল মেনু বাটন (কখনোই স্ক্রিনের বাইরে যাবে না) */}
+          {/* ডানপাশ: লগইন ও ৩-দাগের মোবাইল মেনু বাটন */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Link
               href="/admin"
@@ -250,7 +285,6 @@ export function SiteHeader() {
               <span>{pick('লগইন', 'Login')}</span>
             </Link>
 
-            {/* ৩-দাগের মোবাইল মেনু বাটন (১০০% দৃশ্যমান) */}
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
@@ -324,21 +358,40 @@ export function SiteHeader() {
               </button>
               {activeMobileTab === 'clubs' && (
                 <div className="p-2.5 border-t border-white/10 bg-black/30 space-y-1.5 text-xs">
-                  <Link href="/#leadership" onClick={() => setMenuOpen(false)} className="block font-semibold text-cyan-300 py-1">👥 কার্যনির্বাহী পরিষদ →</Link>
-                  <Link href="/council" onClick={() => setMenuOpen(false)} className="block font-semibold text-cyan-300 py-1">🛡️ ডিরেক্টর প্যানেল →</Link>
-                  <Link href="/#club-news" onClick={() => setMenuOpen(false)} className="block font-semibold text-cyan-300 py-1">⭐ ক্যাম্পাস ক্লাবসমূহ ({clubsList.length}) →</Link>
+                  {/* কার্যনির্বাহী পরিষদে স্ক্রল */}
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection('leadership')}
+                    className="block w-full text-left font-semibold text-cyan-300 py-1 cursor-pointer"
+                  >
+                    👥 কার্যনির্বাহী পরিষদ →
+                  </button>
+
+                  <Link href="/council" onClick={() => setMenuOpen(false)} className="block font-semibold text-cyan-300 py-1">
+                    🛡️ ডিরেক্টর প্যানেল →
+                  </Link>
+
+                  {/* ✅ ক্যাম্পাস ক্লাবসমূহে স্ক্রল (প্রতিবার কাজ করবে) */}
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection('club-news')}
+                    className="block w-full text-left font-semibold text-cyan-300 py-1 cursor-pointer"
+                  >
+                    ⭐ ক্যাম্পাস ক্লাবসমূহ ({clubsList.length}) →
+                  </button>
                 </div>
               )}
             </div>
 
-            <Link
-              href="/#about"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 text-white text-xs font-bold border border-white/10"
+            {/* পরিচিতি */}
+            <button
+              type="button"
+              onClick={() => scrollToSection('about')}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 text-white text-xs font-bold border border-white/10 cursor-pointer text-left"
             >
               <span className="flex items-center gap-2"><Info className="size-4 text-cyan-400" /><span>পরিচিতি (About)</span></span>
               <ChevronRight className="size-4 text-white/50" />
-            </Link>
+            </button>
           </nav>
         )}
       </header>
