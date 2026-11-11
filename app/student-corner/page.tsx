@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ArrowUpRight, Award, BookOpen, Feather, GraduationCap, MessageSquareQuote } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, Award, BookOpen, Feather, MessageSquareQuote, Sparkles } from 'lucide-react'
 import { getStudentItems, getStudentCategories, type StudentItem } from '@/lib/sb'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
@@ -25,12 +25,10 @@ export default function StudentCornerPage() {
   const [selected, setSelected] = useState<StudentItem | null>(null)
 
   useEffect(() => {
-    // পোস্ট ও ক্যাটাগরি লোড
     Promise.all([getStudentItems(false), getStudentCategories()]).then(([allPosts, allKinds]) => {
       setItems(allPosts)
       setKinds(['All', ...allKinds])
 
-      // লিংকে আইডি থাকলে অটো পপ-আপ খোলা
       if (typeof window !== 'undefined') {
         const id = new URLSearchParams(window.location.search).get('id')
         if (id) {
@@ -47,26 +45,26 @@ export default function StudentCornerPage() {
     <>
       <TopBar />
       <SiteHeader />
-      <main className="min-h-[75vh] py-10 sm:py-16 bg-gray-50/50">
+      <main className="min-h-[75vh] py-10 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 space-y-8">
           
-          {/* হোমপেজে ফেরার রিলোডহীন লিংক */}
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
             >
               <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
             </Link>
           </div>
 
           <SectionHeading
+            inverted
             eyebrow="Student Corner"
             title="শিক্ষার্থীদের লেখা ও কর্নার"
             subtitle="মাভাবিপ্রবি শিক্ষার্থীদের মতামত, সাহিত্য, গবেষণা ও অর্জনের উন্মুক্ত মঞ্চ।"
           />
 
-          {/* ক্যাটাগরি বাটন ফিল্টার */}
+          {/* ফিল্টার বাটন */}
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none" role="group">
             {kinds.map((k) => (
               <button
@@ -75,12 +73,12 @@ export default function StudentCornerPage() {
                 onClick={() => setFilter(k)}
                 className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                   filter === k
-                    ? 'border-brand bg-brand text-white shadow'
-                    : 'border-border bg-white text-navy hover:bg-brand-soft'
+                    ? 'border-cyan-300/40 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
+                    : 'border-white/20 bg-white/10 text-white/80 hover:bg-white/20'
                 }`}
               >
                 {k === 'All' ? 'সব লেখা' : k}
-                <span className="ml-1.5 text-[10px] opacity-70">
+                <span className="ml-1.5 text-[10px] opacity-75">
                   ({k === 'All' ? items.length : items.filter((it) => it.kind === k).length})
                 </span>
               </button>
@@ -89,18 +87,18 @@ export default function StudentCornerPage() {
 
           {/* পোস্টগুলোর কার্ড গ্রিড */}
           {visible.length > 0 ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {visible.map((item) => {
                 const Icon = kindIcons[item.kind] || MessageSquareQuote
                 return (
                   <div
                     key={item.id}
                     onClick={() => setSelected(item)}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition-all hover:-translate-y-1 hover:border-brand hover:shadow-xl cursor-pointer"
+                    className="glass-card group flex flex-col overflow-hidden text-white cursor-pointer hover:border-cyan-400"
                   >
-                    {/* কার্ডের ছবি */}
+                    {/* কার্ডের ছবি অথবা দৃষ্টিনন্দন আর্ট প্লেসহোল্ডার */}
                     {item.image_url ? (
-                      <div className="h-44 w-full overflow-hidden bg-gray-100">
+                      <div className="h-44 w-full overflow-hidden bg-black/40">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={item.image_url}
@@ -110,41 +108,44 @@ export default function StudentCornerPage() {
                         />
                       </div>
                     ) : (
-                      <div className="h-28 w-full bg-brand-soft flex items-center justify-center text-brand">
-                        <Icon className="size-10 opacity-30" />
+                      <div className="h-32 w-full bg-gradient-to-br from-indigo-950 via-slate-900 to-blue-950 flex flex-col items-center justify-center p-3 text-center border-b border-white/10 relative overflow-hidden">
+                        <Icon className="size-10 text-cyan-400/30 mb-1" />
+                        <span className="text-[11px] font-serif italic text-cyan-100/70 line-clamp-1">
+                          "ক্যাম্পাস শিক্ষার্থীদের সাহিত্য ও চিন্তার প্রকাশ"
+                        </span>
                       </div>
                     )}
 
-                    <div className="flex flex-1 flex-col p-5">
+                    <div className="flex flex-1 flex-col p-5 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-crimson">
-                          <Icon className="size-3.5" />
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-cyan-300 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
+                          <Icon className="size-3" />
                           {item.kind}
                         </span>
-                        <ArrowUpRight className="size-4 text-muted-foreground transition-colors group-hover:text-brand" />
+                        <ArrowUpRight className="size-4 text-cyan-200 transition-colors group-hover:text-white" />
                       </div>
 
-                      <h3 className="mt-3 font-serif text-lg font-bold leading-snug text-navy group-hover:text-brand transition-colors line-clamp-2">
+                      <h3 className="font-serif text-lg font-bold leading-snug text-white group-hover:text-cyan-200 transition-colors line-clamp-2 drop-shadow-sm">
                         {item.title}
                       </h3>
 
                       {item.excerpt && (
-                        <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
+                        <p className="line-clamp-3 text-xs leading-relaxed text-slate-300">
                           {item.excerpt}
                         </p>
                       )}
 
-                      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 text-xs">
+                      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-white/15 pt-3 text-xs">
                         <div>
-                          {item.author && <p className="font-bold text-navy">{item.author}</p>}
+                          {item.author && <p className="font-bold text-white">{item.author}</p>}
                           {item.dept && (
-                            <p className="text-[11px] text-gray-500">
+                            <p className="text-[11px] text-cyan-200/80">
                               {item.dept} {item.batch ? `· ${item.batch}` : ''}
                             </p>
                           )}
                         </div>
-                        <span className="text-xs font-bold text-brand group-hover:underline">
-                          পড়ুন ও রিঅ্যাক্ট দিন →
+                        <span className="text-xs font-bold text-cyan-300 group-hover:underline">
+                          পড়ুন ও মন্তব্য করুন →
                         </span>
                       </div>
                     </div>
@@ -153,9 +154,8 @@ export default function StudentCornerPage() {
               })}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed p-10 text-center bg-white shadow-sm space-y-1">
-              <p className="text-sm font-bold text-navy">এই বিভাগে এখনো কোনো লেখা প্রকাশিত হয়নি।</p>
-              <p className="text-xs text-muted-foreground">শীঘ্রই মাভাবিপ্রবি শিক্ষার্থীদের নতুন লেখা এখানে যুক্ত হবে।</p>
+            <div className="glass-card p-10 text-center text-white/70 space-y-1">
+              <p className="text-sm font-bold">এই বিভাগে এখনো কোনো লেখা প্রকাশিত হয়নি।</p>
             </div>
           )}
         </div>
@@ -164,7 +164,6 @@ export default function StudentCornerPage() {
       <SiteFooter />
       <BackToTop />
 
-      {/* বিস্তারিত পড়ার পপ-আপ */}
       <StudentDialog item={selected} onClose={() => setSelected(null)} />
     </>
   )
