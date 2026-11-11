@@ -92,6 +92,7 @@ export function ClubNews() {
   const [isPaused, setIsPaused] = useState(false)
   const [itemsPerView, setItemsPerView] = useState(1)
 
+  const sliderContainerRef = useRef<HTMLDivElement>(null)
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
   const clubsRef = useRef<Club[]>(fallbackClubs)
@@ -166,6 +167,13 @@ export function ClubNews() {
     }
   }, [handleOpenClub])
 
+  // যে কোনো অযাচিত হরিজন্টাল ব্রাউজার স্ক্রল রোধ করে কনটেইনারকে নিখুঁত স্থানে লক রাখা
+  useEffect(() => {
+    if (sliderContainerRef.current) {
+      sliderContainerRef.current.scrollLeft = 0
+    }
+  }, [currentIndex])
+
   const tags = ['All', ...Array.from(new Set(list.map((c) => c.tag)))]
   const visible = filter === 'All' ? list : list.filter((c) => c.tag === filter)
   const total = visible.length
@@ -235,11 +243,10 @@ export function ClubNews() {
 
     return (
       <div
-        id={`club-${club.id}`}
-        className="glass-card flex flex-col justify-between p-4 sm:p-5 select-none text-white h-full min-h-[300px] transition-all"
+        className="glass-card flex flex-col justify-between p-4 sm:p-5 select-none text-white h-full min-h-[300px] w-full transition-all"
       >
         <div className="space-y-3">
-          {/* লোগো, নাম ও ট্যাগ: কোনো অক্ষর যাতে না কাটে সে জন্য line-clamp ও wrap দেওয়া হলো */}
+          {/* লোগো, নাম ও ট্যাগ: কিনারার কোনো অংশ কাটবে না */}
           <div className="flex items-start justify-between gap-2 border-b border-white/15 pb-2.5">
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
               {raw?.logo_url ? (
@@ -255,8 +262,7 @@ export function ClubNews() {
                   <Icon className="size-4" aria-hidden="true" />
                 </div>
               )}
-              {/* truncate সরিয়ে line-clamp-2 ও break-words যোগ করা হয়েছে যাতে পুরো নাম সুন্দরভাবে দেখা যায় */}
-              <span className="font-bold text-xs sm:text-sm text-white line-clamp-2 break-words leading-tight drop-shadow-sm">
+              <span className="font-bold text-xs sm:text-sm text-white line-clamp-2 break-words leading-tight drop-shadow-sm flex-1">
                 {club.nameBn || club.name}
               </span>
             </div>
@@ -268,15 +274,15 @@ export function ClubNews() {
 
           {/* সাম্প্রতিক কার্যক্রম */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] text-cyan-200/80">
-              <span className="font-semibold flex items-center gap-1">
-                <Sparkles className="size-3 text-amber-300 shrink-0" /> 
+            <div className="flex items-center justify-between text-[11px] text-cyan-200/80 gap-1">
+              <span className="font-semibold flex items-center gap-1 shrink-0">
+                <Sparkles className="size-3 text-amber-300" /> 
                 <span>সাম্প্রতিক কার্যক্রম</span>
               </span>
               {club.date && <span className="font-mono text-[10px] opacity-80 shrink-0">{club.date}</span>}
             </div>
 
-            <p className="text-xs leading-relaxed text-slate-200 line-clamp-2">
+            <p className="text-xs leading-relaxed text-slate-200 line-clamp-2 break-words">
               {club.activityBn || club.activity}
             </p>
 
@@ -364,7 +370,7 @@ export function ClubNews() {
           subtitle="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের সাম্প্রতিক অর্জন, কার্যক্রম এবং পূর্ণাঙ্গ পরিচিতি।"
         />
 
-        {/* ⭐ ফিক্স ১: ফিল্টার বাটনের প্রান্ত যাতে না কাটে সেজন্য -mx-4 px-4 দেওয়া হয়েছে এবং সেফটি মার্জিন নিশ্চিত করা হয়েছে ⭐ */}
+        {/* ফিল্টার বাটন: স্ক্রিনের শেষ প্রান্ত পর্যন্ত পূর্ণাঙ্গ স্ক্রল */}
         <div className="-mx-4 px-4 sm:mx-0 sm:px-0 mb-6 flex gap-2.5 overflow-x-auto pb-2.5 pt-1 scrollbar-none" role="group">
           {tags.map((tag) => (
             <button
@@ -389,78 +395,80 @@ export function ClubNews() {
           ))}
         </div>
 
-        {/* ⭐ ফিক্স ২: মোবাইল স্লাইডারে কার্ড ডিসপ্লের শেষ সীমানা পর্যন্ত মসৃণভাবে যাবে, মাঝপথে কেটে যাবে না ⭐ */}
+        {/* ⭐ মূল সমাধান: overflow-hidden সরাসরি -mx-4 এ দেওয়া হয়েছে, ফলে কার্ডটি স্ক্রিনের শেষ ০px কিনারা পর্যন্ত যাবে, মাঝপথে কাটবে না ⭐ */}
         <div
+          ref={sliderContainerRef}
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="-mx-4 px-4 sm:mx-0 sm:px-0 relative w-auto"
+          className="-mx-4 sm:mx-0 overflow-hidden relative py-2"
         >
           {total > 0 ? (
-            <div className="overflow-hidden w-full py-2">
-              <div
-                className="flex transition-transform duration-500 ease-out"
-                style={{
-                  transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
-                }}
-              >
-                {visible.map((club) => (
-                  <div
-                    key={club.id}
-                    className="shrink-0 px-2 sm:px-2.5"
-                    style={{ width: `${100 / itemsPerView}%` }}
-                  >
-                    {renderCard(club)}
-                  </div>
-                ))}
-              </div>
+            <div
+              className="flex transition-transform duration-500 ease-out"
+              style={{
+                transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
+              }}
+            >
+              {visible.map((club) => (
+                <div
+                  key={club.id}
+                  className="shrink-0 px-4 sm:px-2.5 box-border"
+                  style={{ width: `${100 / itemsPerView}%` }}
+                >
+                  {renderCard(club)}
+                </div>
+              ))}
             </div>
           ) : (
-            <p className="text-center text-xs text-white/60 py-10 glass-card">
-              কোনো ক্লাব পাওয়া যায়নি।
-            </p>
-          )}
-
-          {/* কন্ট্রোল বার */}
-          {total > itemsPerView && (
-            <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
-              
-              <button
-                type="button"
-                onClick={() => setIsPaused(!isPaused)}
-                className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 text-xs font-semibold border border-white/20 transition cursor-pointer active:scale-95"
-              >
-                {isPaused ? <Play className="size-3 text-cyan-400" /> : <Pause className="size-3 text-amber-400" />}
-                <span>{isPaused ? 'চালান' : 'থামান'}</span>
-              </button>
-
-              <span className="text-xs font-bold text-cyan-300 bg-white/10 px-3 py-1 rounded-full border border-white/15">
-                ক্লাব {bn(currentIndex + 1)} / {bn(total)}
-              </span>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={prevSlide}
-                  className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
-                  aria-label="Previous"
-                >
-                  <ChevronLeft className="size-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={nextSlide}
-                  className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
-                  aria-label="Next"
-                >
-                  <ChevronRight className="size-4" />
-                </button>
-              </div>
-
+            <div className="px-4">
+              <p className="text-center text-xs text-white/60 py-10 glass-card">
+                কোনো ক্লাব পাওয়া যায়নি।
+              </p>
             </div>
           )}
         </div>
+
+        {/* কন্ট্রোল বার */}
+        {total > itemsPerView && (
+          <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+            
+            <button
+              type="button"
+              onClick={() => setIsPaused(!isPaused)}
+              className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 text-xs font-semibold border border-white/20 transition cursor-pointer active:scale-95"
+            >
+              {isPaused ? <Play className="size-3 text-cyan-400" /> : <Pause className="size-3 text-amber-400" />}
+              <span>{isPaused ? 'চালান' : 'থামান'}</span>
+            </button>
+
+            <span className="text-xs font-bold text-cyan-300 bg-white/10 px-3 py-1 rounded-full border border-white/15">
+              ক্লাব {bn(currentIndex + 1)} / {bn(total)}
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={prevSlide}
+                className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
+                aria-label="Previous"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={nextSlide}
+                className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
+                aria-label="Next"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
+
+          </div>
+        )}
+
       </div>
 
       <ClubReportsDialog
