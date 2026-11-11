@@ -98,7 +98,7 @@ export function ThemeSwitcher() {
         className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/15 px-3 py-1 text-xs font-bold text-white shadow-xs backdrop-blur-md transition-all hover:bg-white/25 active:scale-95 cursor-pointer"
       >
         <Palette className="size-3.5" aria-hidden="true" />
-        <span>{pick('৪টি গ্লাস থিম', '4 Glass Themes')}</span>
+        <span>{pick('৪টি থিম', '4 Themes')}</span>
       </button>
 
       {open && (
