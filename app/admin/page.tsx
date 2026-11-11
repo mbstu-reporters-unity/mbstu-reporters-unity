@@ -37,9 +37,11 @@ import {
 const TOKEN_KEY = "mbstu_admin_token"
 const MAX_VIDEO_MB = 50
 const CATS = ["ক্যাম্পাস সংবাদ", "ক্লাব", "একাডেমিক", "গবেষণা", "খেলাধুলা", "সংস্কৃতি", "পরিবেশ"]
-const inp = "w-full border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-green-600"
-const smallInp = "w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none focus:border-green-600"
-const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold text-sm hover:bg-green-800 disabled:opacity-50 cursor-pointer shadow-md transition"
+
+// ইনপুট বক্সে স্পষ্ট টেক্সট কালার (text-slate-900)
+const inp = "w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-600 transition"
+const smallInp = "w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs bg-white text-slate-900 focus:outline-none focus:border-cyan-600"
+const btn = "w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-50 cursor-pointer shadow-md transition active:scale-98"
 
 type Tab =
   | "posts" | "comments" | "reporters" | "profile" | "leaders" | "notices"
@@ -239,7 +241,7 @@ export default function AdminPage() {
       })
       setMode("login")
       setPassword("")
-      setMsg("✅ নিবন্ধন সম্পন্ন। অ্যাডমিন অনুমোদন দিলে পোস্ট করতে পারবেন। এখন লগইন করুন।")
+      setMsg("✅ নিবন্ধন সম্পন্ন। অ্যাডমিন অনুমোদন দিলে লগইন করুন।")
     } catch (e) { fail(e) }
     setBusy(false)
   }
@@ -341,7 +343,7 @@ export default function AdminPage() {
 
       let vurl = oldVideo
       if (videoFile) {
-        setMsg("ভিডিও আপলোড হচ্ছে, অপেক্ষা করুন...")
+        setMsg("ভিডিও আপলোড হচ্ছে...")
         vurl = await uploadVideo(token, videoFile)
       }
 
@@ -428,10 +430,10 @@ export default function AdminPage() {
 
   if (!ready) return null
 
-  // লগইন ও সাইনআপ স্ক্রিন
+  // ==================== লগইন ও সাইনআপ স্ক্রিন (লেখা ১০০% স্পষ্ট) ====================
   if (!token) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+      <main className="min-h-screen bg-[#071030] text-white flex items-center justify-center p-4">
         <div className="w-full max-w-sm rounded-3xl border border-white/20 bg-slate-900/90 shadow-2xl p-6 sm:p-7 space-y-4 backdrop-blur-xl">
           <div className="text-center space-y-1 border-b border-white/10 pb-3">
             <h1 className="text-xl font-serif font-bold text-cyan-300">
@@ -451,7 +453,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <input className={inp} type="email" placeholder="জিমেইল *" value={email} onChange={(e) => setEmail(e.target.value)} />
             <input className={inp} type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর) *" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
@@ -480,7 +482,7 @@ export default function AdminPage() {
   // অনুমোদনের অপেক্ষা স্ক্রিন
   if (me && !me.approved) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+      <main className="min-h-screen bg-[#071030] text-white flex items-center justify-center p-4">
         <div className="w-full max-w-sm rounded-3xl border border-white/20 bg-slate-900/90 shadow-2xl p-6 space-y-3 text-center backdrop-blur">
           <h1 className="text-xl font-bold text-amber-300">অনুমোদনের অপেক্ষায়</h1>
           <p className="text-xs text-slate-300 leading-relaxed">
@@ -498,7 +500,6 @@ export default function AdminPage() {
   const canManage = (p: Post) => me.role === "admin" || me.role === "moderator" || p.user_id === me.id
   const isClubCategory = category.includes("ক্লাব") || category.includes("Club")
 
-  // ৫টি প্রধান গ্রুপে বিভক্ত মেনু নেভিগেশন আইটেমসমূহ
   const navigationGroups = [
     {
       groupTitle: "১. কন্টেন্ট ও সংবাদ",
@@ -555,7 +556,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col lg:flex-row text-slate-800">
       
-      {/* ==================== মোবাইল হেডার (Navbar on Mobile) ==================== */}
+      {/* মোবাইল হেডার */}
       <header className="lg:hidden sticky top-0 z-40 bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 shadow-md">
         <div className="flex items-center gap-2.5">
           <button
@@ -582,13 +583,12 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* ==================== সাইডবার নেভিগেশন (Sidebar on Desktop & Mobile Drawer) ==================== */}
+      {/* সাইডবার */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white flex flex-col border-r border-slate-800 shadow-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* সাইডবার ব্র্যান্ড হেডার */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {me.avatar_url ? (
@@ -609,7 +609,6 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* ৫টি ক্যাটাগরিতে সাজানো মেনু তালিকা */}
         <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-none text-xs">
           {navigationGroups.map((grp, gi) => {
             const visibleItems = grp.items.filter((it) => !it.adminOnly || isAdmin)
@@ -653,7 +652,6 @@ export default function AdminPage() {
           })}
         </div>
 
-        {/* সাইডবার ফুটার */}
         <div className="p-3 border-t border-slate-800 flex items-center justify-between text-xs bg-slate-950/60">
           <a href="/" target="_blank" className="flex items-center gap-1.5 text-slate-300 hover:text-cyan-300 font-semibold">
             <ExternalLink className="size-3.5" />
@@ -666,25 +664,19 @@ export default function AdminPage() {
         </div>
       </aside>
 
-      {/* ব্যাকড্রপ (মোবাইলে ড্রয়ার খোলা থাকলে ব্যাকগ্রাউন্ড আবছা করবে) */}
       {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
-        />
+        <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden" />
       )}
 
-      {/* ==================== মূল ড্যাশবোর্ড কাজের ক্যানভাস (Main Content Area) ==================== */}
+      {/* মূল কাজের ক্যানভাস */}
       <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-5xl mx-auto w-full space-y-4">
-        
-        {/* টপ মেসেজ নোটিফিকেশন */}
         {msg && (
           <div className="p-3 bg-emerald-50 text-emerald-900 border border-emerald-300 rounded-2xl text-xs sm:text-sm font-bold text-center shadow-xs">
             {msg}
           </div>
         )}
 
-        {/* ==================== ১. সংবাদ ও রিপোর্ট ট্যাব ==================== */}
+        {/* সংবাদ ও রিপোর্ট ট্যাব */}
         {tab === "posts" && (
           <div className="space-y-4">
             <div className="bg-white rounded-2xl shadow p-4 sm:p-5 space-y-3.5 border border-slate-200">
@@ -717,7 +709,6 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* নির্দিষ্ট পেজে পোস্ট ড্রপডাউন */}
               <div className="space-y-1 rounded-xl border border-blue-200 bg-blue-50/60 p-3">
                 <label className="text-xs font-bold text-blue-950 block">
                   📄 নির্দিষ্ট পেজে পোস্ট করুন (ফেসবুক পেজের মতো টাইমলাইনে দেখাবে - ঐচ্ছিক):
@@ -742,7 +733,6 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* সংবাদে মিডিয়া সংযুক্তি */}
               <div className="space-y-3 rounded-2xl border-2 border-emerald-200 bg-emerald-50/40 p-3.5">
                 <div className="flex items-center justify-between border-b border-emerald-200 pb-2">
                   <p className="text-xs font-bold text-emerald-950">🎥 সংবাদে মিডিয়া সংযুক্তি (ছবি, ভিডিও বা লিংক):</p>
@@ -841,7 +831,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ==================== অন্যান্য সাব-ম্যানেজারসমূহ ==================== */}
+        {/* অন্যান্য সাব-ম্যানেজারসমূহ */}
         {tab === "notices" && <NoticeManager token={token} isAdmin={!!isAdmin} />}
         {tab === "hero" && isAdmin && <HeroManager token={token} shrink={shrink} />}
         {tab === "hero_banner" && isAdmin && <HeroBannerManager token={token} shrink={shrink} />}
