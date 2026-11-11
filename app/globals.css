@@ -8,18 +8,18 @@
   --font-sans: var(--font-hind), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-noto-serif), Georgia, serif;
 
-  --color-brand: var(--theme-brand, #0284c7);
-  --color-brand-dark: var(--theme-brand-dark, #0369a1);
-  --color-brand-soft: var(--theme-brand-soft, rgba(2, 132, 199, 0.1));
-  --color-navy: var(--theme-text-title, #0f172a);
-  --color-crimson: #dc2626;
-  --color-gold: #d97706;
+  --color-brand: var(--theme-brand, #00d2ff);
+  --color-brand-dark: var(--theme-brand-dark, #0284c7);
+  --color-brand-soft: var(--theme-brand-soft, rgba(0, 210, 255, 0.15));
+  --color-navy: var(--theme-text-title, #ffffff);
+  --color-crimson: #ef4444;
+  --color-gold: #f59e0b;
 
-  --color-ring: var(--theme-brand, #0284c7);
-  --color-input: var(--theme-input-bg, rgba(255, 255, 255, 0.5));
-  --color-border: var(--theme-card-border, rgba(226, 232, 240, 0.8));
-  --color-foreground: var(--theme-text-body, #1e293b);
-  --color-background: var(--theme-bg-solid, #f8fafc);
+  --color-ring: var(--theme-brand, #00d2ff);
+  --color-input: var(--theme-input-bg, rgba(255, 255, 255, 0.15));
+  --color-border: var(--theme-card-border, rgba(255, 255, 255, 0.2));
+  --color-foreground: var(--theme-text-body, #e2e8f0);
+  --color-background: var(--theme-bg-solid, #0b1540);
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -27,6 +27,7 @@
   --radius-xl: 1.25rem;
   --radius-2xl: 1.5rem;
   --radius-3xl: 2rem;
+  --radius-4xl: 2.5rem;
 
   --animate-marquee: marquee 40s linear infinite;
 
@@ -37,7 +38,7 @@
 }
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -80,7 +81,7 @@
     text-justify: inter-word;
     text-align-last: left;
     word-break: break-word;
-    line-height: 1.75;
+    line-height: 1.8;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -91,303 +92,103 @@
 }
 
 /* ========================================================
-   ১৩টি ক্লিন, হাই-কনট্রাস্ট ও আধুনিক গ্লাস থিম
+   স্ক্রিনশটের মতো রয়্যাল ব্লু লিকুইড গ্লাস থিম (ডিফল্ট সিগনেচার)
    ======================================================== */
-
-/* ১. ocean-glass (ডিফল্ট: মার্জিত ব্লু গ্লাস) */
 html,
 html[data-theme='ocean-glass'] {
-  --theme-bg-solid: #f0f7ff;
-  --theme-bg-gradient: radial-gradient(circle at 15% 15%, rgba(191, 219, 254, 0.45), transparent 40%),
-                       radial-gradient(circle at 85% 85%, rgba(224, 242, 254, 0.5), transparent 45%),
-                       linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
-  --theme-card-bg: rgba(255, 255, 255, 0.88);
-  --theme-card-border: rgba(191, 219, 254, 0.8);
-  --theme-card-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
-  --theme-pill-bg: #e0f2fe;
-  --theme-pill-border: #bae6fd;
-  --theme-pill-text: #0369a1;
-  --theme-text-title: #0f172a;
-  --theme-text-body: #334155;
-  --theme-text-muted: #64748b;
-  --theme-brand: #0284c7;
-  --theme-brand-dark: #0369a1;
-  --theme-brand-soft: rgba(2, 132, 199, 0.1);
-  --theme-divider: rgba(226, 232, 240, 0.8);
-}
-
-/* ২. sunset-peach (ডার্ক: সানসেট বিচ) */
-html[data-theme='sunset-peach'] {
-  --theme-bg-solid: #181113;
-  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.2), transparent 40%),
-                       linear-gradient(135deg, #181113 0%, #261619 100%);
-  --theme-card-bg: rgba(38, 22, 25, 0.85);
-  --theme-card-border: rgba(255, 255, 255, 0.12);
-  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.6);
-  --theme-pill-bg: rgba(249, 115, 22, 0.15);
-  --theme-pill-border: rgba(249, 115, 22, 0.3);
-  --theme-pill-text: #fdba74;
-  --theme-text-title: #ffffff;
-  --theme-text-body: #f8fafc;
-  --theme-text-muted: #cbd5e1;
-  --theme-brand: #f97316;
-  --theme-brand-dark: #ea580c;
-  --theme-brand-soft: rgba(249, 115, 22, 0.15);
-  --theme-divider: rgba(255, 255, 255, 0.1);
-}
-
-/* ৩. pure-frost (মিনিমালিস্ট স্নো হোয়াইট) */
-html[data-theme='pure-frost'] {
-  --theme-bg-solid: #f8fafc;
-  --theme-bg-gradient: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
-  --theme-card-bg: #ffffff;
-  --theme-card-border: #e2e8f0;
-  --theme-card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-  --theme-pill-bg: #f1f5f9;
-  --theme-pill-border: #e2e8f0;
-  --theme-pill-text: #0f172a;
-  --theme-text-title: #090d16;
-  --theme-text-body: #334155;
-  --theme-text-muted: #64748b;
-  --theme-brand: #2563eb;
-  --theme-brand-dark: #1d4ed8;
-  --theme-brand-soft: rgba(37, 99, 235, 0.08);
-  --theme-divider: #e2e8f0;
-}
-
-/* ৪. pastel-lilac (ল্যাভেন্ডার প্যাস্টেল) */
-html[data-theme='pastel-lilac'] {
-  --theme-bg-solid: #f5f3ff;
-  --theme-bg-gradient: radial-gradient(circle at 15% 15%, rgba(233, 213, 255, 0.5), transparent 45%),
-                       linear-gradient(135deg, #fbfbfe 0%, #f3e8ff 100%);
-  --theme-card-bg: rgba(255, 255, 255, 0.9);
-  --theme-card-border: rgba(216, 180, 254, 0.6);
-  --theme-card-shadow: 0 10px 25px -5px rgba(147, 51, 234, 0.07);
-  --theme-pill-bg: #f3e8ff;
-  --theme-pill-border: #e9d5ff;
-  --theme-pill-text: #7e22ce;
-  --theme-text-title: #1e1b4b;
-  --theme-text-body: #312e81;
-  --theme-text-muted: #6b21a8;
-  --theme-brand: #9333ea;
-  --theme-brand-dark: #7e22ce;
-  --theme-brand-soft: rgba(147, 51, 234, 0.1);
-  --theme-divider: rgba(233, 213, 255, 0.7);
-}
-
-/* ৫. midnight-neon (ডার্ক অবসিডিয়ান) */
-html[data-theme='midnight-neon'] {
-  --theme-bg-solid: #090d16;
-  --theme-bg-gradient: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.18), transparent 45%),
-                       linear-gradient(135deg, #090d16 0%, #111827 100%);
-  --theme-card-bg: rgba(17, 24, 39, 0.85);
-  --theme-card-border: rgba(255, 255, 255, 0.12);
-  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.7);
-  --theme-pill-bg: rgba(255, 255, 255, 0.08);
-  --theme-pill-border: rgba(255, 255, 255, 0.16);
-  --theme-pill-text: #93c5fd;
+  --theme-bg-solid: #0b1540;
+  --theme-bg-gradient: radial-gradient(circle at 85% 15%, rgba(0, 210, 255, 0.35), transparent 50%),
+                       radial-gradient(circle at 15% 85%, rgba(46, 16, 101, 0.45), transparent 55%),
+                       linear-gradient(135deg, #0b1540 0%, #032d84 40%, #004e9a 75%, #006f85 100%);
+  --theme-card-bg: rgba(14, 34, 78, 0.65);
+  --theme-card-border: rgba(255, 255, 255, 0.2);
+  --theme-card-hover-border: rgba(0, 210, 255, 0.55);
+  --theme-card-shadow: 0 16px 36px -8px rgba(0, 10, 45, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  --theme-pill-bg: rgba(255, 255, 255, 0.16);
+  --theme-pill-border: rgba(255, 255, 255, 0.28);
+  --theme-pill-text: #e0f2fe;
   --theme-text-title: #ffffff;
   --theme-text-body: #e2e8f0;
   --theme-text-muted: #94a3b8;
-  --theme-brand: #3b82f6;
-  --theme-brand-dark: #2563eb;
-  --theme-brand-soft: rgba(59, 130, 246, 0.15);
-  --theme-divider: rgba(255, 255, 255, 0.1);
+  --theme-brand: #00d2ff;
+  --theme-brand-dark: #0284c7;
+  --theme-brand-soft: rgba(0, 210, 255, 0.16);
+  --theme-divider: rgba(255, 255, 255, 0.14);
 }
 
-/* ৬. glass-pay (রয়্যাল ভায়োলেট) */
-html[data-theme='glass-pay'] {
-  --theme-bg-solid: #150a21;
-  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(219, 39, 119, 0.22), transparent 45%),
-                       linear-gradient(135deg, #150a21 0%, #2a0845 100%);
-  --theme-card-bg: rgba(37, 12, 58, 0.85);
-  --theme-card-border: rgba(255, 255, 255, 0.12);
-  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.7);
-  --theme-pill-bg: rgba(236, 72, 153, 0.15);
-  --theme-pill-border: rgba(236, 72, 153, 0.3);
-  --theme-pill-text: #fbcfe8;
+/* অন্যান্য থিমসমূহ */
+html[data-theme='sunset-peach'] {
+  --theme-bg-solid: #181113;
+  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.35), transparent 45%),
+                       linear-gradient(135deg, #181113 0%, #351a20 100%);
+  --theme-card-bg: rgba(45, 24, 28, 0.75);
+  --theme-card-border: rgba(255, 255, 255, 0.18);
+  --theme-card-hover-border: rgba(249, 115, 22, 0.6);
+  --theme-card-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.8);
+  --theme-pill-bg: rgba(249, 115, 22, 0.18);
+  --theme-pill-border: rgba(249, 115, 22, 0.35);
+  --theme-pill-text: #fed7aa;
   --theme-text-title: #ffffff;
-  --theme-text-body: #fce7f3;
-  --theme-text-muted: #f472b6;
-  --theme-brand: #ec4899;
-  --theme-brand-dark: #db2777;
-  --theme-brand-soft: rgba(236, 72, 153, 0.15);
-  --theme-divider: rgba(255, 255, 255, 0.1);
+  --theme-text-body: #ffedd5;
+  --theme-text-muted: #fdba74;
+  --theme-brand: #f97316;
+  --theme-brand-dark: #ea580c;
+  --theme-brand-soft: rgba(249, 115, 22, 0.15);
+  --theme-divider: rgba(255, 255, 255, 0.12);
 }
 
-/* ৭. pastel-dashboard (লাইট ইনডিগো) */
-html[data-theme='pastel-dashboard'] {
-  --theme-bg-solid: #f1f5f9;
-  --theme-bg-gradient: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15), transparent 40%),
-                       linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-  --theme-card-bg: rgba(255, 255, 255, 0.92);
-  --theme-card-border: rgba(199, 210, 254, 0.8);
-  --theme-card-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.08);
-  --theme-pill-bg: #e0e7ff;
-  --theme-pill-border: #c7d2fe;
-  --theme-pill-text: #4338ca;
-  --theme-text-title: #0f172a;
-  --theme-text-body: #334155;
-  --theme-text-muted: #64748b;
-  --theme-brand: #4f46e5;
-  --theme-brand-dark: #4338ca;
-  --theme-brand-soft: rgba(79, 70, 229, 0.1);
-  --theme-divider: rgba(226, 232, 240, 0.8);
-}
-
-/* ৮. neon-wireframe (মিনিমালিস্ট ডার্ক) */
-html[data-theme='neon-wireframe'] {
-  --theme-bg-solid: #09090b;
-  --theme-bg-gradient: linear-gradient(180deg, #09090b 0%, #18181b 100%);
-  --theme-card-bg: rgba(24, 24, 27, 0.85);
-  --theme-card-border: rgba(255, 255, 255, 0.1);
-  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.8);
-  --theme-pill-bg: rgba(245, 158, 11, 0.15);
-  --theme-pill-border: rgba(245, 158, 11, 0.3);
-  --theme-pill-text: #fde68a;
+html[data-theme='pure-frost'] {
+  --theme-bg-solid: #0f172a;
+  --theme-bg-gradient: radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.2), transparent 50%),
+                       linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  --theme-card-bg: rgba(30, 41, 59, 0.7);
+  --theme-card-border: rgba(255, 255, 255, 0.2);
+  --theme-card-hover-border: rgba(255, 255, 255, 0.5);
+  --theme-card-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.6);
+  --theme-pill-bg: rgba(255, 255, 255, 0.12);
+  --theme-pill-border: rgba(255, 255, 255, 0.25);
+  --theme-pill-text: #f8fafc;
   --theme-text-title: #ffffff;
-  --theme-text-body: #e4e4e7;
-  --theme-text-muted: #a1a1aa;
-  --theme-brand: #f59e0b;
-  --theme-brand-dark: #d97706;
-  --theme-brand-soft: rgba(245, 158, 11, 0.15);
-  --theme-divider: rgba(255, 255, 255, 0.1);
-}
-
-/* ৯. visionos-taupe (ভিশন ওএস ডার্ক) */
-html[data-theme='visionos-taupe'] {
-  --theme-bg-solid: #1c1917;
-  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(120, 113, 108, 0.2), transparent 45%),
-                       linear-gradient(135deg, #1c1917 0%, #292524 100%);
-  --theme-card-bg: rgba(41, 37, 36, 0.85);
-  --theme-card-border: rgba(255, 255, 255, 0.12);
-  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.7);
-  --theme-pill-bg: rgba(255, 255, 255, 0.1);
-  --theme-pill-border: rgba(255, 255, 255, 0.15);
-  --theme-pill-text: #f5f5f4;
-  --theme-text-title: #ffffff;
-  --theme-text-body: #e7e5e4;
-  --theme-text-muted: #a8a29e;
-  --theme-brand: #eab308;
-  --theme-brand-dark: #ca8a04;
-  --theme-brand-soft: rgba(234, 179, 8, 0.15);
-  --theme-divider: rgba(255, 255, 255, 0.1);
-}
-
-/* ১০. cyan-daylight (আকাশী ডেলাইট) */
-html[data-theme='cyan-daylight'] {
-  --theme-bg-solid: #f0fdfa;
-  --theme-bg-gradient: radial-gradient(circle at 15% 15%, rgba(153, 246, 228, 0.45), transparent 45%),
-                       linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
-  --theme-card-bg: rgba(255, 255, 255, 0.9);
-  --theme-card-border: rgba(186, 230, 253, 0.8);
-  --theme-card-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.08);
-  --theme-pill-bg: #e0f2fe;
-  --theme-pill-border: #bae6fd;
-  --theme-pill-text: #0284c7;
-  --theme-text-title: #0f172a;
-  --theme-text-body: #334155;
-  --theme-text-muted: #64748b;
-  --theme-brand: #0284c7;
-  --theme-brand-dark: #0369a1;
-  --theme-brand-soft: rgba(2, 132, 199, 0.1);
-  --theme-divider: rgba(226, 232, 240, 0.8);
-}
-
-/* ১১. chromatic-liquid (ডিপ ব্লু গ্লাস) */
-html[data-theme='chromatic-liquid'] {
-  --theme-bg-solid: #0b1528;
-  --theme-bg-gradient: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.2), transparent 45%),
-                       linear-gradient(135deg, #0b1528 0%, #172554 100%);
-  --theme-card-bg: rgba(15, 23, 42, 0.85);
-  --theme-card-border: rgba(255, 255, 255, 0.14);
-  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.7);
-  --theme-pill-bg: rgba(56, 189, 248, 0.15);
-  --theme-pill-border: rgba(56, 189, 248, 0.3);
-  --theme-pill-text: #bae6fd;
-  --theme-text-title: #ffffff;
-  --theme-text-body: #e2e8f0;
+  --theme-text-body: #f1f5f9;
   --theme-text-muted: #94a3b8;
   --theme-brand: #38bdf8;
   --theme-brand-dark: #0284c7;
   --theme-brand-soft: rgba(56, 189, 248, 0.15);
-  --theme-divider: rgba(255, 255, 255, 0.1);
-}
-
-/* ১২. aurora-teal (অরোরা টিয়াল ডার্ক) */
-html[data-theme='aurora-teal'] {
-  --theme-bg-solid: #081d24;
-  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(147, 51, 234, 0.22), transparent 50%),
-                       radial-gradient(circle at 20% 80%, rgba(20, 184, 166, 0.2), transparent 50%),
-                       linear-gradient(135deg, #081d24 0%, #132f38 100%);
-  --theme-card-bg: rgba(19, 47, 56, 0.85);
-  --theme-card-border: rgba(255, 255, 255, 0.14);
-  --theme-card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.7);
-  --theme-pill-bg: rgba(20, 184, 166, 0.15);
-  --theme-pill-border: rgba(20, 184, 166, 0.3);
-  --theme-pill-text: #99f6e4;
-  --theme-text-title: #ffffff;
-  --theme-text-body: #ccfbf1;
-  --theme-text-muted: #5eead4;
-  --theme-brand: #14b8a6;
-  --theme-brand-dark: #0f766e;
-  --theme-brand-soft: rgba(20, 184, 166, 0.15);
-  --theme-divider: rgba(255, 255, 255, 0.1);
-}
-
-/* ১৩. bubble-pop (ক্লিন হোয়াইট বাবল) */
-html[data-theme='bubble-pop'] {
-  --theme-bg-solid: #f8fafc;
-  --theme-bg-gradient: radial-gradient(circle at 15% 20%, rgba(147, 51, 234, 0.12), transparent 35%),
-                       radial-gradient(circle at 85% 30%, rgba(249, 115, 22, 0.12), transparent 40%),
-                       linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-  --theme-card-bg: #ffffff;
-  --theme-card-border: #e2e8f0;
-  --theme-card-shadow: 0 8px 25px -4px rgba(0, 0, 0, 0.05);
-  --theme-pill-bg: #eef2ff;
-  --theme-pill-border: #e0e7ff;
-  --theme-pill-text: #4338ca;
-  --theme-text-title: #0f172a;
-  --theme-text-body: #334155;
-  --theme-text-muted: #64748b;
-  --theme-brand: #4338ca;
-  --theme-brand-dark: #3730a3;
-  --theme-brand-soft: rgba(67, 56, 202, 0.08);
-  --theme-divider: #e2e8f0;
+  --theme-divider: rgba(255, 255, 255, 0.12);
 }
 
 /* ========================================================
-   উপাদানসমূহের মার্জিত ন্যাচারাল স্টাইলিং (No !important hacks)
+   গ্লাস কার্ড কমন ইউটিলিটি ক্লাস
    ======================================================== */
-
-.theme-card {
+.glass-card {
   background: var(--theme-card-bg);
   border: 1px solid var(--theme-card-border);
   box-shadow: var(--theme-card-shadow);
-  border-radius: 1.5rem;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 1.75rem;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.theme-card:hover {
+.glass-card:hover {
+  border-color: var(--theme-card-hover-border, rgba(0, 210, 255, 0.6));
+  box-shadow: 0 20px 45px -10px rgba(0, 15, 60, 0.8), 0 0 20px rgba(0, 210, 255, 0.2);
   transform: translateY(-2px);
 }
 
-/* হেডার ও নেভিগেশন */
 header {
-  background: var(--theme-card-bg);
+  background: rgba(11, 21, 64, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--theme-card-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .bg-navy {
-  background: #091325;
+  background: rgba(7, 16, 48, 0.9);
 }
 
 footer {
-  background: #060e1a;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: #060e24;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   color: #94a3b8;
 }
