@@ -170,7 +170,6 @@ export function ClubNews() {
   const visible = filter === 'All' ? list : list.filter((c) => c.tag === filter)
   const total = visible.length
 
-  // রেসপনসিভ স্ক্রিন ক্যালকুলেশন (মোবাইলে ১টি সম্পূর্ণ কার্ড, ট্যাবলেটে ২টি, ডেস্কটপে ৩টি)
   useEffect(() => {
     const handleResize = () => {
       if (typeof window === 'undefined') return
@@ -179,7 +178,7 @@ export function ClubNews() {
       } else if (window.innerWidth >= 640) {
         setItemsPerView(Math.min(2, total || 1))
       } else {
-        setItemsPerView(1) // মোবাইলে ১টি করে সম্পূর্ণ কার্ড
+        setItemsPerView(1)
       }
     }
 
@@ -200,7 +199,6 @@ export function ClubNews() {
     setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1))
   }, [maxIndex, total])
 
-  // স্বয়ংক্রিয় স্লাইডার টাইমার (৪ সেকেন্ড)
   useEffect(() => {
     if (isPaused || total <= itemsPerView) return
     const intervalMs = Math.max(3, config.duration_sec || 4) * 1000
@@ -208,7 +206,6 @@ export function ClubNews() {
     return () => clearInterval(timer)
   }, [isPaused, total, itemsPerView, config.duration_sec, nextSlide])
 
-  // মোবাইল সোয়াইপ হ্যান্ডলার
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsPaused(true)
     touchStartX.current = e.touches[0].clientX
@@ -242,8 +239,8 @@ export function ClubNews() {
         className="glass-card flex flex-col justify-between p-4 sm:p-5 select-none text-white h-full min-h-[300px] transition-all"
       >
         <div className="space-y-3">
-          {/* লোগো ও ট্যাগ */}
-          <div className="flex items-center justify-between gap-2 border-b border-white/15 pb-2.5">
+          {/* লোগো, নাম ও ট্যাগ: কোনো অক্ষর যাতে না কাটে সে জন্য line-clamp ও wrap দেওয়া হলো */}
+          <div className="flex items-start justify-between gap-2 border-b border-white/15 pb-2.5">
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
               {raw?.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -258,12 +255,13 @@ export function ClubNews() {
                   <Icon className="size-4" aria-hidden="true" />
                 </div>
               )}
-              <span className="font-bold text-xs sm:text-sm text-white truncate drop-shadow-sm">
+              {/* truncate সরিয়ে line-clamp-2 ও break-words যোগ করা হয়েছে যাতে পুরো নাম সুন্দরভাবে দেখা যায় */}
+              <span className="font-bold text-xs sm:text-sm text-white line-clamp-2 break-words leading-tight drop-shadow-sm">
                 {club.nameBn || club.name}
               </span>
             </div>
 
-            <span className="rounded-full bg-white/15 border border-white/20 px-2.5 py-0.5 text-[10px] font-bold text-cyan-200 shrink-0">
+            <span className="rounded-full bg-white/15 border border-white/20 px-2.5 py-1 text-[10px] font-bold text-cyan-200 shrink-0 whitespace-nowrap">
               {club.tag}
             </span>
           </div>
@@ -272,9 +270,10 @@ export function ClubNews() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[11px] text-cyan-200/80">
               <span className="font-semibold flex items-center gap-1">
-                <Sparkles className="size-3 text-amber-300" /> সাম্প্রতিক কার্যক্রম
+                <Sparkles className="size-3 text-amber-300 shrink-0" /> 
+                <span>সাম্প্রতিক কার্যক্রম</span>
               </span>
-              {club.date && <span className="font-mono text-[10px] opacity-80">{club.date}</span>}
+              {club.date && <span className="font-mono text-[10px] opacity-80 shrink-0">{club.date}</span>}
             </div>
 
             <p className="text-xs leading-relaxed text-slate-200 line-clamp-2">
@@ -365,8 +364,8 @@ export function ClubNews() {
           subtitle="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের সাম্প্রতিক অর্জন, কার্যক্রম এবং পূর্ণাঙ্গ পরিচিতি।"
         />
 
-        {/* ফিল্টার বাটন */}
-        <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none" role="group">
+        {/* ⭐ ফিক্স ১: ফিল্টার বাটনের প্রান্ত যাতে না কাটে সেজন্য -mx-4 px-4 দেওয়া হয়েছে এবং সেফটি মার্জিন নিশ্চিত করা হয়েছে ⭐ */}
+        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 mb-6 flex gap-2.5 overflow-x-auto pb-2.5 pt-1 scrollbar-none" role="group">
           {tags.map((tag) => (
             <button
               key={tag}
@@ -376,9 +375,9 @@ export function ClubNews() {
                 setCurrentIndex(0)
               }}
               className={cn(
-                'shrink-0 rounded-full border px-4 py-1.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5',
+                'shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap',
                 filter === tag
-                  ? 'border-cyan-300/40 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md font-bold'
+                  ? 'border-cyan-300/60 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md font-bold'
                   : 'border-white/20 bg-white/10 text-white/80 hover:bg-white/20',
               )}
             >
@@ -390,16 +389,16 @@ export function ClubNews() {
           ))}
         </div>
 
-        {/* স্মুথ টাচ স্লাইডার কনটেইনার */}
+        {/* ⭐ ফিক্স ২: মোবাইল স্লাইডারে কার্ড ডিসপ্লের শেষ সীমানা পর্যন্ত মসৃণভাবে যাবে, মাঝপথে কেটে যাবে না ⭐ */}
         <div
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="relative w-full"
+          className="-mx-4 px-4 sm:mx-0 sm:px-0 relative w-auto"
         >
           {total > 0 ? (
-            <div className="overflow-hidden w-full py-1">
+            <div className="overflow-hidden w-full py-2">
               <div
                 className="flex transition-transform duration-500 ease-out"
                 style={{
@@ -423,11 +422,10 @@ export function ClubNews() {
             </p>
           )}
 
-          {/* কন্ট্রোল বার (মোবাইলে এবং ডেস্কটপে শতভাগ কার্যকর) */}
+          {/* কন্ট্রোল বার */}
           {total > itemsPerView && (
             <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
               
-              {/* প্লে/পজ বাটন */}
               <button
                 type="button"
                 onClick={() => setIsPaused(!isPaused)}
@@ -437,12 +435,10 @@ export function ClubNews() {
                 <span>{isPaused ? 'চালান' : 'থামান'}</span>
               </button>
 
-              {/* ক্লাব নম্বর কাউন্টার (যেমন: ১/১১) */}
               <span className="text-xs font-bold text-cyan-300 bg-white/10 px-3 py-1 rounded-full border border-white/15">
                 ক্লাব {bn(currentIndex + 1)} / {bn(total)}
               </span>
 
-              {/* তীর বাটন */}
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
