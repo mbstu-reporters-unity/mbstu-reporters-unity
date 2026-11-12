@@ -1,9 +1,8 @@
 import Link from 'next/link'
-import { ArrowRight, CalendarDays, User, Sparkles } from 'lucide-react'
+import { ArrowRight, CalendarDays, User, Sparkles, Video, Images } from 'lucide-react'
 import type { Post } from '@/lib/sb'
 import { ReactionBar } from './reaction-bar'
 import CardGallery from './card-gallery'
-import { UniversalMediaEmbed } from './universal-media-embed'
 
 function formatBanglaDate(val?: string | null): string {
   if (!val) return ''
@@ -22,8 +21,8 @@ function formatBanglaDate(val?: string | null): string {
   return val
 }
 
-// শব্দের মাঝপথে না কেটে পরিষ্কার বাক্যাংশ তৈরি করার ফাংশন
-function cleanExcerpt(text?: string | null, maxLength = 135): string {
+// শব্দের মাঝপথে না কেটে পরিষ্কার বাক্য সংক্ষেপ করার ফাংশন
+function cleanExcerpt(text?: string | null, maxLength = 130): string {
   if (!text) return ''
   const clean = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
   if (clean.length <= maxLength) return clean
@@ -32,32 +31,58 @@ function cleanExcerpt(text?: string | null, maxLength = 135): string {
   return (lastSpace > 60 ? truncated.slice(0, lastSpace) : truncated) + '...'
 }
 
+// মিডিয়া তালিকা থেকে প্রথম ছবির লিঙ্ক বের করার নিরাপদ হেল্পার
+function extractFirstMediaUrl(raw?: string | null): string | null {
+  if (!raw || !raw.trim()) return null
+  const s = raw.trim()
+  if (s.startsWith('[') || s.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(s)
+      if (Array.isArray(parsed) && parsed[0]?.url) return parsed[0].url
+      if (parsed?.url) return parsed.url
+    } catch {}
+  }
+  if (/^https?:\/\//i.test(s)) return s
+  return null
+}
+
 export function NewsCard({ p }: { p: Post }) {
   const href = p.link_url?.trim() || `/post/${p.id}`
   const isExt = /^https?:\/\//i.test(href)
   const excerpt = cleanExcerpt(p.heading || p.body, 130)
   const formattedDate = formatBanglaDate(p.created_at)
 
+  // ✅ সমাধান ১: পোস্টের যেকোনো ছবি থাকলে সেটাকে কার্ডের শীর্ষ কভার হিসেবে বেছে নেওয়া
+  const coverImage = p.image_url || extractFirstMediaUrl(p.embed_media_url) || null
+  const hasVideo = !!p.video_url || (p.embed_media_url?.includes('youtube') || p.embed_media_url?.includes('video'))
+  const hasExtraMedia = !!p.embed_media_url
+
   return (
     <article className="glass-card group flex flex-col overflow-hidden">
       
-      {/* ছবি গ্যালারি */}
-      {!p.embed_media_url && (
-        <div className="overflow-hidden rounded-t-[1.75rem] border-b border-white/10">
-          <CardGallery
-            postId={p.id}
-            cover={p.image_url}
-            href={href}
-            external={isExt}
-            category={p.category || 'সংবাদ'}
-            hasVideo={!!p.video_url}
-          />
-        </div>
-      )}
+      {/* ✅ সমাধান ২: কার্ডের সবার ওপরে সবসময় ছবি থাকবে (ওয়াইফাই পোস্টের মতো প্রফেশনাল লুক) */}
+      <div className="relative overflow-hidden rounded-t-[1.75rem] border-b border-white/10 bg-black/25">
+        <CardGallery
+          postId={p.id}
+          cover={coverImage}
+          href={href}
+          external={isExt}
+          category={p.category || 'সংবাদ'}
+          hasVideo={hasVideo}
+        />
+
+        {/* অতিরিক্ত মিডিয়া থাকলে ছবির ওপর ছোট ব্যাজ */}
+        {hasExtraMedia && !hasVideo && (
+          <span className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
+            <Images className="size-3 text-cyan-400" />
+            <span>মাল্টিমিডিয়া</span>
+          </span>
+        )}
+      </div>
 
       <div className="flex flex-1 flex-col p-5 sm:p-6 space-y-3">
         
-        {/* ক্যাটাগরি পিল ও রিপোর্টার */}
+        {/* ক্যাটাগরি ও রিপোর্টার */}
         <div className="flex items-center justify-between gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-white border border-white/25 backdrop-blur-md shadow-xs">
             <Sparkles className="size-3 text-cyan-300" />
@@ -96,12 +121,9 @@ export function NewsCard({ p }: { p: Post }) {
           {excerpt}
         </p>
 
-        {/* মিডিয়া প্লেয়ার (compact=true দেওয়ায় ডুপ্লিকেট শেয়ার বার ও অকার্যকর মন্তব্য বাটন দেখাবে না) */}
-        {p.embed_media_url && (
-          <UniversalMediaEmbed url={p.embed_media_url} title={p.title} className="mb-1 mt-2" compact={true} />
-        )}
+        {/* ✅ সমাধান ৩: কার্ডের পেটের ভেতর থেকে ফ্রেম বাঁধানো কুৎসিত উইজেট চিরতরে বন্ধ করা হলো */}
 
-        {/* কার্ডের মূল অ্যাকশন বার */}
+        {/* কার্ডের ফুটার অ্যাকশন বার */}
         <div className="mt-auto pt-4 border-t border-white/15 flex items-center justify-between gap-3">
           {isExt ? (
             <a
