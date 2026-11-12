@@ -4,11 +4,8 @@ import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Maximize2,
-  Share2,
-  MessageSquare,
   Calendar,
   Camera,
-  Check,
   X,
   ZoomIn,
 } from 'lucide-react'
@@ -88,7 +85,6 @@ function SingleMediaCard({
   index,
   total,
   defaultTitle = '',
-  compact = false,
 }: {
   item: SingleMediaItem
   index: number
@@ -96,12 +92,11 @@ function SingleMediaCard({
   defaultTitle?: string
   compact?: boolean
 }) {
-  const [copied, setCopied] = useState(false)
   const [isTheaterOpen, setIsTheaterOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   const media = parseMedia(item.url)
-  const displayTitle = item.title || (total > 1 ? `মিডিয়া #${index + 1}` : defaultTitle)
+  const displayTitle = item.title || (total > 1 ? `ছবি #${index + 1}` : defaultTitle)
 
   useEffect(() => {
     setMounted(true)
@@ -118,189 +113,118 @@ function SingleMediaCard({
     }
   }, [isTheaterOpen])
 
-  const handleCopyLink = async () => {
-    try {
-      const shareUrl = typeof window !== 'undefined' ? window.location.href : item.url
-      await navigator.clipboard.writeText(item.url || shareUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {}
-  }
-
-  const handleScrollToComments = () => {
-    const el = document.getElementById('comments-section') || document.querySelector('section:has(form)')
-    if (el) el.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : item.url
-  const shareText = encodeURIComponent(`${item.title || defaultTitle || 'প্রতিবেদন'} - ${currentUrl}`)
-
   return (
     <>
-      <div className={`w-full rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md shadow-lg transition-all overflow-hidden ${compact ? 'p-2 space-y-2' : 'p-3.5 sm:p-4 space-y-3'}`}>
+      {/* ✅ সমাধান: ভারী ফ্রেম, বাক্সের মার্জিন এবং বাড়তি শেয়ার/কমেন্ট বাটন দূর করে ক্লিন এডিটোরিয়াল ডিজাইন */}
+      <div className="w-full my-4 space-y-2">
         
-        {/* শিরোনাম ও উপশিরোনাম */}
-        {(item.title || item.subtitle) && (
-          <div className="space-y-0.5 border-b border-white/15 pb-2">
-            {item.title && (
-              <h4 className="font-serif text-sm font-bold text-white leading-snug line-clamp-1 drop-shadow-md">
-                {item.title}
-              </h4>
-            )}
-            {item.subtitle && (
-              <p className="text-[11px] font-bold text-cyan-300 line-clamp-1 drop-shadow-sm">
-                {item.subtitle}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* মিডিয়া ফ্রেম */}
+        {/* ছবি বা ভিডিও প্রদর্শন */}
         {item.url && (
-          <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-black/60 shadow-inner flex items-center justify-center group/player border border-white/10">
-            
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                setIsTheaterOpen(true)
-              }}
-              title="বড় পর্দায় দেখুন"
-              className="absolute top-2 right-2 z-30 flex items-center gap-1 rounded-xl bg-black/60 hover:bg-black/80 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur border border-white/20 active:scale-95 cursor-pointer shadow-md transition-all"
-            >
-              <Maximize2 className="size-3 text-cyan-400" />
-              <span>বড় পর্দা</span>
-            </button>
-
-            {media.type === 'youtube' && (
-              <iframe
-                src={media.embedSrc}
-                className="absolute inset-0 size-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                allowFullScreen={true}
-                title={displayTitle}
-              />
-            )}
-
-            {media.type === 'facebook' && (
-              <iframe
-                src={media.embedSrc}
-                className="absolute inset-0 size-full border-0"
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen"
-                allowFullScreen={true}
-                title={displayTitle}
-              />
-            )}
-
-            {media.type === 'video' && (
-              <video
-                src={media.src}
-                controls
-                playsInline
-                className="size-full object-cover"
-              />
-            )}
-
+          <div>
             {media.type === 'image' && (
               <div
-                className="size-full cursor-pointer relative"
+                className="relative w-full rounded-2xl overflow-hidden bg-black/20 border border-white/15 shadow-md cursor-zoom-in group/img"
                 onClick={() => setIsTheaterOpen(true)}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={media.src}
                   alt={displayTitle}
-                  className="size-full object-cover select-none transition-transform duration-500 group-hover/player:scale-105"
+                  className="w-full max-h-[500px] object-contain mx-auto select-none transition-transform duration-300 group-hover/img:scale-[1.01]"
                   onError={(e) => {
                     ;(e.target as HTMLElement).style.display = 'none'
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
-                <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-lg bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur border border-white/20">
+                
+                {/* বড় করার সূক্ষ্ম ব্যাজ */}
+                <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-white border border-white/20 shadow-md">
                   <ZoomIn className="size-3 text-cyan-400" />
                   <span>জুম করুন</span>
                 </span>
               </div>
             )}
-          </div>
-        )}
 
-        {/* ক্যাপশন */}
-        {!compact && item.caption && item.caption.trim() !== '' && (
-          <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-white/90 bg-black/20 px-3 py-2 rounded-xl border border-white/10 shadow-inner">
-            <span className="flex items-center gap-1.5 font-bold truncate">
-              <Camera className="size-3.5 text-cyan-400 shrink-0" /> {item.caption}
-            </span>
-            {item.date && (
-              <span className="flex items-center gap-1 ml-auto text-[10px] text-cyan-200 font-semibold bg-white/10 px-2 py-0.5 rounded-full">
-                <Calendar className="size-2.5 text-cyan-400" /> {formatBanglaDate(item.date)}
-              </span>
+            {media.type === 'video' && (
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-lg border border-white/15">
+                <video
+                  src={media.src}
+                  controls
+                  playsInline
+                  className="size-full object-cover"
+                />
+              </div>
+            )}
+
+            {media.type === 'youtube' && (
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-white/15 bg-black">
+                <iframe
+                  src={media.embedSrc}
+                  className="size-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                  allowFullScreen={true}
+                  title={displayTitle}
+                />
+              </div>
+            )}
+
+            {media.type === 'facebook' && (
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-white/15 bg-black">
+                <iframe
+                  src={media.embedSrc}
+                  className="size-full border-0"
+                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen"
+                  allowFullScreen={true}
+                  title={displayTitle}
+                />
+              </div>
             )}
           </div>
         )}
 
-        {/* বিবরণ */}
-        {!compact && item.description && (
-          <p className="whitespace-pre-line text-xs text-white/90 leading-relaxed line-clamp-3">
-            {item.description}
-          </p>
-        )}
-
-        {/* শেয়ার বার (compact=false হলেই শুধু আসবে) */}
-        {!compact && (
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/15 text-xs">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold text-white/60 flex items-center gap-1">
-                <Share2 className="size-2.5" /> শেয়ার:
-              </span>
-              <a
-                href={`https://wa.me/?text=${shareText}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full bg-emerald-500/80 text-white px-2.5 py-0.5 text-[10px] font-bold hover:bg-emerald-500 transition backdrop-blur-md border border-emerald-400/50"
-              >
-                WhatsApp
-              </a>
-              <a
-                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full bg-blue-600/80 text-white px-2.5 py-0.5 text-[10px] font-bold hover:bg-blue-500 transition backdrop-blur-md border border-blue-400/50"
-              >
-                Facebook
-              </a>
-              <button
-                type="button"
-                onClick={handleCopyLink}
-                className="rounded-full border border-white/30 bg-white/15 px-2.5 py-0.5 text-[10px] font-bold text-white hover:bg-white/25 transition inline-flex items-center gap-1 cursor-pointer backdrop-blur-md"
-              >
-                {copied ? <Check className="size-2.5 text-cyan-300" /> : null}
-                <span>{copied ? 'কপি হয়েছে' : 'লিংক'}</span>
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleScrollToComments}
-              className="inline-flex items-center gap-1 text-[10px] font-bold text-cyan-300 hover:text-cyan-200 hover:underline cursor-pointer"
-            >
-              <MessageSquare className="size-3" />
-              <span>মন্তব্য</span>
-            </button>
+        {/* ✅ সংবাদপত্র স্টাইল ক্যাপশন ও বিবরণ (কোনো কৃত্রিম ফ্রেম ছাড়া) */}
+        {(item.title || item.subtitle || item.caption || item.description) && (
+          <div className="px-2 pt-1 space-y-0.5 border-l-2 border-cyan-400/70 bg-white/[0.03] py-1.5 rounded-r-xl">
+            {item.title && (
+              <p className="font-bold text-xs sm:text-sm text-white">
+                {item.title}
+              </p>
+            )}
+            {item.subtitle && (
+              <p className="text-[11px] font-semibold text-cyan-300">
+                {item.subtitle}
+              </p>
+            )}
+            {item.caption && (
+              <p className="text-[11px] text-slate-300 flex items-center gap-1.5">
+                <Camera className="size-3 text-cyan-400 shrink-0" />
+                <span>{item.caption}</span>
+              </p>
+            )}
+            {item.description && (
+              <p className="text-xs text-slate-200/90 leading-relaxed whitespace-pre-line pt-0.5">
+                {item.description}
+              </p>
+            )}
+            {item.date && (
+              <p className="text-[10px] text-white/50 flex items-center gap-1 pt-0.5">
+                <Calendar className="size-2.5 text-cyan-400" />
+                <span>{formatBanglaDate(item.date)}</span>
+              </p>
+            )}
           </div>
         )}
       </div>
 
-      {/* ✅ সম্পূর্ণ ফুলস্ক্রিন থিয়েটার পোর্টাল: createPortal ব্যবহার করায় উপরের হেডার/মেনু আর উঁকি দেবে না */}
+      {/* ফুলস্ক্রিন লাইটবক্স থিয়েটার */}
       {isTheaterOpen && mounted && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/95 backdrop-blur-2xl p-3 sm:p-6 animate-in fade-in"
+          className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-black/95 backdrop-blur-2xl p-3 sm:p-6 animate-in fade-in"
           onClick={() => setIsTheaterOpen(false)}
         >
           <button
             type="button"
             onClick={() => setIsTheaterOpen(false)}
-            className="absolute top-4 right-4 z-[10000] flex size-11 items-center justify-center rounded-full bg-white/15 hover:bg-white/25 text-white backdrop-blur-md border border-white/20 transition-all cursor-pointer shadow-xl active:scale-95"
+            className="absolute top-4 right-4 z-[100000] flex size-11 items-center justify-center rounded-full bg-white/15 hover:bg-white/25 text-white backdrop-blur-md border border-white/20 transition-all cursor-pointer shadow-xl active:scale-95"
             aria-label="বন্ধ করুন"
           >
             <X className="size-6" />
@@ -310,26 +234,13 @@ function SingleMediaCard({
             className="relative w-full max-w-5xl flex flex-col items-center justify-center px-2"
             onClick={(e) => e.stopPropagation()}
           >
-            {media.type === 'youtube' && (
-              <div className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-black">
-                <iframe
-                  src={`${media.embedSrc}&autoplay=1`}
-                  className="absolute inset-0 size-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                  allowFullScreen={true}
-                  title={displayTitle}
-                />
-              </div>
-            )}
-
-            {media.type === 'facebook' && (
-              <div className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-black">
-                <iframe
-                  src={`${media.embedSrc}&autoplay=true`}
-                  className="absolute inset-0 size-full border-0"
-                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen"
-                  allowFullScreen={true}
-                  title={displayTitle}
+            {media.type === 'image' && (
+              <div className="relative w-full max-h-[85vh] flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={media.src}
+                  alt={displayTitle}
+                  className="max-h-[80vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl border border-white/20 bg-black/50"
                 />
               </div>
             )}
@@ -346,13 +257,14 @@ function SingleMediaCard({
               </div>
             )}
 
-            {media.type === 'image' && (
-              <div className="relative w-full max-h-[85vh] flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={media.src}
-                  alt={displayTitle}
-                  className="max-h-[80vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl border border-white/20 bg-black/50"
+            {media.type === 'youtube' && (
+              <div className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-black">
+                <iframe
+                  src={`${media.embedSrc}&autoplay=1`}
+                  className="size-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                  allowFullScreen={true}
+                  title={displayTitle}
                 />
               </div>
             )}
@@ -387,7 +299,7 @@ export function UniversalMediaEmbed({
   if (items.length === 0) return null
 
   return (
-    <div className={`space-y-3 w-full ${className}`}>
+    <div className={`space-y-4 w-full ${className}`}>
       {items.map((item, idx) => (
         <SingleMediaCard
           key={item.id || idx}
