@@ -10,17 +10,18 @@ export async function GeneralNews() {
     .slice(0, limit)
 
   return (
-    <section id="general-news" className="py-16 sm:py-20">
-      <div className="mx-auto max-w-7xl px-4">
+    <section id="general-news" className="py-14 sm:py-20 border-b border-white/10 relative">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
+          inverted
           eyebrow="Campus News"
           title="ক্যাম্পাস সংবাদ"
-          subtitle="Verified reports from across MBSTU."
+          subtitle="মাভাবিপ্রবির সর্বত্র থেকে যাচাইকৃত নির্ভরযোগ্য প্রতিবেদন।"
         />
         {posts.length ? (
           <NewsGrid posts={posts} />
         ) : (
-          <p className="text-sm text-muted-foreground">এখনো কোনো সংবাদ নেই।</p>
+          <p className="text-sm text-slate-300">এখনো কোনো সংবাদ নেই।</p>
         )}
       </div>
     </section>
