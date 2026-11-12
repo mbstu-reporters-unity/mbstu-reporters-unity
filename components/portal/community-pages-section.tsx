@@ -8,14 +8,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe,
-  Mail,
   MapPin,
   Newspaper,
   Pause,
-  Phone,
   Play,
   Share2,
-  Sparkles,
 } from 'lucide-react'
 import { getCommunityPages, type CommunityPage } from '@/lib/pages'
 import { SectionHeading } from './section-heading'
@@ -25,14 +22,13 @@ export function CommunityPagesSection() {
   const [filter, setFilter] = useState('All')
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
-  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [, setCopiedId] = useState<string | null>(null)
 
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
 
   useEffect(() => {
     getCommunityPages().then((data) => {
-      // শুধুমাত্র অ্যাডমিনের অনুমোদিত ও সক্রিয় পেজগুলো লোড হবে
       const activeOnly = (data || []).filter((p) => p.is_active !== false)
       setPages(activeOnly)
     })
@@ -42,7 +38,6 @@ export function CommunityPagesSection() {
   const filteredPages = filter === 'All' ? pages : pages.filter((p) => (p.category || 'ক্যাম্পাস সংগঠন') === filter)
   const total = filteredPages.length
 
-  // পরবর্তী ও পূর্ববর্তী স্লাইড হ্যান্ডলার
   const nextSlide = useCallback(() => {
     if (total <= 1) return
     setCurrentIndex((prev) => (prev + 1) % total)
@@ -53,18 +48,12 @@ export function CommunityPagesSection() {
     setCurrentIndex((prev) => (prev - 1 + total) % total)
   }, [total])
 
-  // স্বয়ংক্রিয় স্লাইড শো (৪ সেকেন্ড বিরতি)
   useEffect(() => {
     if (total <= 1 || isPaused) return
-
-    const timer = setInterval(() => {
-      nextSlide()
-    }, 4500)
-
+    const timer = setInterval(() => { nextSlide() }, 4500)
     return () => clearInterval(timer)
   }, [total, isPaused, nextSlide])
 
-  // মোবাইল টাচ সোয়াইপ
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsPaused(true)
     touchStartX.current = e.touches[0].clientX
@@ -74,7 +63,6 @@ export function CommunityPagesSection() {
   const handleTouchEnd = (e: React.TouchEvent) => {
     setIsPaused(false)
     if (touchStartX.current === null || touchStartY.current === null || total <= 1) return
-
     const diffX = e.changedTouches[0].clientX - touchStartX.current
     const diffY = e.changedTouches[0].clientY - touchStartY.current
 
@@ -82,7 +70,6 @@ export function CommunityPagesSection() {
       if (diffX < 0) nextSlide()
       else prevSlide()
     }
-
     touchStartX.current = null
     touchStartY.current = null
   }
@@ -112,7 +99,6 @@ export function CommunityPagesSection() {
 
   if (pages.length === 0) return null
 
-  // ডেস্কটপে পাশাপাশি ৩টি কার্ড এবং মোবাইলে ১টি করে কার্ড রোটেশন
   const cardsCount = typeof window !== 'undefined' && window.innerWidth >= 1024 ? 3 : typeof window !== 'undefined' && window.innerWidth >= 640 ? 2 : 1
   const displayedPages: CommunityPage[] = []
   if (total > 0) {
@@ -122,19 +108,19 @@ export function CommunityPagesSection() {
   }
 
   return (
-    <section id="community-pages" className="py-16 sm:py-20 bg-slate-50 border-y border-border/60">
+    // ✅ সাদা bg-slate-50 দূর করে ডার্ক গ্লাস ব্লেন্ডিং
+    <section id="community-pages" className="py-14 sm:py-20 border-b border-white/10 relative">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
-        {/* সেকশন হেডার */}
         <SectionHeading
+          inverted
           eyebrow="Community & Organizations"
           title="ক্যাম্পাস পেজ ও কমিউনিটি"
-          subtitle="মাভাবিপ্রবির বিভিন্ন সমিতি, হল সংসদ ও ক্যাম্পাস সংগঠনসমূহের অফিসিয়াল ফেসবুক-স্টাইল পেজ ও সাম্প্রতিক কার্যক্রম।"
+          subtitle="মাভাবিপ্রবির বিভিন্ন সমিতি, হল সংসদ ও ক্যাম্পাস সংগঠনসমূহের অফিসিয়াল পেজ ও সাম্প্রতিক কার্যক্রম।"
         />
 
-        {/* ফিল্টার বাটন */}
         {categories.length > 2 && (
-          <div className="mb-8 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
             {categories.map((cat) => (
               <button
                 key={cat}
@@ -145,8 +131,8 @@ export function CommunityPagesSection() {
                 }}
                 className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                   filter === cat
-                    ? 'border-brand bg-brand text-white shadow-sm'
-                    : 'border-border bg-white text-navy hover:bg-brand-soft'
+                    ? 'border-cyan-300/60 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
+                    : 'border-white/20 bg-white/10 text-white/80 hover:bg-white/20'
                 }`}
               >
                 <span>{cat === 'All' ? 'সকল পেজ' : cat}</span>
@@ -158,7 +144,6 @@ export function CommunityPagesSection() {
           </div>
         )}
 
-        {/* স্লাইডার কনটেইনার */}
         <div
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
@@ -168,13 +153,13 @@ export function CommunityPagesSection() {
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayedPages.map((page) => (
+              // ✅ কার্ড এখন প্রিমিয়াম glass-card থিমে দেখাবে
               <article
                 key={page.id}
-                className="group flex flex-col justify-between overflow-hidden rounded-3xl border border-border bg-white shadow-sm hover:border-brand hover:shadow-xl transition-all duration-300"
+                className="glass-card group flex flex-col justify-between overflow-hidden text-white"
               >
                 <div>
-                  {/* কভার ফটো */}
-                  <div className="relative h-32 sm:h-36 w-full overflow-hidden bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-900">
+                  <div className="relative h-32 sm:h-36 w-full overflow-hidden bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 border-b border-white/10">
                     {page.cover_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -183,24 +168,23 @@ export function CommunityPagesSection() {
                         className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
-                      <div className="size-full flex items-center justify-center text-white/20 font-bold text-xl uppercase tracking-widest select-none">
+                      <div className="size-full flex items-center justify-center text-white/20 font-bold text-lg uppercase tracking-widest select-none">
                         {page.name}
                       </div>
                     )}
-                    <span className="absolute top-2.5 right-2.5 rounded-full bg-black/60 backdrop-blur px-2.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                    <span className="absolute top-2.5 right-2.5 rounded-full bg-black/60 backdrop-blur px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
                       {page.category || 'কমিউনিটি'}
                     </span>
                   </div>
 
-                  {/* প্রোফাইল লোগো ও টাইটেল */}
                   <div className="px-5 pt-0 pb-4 relative">
-                    <div className="flex items-end justify-between -mt-12 mb-3">
-                      <div className="relative size-20 rounded-full bg-white ring-4 ring-white shadow-md overflow-hidden shrink-0 flex items-center justify-center">
+                    <div className="flex items-end justify-between -mt-10 mb-3">
+                      <div className="relative size-20 rounded-full bg-slate-900 ring-4 ring-cyan-400/80 shadow-lg overflow-hidden shrink-0 flex items-center justify-center">
                         {page.avatar_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={page.avatar_url} alt={page.name} className="size-full object-cover" />
                         ) : (
-                          <div className="size-full bg-brand text-white flex items-center justify-center text-2xl font-bold">
+                          <div className="size-full bg-cyan-600 text-white flex items-center justify-center text-2xl font-bold">
                             {page.name.charAt(0)}
                           </div>
                         )}
@@ -209,7 +193,7 @@ export function CommunityPagesSection() {
                       <button
                         type="button"
                         onClick={(e) => handleShare(e, page)}
-                        className="rounded-full p-2 bg-slate-100 hover:bg-brand-soft text-navy hover:text-brand transition cursor-pointer"
+                        className="rounded-full p-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 transition cursor-pointer"
                         title="শেয়ার করুন"
                       >
                         <Share2 className="size-3.5" />
@@ -218,37 +202,35 @@ export function CommunityPagesSection() {
 
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5">
-                        <Link href={`/p/${page.slug}`} className="font-serif text-lg font-bold text-navy hover:text-brand transition-colors line-clamp-1">
+                        <Link href={`/p/${page.slug}`} className="font-serif text-lg font-bold text-white hover:text-cyan-300 transition-colors line-clamp-1">
                           {page.name}
                         </Link>
                         {page.is_verified && (
-                          <CheckCircle2 className="size-4 fill-blue-600 text-white shrink-0" title="অফিসিয়াল ভেরিফাইড পেজ" />
+                          <CheckCircle2 className="size-4 fill-blue-500 text-white shrink-0" title="ভেরিফাইড পেজ" />
                         )}
                       </div>
                       {page.name_en && (
-                        <p className="text-xs text-gray-500 truncate">{page.name_en}</p>
+                        <p className="text-xs text-cyan-200/80 truncate">{page.name_en}</p>
                       )}
                     </div>
 
-                    {/* বায়ো / ইন্ট্রো */}
                     {page.bio && (
-                      <p className="mt-3 text-xs text-slate-700 line-clamp-2 leading-relaxed">
+                      <p className="mt-3 text-xs text-slate-200 line-clamp-2 leading-relaxed">
                         {page.bio}
                       </p>
                     )}
 
-                    {/* লোকেশন / যোগাযোগ */}
-                    <div className="mt-4 pt-3 border-t border-gray-100 space-y-1.5 text-[11px] text-gray-500">
+                    <div className="mt-4 pt-3 border-t border-white/15 space-y-1.5 text-[11px] text-slate-300">
                       {page.location && (
                         <p className="flex items-center gap-1.5 truncate">
-                          <MapPin className="size-3 text-emerald-700 shrink-0" />
+                          <MapPin className="size-3 text-cyan-400 shrink-0" />
                           <span className="truncate">{page.location}</span>
                         </p>
                       )}
                       {page.website_url && (
                         <p className="flex items-center gap-1.5 truncate">
-                          <Globe className="size-3 text-emerald-700 shrink-0" />
-                          <a href={page.website_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                          <Globe className="size-3 text-cyan-400 shrink-0" />
+                          <a href={page.website_url} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline truncate">
                             অফিসিয়াল ওয়েবসাইট
                           </a>
                         </p>
@@ -257,11 +239,10 @@ export function CommunityPagesSection() {
                   </div>
                 </div>
 
-                {/* কার্ড ফুটার বাটন (সরাসরি পেজে নিয়ে যাবে) */}
-                <div className="p-4 bg-gray-50/80 border-t border-border/60">
+                <div className="p-4 border-t border-white/15">
                   <Link
                     href={`/p/${page.slug}`}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand hover:bg-brand-dark px-4 py-2.5 text-xs font-bold text-white shadow-sm transition active:scale-98 cursor-pointer"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-4 py-2.5 text-xs font-bold shadow-md transition active:scale-98 border border-white/20"
                   >
                     <Newspaper className="size-3.5" />
                     <span>পেজ ও টাইমলাইন দেখুন</span>
@@ -272,9 +253,8 @@ export function CommunityPagesSection() {
             ))}
           </div>
 
-          {/* স্লাইডার কন্ট্রোল ও ইন্ডিকেটর */}
           {total > 1 && (
-            <div className="mt-8 flex items-center justify-between gap-4 border-t border-border/80 pt-4">
+            <div className="mt-6 flex items-center justify-between gap-4 border-t border-white/10 pt-4">
               <div className="flex items-center gap-1.5">
                 {filteredPages.map((_, i) => (
                   <button
@@ -282,7 +262,7 @@ export function CommunityPagesSection() {
                     type="button"
                     onClick={() => setCurrentIndex(i)}
                     className={`h-2 rounded-full transition-all cursor-pointer ${
-                      i === currentIndex ? 'w-6 bg-brand shadow-sm' : 'w-2 bg-gray-300 hover:bg-gray-400'
+                      i === currentIndex ? 'w-6 bg-cyan-400 shadow-sm' : 'w-2 bg-white/30 hover:bg-white/50'
                     }`}
                   />
                 ))}
@@ -292,21 +272,21 @@ export function CommunityPagesSection() {
                 <button
                   type="button"
                   onClick={() => setIsPaused(!isPaused)}
-                  className="size-8 rounded-xl bg-white border border-border text-navy flex items-center justify-center hover:bg-gray-50 cursor-pointer shadow-xs"
+                  className="size-8 rounded-xl bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 cursor-pointer"
                 >
-                  {isPaused ? <Play className="size-3 text-emerald-600" /> : <Pause className="size-3 text-amber-600" />}
+                  {isPaused ? <Play className="size-3 text-cyan-400" /> : <Pause className="size-3 text-amber-400" />}
                 </button>
                 <button
                   type="button"
                   onClick={prevSlide}
-                  className="size-8 rounded-xl bg-white border border-border text-navy flex items-center justify-center hover:bg-gray-50 cursor-pointer active:scale-95 shadow-xs"
+                  className="size-8 rounded-xl bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 cursor-pointer active:scale-95"
                 >
                   <ChevronLeft className="size-4" />
                 </button>
                 <button
                   type="button"
                   onClick={nextSlide}
-                  className="size-8 rounded-xl bg-white border border-border text-navy flex items-center justify-center hover:bg-gray-50 cursor-pointer active:scale-95 shadow-xs"
+                  className="size-8 rounded-xl bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 cursor-pointer active:scale-95"
                 >
                   <ChevronRight className="size-4" />
                 </button>
