@@ -9,7 +9,6 @@ import { NewsGrid } from '@/components/portal/news-card'
 import { SectionHeading } from '@/components/portal/section-heading'
 import { getCategoryPosts } from '@/lib/categories'
 
-// ⭐ ক্যাটাগরি পেজেও সুপারফাস্ট লোডিংয়ের জন্য ক্যাশিং সক্রিয় ⭐
 export const revalidate = 60
 
 export async function generateMetadata({
@@ -38,20 +37,21 @@ export default async function CategoryPage({
     <>
       <TopBar />
       <SiteHeader />
-      <main className="min-h-[75vh] py-10 sm:py-16 bg-gray-50/50">
+      {/* ✅ সাদা ব্যাকগ্রাউন্ড সরিয়ে ডার্ক গ্লাস ব্লেন্ডিং */}
+      <main className="min-h-[75vh] py-8 sm:py-14">
         <div className="mx-auto max-w-7xl px-4 space-y-8">
           
-          {/* দ্রুত হোমপেজে ফেরার বাটন (SPA Link) */}
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
             >
               <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
             </Link>
           </div>
 
           <SectionHeading
+            inverted
             eyebrow="News Category"
             title={catName}
             subtitle={`${catName} বিভাগের সকল খবর ও প্রতিবেদন (${posts.length}টি সংবাদ প্রকাশিত)`}
@@ -60,21 +60,20 @@ export default async function CategoryPage({
           {posts.length > 0 ? (
             <NewsGrid posts={posts} />
           ) : (
-            <div className="rounded-3xl border border-dashed border-border p-12 text-center bg-white shadow-sm space-y-2">
-              <div className="size-12 rounded-full bg-brand/10 text-brand flex items-center justify-center mx-auto">
+            <div className="glass-card p-12 text-center text-white space-y-2">
+              <div className="size-12 rounded-full bg-white/10 text-cyan-300 flex items-center justify-center mx-auto border border-white/20">
                 <Newspaper className="size-6" />
               </div>
-              <p className="text-base font-bold text-navy">এই ক্যাটাগরিতে এখনো কোনো সংবাদ প্রকাশিত হয়নি।</p>
-              <p className="text-xs text-muted-foreground">অ্যাডমিন বা মডারেটররা এই ক্যাটাগরিতে পোস্ট দিলেই তা এখানে সরাসরি লাইভ হয়ে যাবে।</p>
+              <p className="text-base font-bold text-white">এই ক্যাটাগরিতে এখনো কোনো সংবাদ প্রকাশিত হয়নি।</p>
+              <p className="text-xs text-slate-300">অ্যাডমিন বা মডারেটররা এই ক্যাটাগরিতে পোস্ট দিলেই তা এখানে সরাসরি লাইভ হয়ে যাবে।</p>
             </div>
           )}
 
-          {/* নিচে স্ক্রল করার পর পাঠকদের জন্য ফিরতি লিংক */}
           {posts.length > 3 && (
-            <div className="pt-6 text-center border-t border-border/60">
+            <div className="pt-6 text-center border-t border-white/15">
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
               >
                 <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
               </Link>
