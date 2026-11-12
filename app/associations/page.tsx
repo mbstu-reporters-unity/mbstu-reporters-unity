@@ -54,30 +54,36 @@ export default async function AssociationsPage() {
                     key={assoc.id}
                     className="glass-card flex flex-col justify-between p-5 text-white"
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3">
+                    <div className="space-y-3.5">
+                      <div className="flex items-start gap-3.5">
+                        
+                        {/* ✅ লোগো এখন পূর্ণাঙ্গ বৃত্তের কিনারা পর্যন্ত ছড়িয়ে থাকবে */}
                         {assoc.logo_url ? (
                           targetLink ? (
                             <a href={targetLink} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                              <div className="size-16 rounded-full overflow-hidden bg-white ring-2 ring-cyan-400/50 shadow-md flex items-center justify-center p-0.5 hover:ring-cyan-300 transition-all">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={assoc.logo_url}
+                                  alt={assoc.name}
+                                  loading="lazy"
+                                  className="size-full rounded-full object-cover"
+                                />
+                              </div>
+                            </a>
+                          ) : (
+                            <div className="size-16 rounded-full overflow-hidden bg-white ring-2 ring-cyan-400/50 shadow-md shrink-0 flex items-center justify-center p-0.5">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={assoc.logo_url}
                                 alt={assoc.name}
                                 loading="lazy"
-                                className="size-14 rounded-2xl object-contain border border-white/30 p-1 bg-white shadow-md hover:opacity-90"
+                                className="size-full rounded-full object-cover"
                               />
-                            </a>
-                          ) : (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={assoc.logo_url}
-                              alt={assoc.name}
-                              loading="lazy"
-                              className="size-14 rounded-2xl object-contain border border-white/30 p-1 bg-white shadow-md shrink-0"
-                            />
+                            </div>
                           )
                         ) : (
-                          <div className="size-14 rounded-2xl bg-white/10 text-cyan-300 flex items-center justify-center text-xl font-bold border border-white/20 shrink-0">
+                          <div className="size-16 rounded-full bg-white/10 text-cyan-300 flex items-center justify-center text-2xl font-bold border border-white/20 shrink-0">
                             📰
                           </div>
                         )}
@@ -108,14 +114,17 @@ export default async function AssociationsPage() {
                         </div>
                       </div>
 
+                      {/* ✅ line-clamp-3 তুলে দেওয়া হয়েছে, তাই পুরো পরিচিতি ও ইতিহাস দৃশ্যমান থাকবে */}
                       {assoc.description && (
-                        <p className="text-xs text-slate-200 whitespace-pre-line leading-relaxed border-t border-white/10 pt-2 line-clamp-3">
-                          {assoc.description}
-                        </p>
+                        <div className="border-t border-white/10 pt-2.5">
+                          <p className="text-xs text-slate-100 whitespace-pre-line leading-relaxed text-justify">
+                            {assoc.description}
+                          </p>
+                        </div>
                       )}
 
                       {assoc.contact_info && (
-                        <div className="text-xs text-slate-300 bg-white/10 p-2.5 rounded-2xl border border-white/15 space-y-1">
+                        <div className="text-xs text-slate-200 bg-white/10 p-3 rounded-2xl border border-white/15 space-y-1">
                           <p className="font-bold text-cyan-300 text-[11px]">যোগাযোগের তথ্য:</p>
                           <p className="whitespace-pre-line">{assoc.contact_info}</p>
                         </div>
