@@ -22,10 +22,20 @@ function formatBanglaDate(val?: string | null): string {
   return val
 }
 
+// শব্দের মাঝপথে না কেটে পরিষ্কার বাক্যাংশ তৈরি করার ফাংশন
+function cleanExcerpt(text?: string | null, maxLength = 135): string {
+  if (!text) return ''
+  const clean = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
+  if (clean.length <= maxLength) return clean
+  const truncated = clean.slice(0, maxLength)
+  const lastSpace = truncated.lastIndexOf(' ')
+  return (lastSpace > 60 ? truncated.slice(0, lastSpace) : truncated) + '...'
+}
+
 export function NewsCard({ p }: { p: Post }) {
   const href = p.link_url?.trim() || `/post/${p.id}`
   const isExt = /^https?:\/\//i.test(href)
-  const excerpt = (p.heading || p.body || '').slice(0, 140)
+  const excerpt = cleanExcerpt(p.heading || p.body, 130)
   const formattedDate = formatBanglaDate(p.created_at)
 
   return (
@@ -47,7 +57,7 @@ export function NewsCard({ p }: { p: Post }) {
 
       <div className="flex flex-1 flex-col p-5 sm:p-6 space-y-3">
         
-        {/* ক্যাটাগরি পিল (স্ক্রিনশটের মতো ব্যাজ) */}
+        {/* ক্যাটাগরি পিল ও রিপোর্টার */}
         <div className="flex items-center justify-between gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-white border border-white/25 backdrop-blur-md shadow-xs">
             <Sparkles className="size-3 text-cyan-300" />
@@ -68,7 +78,7 @@ export function NewsCard({ p }: { p: Post }) {
           <span>{formattedDate}</span>
         </div>
 
-        {/* ১. শিরোনাম */}
+        {/* শিরোনাম */}
         <h3 className="font-serif text-lg sm:text-xl font-bold leading-snug text-white group-hover:text-cyan-200 transition-colors drop-shadow-sm">
           {isExt ? (
             <a href={href} target="_blank" rel="noopener noreferrer">
@@ -81,17 +91,17 @@ export function NewsCard({ p }: { p: Post }) {
           )}
         </h3>
 
-        {/* ২. বিস্তারিত লেখা */}
+        {/* সারসংক্ষেপ */}
         <p className="line-clamp-3 text-sm leading-relaxed text-slate-200 opacity-95">
           {excerpt}
         </p>
 
-        {/* ৩. মিডিয়া প্লেয়ার */}
+        {/* মিডিয়া প্লেয়ার (compact=true দেওয়ায় ডুপ্লিকেট শেয়ার বার ও অকার্যকর মন্তব্য বাটন দেখাবে না) */}
         {p.embed_media_url && (
-          <UniversalMediaEmbed url={p.embed_media_url} title={p.title} className="mb-1 mt-2" />
+          <UniversalMediaEmbed url={p.embed_media_url} title={p.title} className="mb-1 mt-2" compact={true} />
         )}
 
-        {/* ৪. স্ক্রিনশটের মতো গ্রেডিয়েন্ট বাটন ও রিঅ্যাকশন */}
+        {/* কার্ডের মূল অ্যাকশন বার */}
         <div className="mt-auto pt-4 border-t border-white/15 flex items-center justify-between gap-3">
           {isExt ? (
             <a
