@@ -41,21 +41,24 @@ export default function CardGallery({
   }, [postId])
 
   const badge = (
-    <span className="absolute left-4 top-4 z-10 rounded bg-brand px-2.5 py-1 text-xs font-bold text-white shadow-xs">
+    <span className="absolute left-3 top-3 z-10 rounded-full bg-cyan-600/90 border border-white/20 px-3 py-0.5 text-[11px] font-bold text-white shadow-md backdrop-blur-md">
       {category}
     </span>
   )
   const videoBadge = hasVideo ? (
-    <span className="absolute bottom-4 right-4 z-10 inline-flex items-center gap-1 rounded-full bg-navy/80 px-2.5 py-1 text-xs text-white backdrop-blur-xs">
+    <span className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 rounded-full bg-black/70 px-2.5 py-0.5 text-xs text-white backdrop-blur border border-white/20">
       <Video className="size-3" aria-hidden="true" /> ভিডিও
     </span>
   ) : null
 
+  // ✅ সাদা bg-gray-100 ও pt-12 সরিয়ে কার্ডের ডার্ক গ্লাস ব্লেন্ডিং করা হয়েছে
   if (items && items.length > 1) {
     return (
-      <div className="relative bg-gray-100 p-2 pt-12">
+      <div className="relative overflow-hidden p-2 bg-black/20">
         {badge}
-        <RichGallery items={items} layout={layout} />
+        <div className="pt-8">
+          <RichGallery items={items} layout={layout} />
+        </div>
         {videoBadge}
       </div>
     )
@@ -72,7 +75,7 @@ export default function CardGallery({
           className="block h-auto w-full aspect-[16/10] object-cover transition-transform duration-500 group-hover:scale-105"
         />
       ) : (
-        <div className="aspect-[16/10] w-full bg-brand-soft/40 flex items-center justify-center text-brand font-bold text-xs select-none">
+        <div className="aspect-[16/10] w-full bg-cyan-950/40 flex items-center justify-center text-cyan-300 font-bold text-xs select-none">
           মাভাবিপ্রবি রিপোর্টার্স ইউনিটি
         </div>
       )}
@@ -81,9 +84,8 @@ export default function CardGallery({
     </>
   )
 
-  const linkClass = "relative block overflow-hidden bg-gray-100 select-none"
+  const linkClass = "relative block overflow-hidden bg-black/20 select-none"
 
-  // বহিরাগত লিংক হলে নতুন ট্যাবে, সাইটের লিংক হলে রিলোডহীন নেক্সট লিংকে যাবে
   if (external) {
     return (
       <a href={href} target="_blank" rel="noopener noreferrer" className={linkClass}>
