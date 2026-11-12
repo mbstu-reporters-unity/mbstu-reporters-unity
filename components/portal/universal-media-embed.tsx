@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Maximize2,
   Share2,
@@ -22,14 +23,11 @@ export type SingleMediaItem = {
   url: string
 }
 
-// ⭐ তারিখকে বাংলায় রূপান্তর (যেমন: ৯ নভেম্বর ২০২৬) ⭐
 function formatBanglaDate(val?: string | null): string {
   if (!val) return ''
-  
   if (/জানুয়ারি|ফেব্রুয়ারি|মার্চ|এপ্রিল|মে|জুন|জুলাই|আগস্ট|সেপ্টেম্বর|অক্টোবর|নভেম্বর|ডিসেম্বর/.test(val)) {
     return val
   }
-
   const d = new Date(val)
   if (!isNaN(d.getTime())) {
     return d.toLocaleDateString('bn-BD', {
@@ -39,23 +37,6 @@ function formatBanglaDate(val?: string | null): string {
       timeZone: 'Asia/Dhaka',
     })
   }
-
-  const normalized = val.replace(/[০-৯]/g, (digit) => '০১২৩৪৫৬৭৮৯'.indexOf(digit).toString())
-  const parts = normalized.split(/[/\-.]/)
-  if (parts.length === 3) {
-    const day = parseInt(parts[0], 10)
-    const month = parseInt(parts[1], 10)
-    const year = parseInt(parts[2], 10)
-    const monthsBn = [
-      'জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
-      'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
-    ]
-    const toBn = (n: number | string) => String(n).replace(/\d/g, (x) => '০১২৩৪৫৬৭৮৯'[Number(x)])
-    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-      return `${toBn(day)} ${monthsBn[month - 1]} ${toBn(year)}`
-    }
-  }
-
   return val
 }
 
@@ -117,9 +98,14 @@ function SingleMediaCard({
 }) {
   const [copied, setCopied] = useState(false)
   const [isTheaterOpen, setIsTheaterOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   const media = parseMedia(item.url)
   const displayTitle = item.title || (total > 1 ? `মিডিয়া #${index + 1}` : defaultTitle)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (isTheaterOpen) {
@@ -151,7 +137,6 @@ function SingleMediaCard({
 
   return (
     <>
-      {/* ⭐ সলিড সাদা বর্ডার সরিয়ে গ্লাসমর্ফিজম (Glassmorphism) কার্ড যুক্ত করা হয়েছে ⭐ */}
       <div className={`w-full rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md shadow-lg transition-all overflow-hidden ${compact ? 'p-2 space-y-2' : 'p-3.5 sm:p-4 space-y-3'}`}>
         
         {/* শিরোনাম ও উপশিরোনাম */}
@@ -170,11 +155,10 @@ function SingleMediaCard({
           </div>
         )}
 
-        {/* আন্তর্জাতিক ১৬:৯ স্ট্যান্ডার্ড মিডিয়া ফ্রেম */}
+        {/* মিডিয়া ফ্রেম */}
         {item.url && (
           <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-black/60 shadow-inner flex items-center justify-center group/player border border-white/10">
             
-            {/* বড় পর্দা / ফুলস্ক্রিন বাটন */}
             <button
               type="button"
               onClick={(e) => {
@@ -241,7 +225,7 @@ function SingleMediaCard({
           </div>
         )}
 
-        {/* ক্যাপশন বার (গ্লাসি লুক) */}
+        {/* ক্যাপশন */}
         {!compact && item.caption && item.caption.trim() !== '' && (
           <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-white/90 bg-black/20 px-3 py-2 rounded-xl border border-white/10 shadow-inner">
             <span className="flex items-center gap-1.5 font-bold truncate">
@@ -262,7 +246,7 @@ function SingleMediaCard({
           </p>
         )}
 
-        {/* শেয়ার বার (গ্লাসি পিল বাটন) */}
+        {/* শেয়ার বার (compact=false হলেই শুধু আসবে) */}
         {!compact && (
           <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/15 text-xs">
             <div className="flex items-center gap-1.5">
@@ -307,23 +291,23 @@ function SingleMediaCard({
         )}
       </div>
 
-      {/* বড় পর্দা / ফুলস্ক্রিন থিয়েটার মোডাল */}
-      {isTheaterOpen && (
+      {/* ✅ সম্পূর্ণ ফুলস্ক্রিন থিয়েটার পোর্টাল: createPortal ব্যবহার করায় উপরের হেডার/মেনু আর উঁকি দেবে না */}
+      {isTheaterOpen && mounted && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl p-2 sm:p-6 animate-in fade-in"
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/95 backdrop-blur-2xl p-3 sm:p-6 animate-in fade-in"
           onClick={() => setIsTheaterOpen(false)}
         >
           <button
             type="button"
             onClick={() => setIsTheaterOpen(false)}
-            className="absolute top-4 right-4 z-[110] flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-md border border-white/20 transition-all cursor-pointer shadow-lg active:scale-95"
+            className="absolute top-4 right-4 z-[10000] flex size-11 items-center justify-center rounded-full bg-white/15 hover:bg-white/25 text-white backdrop-blur-md border border-white/20 transition-all cursor-pointer shadow-xl active:scale-95"
             aria-label="বন্ধ করুন"
           >
-            <X className="size-5" />
+            <X className="size-6" />
           </button>
 
           <div
-            className="relative w-full max-w-5xl flex flex-col items-center justify-center"
+            className="relative w-full max-w-5xl flex flex-col items-center justify-center px-2"
             onClick={(e) => e.stopPropagation()}
           >
             {media.type === 'youtube' && (
@@ -368,7 +352,7 @@ function SingleMediaCard({
                 <img
                   src={media.src}
                   alt={displayTitle}
-                  className="max-h-[85vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl border border-white/10 bg-black"
+                  className="max-h-[80vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl border border-white/20 bg-black/50"
                 />
               </div>
             )}
@@ -379,7 +363,8 @@ function SingleMediaCard({
               </p>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )
