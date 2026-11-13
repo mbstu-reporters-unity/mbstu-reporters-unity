@@ -347,6 +347,7 @@ export default function AdminPage() {
         avatar_url: avatar,
       })
       setPFile(null)
+      if (!editId) setAuthorAvatar(avatar)
       setMsg("✅ প্রোফাইল সেভ হয়েছে")
       await loadMe(token)
     } catch (e) { await fail(e) }
@@ -918,6 +919,7 @@ export default function AdminPage() {
                         setAuthor(chosen.full_name)
                         setAuthorAvatar(chosen.avatar_url || null)
                         pickAuthorAvatarFile(null)
+                        setShowAuthorAvatar(true)
                       }
                     }}
                   >
@@ -956,7 +958,10 @@ export default function AdminPage() {
                         className="hidden"
                         onChange={(e) => {
                           const f = e.target.files?.[0] || null
-                          if (f) pickAuthorAvatarFile(f)
+                          if (f) {
+                            pickAuthorAvatarFile(f)
+                            setShowAuthorAvatar(true)
+                          }
                           e.target.value = ""
                         }}
                       />
@@ -968,6 +973,7 @@ export default function AdminPage() {
                         onClick={() => {
                           pickAuthorAvatarFile(null)
                           setAuthorAvatar(me.avatar_url || null)
+                          setShowAuthorAvatar(true)
                         }}
                         className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 px-2.5 py-1.5 text-xs font-semibold cursor-pointer"
                       >
@@ -982,6 +988,7 @@ export default function AdminPage() {
                         onClick={() => {
                           pickAuthorAvatarFile(null)
                           setAuthorAvatar(null)
+                          setShowAuthorAvatar(false)
                         }}
                         className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 px-2.5 py-1.5 text-xs font-bold cursor-pointer"
                       >
@@ -997,7 +1004,11 @@ export default function AdminPage() {
                   placeholder="অথবা প্রতিবেদকের ছবির সরাসরি লিংক দিন (https://... ঐচ্ছিক)"
                   value={authorAvatarFile ? "" : authorAvatar || ""}
                   disabled={!!authorAvatarFile}
-                  onChange={(e) => setAuthorAvatar(e.target.value.trim() || null)}
+                  onChange={(e) => {
+                    const val = e.target.value.trim()
+                    setAuthorAvatar(val || null)
+                    if (val) setShowAuthorAvatar(true)
+                  }}
                 />
               </div>
 
@@ -1157,7 +1168,7 @@ export default function AdminPage() {
                         />
                       )}
                       <span className="truncate">
-                        {p.author}{p.author_avatar && p.show_author_avatar === false ? " (ছবি লুকানো)" : ""} · {new Date(p.created_at).toLocaleDateString("bn-BD")} · <span className="text-emerald-700 font-semibold">{p.category}</span>
+                        {p.author}{p.show_author_avatar === false ? " (ছবি লুকানো)" : ""} · {new Date(p.created_at).toLocaleDateString("bn-BD")} · <span className="text-emerald-700 font-semibold">{p.category}</span>
                       </span>
                     </div>
                     {canManage(p) && (
@@ -1175,7 +1186,7 @@ export default function AdminPage() {
                         <button onClick={() => act(() => setPostHidden(token, p.id, !p.hidden))} className="text-amber-600 hover:underline">
                           {p.hidden ? "দেখান" : "হাইড"}
                         </button>
-                        {p.author_avatar && (
+                        {(p.author_avatar || p.show_author_avatar === false) && (
                           <button
                             onClick={() => act(() => setPostAuthorAvatarVisible(token, p.id, p.show_author_avatar === false))}
                             className="text-cyan-700 hover:underline"
