@@ -1,4 +1,4 @@
-import { SB_URL, SB_KEY, type Post } from "./sb"
+import { SB_URL, SB_KEY, attachProfileAvatars, type Post } from "./sb"
 
 export type CommunityPage = {
   id: string
@@ -75,7 +75,8 @@ export async function getPagePosts(pageId: string): Promise<Post[]> {
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
-    return await res.json()
+    const rows: Post[] = await res.json()
+    return await attachProfileAvatars(rows)
   } catch {
     return []
   }
