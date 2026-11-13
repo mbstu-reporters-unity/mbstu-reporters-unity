@@ -11,17 +11,19 @@ export async function GeneralNews() {
 
   return (
     <section id="general-news" className="py-14 sm:py-20 border-b border-white/10 relative">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeading
-          inverted
-          eyebrow="Campus News"
-          title="ক্যাম্পাস সংবাদ"
-          subtitle="মাভাবিপ্রবির সর্বত্র থেকে যাচাইকৃত নির্ভরযোগ্য প্রতিবেদন।"
-        />
+      <div className="mx-auto max-w-7xl md:px-6 lg:px-8">
+        <div className="px-4 md:px-0">
+          <SectionHeading
+            inverted
+            eyebrow="Campus News"
+            title="ক্যাম্পাস সংবাদ"
+            subtitle="মাভাবিপ্রবির সর্বত্র থেকে যাচাইকৃত নির্ভরযোগ্য প্রতিবেদন।"
+          />
+        </div>
         {posts.length ? (
           <NewsGrid posts={posts} />
         ) : (
-          <p className="text-sm text-slate-300">এখনো কোনো সংবাদ নেই।</p>
+          <p className="px-4 md:px-0 text-sm text-slate-300">এখনো কোনো সংবাদ নেই।</p>
         )}
       </div>
     </section>
