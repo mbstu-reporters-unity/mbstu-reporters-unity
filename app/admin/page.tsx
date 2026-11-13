@@ -1,15 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
+import { useEffect, useMemo, useState } from "react"
 import {
-  login, signUp, getMe, getAllPosts, setPostHidden, getCategoryNames, getHomeLimit, updatePost, deletePost, uploadImage, uploadVideo,
+  login, signUp, getMe, getAllPosts, setPostHidden, getCategoryNames, getCategories,
+  updatePost, deletePost, uploadImage, uploadVideo,
   getPendingComments, approveComment, deleteComment,
   getReporters, approveReporter, removeReporter,
-  updateMyProfile,
-  createPostReturningId, removeAllImages,
+  updateMyProfile, createPostReturningId, removeAllImages,
+  isTokenExpired, refreshSession,
 } from "../../lib/sb"
-import type { Post, PendingComment, Profile } from "../../lib/sb"
+import type { Post, PendingComment, Profile, CategoryRow } from "../../lib/sb"
 import { getCampusClubs, type ClubItem } from "../../lib/clubs"
 import { getCommunityPages, type CommunityPage } from "../../lib/pages"
 import LeadershipManager from "./leadership-manager"
@@ -44,7 +44,7 @@ const btn = "w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl py
 
 type Tab =
   | "posts" | "comments" | "reporters" | "profile" | "leaders" | "notices"
-  | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "directors" | "categories" 
+  | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "directors" | "categories"
   | "clubs" | "faculties" | "associations" | "social_sites" | "administration"
   | "community_pages"
 
@@ -59,15 +59,31 @@ export type PostMediaItem = {
 }
 
 async function shrink(file: File): Promise<Blob> {
-  const bmp = await createImageBitmap(file)
-  const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height))
-  const c = document.createElement("canvas")
-  c.width = Math.round(bmp.width * scale)
-  c.height = Math.round(bmp.height * scale)
-  c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height)
-  return new Promise((res, rej) =>
-    c.toBlob((b) => (b ? res(b) : rej(new Error("ছবি প্রসেস করা যায়নি"))), "image/jpeg", 0.82)
-  )
+  if (!file.type.startsWith("image/") || file.type === "image/svg+xml" || file.type === "image/gif") {
+    return file
+  }
+  try {
+    const bmp = await createImageBitmap(file)
+    const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height))
+    const c = document.createElement("canvas")
+    c.width = Math.round(bmp.width * scale)
+    c.height = Math.round(bmp.height * scale)
+    c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height)
+    if (typeof bmp.close === "function") bmp.close()
+
+    const outType =
+      file.type === "image/png"
+        ? "image/png"
+        : file.type === "image/webp"
+          ? "image/webp"
+          : "image/jpeg"
+
+    return await new Promise<Blob>((res) =>
+      c.toBlob((b) => res(b || file), outType, outType === "image/png" ? undefined : 0.84)
+    )
+  } catch {
+    return file
+  }
 }
 
 export default function AdminPage() {
@@ -96,6 +112,7 @@ export default function AdminPage() {
   const [communityPages, setCommunityPages] = useState<CommunityPage[]>([])
 
   const [editId, setEditId] = useState<string | null>(null)
+  const [editHidden, setEditHidden] = useState(false)
   const [title, setTitle] = useState("")
   const [heading, setHeading] = useState("")
   const [body, setBody] = useState("")
@@ -111,8 +128,8 @@ export default function AdminPage() {
 
   const [busy, setBusy] = useState(false)
   const [cats, setCats] = useState<string[]>(CATS)
+  const [categoryRows, setCategoryRows] = useState<CategoryRow[]>([])
   const [linkUrl, setLinkUrl] = useState("")
-  const [, setHomeLimit] = useState("12")
   const [msg, setMsg] = useState("")
 
   const imgs = useImageSection("post")
@@ -126,6 +143,16 @@ export default function AdminPage() {
 
   const isAdmin = me?.role === "admin" && me.approved
 
+  // মডারেটরদের জন্য লুকানো (is_hidden) ও লক করা (is_locked) ক্যাটাগরি ফিল্টার
+  const selectableCats = useMemo(() => {
+    if (isAdmin) return cats
+    if (categoryRows.length === 0) return cats
+    const filtered = categoryRows
+      .filter((r) => !r.is_hidden && (editId || !r.is_locked))
+      .map((r) => r.name)
+    return filtered.length > 0 ? filtered : cats
+  }, [isAdmin, cats, categoryRows, editId])
+
   useEffect(() => {
     if (me) {
       setPName(me.full_name || "")
@@ -136,16 +163,31 @@ export default function AdminPage() {
     }
   }, [me])
 
+  useEffect(() => {
+    if (!editId && selectableCats.length > 0 && !selectableCats.includes(category)) {
+      setCategory(selectableCats[0])
+    }
+  }, [selectableCats, category, editId])
+
   function logout() {
-    try { localStorage.removeItem(TOKEN_KEY) } catch {}
+    try {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem("mbstu_admin_refresh_token")
+    } catch {}
     setToken("")
     setMe(null)
     setMsg("")
   }
 
-  function fail(e: unknown) {
+  async function fail(e: unknown) {
     const m = e instanceof Error ? e.message : "কিছু ভুল হয়েছে"
     if (/jwt|expired|claim|exp/i.test(m)) {
+      const fresh = await refreshSession()
+      if (fresh) {
+        setToken(fresh)
+        setMsg("🔄 সেশন নবায়ন হয়েছে, অনুগ্রহ করে কাজটি আবার করুন")
+        return
+      }
       logout()
       setMsg("সেশন শেষ, আবার লগইন করুন")
       return
@@ -155,16 +197,17 @@ export default function AdminPage() {
 
   async function refresh(t: string, profile: Profile | null) {
     try {
-      const p = await getAllPosts(100)
+      const [p, names, catRows, clubs, pages] = await Promise.all([
+        getAllPosts(100),
+        getCategoryNames(),
+        getCategories(t),
+        getCampusClubs(t),
+        getCommunityPages(),
+      ])
       setPosts(p)
-      const names = await getCategoryNames()
       if (names.length) setCats(names)
-      setHomeLimit(String(await getHomeLimit()))
-      
-      const clubs = await getCampusClubs(t)
+      setCategoryRows(catRows)
       setAvailableClubs(clubs)
-
-      const pages = await getCommunityPages()
       setCommunityPages(pages)
 
       if (profile?.role === "admin" && profile.approved) {
@@ -177,18 +220,26 @@ export default function AdminPage() {
         setWaiting(w)
         setActive(a)
       }
-    } catch (e) { fail(e) }
+    } catch (e) { await fail(e) }
   }
 
   async function loadMe(t: string) {
     try {
-      const p = await getMe(t)
+      let activeTok = t
+      if (isTokenExpired(t)) {
+        const fresh = await refreshSession()
+        if (fresh) {
+          activeTok = fresh
+          setToken(fresh)
+        }
+      }
+      const p = await getMe(activeTok)
       setMe(p)
       if (p) {
         setAuthor((a) => a || p.full_name)
-        await refresh(t, p)
+        await refresh(activeTok, p)
       }
-    } catch (e) { fail(e) }
+    } catch (e) { await fail(e) }
   }
 
   useEffect(() => {
@@ -201,6 +252,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (token) loadMe(token)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
   async function onLogin() {
@@ -208,7 +260,6 @@ export default function AdminPage() {
     setMsg("")
     try {
       const t = await login(email.trim(), password)
-      try { localStorage.setItem(TOKEN_KEY, t) } catch {}
       setToken(t)
       setPassword("")
     } catch (e) {
@@ -241,7 +292,7 @@ export default function AdminPage() {
       setMode("login")
       setPassword("")
       setMsg("✅ নিবন্ধন সম্পন্ন। অ্যাডমিন অনুমোদন দিলে লগইন করুন।")
-    } catch (e) { fail(e) }
+    } catch (e) { await fail(e) }
     setBusy(false)
   }
 
@@ -263,7 +314,7 @@ export default function AdminPage() {
       setPFile(null)
       setMsg("✅ প্রোফাইল সেভ হয়েছে")
       await loadMe(token)
-    } catch (e) { fail(e) }
+    } catch (e) { await fail(e) }
     setBusy(false)
   }
 
@@ -302,7 +353,6 @@ export default function AdminPage() {
     setMediaItems(mediaItems.filter((_, i) => i !== index))
   }
 
-  // ✅ একসাথে একাধিক ফাইল সিলেক্ট ও ব্যাচ আপলোড ফাংশন
   async function batchUploadMediaFiles(files: File[]) {
     if (files.length === 0) return
     setBusy(true)
@@ -359,8 +409,9 @@ export default function AdminPage() {
   function resetForm() {
     setLinkUrl("")
     setMediaItems([])
-    setEditId(null); setTitle(""); setHeading(""); setBody("")
-    setCategory(CATS[0]); setSelectedClubId(""); setSelectedPageId(""); setAuthor(me?.full_name || ""); setOldImage(null)
+    setEditId(null); setEditHidden(false); setTitle(""); setHeading(""); setBody("")
+    setCategory(selectableCats[0] || CATS[0]); setSelectedClubId(""); setSelectedPageId("")
+    setAuthor(me?.full_name || ""); setOldImage(null)
     setOldVideo(null); setVideoFile(null)
     imgs.reset()
   }
@@ -389,7 +440,7 @@ export default function AdminPage() {
       const validMedia = mediaItems.filter((m) => m.url.trim() || m.title.trim() || m.description.trim())
       const finalEmbedMedia = validMedia.length > 0 ? JSON.stringify(validMedia) : null
 
-      const data: any = {
+      const data = {
         title: title.trim(),
         heading: heading.trim() || null,
         body: body.trim(),
@@ -401,7 +452,7 @@ export default function AdminPage() {
         video_url: vurl,
         link_url: linkUrl.trim() || null,
         embed_media_url: finalEmbedMedia,
-        hidden: false,
+        hidden: editId ? editHidden : false,
       }
 
       let postId = editId
@@ -420,24 +471,25 @@ export default function AdminPage() {
       resetForm()
       setMsg("✅ প্রকাশিত হয়েছে" + imgWarn)
       await refresh(token, me)
-    } catch (e) { fail(e) }
+    } catch (e) { await fail(e) }
     setBusy(false)
   }
 
   async function startEdit(p: Post) {
     setEditId(p.id)
+    setEditHidden(Boolean(p.hidden))
     setTitle(p.title)
     setHeading(p.heading || "")
     setBody(p.body || "")
     setCategory(p.category || CATS[0])
-    setSelectedClubId((p as any).club_id || "")
-    setSelectedPageId((p as any).page_id || "")
+    setSelectedClubId(p.club_id || "")
+    setSelectedPageId(p.page_id || "")
     setAuthor(p.author || "")
     setOldImage(p.image_url)
     setOldVideo(p.video_url || null)
     setLinkUrl(p.link_url || "")
-    
-    const rawMedia = (p as any).embed_media_url || ""
+
+    const rawMedia = p.embed_media_url || ""
     if (rawMedia.trim().startsWith("[") || rawMedia.trim().startsWith("{")) {
       try {
         const parsed = JSON.parse(rawMedia)
@@ -460,7 +512,7 @@ export default function AdminPage() {
 
   async function act(fn: () => Promise<void>, ask?: string) {
     if (ask && !confirm(ask)) return
-    try { await fn(); await refresh(token, me) } catch (e) { fail(e) }
+    try { await fn(); await refresh(token, me) } catch (e) { await fail(e) }
   }
 
   if (!ready) return null
@@ -586,9 +638,11 @@ export default function AdminPage() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
+  const dropdownCats = selectableCats.includes(category) ? selectableCats : [...selectableCats, category]
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col lg:flex-row text-slate-800">
-      
+
       <header className="lg:hidden sticky top-0 z-40 bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 shadow-md">
         <div className="flex items-center gap-2.5">
           <button
@@ -724,12 +778,12 @@ export default function AdminPage() {
               <input className={inp} placeholder="শিরোনাম (টাইটেল) *" value={title} onChange={(e) => setTitle(e.target.value)} />
               <input className={inp} placeholder="হেডিং (উপশিরোনাম - ঐচ্ছিক)" value={heading} onChange={(e) => setHeading(e.target.value)} />
               <textarea className={inp} rows={5} placeholder="ক্যাপশন / সংবাদের বিস্তারিত লেখা *" value={body} onChange={(e) => setBody(e.target.value)} />
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <label className="text-xs font-semibold text-slate-600 block mb-1">ক্যাটাগরি নির্বাচন করুন:</label>
                   <select className={inp} value={category} onChange={(e) => setCategory(e.target.value)}>
-                    {(cats.includes(category) ? cats : [...cats, category]).map((c) => <option key={c}>{c}</option>)}
+                    {dropdownCats.map((c) => <option key={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
@@ -762,11 +816,10 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* ✅ একাধিক ফাইল একসাথে যোগ ও থাম্বনেইল প্রিভিউ সহ মিডিয়া সংযুক্তি সেকশন */}
               <div className="space-y-3 rounded-2xl border-2 border-emerald-200 bg-emerald-50/40 p-3.5">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200 pb-2">
                   <p className="text-xs font-bold text-emerald-950">🎥 সংবাদে মিডিয়া সংযুক্তি (ছবি, ভিডিও বা লিংক):</p>
-                  
+
                   <div className="flex items-center gap-2">
                     <label className="text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl px-3 py-1.5 shadow flex items-center gap-1.5 cursor-pointer">
                       <Upload className="size-3.5" />
@@ -808,7 +861,6 @@ export default function AdminPage() {
                       </button>
                     </div>
 
-                    {/* ✅ লাইভ থাম্বনেইল / ছোট প্রিভিউ বক্স */}
                     {m.url && (
                       <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-200">
                         {m.url.includes("youtube.com") || m.url.includes("youtu.be") ? (
