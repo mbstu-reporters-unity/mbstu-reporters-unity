@@ -51,7 +51,6 @@ function Fig({
   )
 }
 
-// ✅ ফেসবুক/ইনস্টাগ্রাম স্টাইল পিওর ব্ল্যাক ফুলস্ক্রিন লাইটবক্স
 function Lightbox({
   list, index, onClose, onIndex,
 }: {
@@ -96,7 +95,6 @@ function Lightbox({
         if (Math.abs(dx) > 40) (dx > 0 ? prev : next)()
       }}
     >
-      {/* ফেসবুক স্টাইল টপ বার: ছবি সংখ্যা ও ক্লোজ বাটন */}
       <div
         className="flex items-center justify-between p-4 z-20 bg-gradient-to-b from-black/80 to-transparent"
         onClick={(e) => e.stopPropagation()}
@@ -115,7 +113,6 @@ function Lightbox({
         </button>
       </div>
 
-      {/* মাঝখানে মূল ছবি (ফুল-উইডথ রেসপনসিভ) */}
       <div className="relative flex min-h-0 flex-1 items-center justify-center p-2 sm:p-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -148,7 +145,6 @@ function Lightbox({
         )}
       </div>
 
-      {/* ক্যাপশন এরিয়া */}
       {(item.caption || item.credit) && (
         <div
           className="p-4 text-center z-20 bg-gradient-to-t from-black/90 via-black/60 to-transparent"
@@ -239,13 +235,14 @@ export default function RichGallery({
       </div>
     )
   } else {
+    // ✅ সমাধান: ৩টি ছবি থাকলে ১ম ছবিটি ওপরে বড় (col-span-2) থাকবে, আর বাকি ২টি নিচে পাশাপাশি বসবে
     body = (
       <div className="grid grid-cols-2 gap-2">
         {list.map((_, i) =>
           fig(
             i,
-            list.length % 2 === 1 && i === list.length - 1 ? "col-span-2" : "",
-            list.length % 2 === 1 && i === list.length - 1
+            list.length % 2 === 1 && i === 0 ? "col-span-2" : "",
+            list.length % 2 === 1 && i === 0
               ? "aspect-[16/9] w-full rounded-xl object-cover"
               : "aspect-[4/3] w-full rounded-xl object-cover"
           )
@@ -257,7 +254,6 @@ export default function RichGallery({
   return (
     <>
       {body}
-      {/* ✅ createPortal ব্যবহারের কারণে লাইটবক্স সরাসরি <body>-তে মাউন্ট হবে এবং কোনো হেডার/ফুটার উঁকি দিতে পারবে না */}
       {open !== null && mounted && createPortal(
         <Lightbox list={list} index={open} onClose={() => setOpen(null)} onIndex={setOpen} />,
         document.body
