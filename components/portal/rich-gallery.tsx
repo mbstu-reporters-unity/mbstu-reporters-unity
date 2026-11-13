@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import { X, ChevronLeft, ChevronRight } from "lucide-react"
+import { X, ChevronLeft, ChevronRight, Camera } from "lucide-react"
 
 export const LAYOUTS = [
   { key: "grid", bn: "গ্রিড" },
@@ -13,6 +13,9 @@ export const LAYOUTS = [
   { key: "slider", bn: "স্লাইডার" },
   { key: "strip", bn: "ফিল্মস্ট্রিপ" },
   { key: "side", bn: "বাম বড়, ডানে ছোট" },
+  { key: "fb-classic", bn: "ফেসবুক ক্লাসিক" },
+  { key: "fb-columns", bn: "ফেসবুক কলাম" },
+  { key: "fb-frame", bn: "ফেসবুক ফ্রেম" },
 ] as const
 
 export type GalleryItem = {
@@ -21,15 +24,40 @@ export type GalleryItem = {
   credit?: string | null
 }
 
-const bnDigits = (n: number | string) => String(n).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[Number(d)])
+const DEFAULT_FRAME_COLOR = "#c48b45"
+
+export function parseLayoutValue(raw?: string | null): {
+  base: string
+  frameColor: string
+} {
+  if (!raw || typeof raw !== "string") {
+    return { base: "grid", frameColor: DEFAULT_FRAME_COLOR }
+  }
+  if (raw.startsWith("fb-frame:")) {
+    const color = raw.slice("fb-frame:".length).trim()
+    return {
+      base: "fb-frame",
+      frameColor: /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : DEFAULT_FRAME_COLOR,
+    }
+  }
+  return { base: raw, frameColor: DEFAULT_FRAME_COLOR }
+}
+
+const bnDigits = (n: number | string) =>
+  String(n).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[Number(d)])
 
 function Fig({
-  item, cls, imgCls, onOpen,
+  item,
+  cls,
+  imgCls,
+  onOpen,
+  hideMeta = false,
 }: {
   item: GalleryItem
   cls: string
   imgCls: string
   onOpen: () => void
+  hideMeta?: boolean
 }) {
   return (
     <figure className={cls}>
@@ -41,18 +69,59 @@ function Fig({
         onClick={onOpen}
         loading="lazy"
       />
-      {(item.caption || item.credit) && (
+      {!hideMeta && (item.caption || item.credit) && (
         <figcaption className="mt-1 text-xs sm:text-sm text-cyan-100">
           {item.caption && <span className="block">{item.caption}</span>}
-          {item.credit && <span className="block text-[11px] text-white/60">📷 ছবি: {item.credit}</span>}
+          {item.credit && (
+            <span className="block text-[11px] text-white/60">📷 ছবি: {item.credit}</span>
+          )}
         </figcaption>
       )}
     </figure>
   )
 }
 
+function FbTile({
+  item,
+  extraCount = 0,
+  className = "",
+  imgClassName = "",
+  onOpen,
+}: {
+  item: GalleryItem
+  extraCount?: number
+  className?: string
+  imgClassName?: string
+  onOpen: () => void
+}) {
+  return (
+    <div
+      onClick={onOpen}
+      className={`relative overflow-hidden cursor-zoom-in bg-black/30 group ${className}`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={item.url}
+        alt={item.caption || ""}
+        loading="lazy"
+        className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03] ${imgClassName}`}
+      />
+      {extraCount > 0 && (
+        <div className="absolute inset-0 bg-black/55 backdrop-blur-[1px] flex items-center justify-center">
+          <span className="text-white font-bold text-2xl sm:text-3xl tracking-tight drop-shadow-md">
+            +{extraCount}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Lightbox({
-  list, index, onClose, onIndex,
+  list,
+  index,
+  onClose,
+  onIndex,
 }: {
   list: GalleryItem[]
   index: number
@@ -87,7 +156,9 @@ function Lightbox({
     <div
       className="fixed inset-0 z-[999999] flex flex-col justify-between bg-black text-white select-none animate-in fade-in duration-200"
       onClick={onClose}
-      onTouchStart={(e) => { startX.current = e.touches[0].clientX }}
+      onTouchStart={(e) => {
+        startX.current = e.touches[0].clientX
+      }}
       onTouchEnd={(e) => {
         if (startX.current === null || !many) return
         const dx = e.changedTouches[0].clientX - startX.current
@@ -127,7 +198,10 @@ function Lightbox({
           <>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); prev() }}
+              onClick={(e) => {
+                e.stopPropagation()
+                prev()
+              }}
               className="absolute left-3 top-1/2 -translate-y-1/2 flex size-10 sm:size-12 items-center justify-center rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 transition cursor-pointer active:scale-95"
               aria-label="আগের ছবি"
             >
@@ -135,7 +209,10 @@ function Lightbox({
             </button>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); next() }}
+              onClick={(e) => {
+                e.stopPropagation()
+                next()
+              }}
               className="absolute right-3 top-1/2 -translate-y-1/2 flex size-10 sm:size-12 items-center justify-center rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 transition cursor-pointer active:scale-95"
               aria-label="পরের ছবি"
             >
@@ -161,9 +238,11 @@ function Lightbox({
 export default function RichGallery({
   items,
   layout = "grid",
+  compact = false,
 }: {
   items: GalleryItem[]
   layout?: string
+  compact?: boolean
 }) {
   const list = items.filter((i) => i.url)
   const [open, setOpen] = useState<number | null>(null)
@@ -175,15 +254,151 @@ export default function RichGallery({
 
   if (list.length === 0) return null
 
+  const { base: activeLayout, frameColor } = parseLayoutValue(layout)
+  const isFbLayout =
+    activeLayout === "fb-classic" || activeLayout === "fb-columns" || activeLayout === "fb-frame"
+
   const fig = (i: number, cls: string, imgCls: string) => (
-    <Fig key={list[i].url + i} item={list[i]} cls={cls} imgCls={imgCls} onOpen={() => setOpen(i)} />
+    <Fig
+      key={list[i].url + i}
+      item={list[i]}
+      cls={cls}
+      imgCls={imgCls}
+      onOpen={() => setOpen(i)}
+      hideMeta={compact}
+    />
   )
 
   let body: React.ReactNode
 
-  if (list.length === 1) {
+  /* ==================== ফেসবুক স্টাইল ১: Classic ==================== */
+  if (activeLayout === "fb-classic") {
+    if (list.length === 1) {
+      body = fig(0, "", "w-full max-h-[540px] rounded-2xl object-cover")
+    } else if (list.length === 2) {
+      body = (
+        <div className="grid grid-cols-2 gap-1 rounded-2xl overflow-hidden">
+          <FbTile item={list[0]} className="aspect-[4/5] sm:aspect-square" onOpen={() => setOpen(0)} />
+          <FbTile item={list[1]} className="aspect-[4/5] sm:aspect-square" onOpen={() => setOpen(1)} />
+        </div>
+      )
+    } else if (list.length === 3) {
+      body = (
+        <div className="grid grid-cols-2 gap-1 rounded-2xl overflow-hidden">
+          <FbTile item={list[0]} className="col-span-2 aspect-[16/10]" onOpen={() => setOpen(0)} />
+          <FbTile item={list[1]} className="aspect-square" onOpen={() => setOpen(1)} />
+          <FbTile item={list[2]} className="aspect-square" onOpen={() => setOpen(2)} />
+        </div>
+      )
+    } else if (list.length === 4) {
+      body = (
+        <div className="grid grid-cols-2 gap-1 rounded-2xl overflow-hidden">
+          {[0, 1, 2, 3].map((i) => (
+            <FbTile key={i} item={list[i]} className="aspect-square" onOpen={() => setOpen(i)} />
+          ))}
+        </div>
+      )
+    } else {
+      body = (
+        <div className="space-y-1 rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-2 gap-1">
+            <FbTile item={list[0]} className="aspect-[4/3]" onOpen={() => setOpen(0)} />
+            <FbTile item={list[1]} className="aspect-[4/3]" onOpen={() => setOpen(1)} />
+          </div>
+          <div className="grid grid-cols-3 gap-1">
+            <FbTile item={list[2]} className="aspect-square" onOpen={() => setOpen(2)} />
+            <FbTile item={list[3]} className="aspect-square" onOpen={() => setOpen(3)} />
+            <FbTile
+              item={list[4]}
+              extraCount={list.length - 5}
+              className="aspect-square"
+              onOpen={() => setOpen(4)}
+            />
+          </div>
+        </div>
+      )
+    }
+  } else if (activeLayout === "fb-columns") {
+    /* ==================== ফেসবুক স্টাইল ২: Columns ==================== */
+    if (list.length === 1) {
+      body = fig(0, "", "w-full max-h-[540px] rounded-2xl object-cover")
+    } else {
+      const shown = list.slice(0, 4)
+      const colsCls =
+        shown.length === 2 ? "grid-cols-2" : shown.length === 3 ? "grid-cols-3" : "grid-cols-4"
+      const aspectCls =
+        shown.length === 2
+          ? "aspect-[2/3] sm:aspect-[3/4]"
+          : shown.length === 3
+            ? "aspect-[9/16] sm:aspect-[3/4]"
+            : "aspect-[9/16] sm:aspect-[2/3]"
+
+      body = (
+        <div className={`grid ${colsCls} gap-1.5 rounded-2xl overflow-hidden`}>
+          {shown.map((item, i) => (
+            <FbTile
+              key={i}
+              item={item}
+              extraCount={i === 3 ? list.length - 4 : 0}
+              className={`${aspectCls} rounded-xl`}
+              onOpen={() => setOpen(i)}
+            />
+          ))}
+        </div>
+      )
+    }
+  } else if (activeLayout === "fb-frame") {
+    /* ==================== ফেসবুক স্টাইল ৩: Frame ==================== */
+    body = (
+      <div className="rounded-2xl p-2.5 sm:p-3.5 shadow-inner" style={{ backgroundColor: frameColor }}>
+        {list.length === 1 && (
+          <FbTile item={list[0]} className="rounded-xl max-h-[480px]" onOpen={() => setOpen(0)} />
+        )}
+        {list.length === 2 && (
+          <div className="grid grid-cols-2 gap-2">
+            <FbTile item={list[0]} className="aspect-[3/4] rounded-xl" onOpen={() => setOpen(0)} />
+            <FbTile item={list[1]} className="aspect-[3/4] rounded-xl" onOpen={() => setOpen(1)} />
+          </div>
+        )}
+        {list.length === 3 && (
+          <div className="grid grid-cols-2 gap-2 h-[280px] sm:h-[360px]">
+            <FbTile item={list[0]} className="h-full rounded-xl" onOpen={() => setOpen(0)} />
+            <div className="grid grid-rows-2 gap-2 h-full">
+              <FbTile item={list[1]} className="h-full rounded-xl" onOpen={() => setOpen(1)} />
+              <FbTile item={list[2]} className="h-full rounded-xl" onOpen={() => setOpen(2)} />
+            </div>
+          </div>
+        )}
+        {list.length === 4 && (
+          <div className="grid grid-cols-2 gap-2">
+            {[0, 1, 2, 3].map((i) => (
+              <FbTile key={i} item={list[i]} className="aspect-square rounded-xl" onOpen={() => setOpen(i)} />
+            ))}
+          </div>
+        )}
+        {list.length >= 5 && (
+          <div className="grid grid-cols-2 gap-2 h-[310px] sm:h-[420px]">
+            <div className="grid grid-rows-2 gap-2 h-full">
+              <FbTile item={list[0]} className="h-full rounded-xl" onOpen={() => setOpen(0)} />
+              <FbTile item={list[1]} className="h-full rounded-xl" onOpen={() => setOpen(1)} />
+            </div>
+            <div className="grid grid-rows-3 gap-2 h-full">
+              <FbTile item={list[2]} className="h-full rounded-xl" onOpen={() => setOpen(2)} />
+              <FbTile item={list[3]} className="h-full rounded-xl" onOpen={() => setOpen(3)} />
+              <FbTile
+                item={list[4]}
+                extraCount={list.length - 5}
+                className="h-full rounded-xl"
+                onOpen={() => setOpen(4)}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  } else if (list.length === 1) {
     body = fig(0, "", "w-full rounded-2xl object-cover")
-  } else if (layout === "hero") {
+  } else if (activeLayout === "hero") {
     body = (
       <div className="space-y-2">
         {fig(0, "", "w-full rounded-2xl object-cover")}
@@ -192,50 +407,51 @@ export default function RichGallery({
         </div>
       </div>
     )
-  } else if (layout === "mosaic") {
+  } else if (activeLayout === "mosaic") {
     body = (
       <div className="columns-2 gap-2">
         {list.map((_, i) => fig(i, "mb-2 break-inside-avoid", "w-full rounded-xl object-cover"))}
       </div>
     )
-  } else if (layout === "columns") {
+  } else if (activeLayout === "columns") {
     body = (
       <div className="grid grid-cols-3 gap-2">
         {list.map((_, i) => fig(i, "", "aspect-square w-full rounded-xl object-cover"))}
       </div>
     )
-  } else if (layout === "stack") {
+  } else if (activeLayout === "stack") {
     body = (
       <div className="space-y-3">
         {list.map((_, i) => fig(i, "", "w-full rounded-2xl object-cover"))}
       </div>
     )
-  } else if (layout === "slider") {
+  } else if (activeLayout === "slider") {
     body = (
       <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-2 scrollbar-none">
         {list.map((_, i) => fig(i, "w-[88%] shrink-0 snap-center", "w-full rounded-2xl object-cover"))}
       </div>
     )
-  } else if (layout === "strip") {
+  } else if (activeLayout === "strip") {
     body = (
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
         {list.map((_, i) => fig(i, "w-48 shrink-0", "h-36 w-full rounded-xl object-cover"))}
       </div>
     )
-  } else if (layout === "side") {
+  } else if (activeLayout === "side") {
     body = (
       <div className="grid grid-cols-3 gap-2">
         {list.map((_, i) =>
           fig(
             i,
             i === 0 ? "col-span-2 row-span-2" : "",
-            i === 0 ? "h-full w-full rounded-2xl object-cover" : "aspect-square w-full rounded-xl object-cover"
+            i === 0
+              ? "h-full w-full rounded-2xl object-cover"
+              : "aspect-square w-full rounded-xl object-cover"
           )
         )}
       </div>
     )
   } else {
-    // ✅ সমাধান: ৩টি ছবি থাকলে ১ম ছবিটি ওপরে বড় (col-span-2) থাকবে, আর বাকি ২টি নিচে পাশাপাশি বসবে
     body = (
       <div className="grid grid-cols-2 gap-2">
         {list.map((_, i) =>
@@ -251,13 +467,43 @@ export default function RichGallery({
     )
   }
 
+  const captionedItems =
+    !compact && isFbLayout && list.length > 1
+      ? list
+          .map((item, idx) => ({ ...item, idx }))
+          .filter((item) => item.caption || item.credit)
+      : []
+
   return (
     <>
-      {body}
-      {open !== null && mounted && createPortal(
-        <Lightbox list={list} index={open} onClose={() => setOpen(null)} onIndex={setOpen} />,
-        document.body
-      )}
+      <div className="space-y-2">
+        {body}
+        {captionedItems.length > 0 && (
+          <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 space-y-1 text-xs text-slate-200">
+            {captionedItems.map((c) => (
+              <button
+                key={c.idx}
+                type="button"
+                onClick={() => setOpen(c.idx)}
+                className="flex items-start gap-1.5 text-left w-full hover:text-cyan-300 transition cursor-pointer"
+              >
+                <Camera className="size-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                <span>
+                  <b className="text-cyan-300">ছবি {bnDigits(c.idx + 1)}:</b> {c.caption}
+                  {c.credit ? ` (📷 ${c.credit})` : ""}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {open !== null &&
+        mounted &&
+        createPortal(
+          <Lightbox list={list} index={open} onClose={() => setOpen(null)} onIndex={setOpen} />,
+          document.body
+        )}
     </>
   )
 }
