@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
-  login, signUp, getMe, getAllPosts, setPostHidden, getCategoryNames, getCategories,
+  login, signUp, getMe, getAllPosts, setPostHidden, setPostAuthorAvatarVisible, getCategoryNames, getCategories,
   updatePost, deletePost, uploadImage, uploadVideo,
   getPendingComments, approveComment, deleteComment,
   getReporters, approveReporter, removeReporter,
@@ -33,7 +33,8 @@ import FbPostComposer from "../../components/admin/fb-post-composer"
 import {
   Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
-  Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2
+  Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2,
+  Camera, Eye, EyeOff
 } from "lucide-react"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -122,6 +123,11 @@ export default function AdminPage() {
   const [selectedClubId, setSelectedClubId] = useState("")
   const [selectedPageId, setSelectedPageId] = useState("")
   const [author, setAuthor] = useState("")
+  const [authorAvatar, setAuthorAvatar] = useState<string | null>(null)
+  const [authorAvatarFile, setAuthorAvatarFile] = useState<File | null>(null)
+  const [authorAvatarPreview, setAuthorAvatarPreview] = useState<string | null>(null)
+  const [showAuthorAvatar, setShowAuthorAvatar] = useState(true)
+  const authorAvatarInitRef = useRef(false)
   const [oldImage, setOldImage] = useState<string | null>(null)
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [oldVideo, setOldVideo] = useState<string | null>(null)
@@ -174,11 +180,31 @@ export default function AdminPage() {
     }
   }, [selectableCats, category, editId])
 
+  useEffect(() => {
+    return () => {
+      if (authorAvatarPreview) URL.revokeObjectURL(authorAvatarPreview)
+    }
+  }, [authorAvatarPreview])
+
+  function pickAuthorAvatarFile(f: File | null) {
+    if (f) {
+      setAuthorAvatarFile(f)
+      setAuthorAvatarPreview(URL.createObjectURL(f))
+    } else {
+      setAuthorAvatarFile(null)
+      setAuthorAvatarPreview(null)
+    }
+  }
+
   function logout() {
     try {
       localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem("mbstu_admin_refresh_token")
     } catch {}
+    authorAvatarInitRef.current = false
+    setAuthorAvatar(null)
+    pickAuthorAvatarFile(null)
+    setShowAuthorAvatar(true)
     setToken("")
     setMe(null)
     setMsg("")
@@ -242,6 +268,10 @@ export default function AdminPage() {
       setMe(p)
       if (p) {
         setAuthor((a) => a || p.full_name)
+        if (!authorAvatarInitRef.current && !editId) {
+          authorAvatarInitRef.current = true
+          setAuthorAvatar(p.avatar_url || null)
+        }
         await refresh(activeTok, p)
       }
     } catch (e) { await fail(e) }
@@ -416,7 +446,8 @@ export default function AdminPage() {
     setMediaItems([])
     setEditId(null); setEditHidden(false); setTitle(""); setHeading(""); setBody("")
     setCategory(selectableCats[0] || CATS[0]); setSelectedClubId(""); setSelectedPageId("")
-    setAuthor(me?.full_name || ""); setOldImage(null)
+    setAuthor(me?.full_name || ""); setAuthorAvatar(me?.avatar_url || null)
+    pickAuthorAvatarFile(null); setShowAuthorAvatar(true); setOldImage(null)
     setOldVideo(null); setVideoFile(null)
     imgs.reset()
   }
@@ -431,6 +462,12 @@ export default function AdminPage() {
     setMsg("")
     try {
       const up = await imgs.uploadNew(token, shrink, (i, n) => setMsg(`ছবি আপলোড হচ্ছে (${i}/${n})...`))
+
+      let finalAuthorAvatar = authorAvatar
+      if (authorAvatarFile) {
+        setMsg("প্রতিবেদকের ছবি আপলোড হচ্ছে...")
+        finalAuthorAvatar = await uploadImage(token, await shrink(authorAvatarFile))
+      }
 
       let vurl = oldVideo
       if (videoFile) {
@@ -453,6 +490,8 @@ export default function AdminPage() {
         club_id: finalClubId,
         page_id: selectedPageId || null,
         author: author.trim() || me?.full_name || null,
+        author_avatar: finalAuthorAvatar || null,
+        show_author_avatar: showAuthorAvatar,
         image_url: cover,
         video_url: vurl,
         link_url: linkUrl.trim() || null,
@@ -490,6 +529,9 @@ export default function AdminPage() {
     setSelectedClubId(p.club_id || "")
     setSelectedPageId(p.page_id || "")
     setAuthor(p.author || "")
+    setAuthorAvatar(p.author_avatar || null)
+    pickAuthorAvatarFile(null)
+    setShowAuthorAvatar(p.show_author_avatar !== false)
     setOldImage(p.image_url)
     setOldVideo(p.video_url || null)
     setLinkUrl(p.link_url || "")
@@ -796,6 +838,7 @@ export default function AdminPage() {
                 isAdmin={!!isAdmin}
                 authorName={me.full_name}
                 authorAvatar={me.avatar_url}
+                reporters={active}
                 shrink={shrink}
                 categories={dropdownCats}
                 clubs={availableClubs}
@@ -839,6 +882,123 @@ export default function AdminPage() {
                   <label className="text-xs font-semibold text-slate-600 block mb-1">প্রতিবেদকের নাম:</label>
                   <input className={inp} placeholder="প্রতিবেদকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
                 </div>
+              </div>
+
+              {/* প্রতিবেদকের ছবি: যোগ, এডিট, হাইড, ভিজিবল ও বিয়োগ */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Camera className="size-4 text-emerald-700" />
+                    <span>প্রতিবেদকের ছবি (যোগ / এডিট / হাইড / বিয়োগ):</span>
+                  </span>
+
+                  {(authorAvatarPreview || authorAvatar) && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAuthorAvatar((v) => !v)}
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold cursor-pointer border transition ${
+                        showAuthorAvatar
+                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                          : "bg-amber-100 text-amber-800 border-amber-300"
+                      }`}
+                    >
+                      {showAuthorAvatar ? <Eye className="size-3" /> : <EyeOff className="size-3" />}
+                      <span>{showAuthorAvatar ? "ভিজিবল আছে (হাইড করুন)" : "হাইড করা (দেখান)"}</span>
+                    </button>
+                  )}
+                </div>
+
+                {isAdmin && active.length > 0 && (
+                  <select
+                    className={smallInp}
+                    value=""
+                    onChange={(e) => {
+                      const chosen = active.find((r) => r.id === e.target.value)
+                      if (chosen) {
+                        setAuthor(chosen.full_name)
+                        setAuthorAvatar(chosen.avatar_url || null)
+                        pickAuthorAvatarFile(null)
+                      }
+                    }}
+                  >
+                    <option value="">— নিবন্ধিত সাংবাদিক থেকে নাম ও ছবি বাছাই করুন (ঐচ্ছিক) —</option>
+                    {active.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.full_name} {r.avatar_url ? "📷" : ""}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                <div className="flex flex-wrap items-center gap-3">
+                  {(authorAvatarPreview || authorAvatar) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={authorAvatarPreview || authorAvatar || ""}
+                      alt="Reporter"
+                      className={`size-14 rounded-full object-cover object-top border-2 border-emerald-600 bg-white shrink-0 ${
+                        !showAuthorAvatar ? "opacity-40 grayscale" : ""
+                      }`}
+                    />
+                  ) : (
+                    <div className="size-14 rounded-full bg-slate-200 text-slate-600 font-bold text-lg flex items-center justify-center shrink-0">
+                      {(author || me.full_name || "প").charAt(0)}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2 flex-1 min-w-0">
+                    <label className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 text-xs font-bold cursor-pointer shadow-xs">
+                      <Upload className="size-3.5" />
+                      <span>{(authorAvatarPreview || authorAvatar) ? "ছবি এডিট / বদলান" : "ছবি যোগ করুন"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] || null
+                          if (f) pickAuthorAvatarFile(f)
+                          e.target.value = ""
+                        }}
+                      />
+                    </label>
+
+                    {me.avatar_url && (authorAvatar !== me.avatar_url || authorAvatarFile) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          pickAuthorAvatarFile(null)
+                          setAuthorAvatar(me.avatar_url || null)
+                        }}
+                        className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 px-2.5 py-1.5 text-xs font-semibold cursor-pointer"
+                      >
+                        <User className="size-3.5" />
+                        <span>আমার প্রোফাইল ছবি</span>
+                      </button>
+                    )}
+
+                    {(authorAvatarPreview || authorAvatar) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          pickAuthorAvatarFile(null)
+                          setAuthorAvatar(null)
+                        }}
+                        className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 px-2.5 py-1.5 text-xs font-bold cursor-pointer"
+                      >
+                        <Trash2 className="size-3.5" />
+                        <span>ছবি বিয়োগ / সরান</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <input
+                  className={smallInp}
+                  placeholder="অথবা প্রতিবেদকের ছবির সরাসরি লিংক দিন (https://... ঐচ্ছিক)"
+                  value={authorAvatarFile ? "" : authorAvatar || ""}
+                  disabled={!!authorAvatarFile}
+                  onChange={(e) => setAuthorAvatar(e.target.value.trim() || null)}
+                />
               </div>
 
               <div className="space-y-1 rounded-xl border border-blue-200 bg-blue-50/60 p-3">
@@ -985,9 +1145,21 @@ export default function AdminPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-slate-800 truncate">{p.hidden ? "🙈 " : ""}{p.title}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {p.author} · {new Date(p.created_at).toLocaleDateString("bn-BD")} · <span className="text-emerald-700 font-semibold">{p.category}</span>
-                    </p>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
+                      {p.author_avatar && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.author_avatar}
+                          alt=""
+                          className={`size-5 rounded-full object-cover object-top border shrink-0 ${
+                            p.show_author_avatar === false ? "opacity-40 grayscale" : ""
+                          }`}
+                        />
+                      )}
+                      <span className="truncate">
+                        {p.author}{p.author_avatar && p.show_author_avatar === false ? " (ছবি লুকানো)" : ""} · {new Date(p.created_at).toLocaleDateString("bn-BD")} · <span className="text-emerald-700 font-semibold">{p.category}</span>
+                      </span>
+                    </div>
                     {canManage(p) && (
                       <div className="flex flex-wrap gap-4 mt-2 text-xs font-bold">
                         <button onClick={() => startEdit(p)} className="text-emerald-700 hover:underline">এডিট</button>
@@ -1003,6 +1175,14 @@ export default function AdminPage() {
                         <button onClick={() => act(() => setPostHidden(token, p.id, !p.hidden))} className="text-amber-600 hover:underline">
                           {p.hidden ? "দেখান" : "হাইড"}
                         </button>
+                        {p.author_avatar && (
+                          <button
+                            onClick={() => act(() => setPostAuthorAvatarVisible(token, p.id, p.show_author_avatar === false))}
+                            className="text-cyan-700 hover:underline"
+                          >
+                            {p.show_author_avatar === false ? "প্রতিবেদকের ছবি দেখান" : "প্রতিবেদকের ছবি হাইড"}
+                          </button>
+                        )}
                         <button
                           onClick={() => act(async () => {
                             try { await removeAllImages(token, "post", p.id) } catch {}
