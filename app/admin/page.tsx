@@ -29,6 +29,7 @@ import AdministrationManager from "./administration-manager"
 import CommunityPageManager from "./community-page-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
+import FbPostComposer from "../../components/admin/fb-post-composer"
 import {
   Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
@@ -132,6 +133,10 @@ export default function AdminPage() {
   const [categoryRows, setCategoryRows] = useState<CategoryRow[]>([])
   const [linkUrl, setLinkUrl] = useState("")
   const [msg, setMsg] = useState("")
+
+  // ফেসবুক-স্টাইল পোস্ট মোড স্টেট
+  const [fbPostMode, setFbPostMode] = useState(false)
+  const [fbEditPost, setFbEditPost] = useState<Post | null>(null)
 
   const imgs = useImageSection("post")
 
@@ -762,6 +767,50 @@ export default function AdminPage() {
 
         {tab === "posts" && (
           <div className="space-y-4">
+            {/* পোস্ট করার মোড সুইচার */}
+            <div className="flex bg-white rounded-2xl p-1.5 shadow-xs border border-slate-200 gap-1.5 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => { setFbPostMode(false); setFbEditPost(null) }}
+                className={`flex-1 py-2.5 rounded-xl transition cursor-pointer ${
+                  !fbPostMode ? "bg-emerald-700 text-white shadow" : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                📝 ক্লাসিক ফর্ম (বর্তমান)
+              </button>
+              <button
+                type="button"
+                onClick={() => { setFbEditPost(null); setFbPostMode(true) }}
+                className={`flex-1 py-2.5 rounded-xl transition cursor-pointer ${
+                  fbPostMode ? "bg-blue-600 text-white shadow" : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                📱 ফেসবুক স্টাইল পোস্ট (নতুন)
+              </button>
+            </div>
+
+            {fbPostMode && (
+              <FbPostComposer
+                mode="post"
+                token={token}
+                isAdmin={!!isAdmin}
+                authorName={me.full_name}
+                authorAvatar={me.avatar_url}
+                shrink={shrink}
+                categories={dropdownCats}
+                clubs={availableClubs}
+                communityPages={communityPages}
+                editItem={fbEditPost}
+                onCancel={() => { setFbPostMode(false); setFbEditPost(null) }}
+                onSuccess={async (m) => {
+                  setFbPostMode(false)
+                  setFbEditPost(null)
+                  setMsg(m)
+                  await refresh(token, me)
+                }}
+              />
+            )}
+
             <div className="bg-white rounded-2xl shadow p-4 sm:p-5 space-y-3.5 border border-slate-200">
               <div className="border-b pb-2 flex items-center justify-between">
                 <h2 className="font-bold text-base text-slate-800 flex items-center gap-2">
@@ -940,8 +989,17 @@ export default function AdminPage() {
                       {p.author} · {new Date(p.created_at).toLocaleDateString("bn-BD")} · <span className="text-emerald-700 font-semibold">{p.category}</span>
                     </p>
                     {canManage(p) && (
-                      <div className="flex gap-4 mt-2 text-xs font-bold">
+                      <div className="flex flex-wrap gap-4 mt-2 text-xs font-bold">
                         <button onClick={() => startEdit(p)} className="text-emerald-700 hover:underline">এডিট</button>
+                        <button
+                          onClick={() => {
+                            setFbEditPost(p)
+                            setFbPostMode(true)
+                          }}
+                          className="text-blue-600 hover:underline"
+                        >
+                          FB এডিট
+                        </button>
                         <button onClick={() => act(() => setPostHidden(token, p.id, !p.hidden))} className="text-amber-600 hover:underline">
                           {p.hidden ? "দেখান" : "হাইড"}
                         </button>
@@ -963,17 +1021,39 @@ export default function AdminPage() {
           </div>
         )}
 
-        {tab === "notices" && <NoticeManager token={token} isAdmin={!!isAdmin} />}
+        {tab === "notices" && (
+          <NoticeManager
+            token={token}
+            isAdmin={!!isAdmin}
+            authorName={me.full_name}
+            authorAvatar={me.avatar_url}
+          />
+        )}
         {tab === "hero" && isAdmin && <HeroManager token={token} shrink={shrink} />}
         {tab === "hero_banner" && isAdmin && <HeroBannerManager token={token} shrink={shrink} />}
         {tab === "ticker" && isAdmin && <TickerManager token={token} author={me.full_name} />}
-        {tab === "students" && isAdmin && <StudentManager token={token} shrink={shrink} />}
+        {tab === "students" && isAdmin && (
+          <StudentManager
+            token={token}
+            shrink={shrink}
+            authorName={me.full_name}
+            authorAvatar={me.avatar_url}
+          />
+        )}
         {tab === "clubs" && isAdmin && <ClubManager token={token} />}
         {tab === "faculties" && isAdmin && <FacultyManager token={token} shrink={shrink} />}
         {tab === "associations" && isAdmin && <AssociationManager token={token} shrink={shrink} />}
         {tab === "social_sites" && isAdmin && <SocialSiteManager token={token} shrink={shrink} />}
         {tab === "administration" && isAdmin && <AdministrationManager token={token} shrink={shrink} />}
-        {tab === "community_pages" && isAdmin && <CommunityPageManager token={token} shrink={shrink} />}
+        {tab === "community_pages" && isAdmin && (
+          <CommunityPageManager
+            token={token}
+            shrink={shrink}
+            authorName={me.full_name}
+            authorAvatar={me.avatar_url}
+            onPostCreated={() => refresh(token, me)}
+          />
+        )}
         {tab === "limits" && isAdmin && <SectionLimits token={token} cats={cats} />}
         {tab === "directors" && isAdmin && <DirectorManager token={token} members={active} onChanged={() => refresh(token, me)} />}
         {tab === "categories" && isAdmin && <CategoryManager token={token} onChanged={() => refresh(token, me)} />}
