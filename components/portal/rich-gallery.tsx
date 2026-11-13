@@ -258,6 +258,13 @@ export default function RichGallery({
   const isFbLayout =
     activeLayout === "fb-classic" || activeLayout === "fb-columns" || activeLayout === "fb-frame"
 
+  const rOuter = compact ? "rounded-none" : "rounded-2xl"
+  const rInner = compact ? "rounded-none" : "rounded-xl"
+  const gapCls = compact ? "gap-0.5" : "gap-2"
+  const freeSingleCls = compact
+    ? "w-full h-auto max-h-[680px] md:max-h-[460px] object-contain bg-black/20 mx-auto block"
+    : "w-full rounded-2xl object-cover"
+
   const fig = (i: number, cls: string, imgCls: string) => (
     <Fig
       key={list[i].url + i}
@@ -274,17 +281,17 @@ export default function RichGallery({
   /* ==================== ফেসবুক স্টাইল ১: Classic ==================== */
   if (activeLayout === "fb-classic") {
     if (list.length === 1) {
-      body = fig(0, "", "w-full max-h-[540px] rounded-2xl object-cover")
+      body = fig(0, "", freeSingleCls)
     } else if (list.length === 2) {
       body = (
-        <div className="grid grid-cols-2 gap-1 rounded-2xl overflow-hidden">
+        <div className={`grid grid-cols-2 gap-0.5 ${rOuter} overflow-hidden`}>
           <FbTile item={list[0]} className="aspect-[4/5] sm:aspect-square" onOpen={() => setOpen(0)} />
           <FbTile item={list[1]} className="aspect-[4/5] sm:aspect-square" onOpen={() => setOpen(1)} />
         </div>
       )
     } else if (list.length === 3) {
       body = (
-        <div className="grid grid-cols-2 gap-1 rounded-2xl overflow-hidden">
+        <div className={`grid grid-cols-2 gap-0.5 ${rOuter} overflow-hidden`}>
           <FbTile item={list[0]} className="col-span-2 aspect-[16/10]" onOpen={() => setOpen(0)} />
           <FbTile item={list[1]} className="aspect-square" onOpen={() => setOpen(1)} />
           <FbTile item={list[2]} className="aspect-square" onOpen={() => setOpen(2)} />
@@ -292,7 +299,7 @@ export default function RichGallery({
       )
     } else if (list.length === 4) {
       body = (
-        <div className="grid grid-cols-2 gap-1 rounded-2xl overflow-hidden">
+        <div className={`grid grid-cols-2 gap-0.5 ${rOuter} overflow-hidden`}>
           {[0, 1, 2, 3].map((i) => (
             <FbTile key={i} item={list[i]} className="aspect-square" onOpen={() => setOpen(i)} />
           ))}
@@ -300,12 +307,12 @@ export default function RichGallery({
       )
     } else {
       body = (
-        <div className="space-y-1 rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-2 gap-1">
+        <div className={`space-y-0.5 ${rOuter} overflow-hidden`}>
+          <div className="grid grid-cols-2 gap-0.5">
             <FbTile item={list[0]} className="aspect-[4/3]" onOpen={() => setOpen(0)} />
             <FbTile item={list[1]} className="aspect-[4/3]" onOpen={() => setOpen(1)} />
           </div>
-          <div className="grid grid-cols-3 gap-1">
+          <div className="grid grid-cols-3 gap-0.5">
             <FbTile item={list[2]} className="aspect-square" onOpen={() => setOpen(2)} />
             <FbTile item={list[3]} className="aspect-square" onOpen={() => setOpen(3)} />
             <FbTile
@@ -321,7 +328,7 @@ export default function RichGallery({
   } else if (activeLayout === "fb-columns") {
     /* ==================== ফেসবুক স্টাইল ২: Columns ==================== */
     if (list.length === 1) {
-      body = fig(0, "", "w-full max-h-[540px] rounded-2xl object-cover")
+      body = fig(0, "", freeSingleCls)
     } else {
       const shown = list.slice(0, 4)
       const colsCls =
@@ -334,13 +341,13 @@ export default function RichGallery({
             : "aspect-[9/16] sm:aspect-[2/3]"
 
       body = (
-        <div className={`grid ${colsCls} gap-1.5 rounded-2xl overflow-hidden`}>
+        <div className={`grid ${colsCls} ${compact ? "gap-0.5" : "gap-1.5"} ${rOuter} overflow-hidden`}>
           {shown.map((item, i) => (
             <FbTile
               key={i}
               item={item}
               extraCount={i === 3 ? list.length - 4 : 0}
-              className={`${aspectCls} rounded-xl`}
+              className={`${aspectCls} ${rInner}`}
               onOpen={() => setOpen(i)}
             />
           ))}
@@ -350,45 +357,45 @@ export default function RichGallery({
   } else if (activeLayout === "fb-frame") {
     /* ==================== ফেসবুক স্টাইল ৩: Frame ==================== */
     body = (
-      <div className="rounded-2xl p-2.5 sm:p-3.5 shadow-inner" style={{ backgroundColor: frameColor }}>
+      <div className={`${rOuter} p-2 sm:p-3 shadow-inner`} style={{ backgroundColor: frameColor }}>
         {list.length === 1 && (
-          <FbTile item={list[0]} className="rounded-xl max-h-[480px]" onOpen={() => setOpen(0)} />
+          <FbTile item={list[0]} className="rounded-lg max-h-[540px]" onOpen={() => setOpen(0)} />
         )}
         {list.length === 2 && (
-          <div className="grid grid-cols-2 gap-2">
-            <FbTile item={list[0]} className="aspect-[3/4] rounded-xl" onOpen={() => setOpen(0)} />
-            <FbTile item={list[1]} className="aspect-[3/4] rounded-xl" onOpen={() => setOpen(1)} />
+          <div className="grid grid-cols-2 gap-1.5">
+            <FbTile item={list[0]} className="aspect-[3/4] rounded-lg" onOpen={() => setOpen(0)} />
+            <FbTile item={list[1]} className="aspect-[3/4] rounded-lg" onOpen={() => setOpen(1)} />
           </div>
         )}
         {list.length === 3 && (
-          <div className="grid grid-cols-2 gap-2 h-[280px] sm:h-[360px]">
-            <FbTile item={list[0]} className="h-full rounded-xl" onOpen={() => setOpen(0)} />
-            <div className="grid grid-rows-2 gap-2 h-full">
-              <FbTile item={list[1]} className="h-full rounded-xl" onOpen={() => setOpen(1)} />
-              <FbTile item={list[2]} className="h-full rounded-xl" onOpen={() => setOpen(2)} />
+          <div className="grid grid-cols-2 gap-1.5 h-[280px] sm:h-[340px]">
+            <FbTile item={list[0]} className="h-full rounded-lg" onOpen={() => setOpen(0)} />
+            <div className="grid grid-rows-2 gap-1.5 h-full">
+              <FbTile item={list[1]} className="h-full rounded-lg" onOpen={() => setOpen(1)} />
+              <FbTile item={list[2]} className="h-full rounded-lg" onOpen={() => setOpen(2)} />
             </div>
           </div>
         )}
         {list.length === 4 && (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             {[0, 1, 2, 3].map((i) => (
-              <FbTile key={i} item={list[i]} className="aspect-square rounded-xl" onOpen={() => setOpen(i)} />
+              <FbTile key={i} item={list[i]} className="aspect-square rounded-lg" onOpen={() => setOpen(i)} />
             ))}
           </div>
         )}
         {list.length >= 5 && (
-          <div className="grid grid-cols-2 gap-2 h-[310px] sm:h-[420px]">
-            <div className="grid grid-rows-2 gap-2 h-full">
-              <FbTile item={list[0]} className="h-full rounded-xl" onOpen={() => setOpen(0)} />
-              <FbTile item={list[1]} className="h-full rounded-xl" onOpen={() => setOpen(1)} />
+          <div className="grid grid-cols-2 gap-1.5 h-[310px] sm:h-[390px]">
+            <div className="grid grid-rows-2 gap-1.5 h-full">
+              <FbTile item={list[0]} className="h-full rounded-lg" onOpen={() => setOpen(0)} />
+              <FbTile item={list[1]} className="h-full rounded-lg" onOpen={() => setOpen(1)} />
             </div>
-            <div className="grid grid-rows-3 gap-2 h-full">
-              <FbTile item={list[2]} className="h-full rounded-xl" onOpen={() => setOpen(2)} />
-              <FbTile item={list[3]} className="h-full rounded-xl" onOpen={() => setOpen(3)} />
+            <div className="grid grid-rows-3 gap-1.5 h-full">
+              <FbTile item={list[2]} className="h-full rounded-lg" onOpen={() => setOpen(2)} />
+              <FbTile item={list[3]} className="h-full rounded-lg" onOpen={() => setOpen(3)} />
               <FbTile
                 item={list[4]}
                 extraCount={list.length - 5}
-                className="h-full rounded-xl"
+                className="h-full rounded-lg"
                 onOpen={() => setOpen(4)}
               />
             </div>
@@ -397,70 +404,70 @@ export default function RichGallery({
       </div>
     )
   } else if (list.length === 1) {
-    body = fig(0, "", "w-full rounded-2xl object-cover")
+    body = fig(0, "", freeSingleCls)
   } else if (activeLayout === "hero") {
     body = (
-      <div className="space-y-2">
-        {fig(0, "", "w-full rounded-2xl object-cover")}
-        <div className="grid grid-cols-2 gap-2">
-          {list.slice(1).map((_, k) => fig(k + 1, "", "aspect-[4/3] w-full rounded-xl object-cover"))}
+      <div className={compact ? "space-y-0.5" : "space-y-2"}>
+        {fig(0, "", `w-full ${rOuter} object-cover`)}
+        <div className={`grid grid-cols-2 ${gapCls}`}>
+          {list.slice(1).map((_, k) => fig(k + 1, "", `aspect-[4/3] w-full ${rInner} object-cover`))}
         </div>
       </div>
     )
   } else if (activeLayout === "mosaic") {
     body = (
-      <div className="columns-2 gap-2">
-        {list.map((_, i) => fig(i, "mb-2 break-inside-avoid", "w-full rounded-xl object-cover"))}
+      <div className={`columns-2 ${compact ? "gap-0.5" : "gap-2"}`}>
+        {list.map((_, i) => fig(i, compact ? "mb-0.5 break-inside-avoid" : "mb-2 break-inside-avoid", `w-full ${rInner} object-cover`))}
       </div>
     )
   } else if (activeLayout === "columns") {
     body = (
-      <div className="grid grid-cols-3 gap-2">
-        {list.map((_, i) => fig(i, "", "aspect-square w-full rounded-xl object-cover"))}
+      <div className={`grid grid-cols-3 ${gapCls}`}>
+        {list.map((_, i) => fig(i, "", `aspect-square w-full ${rInner} object-cover`))}
       </div>
     )
   } else if (activeLayout === "stack") {
     body = (
-      <div className="space-y-3">
-        {list.map((_, i) => fig(i, "", "w-full rounded-2xl object-cover"))}
+      <div className={compact ? "space-y-0.5" : "space-y-3"}>
+        {list.map((_, i) => fig(i, "", `w-full ${rOuter} object-cover`))}
       </div>
     )
   } else if (activeLayout === "slider") {
     body = (
-      <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-2 scrollbar-none">
-        {list.map((_, i) => fig(i, "w-[88%] shrink-0 snap-center", "w-full rounded-2xl object-cover"))}
+      <div className="flex snap-x snap-mandatory gap-1 overflow-x-auto pb-1 scrollbar-none">
+        {list.map((_, i) => fig(i, "w-[88%] shrink-0 snap-center", "w-full rounded-lg object-cover"))}
       </div>
     )
   } else if (activeLayout === "strip") {
     body = (
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-        {list.map((_, i) => fig(i, "w-48 shrink-0", "h-36 w-full rounded-xl object-cover"))}
+      <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
+        {list.map((_, i) => fig(i, "w-48 shrink-0", "h-36 w-full rounded-lg object-cover"))}
       </div>
     )
   } else if (activeLayout === "side") {
     body = (
-      <div className="grid grid-cols-3 gap-2">
+      <div className={`grid grid-cols-3 ${gapCls}`}>
         {list.map((_, i) =>
           fig(
             i,
             i === 0 ? "col-span-2 row-span-2" : "",
             i === 0
-              ? "h-full w-full rounded-2xl object-cover"
-              : "aspect-square w-full rounded-xl object-cover"
+              ? `h-full w-full ${rOuter} object-cover`
+              : `aspect-square w-full ${rInner} object-cover`
           )
         )}
       </div>
     )
   } else {
     body = (
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid grid-cols-2 ${gapCls}`}>
         {list.map((_, i) =>
           fig(
             i,
             list.length % 2 === 1 && i === 0 ? "col-span-2" : "",
             list.length % 2 === 1 && i === 0
-              ? "aspect-[16/9] w-full rounded-xl object-cover"
-              : "aspect-[4/3] w-full rounded-xl object-cover"
+              ? `aspect-[16/9] w-full ${rInner} object-cover`
+              : `aspect-[4/3] w-full ${rInner} object-cover`
           )
         )}
       </div>
@@ -476,7 +483,7 @@ export default function RichGallery({
 
   return (
     <>
-      <div className="space-y-2">
+      <div className={compact ? "" : "space-y-2"}>
         {body}
         {captionedItems.length > 0 && (
           <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 space-y-1 text-xs text-slate-200">
