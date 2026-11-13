@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { requestReset, updatePassword } from "../../lib/sb"
 
-const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
-const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
+const inp = "w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition"
+const btn = "w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-50 cursor-pointer shadow-md transition active:scale-98"
 
 export default function ResetPage() {
   const [token, setToken] = useState("")
@@ -51,30 +52,73 @@ export default function ResetPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow p-6 space-y-3">
-        <h1 className="text-xl font-bold text-green-800">
-          {token ? "নতুন পাসওয়ার্ড দিন" : "পাসওয়ার্ড ভুলে গেছেন?"}
-        </h1>
+    <main className="min-h-screen bg-[#071030] text-white flex items-center justify-center p-4">
+      <div className="w-full max-w-sm rounded-3xl border border-white/20 bg-slate-900/90 shadow-2xl p-6 sm:p-7 space-y-4 backdrop-blur-xl">
+        <div className="text-center space-y-1 border-b border-white/10 pb-3">
+          <h1 className="text-xl font-serif font-bold text-cyan-300">
+            {token ? "নতুন পাসওয়ার্ড দিন" : "পাসওয়ার্ড রিসেট"}
+          </h1>
+          <p className="text-xs text-white/60">মাভাবিপ্রবি রিপোর্টার্স ইউনিটি পোর্টাল</p>
+        </div>
 
         {!token && !done && (
           <>
-            <p className="text-sm text-gray-600">নিবন্ধনের জিমেইল দিন। পাসওয়ার্ড রিসেটের লিংক সেখানে যাবে।</p>
-            <input className={inp} type="email" placeholder="জিমেইল" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <button className={btn} onClick={sendLink} disabled={busy}>{busy ? "অপেক্ষা করুন..." : "লিংক পাঠান"}</button>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              নিবন্ধনের জিমেইল দিন। পাসওয়ার্ড রিসেটের লিংক সেখানে পাঠানো হবে।
+            </p>
+            <input
+              className={inp}
+              type="email"
+              placeholder="জিমেইল লিখুন *"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <button className={btn} onClick={sendLink} disabled={busy}>
+              {busy ? "অপেক্ষা করুন..." : "রিসেট লিংক পাঠান"}
+            </button>
           </>
         )}
 
         {token && !done && (
           <>
-            <input className={inp} type="password" placeholder="নতুন পাসওয়ার্ড" value={pw} onChange={(e) => setPw(e.target.value)} />
-            <input className={inp} type="password" placeholder="আবার লিখুন" value={pw2} onChange={(e) => setPw2(e.target.value)} />
-            <button className={btn} onClick={save} disabled={busy}>{busy ? "অপেক্ষা করুন..." : "পাসওয়ার্ড বদলান"}</button>
+            <input
+              className={inp}
+              type="password"
+              placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+            />
+            <input
+              className={inp}
+              type="password"
+              placeholder="আবার লিখুন"
+              value={pw2}
+              onChange={(e) => setPw2(e.target.value)}
+            />
+            <button className={btn} onClick={save} disabled={busy}>
+              {busy ? "অপেক্ষা করুন..." : "পাসওয়ার্ড বদলান"}
+            </button>
           </>
         )}
 
-        {msg && <p className="text-sm">{msg}</p>}
-        <a href="/admin" className="block text-center text-sm underline text-green-800">লগইন পাতায় যান</a>
+        {msg && (
+          <p className={`text-xs text-center font-semibold p-2.5 rounded-xl border ${
+            msg.startsWith("✅")
+              ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-300"
+              : "bg-rose-500/20 border-rose-400/40 text-rose-300"
+          }`}>
+            {msg}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+          <Link href="/" className="text-white/50 hover:text-white transition">
+            ← সাইটে ফিরুন
+          </Link>
+          <Link href="/admin" className="text-cyan-300 hover:underline font-semibold">
+            লগইন পাতায় যান →
+          </Link>
+        </div>
       </div>
     </main>
   )
