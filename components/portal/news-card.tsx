@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, CalendarDays, User, Sparkles, Images } from 'lucide-react'
+import { CalendarDays, Globe, User } from 'lucide-react'
 import type { Post } from '@/lib/sb'
 import { ReactionBar } from './reaction-bar'
 import CardGallery from './card-gallery'
@@ -22,7 +22,7 @@ function formatBanglaDate(val?: string | null): string {
   return val
 }
 
-function cleanExcerpt(text?: string | null, maxLength = 130): string {
+function cleanExcerpt(text?: string | null, maxLength = 150): string {
   if (!text) return ''
   const clean = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
   if (clean.length <= maxLength) return clean
@@ -31,70 +31,77 @@ function cleanExcerpt(text?: string | null, maxLength = 130): string {
   return (lastSpace > 60 ? truncated.slice(0, lastSpace) : truncated) + '...'
 }
 
-function extractFirstMediaUrl(raw?: string | null): string | null {
+function extractFirstImageUrl(raw?: string | null): string | null {
   if (!raw || !raw.trim()) return null
   const s = raw.trim()
+  const isVideo = (u: string) =>
+    /youtube\.com|youtu\.be|facebook\.com|fb\.watch|\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(u)
+
   if (s.startsWith('[') || s.startsWith('{')) {
     try {
       const parsed = JSON.parse(s)
-      if (Array.isArray(parsed) && parsed[0]?.url) return parsed[0].url
-      if (parsed?.url) return parsed.url
+      const arr = Array.isArray(parsed) ? parsed : [parsed]
+      const firstImg = arr.find((x) => x?.url && !isVideo(x.url))
+      return firstImg?.url || null
     } catch {}
   }
-  if (/^https?:\/\//i.test(s)) return s
+  if (/^https?:\/\//i.test(s) && !isVideo(s)) return s
   return null
 }
 
 export function NewsCard({ p }: { p: Post }) {
   const href = p.link_url?.trim() || `/post/${p.id}`
   const isExt = /^https?:\/\//i.test(href)
-  const excerpt = cleanExcerpt(p.heading || p.body, 130)
   const formattedDate = formatBanglaDate(p.created_at)
 
-  const coverImage = p.image_url || extractFirstMediaUrl(p.embed_media_url) || null
-  const hasVideo = !!p.video_url || (p.embed_media_url?.includes('youtube') || p.embed_media_url?.includes('youtu.be') || p.embed_media_url?.includes('facebook') || p.embed_media_url?.includes('video'))
-  const hasExtraMedia = !!p.embed_media_url
+  const coverImage = p.image_url || extractFirstImageUrl(p.embed_media_url) || null
+  const authorName = p.author?.trim() || 'মাভাবিপ্রবি রিপোর্টার্স ইউনিটি'
+  const categoryName = p.category || 'ক্যাম্পাস সংবাদ'
+  const bodyExcerpt = cleanExcerpt(p.body, 150)
 
   return (
-    <article className="glass-card group flex flex-col overflow-hidden">
-      <div className="relative overflow-hidden rounded-t-[1.75rem] border-b border-white/10 bg-black/25">
-        <CardGallery
-          postId={p.id}
-          cover={coverImage}
-          href={href}
-          external={isExt}
-          category={p.category || 'সংবাদ'}
-          hasVideo={Boolean(hasVideo)}
-        />
+    <article className="group flex flex-col overflow-hidden bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card">
+      {/* ১. পোস্টকারীর তথ্য: সবার উপরে বামপাশের কোনায় (ফেসবুকের মতো) */}
+      <div className="flex items-center justify-between gap-2.5 px-3.5 pt-3.5 pb-2.5 sm:px-5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold text-sm ring-2 ring-white/25 shadow-sm">
+            {authorName ? authorName.charAt(0) : <User className="size-4" />}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-white truncate leading-tight">
+              {authorName}
+            </p>
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-cyan-200/85 mt-0.5">
+              <span className="inline-flex items-center gap-1">
+                <CalendarDays className="size-3 text-cyan-300 shrink-0" />
+                <span>{formattedDate}</span>
+              </span>
+              <span>·</span>
+              <Globe className="size-3 opacity-80 shrink-0" aria-hidden="true" />
+            </div>
+          </div>
+        </div>
 
-        {hasExtraMedia && !hasVideo && (
-          <span className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
-            <Images className="size-3 text-cyan-400" />
-            <span>মাল্টিমিডিয়া</span>
-          </span>
-        )}
+        <Link
+          href={`/category/${encodeURIComponent(categoryName)}`}
+          className="shrink-0 rounded-full bg-white/15 hover:bg-white/25 px-3 py-1 text-[11px] font-bold text-cyan-200 border border-white/20 backdrop-blur-md transition"
+        >
+          {categoryName}
+        </Link>
       </div>
 
-      <div className="flex flex-1 flex-col p-5 sm:p-6 space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-white border border-white/25 backdrop-blur-md shadow-xs">
-            <Sparkles className="size-3 text-cyan-300" />
-            <span>{p.category || 'ক্যাম্পাস সংবাদ'}</span>
-          </span>
+      {/* ২. মিডিয়া (ছবি / কোলাজ / ডিরেক্ট ভিডিও / লিংক ভিডিও — এজ-টু-এজ ফ্রি সাইজ) */}
+      <CardGallery
+        postId={p.id}
+        cover={coverImage}
+        videoUrl={p.video_url}
+        embedMediaUrl={p.embed_media_url}
+        href={href}
+        external={isExt}
+      />
 
-          {p.author && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-cyan-100 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
-              <User className="size-3 text-cyan-300 shrink-0" />
-              <span>{p.author}</span>
-            </span>
-          )}
-        </div>
-
-        <div className="text-xs text-cyan-200/90 flex items-center gap-1 font-medium">
-          <CalendarDays className="size-3.5 text-cyan-300 shrink-0" />
-          <span>{formattedDate}</span>
-        </div>
-
+      {/* ৩. শিরোনাম, উপশিরোনাম, বিস্তারিত ও মেটা ব্যাজ */}
+      <div className="flex flex-1 flex-col px-3.5 pt-3 pb-3.5 sm:px-5 sm:pb-5 space-y-2">
         <h3 className="font-serif text-lg sm:text-xl font-bold leading-snug text-white group-hover:text-cyan-200 transition-colors drop-shadow-sm">
           {isExt ? (
             <a href={href} target="_blank" rel="noopener noreferrer">
@@ -107,36 +114,29 @@ export function NewsCard({ p }: { p: Post }) {
           )}
         </h3>
 
+        {p.heading && p.heading.trim() !== p.title.trim() && (
+          <p className="text-xs sm:text-sm font-medium text-cyan-100/90 leading-snug border-l-2 border-cyan-400/70 pl-2.5">
+            {p.heading}
+          </p>
+        )}
+
         <PostMetaBadges data={p} compact />
 
-        <p className="line-clamp-3 text-sm leading-relaxed text-slate-200 opacity-95">
-          {excerpt}
-        </p>
+        {bodyExcerpt && (
+          <p className="line-clamp-3 text-xs sm:text-sm leading-relaxed text-slate-200 opacity-95">
+            {bodyExcerpt}
+          </p>
+        )}
 
-        <div className="mt-auto pt-4 border-t border-white/15 flex items-center justify-between gap-3">
-          {isExt ? (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-4 py-2 text-xs font-bold shadow-md border border-white/30 transition-all active:scale-95"
-            >
-              <span>বিস্তারিত পড়ুন</span>
-              <ArrowRight className="size-3" />
-            </a>
-          ) : (
-            <Link
-              href={href}
-              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-4 py-2 text-xs font-bold shadow-md border border-white/30 transition-all active:scale-95"
-            >
-              <span>বিস্তারিত পড়ুন</span>
-              <ArrowRight className="size-3" />
-            </Link>
-          )}
-
-          <div className="shrink-0">
-            <ReactionBar postId={p.id} title={p.title} />
-          </div>
+        {/* ৪. বটম অ্যাকশন বার: রিঅ্যাকশন, বিস্তারিত ও শেয়ার */}
+        <div className="mt-auto pt-2.5 border-t border-white/15">
+          <ReactionBar
+            postId={p.id}
+            title={p.title}
+            readMoreHref={href}
+            readMoreExternal={isExt}
+            noTopBorder
+          />
         </div>
       </div>
     </article>
@@ -145,7 +145,7 @@ export function NewsCard({ p }: { p: Post }) {
 
 export function NewsGrid({ posts }: { posts: Post[] }) {
   return (
-    <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="flex flex-col divide-y divide-white/20 border-y border-white/15 md:border-y-0 md:divide-y-0 md:grid md:items-start md:gap-6 md:grid-cols-2 lg:grid-cols-3">
       {posts.map((p) => (
         <NewsCard key={p.id} p={p} />
       ))}
