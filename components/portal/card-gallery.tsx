@@ -29,11 +29,13 @@ export default function CardGallery({
     let live = true
     ;(async () => {
       const rows = await getImagesMeta("post", postId)
-      if (!live || rows.length < 2) return
+      if (!live || rows.length === 0) return
       const lay = await getLayout("post", postId)
       if (!live) return
-      setItems(rows.map((r) => ({ url: r.url, caption: r.caption, credit: r.credit })))
-      setLayout(lay)
+      if (rows.length >= 2 || lay.startsWith("fb-frame")) {
+        setItems(rows.map((r) => ({ url: r.url, caption: r.caption, credit: r.credit })))
+        setLayout(lay)
+      }
     })()
     return () => {
       live = false
@@ -51,13 +53,12 @@ export default function CardGallery({
     </span>
   ) : null
 
-  // ✅ সাদা bg-gray-100 ও pt-12 সরিয়ে কার্ডের ডার্ক গ্লাস ব্লেন্ডিং করা হয়েছে
-  if (items && items.length > 1) {
+  if (items && items.length > 0) {
     return (
       <div className="relative overflow-hidden p-2 bg-black/20">
         {badge}
         <div className="pt-8">
-          <RichGallery items={items} layout={layout} />
+          <RichGallery items={items} layout={layout} compact />
         </div>
         {videoBadge}
       </div>
