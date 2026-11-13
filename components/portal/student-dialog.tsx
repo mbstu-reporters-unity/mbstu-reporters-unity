@@ -13,10 +13,11 @@ import {
   BookOpen,
   Send,
 } from 'lucide-react'
-import { SB_URL, SB_KEY, getImages, type StudentItem } from '@/lib/sb'
+import { SB_URL, SB_KEY, getImagesMeta, getLayout, type StudentItem } from '@/lib/sb'
 import { ReactionBar } from './reaction-bar'
 import { UniversalMediaEmbed } from './universal-media-embed'
 import { FormattedText } from './formatted-text'
+import RichGallery, { type GalleryItem } from './rich-gallery'
 
 type StudentCommentRow = {
   id: string
@@ -51,7 +52,8 @@ export function StudentDialog({
   onClose: () => void
 }) {
   const [copied, setCopied] = useState(false)
-  const [images, setImages] = useState<string[]>([])
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([])
+  const [layout, setLayout] = useState('grid')
   const [comments, setComments] = useState<StudentCommentRow[]>([])
   const [cName, setCName] = useState('')
   const [cText, setCText] = useState('')
@@ -82,14 +84,18 @@ export function StudentDialog({
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
 
-    getImages('student', item.id).then((rows) => {
+    Promise.all([
+      getImagesMeta('student', item.id),
+      getLayout('student', item.id),
+    ]).then(([rows, lay]) => {
       if (rows.length > 0) {
-        setImages(rows.map((r) => r.url))
+        setGalleryItems(rows.map((r) => ({ url: r.url, caption: r.caption, credit: r.credit })))
       } else if (item.image_url) {
-        setImages([item.image_url])
+        setGalleryItems([{ url: item.image_url }])
       } else {
-        setImages([])
+        setGalleryItems([])
       }
+      setLayout(lay || 'grid')
     })
 
     setCErr('')
@@ -168,7 +174,6 @@ export function StudentDialog({
         aria-modal="true"
         className="animate-in zoom-in-95 fade-in relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-white/20 bg-slate-950/95 text-white shadow-2xl backdrop-blur-2xl scrollbar-none"
       >
-        {/* হেডার */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/15 bg-slate-900/90 px-5 py-3.5 backdrop-blur">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 px-3 py-1 text-xs font-bold">
             <Icon className="size-3.5" />
@@ -206,19 +211,7 @@ export function StudentDialog({
             </span>
           </div>
 
-          {images.length > 0 && (
-            <div className="space-y-2">
-              {images.map((src, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={i}
-                  src={src}
-                  alt={item.title}
-                  className="w-full max-h-96 rounded-2xl object-cover bg-black/40 border border-white/15 shadow-sm"
-                />
-              ))}
-            </div>
-          )}
+          <RichGallery items={galleryItems} layout={layout} />
 
           {item.excerpt && (
             <FormattedText text={item.excerpt} className="text-sm sm:text-base text-slate-100 py-1" />
@@ -241,7 +234,6 @@ export function StudentDialog({
             </div>
           )}
 
-          {/* শেয়ার বার */}
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white/10 p-3 border border-white/15">
             <span className="text-xs font-bold text-white/80">শেয়ার করুন:</span>
             <div className="flex items-center gap-2">
@@ -274,7 +266,6 @@ export function StudentDialog({
 
           <ReactionBar postId={item.id} title={item.title} />
 
-          {/* কমেন্ট সেকশন (Supabase ডাটাবেজে সংরক্ষিত) */}
           <div className="space-y-3 pt-3 border-t border-white/15">
             <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-300">
               মন্তব্য ({comments.length})
