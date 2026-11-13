@@ -14,6 +14,7 @@ import RichGallery from "../../components/portal/rich-gallery"
 import type { GalleryItem } from "../../components/portal/rich-gallery"
 import { FormattedText } from "../../components/portal/formatted-text"
 import { UniversalMediaEmbed } from "../../components/portal/universal-media-embed"
+import { PostMetaBadges } from "../../components/portal/post-meta-badges"
 import { TopBar } from "../../components/portal/top-bar"
 import { SiteHeader } from "../../components/portal/site-header"
 import { SiteFooter } from "../../components/portal/site-footer"
@@ -56,7 +57,7 @@ function Comments({ id }: { id: string }) {
         </div>
       ))}
       {list.length === 0 && <p className="text-xs text-white/50">এখনো কোনো মন্তব্য নেই।</p>}
-      
+
       <div className="space-y-2 pt-1">
         <input
           className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400"
@@ -156,6 +157,8 @@ function NoticeCard({
         {n.heading && <p className="text-cyan-200/90 text-xs sm:text-sm mt-1">{n.heading}</p>}
       </div>
 
+      <PostMetaBadges data={n} />
+
       {n.body && (
         <div>
           <div className={long && !more ? "line-clamp-5" : ""}>
@@ -185,7 +188,6 @@ function NoticeCard({
         </a>
       )}
 
-      {/* ফাইল ও লিংক বাটন */}
       {(n.file_url || safeUrl(n.link_url)) && (
         <div className="flex flex-wrap gap-2 text-xs pt-1">
           {n.file_url && (
@@ -282,7 +284,7 @@ export default function NoticesPage() {
   useEffect(() => {
     const n = new URLSearchParams(window.location.search).get("n")
     if (n) setHl(n)
-    
+
     Promise.all([getNotices(), getDepartments()]).then(async ([r, depts]) => {
       setList(r)
       const dMap: Record<string, Department> = {}
@@ -330,7 +332,7 @@ export default function NoticesPage() {
       <SiteHeader />
       <main className="min-h-screen py-8 px-4 pb-20">
         <div className="max-w-2xl mx-auto space-y-5">
-          
+
           <div className="flex items-center justify-between">
             <Link
               href="/"
@@ -348,7 +350,6 @@ export default function NoticesPage() {
             <p className="text-xs text-cyan-200/80">বিশ্ববিদ্যালয়, হল, বিভাগ ও রিপোর্টার্স ইউনিটির সকল আনুষ্ঠানিক বিজ্ঞপ্তি</p>
           </div>
 
-          {/* শাখা ভিত্তিক ফিল্টার বাটন */}
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
             <button onClick={() => setBranch("all")} className={tabCls(branch === "all")}>
               সব ({count("all")})
@@ -360,7 +361,6 @@ export default function NoticesPage() {
             ))}
           </div>
 
-          {/* সার্চ বক্স */}
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/40" />
             <input
