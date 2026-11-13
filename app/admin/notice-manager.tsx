@@ -10,6 +10,7 @@ import type { Notice, NoticeOwner, NoticeComment } from "../../lib/notices"
 import { getDepartments, type Department } from "../../lib/faculties"
 import { removeAllImages } from "../../lib/sb"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
+import FbPostComposer from "../../components/admin/fb-post-composer"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
 const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
@@ -51,7 +52,17 @@ function ManageComments({ id, token }: { id: string; token: string }) {
   )
 }
 
-export default function NoticeManager({ token, isAdmin }: { token: string; isAdmin: boolean }) {
+export default function NoticeManager({
+  token,
+  isAdmin,
+  authorName,
+  authorAvatar,
+}: {
+  token: string
+  isAdmin: boolean
+  authorName?: string
+  authorAvatar?: string | null
+}) {
   const [list, setList] = useState<Notice[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
   const [owners, setOwners] = useState<Record<string, NoticeOwner>>({})
@@ -72,6 +83,10 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
   const [openC, setOpenC] = useState("")
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState("")
+
+  // ফেসবুক-স্টাইল মোড স্টেট
+  const [fbMode, setFbMode] = useState(false)
+  const [fbEditNotice, setFbEditNotice] = useState<Notice | null>(null)
 
   const imgs = useImageSection("notice")
 
@@ -174,7 +189,7 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
       if (noticeId) {
         try {
           await imgs.commit(token, noticeId, up, null)
-        } catch (e) {
+        } catch {
           warn = " (নোটিশ সেভ হয়েছে, কিন্তু ছবির তালিকা জোড়া যায়নি)"
         }
       }
@@ -197,6 +212,48 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
 
   return (
     <div className="space-y-4">
+      {/* পোস্ট করার মোড সুইচার */}
+      <div className="flex bg-white rounded-2xl p-1.5 shadow-sm border border-slate-200 gap-1.5 text-xs font-bold">
+        <button
+          type="button"
+          onClick={() => { setFbMode(false); setFbEditNotice(null) }}
+          className={`flex-1 py-2.5 rounded-xl transition cursor-pointer ${
+            !fbMode ? "bg-green-700 text-white shadow" : "text-slate-600 hover:bg-slate-100"
+          }`}
+        >
+          📝 ক্লাসিক ফর্ম (বর্তমান)
+        </button>
+        <button
+          type="button"
+          onClick={() => { setFbEditNotice(null); setFbMode(true) }}
+          className={`flex-1 py-2.5 rounded-xl transition cursor-pointer ${
+            fbMode ? "bg-blue-600 text-white shadow" : "text-slate-600 hover:bg-slate-100"
+          }`}
+        >
+          📱 ফেসবুক স্টাইল পোস্ট (নতুন)
+        </button>
+      </div>
+
+      {fbMode && (
+        <FbPostComposer
+          mode="notice"
+          token={token}
+          isAdmin={isAdmin}
+          authorName={authorName}
+          authorAvatar={authorAvatar}
+          shrink={shrink}
+          departments={departments}
+          editItem={fbEditNotice}
+          onCancel={() => { setFbMode(false); setFbEditNotice(null) }}
+          onSuccess={async (m) => {
+            setFbMode(false)
+            setFbEditNotice(null)
+            setMsg(m)
+            await load()
+          }}
+        />
+      )}
+
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
         <h2 className="font-semibold">{editId ? "নোটিশ এডিট করুন" : "নতুন নোটিশ"}</h2>
 
@@ -229,7 +286,6 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
         <input className={inp} placeholder="রেফ নম্বর (ঐচ্ছিক, যেমন MBSTU-RU/2026/015)" value={ref} onChange={(e) => setRef(e.target.value)} />
         <textarea className={inp} rows={6} placeholder="নোটিশের লেখা" value={body} onChange={(e) => setBody(e.target.value)} />
 
-        {/* ⭐ নতুন: ইউটিউব, ফেসবুক বা ছবির লিংক দেওয়ার ঐচ্ছিক বক্স ⭐ */}
         <div className="space-y-1 rounded-xl border border-emerald-300 bg-emerald-50/60 p-3">
           <label className="text-xs font-bold text-emerald-900 block">
             🎥 ভিডিও / ছবির লিংক (YouTube, Facebook ভিডিও বা ছবির সরাসরি লিংক - ঐচ্ছিক):
@@ -291,7 +347,7 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
           {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "প্রকাশ করুন"}
         </button>
         {editId && <button onClick={reset} className="w-full text-sm underline">বাতিল</button>}
-        {msg && <p className="text-sm">{msg}</p>}
+        {msg && <p className="text-sm font-semibold">{msg}</p>}
       </div>
 
       <div className="space-y-3">
@@ -321,7 +377,16 @@ export default function NoticeManager({ token, isAdmin }: { token: string; isAdm
               )}
               {canEdit(n) ? (
                 <div className="flex flex-wrap gap-4">
-                  <button onClick={() => startEdit(n)} className="text-green-700">এডিট</button>
+                  <button onClick={() => startEdit(n)} className="text-green-700 font-semibold">এডিট</button>
+                  <button
+                    onClick={() => {
+                      setFbEditNotice(n)
+                      setFbMode(true)
+                    }}
+                    className="text-blue-600 font-semibold"
+                  >
+                    FB এডিট
+                  </button>
                   {isAdmin && (
                     <button onClick={() => run(() => updateNotice(token, n.id, { is_pinned: !n.is_pinned }))} className="text-gray-700">
                       {n.is_pinned ? "পিন সরান" : "পিন করুন"}
