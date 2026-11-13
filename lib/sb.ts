@@ -79,6 +79,44 @@ async function ok(res: Response): Promise<Response> {
   throw new Error(msg)
 }
 
+/* ---------- প্রোফাইলের ছবি অটো-সিঙ্ক হেল্পার ---------- */
+
+export async function attachProfileAvatars(posts: Post[]): Promise<Post[]> {
+  if (!posts || posts.length === 0) return posts
+  const needsAvatar = posts.some((p) => !p.author_avatar && p.show_author_avatar !== false)
+  if (!needsAvatar) return posts
+
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/profiles?select=id,full_name,avatar_url&approved=eq.true`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return posts
+    const profiles: Array<{ id: string; full_name: string; avatar_url?: string | null }> =
+      await res.json()
+    if (!Array.isArray(profiles) || profiles.length === 0) return posts
+
+    const byId = new Map<string, string>()
+    const byName = new Map<string, string>()
+    for (const pr of profiles) {
+      if (pr.avatar_url) {
+        if (pr.id) byId.set(pr.id, pr.avatar_url)
+        if (pr.full_name) byName.set(pr.full_name.trim().toLowerCase(), pr.avatar_url)
+      }
+    }
+
+    return posts.map((p) => {
+      if (p.author_avatar || p.show_author_avatar === false) return p
+      const fromId = p.user_id ? byId.get(p.user_id) : undefined
+      const fromName = p.author ? byName.get(p.author.trim().toLowerCase()) : undefined
+      const fallback = fromId || fromName || null
+      return fallback ? { ...p, author_avatar: fallback } : p
+    })
+  } catch {
+    return posts
+  }
+}
+
 /* ---------- লগইন, টোকেন রিফ্রেশ, সাইনআপ ও প্রোফাইল ---------- */
 
 export function isTokenExpired(tokenStr: string): boolean {
@@ -240,10 +278,11 @@ export async function getPosts(limit = 50): Promise<Post[]> {
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/posts?select=*&order=created_at.desc&limit=${limit}`,
-      { headers: hdr(), next: { revalidate: 60 } }
+      { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
-    return await res.json()
+    const rows: Post[] = await res.json()
+    return await attachProfileAvatars(rows)
   } catch {
     return []
   }
@@ -253,11 +292,13 @@ export async function getPost(id: string): Promise<Post | null> {
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/posts?select=*&id=eq.${encodeURIComponent(id)}`,
-      { headers: hdr(), next: { revalidate: 60 } }
+      { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return null
     const rows: Post[] = await res.json()
-    return rows[0] || null
+    if (!rows[0]) return null
+    const [enriched] = await attachProfileAvatars([rows[0]])
+    return enriched || rows[0]
   } catch {
     return null
   }
@@ -347,7 +388,7 @@ export async function getApprovedComments(postId: string): Promise<PublicComment
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/comments?select=id,name,message,created_at,parent_id&post_id=eq.${encodeURIComponent(postId)}&approved=eq.true&order=created_at.asc`,
-      { headers: hdr(), next: { revalidate: 15 } }
+      { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
     return await res.json()
@@ -453,7 +494,7 @@ export async function getLeaders(token?: string): Promise<Leader[]> {
   try {
     const res = await fetch(`${SB_URL}/rest/v1/leaders?select=*&order=sort_order.asc`, {
       headers: hdr(token),
-      next: { revalidate: 60 },
+      cache: "no-store",
     })
     if (!res.ok) return []
     const rows: Leader[] = await res.json()
@@ -499,10 +540,11 @@ export async function getVisiblePosts(limit = 50): Promise<Post[]> {
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/posts?select=*&or=(hidden.is.null,hidden.eq.false)&order=created_at.desc&limit=${limit}`,
-      { headers: hdr(), next: { revalidate: 60 } }
+      { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
-    return await res.json()
+    const rows: Post[] = await res.json()
+    return await attachProfileAvatars(rows)
   } catch {
     return []
   }
@@ -515,7 +557,8 @@ export async function getAllPosts(limit = 100): Promise<Post[]> {
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
-    return await res.json()
+    const rows: Post[] = await res.json()
+    return await attachProfileAvatars(rows)
   } catch {
     return []
   }
@@ -547,7 +590,7 @@ export async function getCategoryNames(): Promise<string[]> {
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/categories?select=name&order=sort_order.asc,created_at.asc`,
-      { headers: hdr(), next: { revalidate: 60 } }
+      { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
     const rows: { name: string }[] = await res.json()
@@ -625,7 +668,7 @@ export async function getHomeLimit(): Promise<number> {
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/app_config?select=value&key=eq.home_news_limit`,
-      { headers: hdr(), next: { revalidate: 60 } }
+      { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return 12
     const rows: { value: string }[] = await res.json()
@@ -660,7 +703,7 @@ export async function getLimits(): Promise<Record<string, number>> {
   try {
     const res = await fetch(`${SB_URL}/rest/v1/app_config?select=key,value`, {
       headers: hdr(),
-      next: { revalidate: 60 },
+      cache: "no-store",
     })
     if (!res.ok) return {}
     const rows: { key: string; value: string }[] = await res.json()
@@ -709,7 +752,7 @@ export async function getStudentItems(includeHidden = false): Promise<StudentIte
     const f = includeHidden ? "" : "&or=(hidden.is.null,hidden.eq.false)"
     const res = await fetch(
       `${SB_URL}/rest/v1/student_items?select=*${f}&order=featured.desc,sort_order.asc,created_at.desc`,
-      { headers: hdr(), next: { revalidate: 60 } }
+      { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
     return await res.json()
@@ -766,7 +809,7 @@ export async function getImages(type: ParentType, id: string): Promise<ImageRow[
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/post_images?select=*&parent_type=eq.${type}&parent_id=eq.${encodeURIComponent(id)}&order=sort_order.asc,created_at.asc`,
-      { headers: hdr(), next: { revalidate: 60 } }
+      { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
     return await res.json()
@@ -785,7 +828,7 @@ export async function getImagesForMany(
     const list = ids.map((i) => encodeURIComponent(i)).join(",")
     const res = await fetch(
       `${SB_URL}/rest/v1/post_images?select=*&parent_type=eq.${type}&parent_id=in.(${list})&order=sort_order.asc,created_at.asc`,
-      { headers: hdr(), next: { revalidate: 60 } }
+      { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return out
     const rows: ImageRow[] = await res.json()
@@ -911,7 +954,7 @@ export async function getLayout(type: ParentType, id: string): Promise<string> {
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/image_layouts?select=layout&parent_type=eq.${type}&parent_id=eq.${encodeURIComponent(id)}`,
-      { headers: hdr(), next: { revalidate: 60 } }
+      { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return "grid"
     const rows: { layout: string }[] = await res.json()
@@ -931,7 +974,7 @@ export async function getLayoutsForMany(
     const list = ids.map((i) => encodeURIComponent(i)).join(",")
     const res = await fetch(
       `${SB_URL}/rest/v1/image_layouts?select=parent_id,layout&parent_type=eq.${type}&parent_id=in.(${list})`,
-      { headers: hdr(), next: { revalidate: 60 } }
+      { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return out
     const rows: { parent_id: string; layout: string }[] = await res.json()
@@ -991,7 +1034,7 @@ export async function getSectionText(key: string, defaultVal: string): Promise<s
   try {
     const res = await fetch(`${SB_URL}/rest/v1/app_config?select=value&key=eq.${encodeURIComponent(key)}`, {
       headers: { apikey: SB_KEY },
-      next: { revalidate: 60 },
+      cache: "no-store",
     })
     if (!res.ok) return defaultVal
     const rows = await res.json()
@@ -1024,7 +1067,7 @@ export async function getStudentCategories(): Promise<string[]> {
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/student_corner_categories?select=name&order=id.asc`,
-      { headers: hdr(), next: { revalidate: 60 } }
+      { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return DEFAULT_STUDENT_KINDS
     const rows: { name: string }[] = await res.json()
