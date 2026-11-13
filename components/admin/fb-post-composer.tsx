@@ -50,7 +50,11 @@ import {
 import type { ClubItem } from "@/lib/clubs"
 import type { CommunityPage } from "@/lib/pages"
 import type { Department } from "@/lib/faculties"
-import { parseLayoutValue } from "@/components/portal/rich-gallery"
+import {
+  parseLayoutValue,
+  buildLayoutValue,
+  type ViewerMode,
+} from "@/components/portal/rich-gallery"
 
 export type FbComposerMode = "post" | "notice" | "student"
 type FbLayoutKind = "fb-classic" | "fb-columns" | "fb-frame"
@@ -321,6 +325,7 @@ export default function FbPostComposer({
   const [removedPhotoIds, setRemovedPhotoIds] = useState<string[]>([])
   const [fbLayout, setFbLayout] = useState<FbLayoutKind>("fb-classic")
   const [frameColor, setFrameColor] = useState("#c48b45")
+  const [viewerMode, setViewerMode] = useState<ViewerMode>("default")
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [videoPreview, setVideoPreview] = useState<string | null>(null)
   const [oldVideoUrl, setOldVideoUrl] = useState<string | null>(null)
@@ -427,6 +432,7 @@ export default function FbPostComposer({
           setFbLayout(parsed.base)
           setFrameColor(parsed.frameColor)
         }
+        setViewerMode(parsed.viewerMode)
       }
     )
 
@@ -701,8 +707,7 @@ export default function FbPostComposer({
           )
         }
 
-        const storedLayout =
-          fbLayout === "fb-frame" ? `fb-frame:${frameColor}` : fbLayout
+        const storedLayout = buildLayoutValue(fbLayout, frameColor, viewerMode)
         await saveLayout(token, mode, savedId, storedLayout).catch(() => {})
       }
 
@@ -735,6 +740,51 @@ export default function FbPostComposer({
         : audience === "featured"
           ? "⭐ বড় কার্ড"
           : "🌐 Public"
+
+  function renderViewerModePicker() {
+    return (
+      <div className="space-y-2">
+        <p className="text-xs font-bold text-slate-700">
+          🖼️ ছবিতে ক্লিক করলে পাঠক কীভাবে দেখবে? (ক্যাপশন, ক্রেডিট, তারিখ)
+        </p>
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <button
+            type="button"
+            onClick={() => setViewerMode("default")}
+            className={`rounded-xl border py-2 px-2 font-bold cursor-pointer transition ${
+              viewerMode === "default"
+                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            ডিফল্ট
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewerMode("album")}
+            className={`rounded-xl border py-2 px-2 font-bold cursor-pointer transition ${
+              viewerMode === "album"
+                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            অ্যালবাম (২ নং)
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewerMode("lightbox")}
+            className={`rounded-xl border py-2 px-2 font-bold cursor-pointer transition ${
+              viewerMode === "lightbox"
+                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            লাইটবক্স (৩ নং)
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   function renderComposerCollage(isMini = false) {
     if (photos.length === 0) return null
@@ -1451,6 +1501,12 @@ export default function FbPostComposer({
                 </div>
               ))}
 
+              {photos.length > 0 && (
+                <div className="p-4 bg-white">
+                  {renderViewerModePicker()}
+                </div>
+              )}
+
               <div className="p-4 bg-white">
                 <button
                   type="button"
@@ -1567,6 +1623,12 @@ export default function FbPostComposer({
                   ))}
                 </div>
               </div>
+
+              {photos.length > 0 && (
+                <div className="px-4 py-3.5">
+                  {renderViewerModePicker()}
+                </div>
+              )}
 
               <div className="px-4 py-3.5 space-y-3">
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
