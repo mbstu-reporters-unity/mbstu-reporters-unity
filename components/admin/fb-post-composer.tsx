@@ -26,6 +26,10 @@ import {
   Palette,
   Plus,
   Video,
+  Eye,
+  EyeOff,
+  Trash2,
+  Upload,
 } from "lucide-react"
 import {
   SB_URL,
@@ -39,6 +43,7 @@ import {
   updateImageMeta,
   saveLayout,
   type Post,
+  type Profile,
   type StudentItem,
 } from "@/lib/sb"
 import {
@@ -75,6 +80,7 @@ export interface FbPostComposerProps {
   isAdmin?: boolean
   authorName?: string
   authorAvatar?: string | null
+  reporters?: Profile[]
   shrink?: (f: File) => Promise<Blob>
 
   categories?: string[]
@@ -271,6 +277,7 @@ export default function FbPostComposer({
   isAdmin = false,
   authorName = "সাংবাদিক",
   authorAvatar = null,
+  reporters = [],
   shrink,
   categories = ["ক্যাম্পাস সংবাদ"],
   clubs = [],
@@ -302,6 +309,10 @@ export default function FbPostComposer({
   const [selectedPageId, setSelectedPageId] = useState(defaultPageId)
   const [selectedClubId, setSelectedClubId] = useState("")
   const [customAuthor, setCustomAuthor] = useState(authorName)
+  const [postAuthorAvatar, setPostAuthorAvatar] = useState<string | null>(authorAvatar || null)
+  const [postAuthorAvatarFile, setPostAuthorAvatarFile] = useState<File | null>(null)
+  const [postAuthorAvatarPreview, setPostAuthorAvatarPreview] = useState<string | null>(null)
+  const [showAuthorAvatar, setShowAuthorAvatar] = useState(true)
 
   const [noticeBranch, setNoticeBranch] = useState<string>(BRANCHES[0].key)
   const [noticeDeptId, setNoticeDeptId] = useState("")
@@ -371,6 +382,10 @@ export default function FbPostComposer({
       setSelectedPageId(p.page_id || "")
       setSelectedClubId(p.club_id || "")
       setCustomAuthor(p.author || authorName)
+      setPostAuthorAvatar(p.author_avatar || null)
+      setShowAuthorAvatar(p.show_author_avatar !== false)
+      setPostAuthorAvatarFile(null)
+      setPostAuthorAvatarPreview(null)
       setOldVideoUrl(p.video_url || null)
       setAudience(p.hidden ? "only_me" : "public")
     } else if (mode === "notice") {
@@ -591,6 +606,12 @@ export default function FbPostComposer({
       let savedId: string | null = null
 
       if (mode === "post") {
+        let finalAuthorAvatar = postAuthorAvatar
+        if (postAuthorAvatarFile) {
+          setMsg("প্রতিবেদকের ছবি আপলোড হচ্ছে...")
+          const avatarBlob = await shrinkFn(postAuthorAvatarFile)
+          finalAuthorAvatar = await uploadImage(token, avatarBlob)
+        }
         const isClub = category.includes("ক্লাব") || category.includes("Club")
         const payload: Record<string, any> = {
           title: finalTitle,
@@ -600,6 +621,8 @@ export default function FbPostComposer({
           club_id: isClub && selectedClubId ? selectedClubId : null,
           page_id: selectedPageId || null,
           author: customAuthor.trim() || authorName || null,
+          author_avatar: finalAuthorAvatar || null,
+          show_author_avatar: showAuthorAvatar,
           image_url: coverUrl,
           video_url: finalVideoUrl,
           link_url: linkUrl.trim() || null,
@@ -723,6 +746,10 @@ export default function FbPostComposer({
   const modeLabel =
     mode === "notice" ? "ডিজিটাল নোটিশ" : mode === "student" ? "স্টুডেন্ট কর্নার" : "সংবাদ / পেজ"
   const activePageName = communityPages.find((p) => p.id === selectedPageId)?.name
+  const currentPostAvatar = postAuthorAvatarPreview || postAuthorAvatar
+  const previewDisplayAvatar =
+    mode === "post" ? (showAuthorAvatar ? currentPostAvatar : null) : authorAvatar
+
   const canProceed =
     Boolean(body.trim()) ||
     Boolean(title.trim()) ||
@@ -955,18 +982,30 @@ export default function FbPostComposer({
 
             <div className="flex-1 overflow-y-auto pb-24">
               <div className="flex items-center gap-3 px-4 pt-3 pb-2">
-                {authorAvatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={authorAvatar}
-                    alt=""
-                    className="size-11 rounded-full object-cover border border-slate-200 shrink-0"
-                  />
-                ) : (
-                  <div className="size-11 rounded-full bg-blue-600 text-white font-bold text-base flex items-center justify-center shrink-0">
-                    {authorName.charAt(0)}
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setActiveChipPanel(activeChipPanel === "people" ? null : "people")}
+                  className="relative shrink-0 cursor-pointer group"
+                  title="প্রতিবেদকের ছবি যোগ, এডিট বা হাইড করতে ট্যাপ করুন"
+                >
+                  {previewDisplayAvatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={previewDisplayAvatar}
+                      alt=""
+                      className="size-11 rounded-full object-cover object-top border border-slate-200"
+                    />
+                  ) : (
+                    <div className="size-11 rounded-full bg-blue-600 text-white font-bold text-base flex items-center justify-center">
+                      {(customAuthor || authorName).charAt(0)}
+                    </div>
+                  )}
+                  {mode === "post" && (
+                    <span className="absolute -bottom-0.5 -right-0.5 size-4.5 rounded-full bg-slate-900 text-white border border-white flex items-center justify-center shadow">
+                      <Camera className="size-2.5" />
+                    </span>
+                  )}
+                </button>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1 text-sm font-bold text-slate-900 leading-snug">
                     <span>{customAuthor || authorName}</span>
@@ -988,6 +1027,15 @@ export default function FbPostComposer({
                     >
                       {audienceBadgeText}
                     </button>
+                    {mode === "post" && currentPostAvatar && !showAuthorAvatar && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveChipPanel("people")}
+                        className="bg-amber-50 text-amber-700 font-semibold px-2 py-0.5 rounded-md cursor-pointer"
+                      >
+                        🙈 ছবি লুকানো
+                      </button>
+                    )}
                     {activePageName && (
                       <span className="bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-md truncate max-w-[160px]">
                         📄 {activePageName}
@@ -1015,13 +1063,13 @@ export default function FbPostComposer({
                   type="button"
                   onClick={() => setActiveChipPanel(activeChipPanel === "people" ? null : "people")}
                   className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold cursor-pointer transition ${
-                    selectedPageId || selectedClubId || noticeDeptId
+                    selectedPageId || selectedClubId || noticeDeptId || currentPostAvatar
                       ? "border-blue-500 bg-blue-50 text-blue-700"
                       : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
                   }`}
                 >
                   <Users className="size-3.5" />
-                  <span>People / Page</span>
+                  <span>People / Photo</span>
                 </button>
 
                 <button
@@ -1130,7 +1178,7 @@ export default function FbPostComposer({
                   {activeChipPanel === "people" && (
                     <>
                       <div className="flex justify-between items-center font-bold text-slate-700">
-                        <span>👥 প্রতিবেদক / পেজ / ক্লাব ট্যাগ:</span>
+                        <span>👥 প্রতিবেদক, ছবি, পেজ ও ক্লাব:</span>
                         <button type="button" onClick={() => setActiveChipPanel(null)} className="text-blue-600">বন্ধ</button>
                       </div>
                       <input
@@ -1139,6 +1187,124 @@ export default function FbPostComposer({
                         value={customAuthor}
                         onChange={(e) => setCustomAuthor(e.target.value)}
                       />
+                      {mode === "post" && (
+                        <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-slate-700">📷 প্রতিবেদকের ছবি (যোগ/এডিট/হাইড/বিয়োগ):</span>
+                            {currentPostAvatar && (
+                              <button
+                                type="button"
+                                onClick={() => setShowAuthorAvatar((v) => !v)}
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold cursor-pointer border ${
+                                  showAuthorAvatar
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                    : "bg-amber-50 text-amber-700 border-amber-200"
+                                }`}
+                              >
+                                {showAuthorAvatar ? <Eye className="size-3" /> : <EyeOff className="size-3" />}
+                                <span>{showAuthorAvatar ? "ভিজিবল" : "হাইড করা"}</span>
+                              </button>
+                            )}
+                          </div>
+
+                          {reporters.length > 0 && (
+                            <select
+                              className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs"
+                              value=""
+                              onChange={(e) => {
+                                const r = reporters.find((x) => x.id === e.target.value)
+                                if (r) {
+                                  setCustomAuthor(r.full_name)
+                                  setPostAuthorAvatar(r.avatar_url || null)
+                                  setPostAuthorAvatarFile(null)
+                                  setPostAuthorAvatarPreview(null)
+                                }
+                              }}
+                            >
+                              <option value="">— নিবন্ধিত সাংবাদিক বাছাই করুন —</option>
+                              {reporters.map((r) => (
+                                <option key={r.id} value={r.id}>
+                                  {r.full_name} {r.avatar_url ? "📷" : ""}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            {currentPostAvatar ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={currentPostAvatar}
+                                alt=""
+                                className={`size-10 rounded-full object-cover object-top border ${
+                                  !showAuthorAvatar ? "opacity-40 grayscale" : ""
+                                }`}
+                              />
+                            ) : (
+                              <div className="size-10 rounded-full bg-slate-200 text-slate-600 font-bold flex items-center justify-center">
+                                {(customAuthor || authorName).charAt(0)}
+                              </div>
+                            )}
+
+                            <label className="inline-flex items-center gap-1 rounded-lg bg-blue-600 text-white px-2.5 py-1.5 text-[11px] font-bold cursor-pointer">
+                              <Upload className="size-3" />
+                              <span>{currentPostAvatar ? "বদলান/এডিট" : "যোগ করুন"}</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0]
+                                  if (f) {
+                                    const u = URL.createObjectURL(f)
+                                    createdUrlsRef.current.push(u)
+                                    setPostAuthorAvatarFile(f)
+                                    setPostAuthorAvatarPreview(u)
+                                  }
+                                  e.target.value = ""
+                                }}
+                              />
+                            </label>
+
+                            {authorAvatar && (postAuthorAvatar !== authorAvatar || postAuthorAvatarFile) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPostAuthorAvatarFile(null)
+                                  setPostAuthorAvatarPreview(null)
+                                  setPostAuthorAvatar(authorAvatar)
+                                }}
+                                className="rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-[11px] font-semibold cursor-pointer"
+                              >
+                                প্রোফাইল ছবি
+                              </button>
+                            )}
+
+                            {currentPostAvatar && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPostAuthorAvatarFile(null)
+                                  setPostAuthorAvatarPreview(null)
+                                  setPostAuthorAvatar(null)
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 px-2 py-1 text-[11px] font-bold cursor-pointer"
+                              >
+                                <Trash2 className="size-3" />
+                                <span>বিয়োগ</span>
+                              </button>
+                            )}
+                          </div>
+
+                          <input
+                            className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-[11px]"
+                            placeholder="অথবা ছবির সরাসরি লিংক (https://... ঐচ্ছিক)"
+                            value={postAuthorAvatarFile ? "" : postAuthorAvatar || ""}
+                            disabled={!!postAuthorAvatarFile}
+                            onChange={(e) => setPostAuthorAvatar(e.target.value.trim() || null)}
+                          />
+                        </div>
+                      )}
                       {mode === "post" && communityPages.length > 0 && (
                         <select
                           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
@@ -1542,12 +1708,12 @@ export default function FbPostComposer({
               <div className="p-4">
                 <div className="rounded-2xl border border-slate-200 shadow-sm overflow-hidden bg-white">
                   <div className="flex items-center gap-2.5 p-3">
-                    {authorAvatar ? (
+                    {previewDisplayAvatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={authorAvatar} alt="" className="size-9 rounded-full object-cover" />
+                      <img src={previewDisplayAvatar} alt="" className="size-9 rounded-full object-cover object-top" />
                     ) : (
                       <div className="size-9 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center">
-                        {authorName.charAt(0)}
+                        {(customAuthor || authorName).charAt(0)}
                       </div>
                     )}
                     <div className="min-w-0">
