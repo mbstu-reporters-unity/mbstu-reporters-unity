@@ -2,13 +2,14 @@ import { cache } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, CalendarDays, User, Tag, Sparkles } from 'lucide-react'
+import { ArrowLeft, CalendarDays, User, Tag } from 'lucide-react'
 import { ReactionBar } from '@/components/portal/reaction-bar'
 import { getPost, getApprovedComments, getImagesMeta, getLayout } from '@/lib/sb'
 import { CommentForm } from '@/components/portal/comment-form'
 import RichGallery from '@/components/portal/rich-gallery'
 import { FormattedText } from '@/components/portal/formatted-text'
 import { UniversalMediaEmbed } from '@/components/portal/universal-media-embed'
+import { PostMetaBadges } from '@/components/portal/post-meta-badges'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
@@ -73,7 +74,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 
   const comments = await getApprovedComments(id)
   const rows = await getImagesMeta('post', id)
-  const layout = rows.length > 1 ? await getLayout('post', id) : 'grid'
+  const layout = rows.length > 0 ? await getLayout('post', id) : 'grid'
   const items =
     rows.length > 0
       ? rows.map((i) => ({ url: i.url, caption: i.caption, credit: i.credit }))
@@ -87,8 +88,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       <SiteHeader />
       <main className="min-h-screen py-6 sm:py-10 px-4 pb-20">
         <article className="glass-card mx-auto max-w-3xl space-y-6 p-5 sm:p-9 text-white">
-          
-          {/* দ্রুত নেভিগেশন ও ক্যাটাগরি */}
+
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 pb-4">
             <Link
               href="/"
@@ -107,58 +107,53 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
               </Link>
             )}
           </div>
-          
-          {/* প্রধান শিরোনাম */}
+
           <h1 className="font-serif text-2xl sm:text-4xl font-bold text-white leading-tight drop-shadow-md">
             {post.title}
           </h1>
-          
-          {/* উপশিরোনাম */}
+
           {post.heading && (
             <p className="text-base sm:text-lg text-cyan-100 font-medium leading-relaxed border-l-4 border-cyan-400 pl-3.5 italic bg-white/5 py-2 rounded-r-xl">
               {post.heading}
             </p>
           )}
-          
-          {/* তারিখ ও প্রতিবেদক */}
-          <div className="flex flex-wrap items-center gap-2.5 text-xs border-y border-white/15 py-3">
-            <span className="inline-flex items-center gap-1.5 font-bold text-cyan-200 bg-white/10 border border-white/20 px-3 py-1 rounded-full">
-              <CalendarDays className="size-3.5 text-cyan-300 shrink-0" />
-              <span>{formatBanglaDate(post.created_at)}</span>
-            </span>
 
-            {post.author && (
-              <span className="inline-flex items-center gap-1.5 font-semibold text-white/90 bg-white/10 border border-white/20 px-3 py-1 rounded-full">
-                <User className="size-3.5 text-cyan-300 shrink-0" />
-                <span>{post.author}</span>
+          <div className="space-y-2.5 border-y border-white/15 py-3">
+            <div className="flex flex-wrap items-center gap-2.5 text-xs">
+              <span className="inline-flex items-center gap-1.5 font-bold text-cyan-200 bg-white/10 border border-white/20 px-3 py-1 rounded-full">
+                <CalendarDays className="size-3.5 text-cyan-300 shrink-0" />
+                <span>{formatBanglaDate(post.created_at)}</span>
               </span>
-            )}
+
+              {post.author && (
+                <span className="inline-flex items-center gap-1.5 font-semibold text-white/90 bg-white/10 border border-white/20 px-3 py-1 rounded-full">
+                  <User className="size-3.5 text-cyan-300 shrink-0" />
+                  <span>{post.author}</span>
+                </span>
+              )}
+            </div>
+
+            <PostMetaBadges data={post} />
           </div>
 
-          {/* ফটো গ্যালারি */}
           <RichGallery items={items} layout={layout} />
 
-          {/* নিজস্ব ভিডিও */}
           {post.video_url && (
             <video src={post.video_url} controls playsInline className="w-full rounded-2xl bg-black border border-white/20 shadow-lg" />
           )}
-          
-          {/* বিস্তারিত লেখা (চোখের আরামদায়ক ফন্ট ও লাইন স্পেসিং) */}
+
           <div className="py-2 text-slate-100 text-base sm:text-lg leading-relaxed">
             <FormattedText text={post.body} className="text-slate-100 leading-relaxed" />
           </div>
 
-          {/* ভিডিও/মিডিয়া এম্বেড */}
           {post.embed_media_url && (
             <UniversalMediaEmbed url={post.embed_media_url} title={post.title} />
           )}
-          
-          {/* রিঅ্যাকশন ও সোশ্যাল শেয়ার */}
+
           <div className="pt-3 border-t border-white/15">
             <ReactionBar postId={id} title={post.title} />
           </div>
 
-          {/* মন্তব্য সেকশন */}
           <div className="pt-4 border-t border-white/15">
             <CommentForm postId={id} initialComments={comments} />
           </div>
