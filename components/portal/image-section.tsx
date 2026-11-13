@@ -6,7 +6,12 @@ import {
   removeImage, updateImageMeta, saveLayout,
 } from "../../lib/sb"
 import type { ImageMeta, ParentType, NewImage } from "../../lib/sb"
-import { LAYOUTS, parseLayoutValue } from "./rich-gallery"
+import {
+  LAYOUTS,
+  parseLayoutValue,
+  buildLayoutValue,
+  type ViewerMode,
+} from "./rich-gallery"
 
 const EMOJIS = [
   "😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇",
@@ -101,7 +106,7 @@ export function useImageSection(type: ParentType) {
       toAdd.unshift({ url: legacyUrl, caption: "", credit: "" })
     }
     await addImagesWithMeta(token, type, id, toAdd, visible.length)
-    if (visible.length + toAdd.length > 1 || layout.startsWith("fb-frame")) {
+    if (visible.length + toAdd.length > 1 || layout.startsWith("fb-frame") || layout.includes("|")) {
       await saveLayout(token, type, id, layout)
     }
   }
@@ -132,7 +137,17 @@ const small = "w-full border rounded-lg px-2 py-1 text-sm bg-white"
 export default function ImageSection({ s }: { s: ImageSectionState }) {
   const [emojiFor, setEmojiFor] = useState<string | null>(null)
   const total = s.visible.length + s.fresh.length
-  const activeBase = parseLayoutValue(s.layout).base
+  const parsed = parseLayoutValue(s.layout)
+  const activeBase = parsed.base
+  const viewerMode = parsed.viewerMode
+
+  function updateBase(base: string) {
+    s.setLayout(buildLayoutValue(base, parsed.frameColor, viewerMode))
+  }
+
+  function updateViewer(mode: ViewerMode) {
+    s.setLayout(buildLayoutValue(activeBase, parsed.frameColor, mode))
+  }
 
   return (
     <div className="space-y-3">
@@ -200,12 +215,43 @@ export default function ImageSection({ s }: { s: ImageSectionState }) {
               <button
                 key={l.key}
                 type="button"
-                onClick={() => s.setLayout(l.key)}
+                onClick={() => updateBase(l.key)}
                 className={`rounded-lg border px-2 py-2 text-sm ${activeBase === l.key ? "bg-green-700 text-white" : "bg-white"}`}
               >
                 {l.bn}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {total > 0 && (
+        <div className="space-y-1.5 rounded-xl border bg-gray-50 p-2.5">
+          <p className="text-xs font-semibold text-gray-700">
+            🖼️ ছবিতে ক্লিক করলে কীভাবে খুলবে (ক্যাপশন, ক্রেডিট, তারিখ সহ):
+          </p>
+          <div className="grid grid-cols-3 gap-1.5 text-xs">
+            <button
+              type="button"
+              onClick={() => updateViewer("default")}
+              className={`rounded-lg border px-2 py-1.5 font-semibold ${viewerMode === "default" ? "bg-green-700 text-white border-green-700" : "bg-white text-gray-700"}`}
+            >
+              ডিফল্ট
+            </button>
+            <button
+              type="button"
+              onClick={() => updateViewer("album")}
+              className={`rounded-lg border px-2 py-1.5 font-semibold ${viewerMode === "album" ? "bg-green-700 text-white border-green-700" : "bg-white text-gray-700"}`}
+            >
+              অ্যালবাম (২ নং)
+            </button>
+            <button
+              type="button"
+              onClick={() => updateViewer("lightbox")}
+              className={`rounded-lg border px-2 py-1.5 font-semibold ${viewerMode === "lightbox" ? "bg-green-700 text-white border-green-700" : "bg-white text-gray-700"}`}
+            >
+              লাইটবক্স (৩ নং)
+            </button>
           </div>
         </div>
       )}
