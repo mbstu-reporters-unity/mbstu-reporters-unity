@@ -22,6 +22,7 @@ import { UniversalMediaEmbed } from '@/components/portal/universal-media-embed'
 import { ReactionBar } from '@/components/portal/reaction-bar'
 import { CommentForm } from '@/components/portal/comment-form'
 import RichGallery from '@/components/portal/rich-gallery'
+import { PostMetaBadges } from '@/components/portal/post-meta-badges'
 
 export const revalidate = 60
 
@@ -72,11 +73,9 @@ export default async function PublicCommunityPage({
       <SiteHeader />
       <main className="min-h-screen pb-20">
 
-        {/* ==================== ফেসবুক স্টাইল গ্লাস হেডার ==================== */}
         <div className="bg-white/[0.06] border-b border-white/15 backdrop-blur-xl shadow-lg">
           <div className="max-w-5xl mx-auto">
 
-            {/* ১. কভার ফটো */}
             <div className="relative h-44 sm:h-72 w-full overflow-hidden bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 sm:rounded-b-3xl border-x border-b border-white/15">
               {page.cover_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -99,7 +98,6 @@ export default async function PublicCommunityPage({
               </Link>
             </div>
 
-            {/* ২. প্রোফাইল লোগো, নাম ও ভেরিফাইড ব্যাজ */}
             <div className="px-4 sm:px-8 pb-6">
               <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-16 sm:-mt-20">
 
@@ -157,11 +155,9 @@ export default async function PublicCommunityPage({
           </div>
         </div>
 
-        {/* ==================== পেজ কন্টেন্ট ==================== */}
         <div className="max-w-5xl mx-auto px-4 mt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
 
-            {/* বাম পাশ: About */}
             <div className="glass-card p-5 space-y-4 text-white">
               <h2 className="font-bold text-base text-white border-b border-white/15 pb-2">
                 📌 পেজের বিবরণ (About)
@@ -217,7 +213,6 @@ export default async function PublicCommunityPage({
               </div>
             </div>
 
-            {/* ডান পাশ: টাইমলাইন */}
             <div className="md:col-span-2 space-y-5">
 
               <div className="flex items-center justify-between">
@@ -264,6 +259,8 @@ export default async function PublicCommunityPage({
                         </p>
                       </div>
                     </div>
+
+                    <PostMetaBadges data={post} />
 
                     <h3 className="font-serif text-lg sm:text-xl font-bold text-white leading-snug">
                       <Link href={`/post/${post.id}`} className="hover:text-cyan-300 transition-colors">
