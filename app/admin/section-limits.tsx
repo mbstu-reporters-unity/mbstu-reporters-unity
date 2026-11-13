@@ -30,6 +30,7 @@ export default function SectionLimits({
   const [univLogo, setUnivLogo] = useState("")
   const [univLink, setUnivLink] = useState("")
   const [univText, setUnivText] = useState("")
+  const [photoClickMode, setPhotoClickMode] = useState<"lightbox" | "album">("lightbox")
   const [univBusy, setUnivBusy] = useState(false)
   const [univMsg, setUnivMsg] = useState("")
 
@@ -57,7 +58,7 @@ export default function SectionLimits({
     getLimits().then(setVals)
 
     fetch(
-      `${SB_URL}/rest/v1/app_config?select=key,value&key=in.(univ_logo_url,univ_link_url,univ_text)`,
+      `${SB_URL}/rest/v1/app_config?select=key,value&key=in.(univ_logo_url,univ_link_url,univ_text,photo_click_mode)`,
       { headers: { apikey: SB_KEY }, cache: "no-store" }
     )
       .then((res) => res.json())
@@ -67,6 +68,9 @@ export default function SectionLimits({
             if (r.key === "univ_logo_url") setUnivLogo(r.value || "")
             if (r.key === "univ_link_url") setUnivLink(r.value || "")
             if (r.key === "univ_text") setUnivText(r.value || "")
+            if (r.key === "photo_click_mode" && (r.value === "album" || r.value === "lightbox")) {
+              setPhotoClickMode(r.value)
+            }
           })
         }
       })
@@ -121,8 +125,11 @@ export default function SectionLimits({
     setBusy(true)
     setMsg("")
     try {
-      await Promise.all(names.map((n) => saveLimit(token, limitKey(n), get(n))))
-      setMsg("✅ সব সেকশনের খবর সংখ্যা সেভ হয়েছে।")
+      await Promise.all([
+        ...names.map((n) => saveLimit(token, limitKey(n), get(n))),
+        saveConfigData("photo_click_mode", photoClickMode),
+      ])
+      setMsg("✅ সব সেটিংস সফলভাবে সেভ হয়েছে।")
     } catch (e) {
       setMsg("❌ " + (e instanceof Error ? e.message : "ব্যর্থ হয়েছে"))
     }
@@ -136,7 +143,7 @@ export default function SectionLimits({
       <div>
         <h2 className="font-bold text-base text-slate-800">হোম পেজ ও বিশ্ববিদ্যালয় সেটিংস</h2>
         <p className="text-xs text-slate-500">
-          হেডারের বিশ্ববিদ্যালয় লোগো ও সেকশনগুলোর খবর সংখ্যা এখান থেকে পরিবর্তন করুন।
+          হেডারের বিশ্ববিদ্যালয় লোগো, ছবির ভিউ মোড ও সেকশনগুলোর খবর সংখ্যা এখান থেকে পরিবর্তন করুন।
         </p>
       </div>
 
@@ -224,6 +231,46 @@ export default function SectionLimits({
         )}
       </div>
 
+      {/* ছবিতে ক্লিক ভিউ মোড (সবার জন্য ডিফল্ট) */}
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2.5">
+        <p className="text-xs font-bold text-slate-700">
+          🖼️ ছবিতে ক্লিক করলে ভিউ মোড (ডিফল্ট):
+        </p>
+        <p className="text-[11px] text-slate-500">
+          পাঠক হোমপেজে ছবিতে ক্লিক করলে ক্যাপশন, ফটো ক্রেডিট ও তারিখ কীভাবে দেখবে তা নির্বাচন করুন (পোস্টের ভেতর আলাদাভাবেও পরিবর্তন করা যাবে)।
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <button
+            type="button"
+            onClick={() => setPhotoClickMode("lightbox")}
+            className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+              photoClickMode === "lightbox"
+                ? "bg-cyan-700 text-white border-cyan-700 font-bold shadow"
+                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            <span className="block">৩ নং ছবির মতো: স্লাইড লাইটবক্স</span>
+            <span className={`text-[10px] block mt-0.5 ${photoClickMode === "lightbox" ? "text-cyan-100" : "text-slate-500"}`}>
+              ডানে-বামে স্লাইড + নিচে ক্যাপশন, ক্রেডিট ও তারিখ
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPhotoClickMode("album")}
+            className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+              photoClickMode === "album"
+                ? "bg-cyan-700 text-white border-cyan-700 font-bold shadow"
+                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            <span className="block">২ নং ছবির মতো: ভার্টিকাল অ্যালবাম</span>
+            <span className={`text-[10px] block mt-0.5 ${photoClickMode === "album" ? "text-cyan-100" : "text-slate-500"}`}>
+              নিচে নিচে সব ছবি + বিবরণ, ক্রেডিট, তারিখ ও জুম বাটন
+            </span>
+          </button>
+        </div>
+      </div>
+
       {/* খবরের সংখ্যা সেটিংস */}
       <div className="space-y-2.5 pt-1">
         <p className="text-xs font-bold text-slate-700">হোম পেজে খবরের সংখ্যা নির্ধারণ:</p>
@@ -260,7 +307,7 @@ export default function SectionLimits({
       </div>
 
       <button className={btn} onClick={saveAll} disabled={busy}>
-        {busy ? "সেভ হচ্ছে..." : "খবরের সংখ্যা সেটিংস সেভ করুন"}
+        {busy ? "সেভ হচ্ছে..." : "সব সেটিংস সেভ করুন"}
       </button>
 
       {msg && (
