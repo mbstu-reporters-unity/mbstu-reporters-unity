@@ -13,7 +13,6 @@ import {
   Smile,
   FolderPlus,
   Pencil,
-  Trash2,
   ArrowUp,
   ArrowDown,
   Globe,
@@ -21,12 +20,12 @@ import {
   Pin,
   Star,
   Sparkles,
-  Video,
   FileText,
   Link2,
   Camera,
   Palette,
   Plus,
+  Video,
 } from "lucide-react"
 import {
   SB_URL,
@@ -285,7 +284,6 @@ export default function FbPostComposer({
     null | "music" | "people" | "location" | "feeling" | "album"
   >(null)
 
-  // টেক্সট ও মেটা
   const [title, setTitle] = useState("")
   const [heading, setHeading] = useState("")
   const [body, setBody] = useState("")
@@ -296,13 +294,11 @@ export default function FbPostComposer({
   const [linkUrl, setLinkUrl] = useState("")
   const [embedMediaUrl, setEmbedMediaUrl] = useState("")
 
-  // টার্গেট ও ক্যাটাগরি
   const [category, setCategory] = useState(categories[0] || "ক্যাম্পাস সংবাদ")
   const [selectedPageId, setSelectedPageId] = useState(defaultPageId)
   const [selectedClubId, setSelectedClubId] = useState("")
   const [customAuthor, setCustomAuthor] = useState(authorName)
 
-  // নোটিশ বিশেষ ফিল্ড
   const [noticeBranch, setNoticeBranch] = useState<string>(BRANCHES[0].key)
   const [noticeDeptId, setNoticeDeptId] = useState("")
   const [noticeRef, setNoticeRef] = useState("")
@@ -315,15 +311,12 @@ export default function FbPostComposer({
     type: string | null
   } | null>(null)
 
-  // স্টুডেন্ট কর্নার বিশেষ ফিল্ড
   const [studentKind, setStudentKind] = useState(studentKinds[0] || "Opinion")
   const [studentDept, setStudentDept] = useState("")
   const [studentBatch, setStudentBatch] = useState("")
 
-  // অডিয়েন্স / দৃশ্যমানতা
   const [audience, setAudience] = useState<"public" | "only_me" | "pinned" | "featured">("public")
 
-  // ছবি, ভিডিও ও লেআউট
   const [photos, setPhotos] = useState<PhotoDraft[]>([])
   const [removedPhotoIds, setRemovedPhotoIds] = useState<string[]>([])
   const [fbLayout, setFbLayout] = useState<FbLayoutKind>("fb-classic")
@@ -332,7 +325,6 @@ export default function FbPostComposer({
   const [videoPreview, setVideoPreview] = useState<string | null>(null)
   const [oldVideoUrl, setOldVideoUrl] = useState<string | null>(null)
 
-  // এডিট ছবি ক্রেডিট পপআপ
   const [creditEditUid, setCreditEditUid] = useState<string | null>(null)
 
   const [busy, setBusy] = useState(false)
@@ -350,7 +342,6 @@ export default function FbPostComposer({
     }
   }, [])
 
-  // এডিট মোড হলে আগের ডেটা লোড করা
   useEffect(() => {
     if (!editItem) return
     let alive = true
@@ -477,6 +468,12 @@ export default function FbPostComposer({
           caption: "",
           credit: "",
         })
+      } else if (mode === "notice") {
+        if (f.size > MAX_NOTICE_FILE_MB * 1024 * 1024) {
+          setMsg(`❌ ফাইল ${MAX_NOTICE_FILE_MB} MB-এর বেশি হতে পারবে না`)
+          continue
+        }
+        setNoticeFile(f)
       }
     }
 
@@ -528,13 +525,16 @@ export default function FbPostComposer({
       if (mode === "student") return "শিক্ষার্থীর লেখা ও ছবি"
       return "ক্যাম্পাসের ছবির প্রতিবেদন"
     }
+    if (mode === "notice" && (noticeFile || oldNoticeFile)) {
+      return noticeFile?.name || oldNoticeFile?.name || "জরুরি বিজ্ঞপ্তি"
+    }
     return ""
   }
 
   async function handlePublish() {
     const finalTitle = deriveTitle()
     if (!finalTitle) {
-      setMsg("❌ অনুগ্রহ করে কিছু লিখুন অথবা অন্তত একটি ছবি যুক্ত করুন")
+      setMsg("❌ অনুগ্রহ করে কিছু লিখুন অথবা অন্তত একটি ছবি/ফাইল যুক্ত করুন")
       return
     }
     if (linkUrl.trim() && !/^https?:\/\//i.test(linkUrl.trim())) {
@@ -637,7 +637,6 @@ export default function FbPostComposer({
           payload
         )
       } else {
-        // student
         if (audience === "featured") {
           await fetch(`${SB_URL}/rest/v1/student_items?featured=eq.true`, {
             method: "PATCH",
@@ -720,7 +719,13 @@ export default function FbPostComposer({
     mode === "notice" ? "ডিজিটাল নোটিশ" : mode === "student" ? "স্টুডেন্ট কর্নার" : "সংবাদ / পেজ"
   const activePageName = communityPages.find((p) => p.id === selectedPageId)?.name
   const canProceed =
-    Boolean(body.trim()) || Boolean(title.trim()) || photos.length > 0 || Boolean(videoFile) || Boolean(oldVideoUrl)
+    Boolean(body.trim()) ||
+    Boolean(title.trim()) ||
+    photos.length > 0 ||
+    Boolean(videoFile) ||
+    Boolean(oldVideoUrl) ||
+    Boolean(noticeFile) ||
+    Boolean(oldNoticeFile)
 
   const audienceBadgeText =
     audience === "only_me"
@@ -810,7 +815,6 @@ export default function FbPostComposer({
       )
     }
 
-    // fb-classic
     if (list.length === 1) {
       return <div>{renderTile(list[0], 0, "max-h-96")}</div>
     }
@@ -857,7 +861,6 @@ export default function FbPostComposer({
     <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-sm flex items-center justify-center sm:p-4">
       <div className="relative w-full h-[100dvh] sm:h-[92vh] sm:max-w-xl bg-white text-slate-900 sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
 
-        {/* Hidden multi-file picker */}
         <input
           ref={fileInputRef}
           type="file"
@@ -872,10 +875,9 @@ export default function FbPostComposer({
           }}
         />
 
-        {/* ==================== ধাপ ১: New Post (মূল কম্পোজার) ==================== */}
+        {/* ==================== ধাপ ১: New Post ==================== */}
         {step === "compose" && (
           <>
-            {/* টপ বার */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white shrink-0">
               <button
                 type="button"
@@ -901,9 +903,7 @@ export default function FbPostComposer({
               </button>
             </div>
 
-            {/* স্ক্রলযোগ্য বডি */}
             <div className="flex-1 overflow-y-auto pb-24">
-              {/* প্রোফাইল হেডার */}
               <div className="flex items-center gap-3 px-4 pt-3 pb-2">
                 {authorAvatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -947,7 +947,6 @@ export default function FbPostComposer({
                 </div>
               </div>
 
-              {/* অনুভূমিক পিল বাটনসমূহ (Music, People, Location, Feeling, Album) */}
               <div className="flex items-center gap-2 overflow-x-auto px-4 py-2 scrollbar-none">
                 <button
                   type="button"
@@ -1015,7 +1014,6 @@ export default function FbPostComposer({
                 </button>
               </div>
 
-              {/* পিল বাটনের মিনি প্যানেল */}
               {activeChipPanel && (
                 <div className="mx-4 my-2 p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs animate-in fade-in">
                   {activeChipPanel === "location" && (
@@ -1166,7 +1164,6 @@ export default function FbPostComposer({
                 </div>
               )}
 
-              {/* শিরোনাম ও মূল ক্যাপশন বক্স */}
               <div className="px-4 pt-2 pb-3 space-y-1.5">
                 <input
                   className="w-full text-sm font-bold text-slate-900 placeholder-slate-400 border-b border-slate-100 pb-1.5 focus:outline-none focus:border-blue-400"
@@ -1174,6 +1171,14 @@ export default function FbPostComposer({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
+                {mode !== "student" && (
+                  <input
+                    className="w-full text-xs text-slate-700 placeholder-slate-400 border-b border-slate-100 pb-1.5 focus:outline-none focus:border-blue-400"
+                    placeholder="উপশিরোনাম / হেডিং (ঐচ্ছিক)"
+                    value={heading}
+                    onChange={(e) => setHeading(e.target.value)}
+                  />
+                )}
                 <textarea
                   rows={photos.length > 0 ? 3 : 6}
                   className="w-full text-base sm:text-lg text-slate-900 placeholder-slate-400 resize-none focus:outline-none leading-relaxed pt-1"
@@ -1183,12 +1188,10 @@ export default function FbPostComposer({
                 />
               </div>
 
-              {/* ==================== লাইভ কোলাজ ও লেআউট সুইচার ==================== */}
               {photos.length > 0 && (
                 <div className="relative mt-1 border-y border-slate-200 bg-slate-100">
                   {renderComposerCollage(false)}
 
-                  {/* ওপর-ডানে ভাসমান ২টি বাটন: লেআউট মেনু + এডিট (পেন্সিল) */}
                   <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
                     <button
                       type="button"
@@ -1212,7 +1215,6 @@ export default function FbPostComposer({
                     </button>
                   </div>
 
-                  {/* লেআউট ড্রপডাউন মেনু (Classic / Columns / Frame) — হুবহু স্ক্রিনশট ৭ এর মতো */}
                   {layoutMenuOpen && (
                     <div className="absolute top-16 right-3 z-30 w-56 rounded-2xl bg-black/85 text-white backdrop-blur-xl shadow-2xl border border-white/15 overflow-hidden animate-in zoom-in-95 fade-in">
                       <button
@@ -1262,7 +1264,6 @@ export default function FbPostComposer({
                     </div>
                   )}
 
-                  {/* Frame মোড চালু থাকলে নিচে ফ্রেমের রঙ বাছাই করার পটি */}
                   {fbLayout === "fb-frame" && (
                     <div className="flex items-center gap-2 px-3 py-2 bg-white border-t border-slate-200 overflow-x-auto scrollbar-none">
                       <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1 shrink-0">
@@ -1292,7 +1293,6 @@ export default function FbPostComposer({
                 </div>
               )}
 
-              {/* ভিডিও প্রিভিউ */}
               {(videoPreview || oldVideoUrl) && (
                 <div className="mx-4 mt-3 relative rounded-2xl overflow-hidden bg-black border border-slate-200">
                   <video
@@ -1315,7 +1315,6 @@ export default function FbPostComposer({
                 </div>
               )}
 
-              {/* নোটিশের PDF/DOC সংযুক্তি দেখানো */}
               {mode === "notice" && (noticeFile || oldNoticeFile) && (
                 <div className="mx-4 mt-3 flex items-center justify-between p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900">
                   <span className="flex items-center gap-2 font-semibold truncate">
@@ -1338,13 +1337,12 @@ export default function FbPostComposer({
               )}
             </div>
 
-            {/* নিচের ভাসমান ছবি যোগ করার বাটন (স্ক্রিনশট ৩, ৪, ৬ এর মতো) */}
             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="size-14 rounded-full bg-white text-slate-900 border border-slate-200 shadow-[0_6px_24px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 transition flex items-center justify-center cursor-pointer"
-                title="ছবি বা ভিডিও যুক্ত করুন"
+                title={mode === "notice" ? "ছবি বা PDF/DOC ফাইল যুক্ত করুন" : "ছবি বা ভিডিও যুক্ত করুন"}
               >
                 <ImagePlus className="size-6" />
               </button>
@@ -1352,7 +1350,7 @@ export default function FbPostComposer({
           </>
         )}
 
-        {/* ==================== ধাপ ২: Edit Photos & Captions (ছবি ৫, ১০, ১৪) ==================== */}
+        {/* ==================== ধাপ ২: Edit Photos & Captions ==================== */}
         {step === "edit" && (
           <>
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white shrink-0">
@@ -1384,7 +1382,6 @@ export default function FbPostComposer({
                       className="w-full max-h-[420px] object-contain mx-auto"
                     />
 
-                    {/* ওপর-বামে Edit (ফটো ক্রেডিট) বাটন */}
                     <button
                       type="button"
                       onClick={() => setCreditEditUid(creditEditUid === p.uid ? null : p.uid)}
@@ -1394,7 +1391,6 @@ export default function FbPostComposer({
                       <span>{p.credit ? `📷 ${p.credit}` : "Edit / Credit"}</span>
                     </button>
 
-                    {/* ওপর-ডানে ক্রম বদলানো ও মুছে ফেলা বাটন */}
                     <div className="absolute top-3 right-3 flex items-center gap-1.5">
                       <button
                         type="button"
@@ -1425,7 +1421,6 @@ export default function FbPostComposer({
                     </div>
                   </div>
 
-                  {/* ফটো ক্রেডিট এডিট ইনপুট */}
                   {creditEditUid === p.uid && (
                     <div className="px-4 py-2 bg-blue-50 border-y border-blue-100 flex items-center gap-2">
                       <Camera className="size-4 text-blue-600 shrink-0" />
@@ -1445,7 +1440,6 @@ export default function FbPostComposer({
                     </div>
                   )}
 
-                  {/* Add a caption... (হুবহু স্ক্রিনশট ৫ ও ১০ এর মতো) */}
                   <div className="px-4 py-2.5">
                     <input
                       className="w-full text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
@@ -1457,7 +1451,6 @@ export default function FbPostComposer({
                 </div>
               ))}
 
-              {/* সবার নিচে + Add Photos/Videos */}
               <div className="p-4 bg-white">
                 <button
                   type="button"
@@ -1472,7 +1465,7 @@ export default function FbPostComposer({
           </>
         )}
 
-        {/* ==================== ধাপ ৩: Publish Settings (স্ক্রিনশট ২) ==================== */}
+        {/* ==================== ধাপ ৩: Publish Settings ==================== */}
         {step === "publish" && (
           <>
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white shrink-0">
@@ -1490,7 +1483,6 @@ export default function FbPostComposer({
             </div>
 
             <div className="flex-1 overflow-y-auto divide-y divide-slate-200 bg-white">
-              {/* মিনি প্রিভিউ কার্ড (স্ক্রিনশট ২ এর উপরের অংশ) */}
               <div className="p-4">
                 <div className="rounded-2xl border border-slate-200 shadow-sm overflow-hidden bg-white">
                   <div className="flex items-center gap-2.5 p-3">
@@ -1530,7 +1522,6 @@ export default function FbPostComposer({
                 </div>
               </div>
 
-              {/* Post audience */}
               <button
                 type="button"
                 onClick={() => setStep("audience")}
@@ -1554,7 +1545,6 @@ export default function FbPostComposer({
                 <ChevronRight className="size-5 text-slate-400" />
               </button>
 
-              {/* Add music */}
               <div className="px-4 py-3.5 space-y-2.5">
                 <div className="flex items-center gap-3.5">
                   <Music className="size-6 text-slate-700" />
@@ -1578,7 +1568,6 @@ export default function FbPostComposer({
                 </div>
               </div>
 
-              {/* Also share to... (ক্যাটাগরি, পেজ, ক্লাব, ডিপার্টমেন্ট, ইত্যাদি) */}
               <div className="px-4 py-3.5 space-y-3">
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Also share to & Details...
@@ -1688,6 +1677,31 @@ export default function FbPostComposer({
                       />
                     </div>
 
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                      <label className="font-bold text-slate-700 block">
+                        📎 PDF / DOC ফাইল সংযুক্ত করুন (ঐচ্ছিক, সর্বোচ্চ {MAX_NOTICE_FILE_MB} MB):
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf,.pdf,.doc,.docx"
+                        className="text-xs w-full"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0]
+                          if (!f) return
+                          if (f.size > MAX_NOTICE_FILE_MB * 1024 * 1024) {
+                            setMsg(`❌ ফাইল ${MAX_NOTICE_FILE_MB} MB-এর বেশি হতে পারবে না`)
+                            return
+                          }
+                          setNoticeFile(f)
+                        }}
+                      />
+                      {(noticeFile || oldNoticeFile) && (
+                        <p className="text-[11px] text-blue-700 font-semibold truncate">
+                          ✓ {noticeFile ? noticeFile.name : oldNoticeFile?.name || "সংযুক্ত ফাইল"}
+                        </p>
+                      )}
+                    </div>
+
                     <label className="flex items-center gap-2 text-xs text-slate-700">
                       <input
                         type="checkbox"
@@ -1730,8 +1744,17 @@ export default function FbPostComposer({
                   </div>
                 )}
 
-                {/* এক্সটার্নাল লিংক */}
                 <div className="flex items-center gap-2 pt-1">
+                  <Video className="size-4 text-slate-500 shrink-0" />
+                  <input
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs bg-white"
+                    placeholder="YouTube / Facebook ভিডিও লিংক (ঐচ্ছিক)"
+                    value={embedMediaUrl}
+                    onChange={(e) => setEmbedMediaUrl(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
                   <Link2 className="size-4 text-slate-500 shrink-0" />
                   <input
                     className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs bg-white"
@@ -1742,7 +1765,6 @@ export default function FbPostComposer({
                 </div>
               </div>
 
-              {/* AI label সুইচ (স্ক্রিনশট ২ এর মতো) */}
               <div className="px-4 py-3.5 flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <Sparkles className="size-5 text-slate-700 shrink-0 mt-0.5" />
@@ -1777,7 +1799,6 @@ export default function FbPostComposer({
               </div>
             )}
 
-            {/* নিচের বড় নীল Post বাটন */}
             <div className="p-3.5 border-t border-slate-200 bg-white shrink-0">
               <button
                 type="button"
@@ -1791,7 +1812,7 @@ export default function FbPostComposer({
           </>
         )}
 
-        {/* ==================== ধাপ ৩বি: Audience Selector (স্ক্রিনশট ১) ==================== */}
+        {/* ==================== ধাপ ৩বি: Audience Selector ==================== */}
         {step === "audience" && (
           <>
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white shrink-0">
@@ -1815,7 +1836,6 @@ export default function FbPostComposer({
               </div>
 
               <div className="space-y-1">
-                {/* Public */}
                 <button
                   type="button"
                   onClick={() => setAudience("public")}
@@ -1839,7 +1859,6 @@ export default function FbPostComposer({
                   </span>
                 </button>
 
-                {/* Pinned (for Notice & Admin) */}
                 {mode === "notice" && isAdmin && (
                   <button
                     type="button"
@@ -1865,7 +1884,6 @@ export default function FbPostComposer({
                   </button>
                 )}
 
-                {/* Featured (for Student Corner) */}
                 {mode === "student" && (
                   <button
                     type="button"
@@ -1891,7 +1909,6 @@ export default function FbPostComposer({
                   </button>
                 )}
 
-                {/* Only me (Hidden / Draft — for Post & Student Corner) */}
                 {mode !== "notice" && (
                   <button
                     type="button"
