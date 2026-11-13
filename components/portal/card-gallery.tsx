@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
 import { getImagesMeta, getLayout } from "@/lib/sb"
 import RichGallery from "./rich-gallery"
 import type { GalleryItem } from "./rich-gallery"
@@ -61,25 +60,46 @@ function parseEmbedMedia(raw?: string | null): EmbedParsed {
   if (!raw || !raw.trim()) return out
 
   const str = raw.trim()
-  let urls: { url: string; caption?: string | null }[] = []
+  let items: Array<{
+    url: string
+    title?: string | null
+    subtitle?: string | null
+    description?: string | null
+    date?: string | null
+    caption?: string | null
+  }> = []
 
   if (str.startsWith("[") || str.startsWith("{")) {
     try {
       const parsed = JSON.parse(str)
       const arr = Array.isArray(parsed) ? parsed : [parsed]
-      urls = arr
+      items = arr
         .filter((item) => item && typeof item.url === "string" && item.url.trim())
-        .map((item) => ({ url: item.url.trim(), caption: item.caption || item.title || null }))
+        .map((item) => ({
+          url: item.url.trim(),
+          title: item.title || null,
+          subtitle: item.subtitle || null,
+          description: item.description || null,
+          date: item.date || null,
+          caption: item.caption || null,
+        }))
     } catch {}
   } else {
-    urls = [{ url: str }]
+    items = [{ url: str }]
   }
 
-  for (const item of urls) {
+  for (const item of items) {
     const c = classifyMediaUrl(item.url)
     if (!c) continue
     if (c.kind === "image") {
-      out.images.push({ url: c.src, caption: item.caption })
+      out.images.push({
+        url: c.src,
+        title: item.title,
+        subtitle: item.subtitle,
+        description: item.description,
+        date: item.date,
+        caption: item.caption,
+      })
     } else {
       out.videos.push(c)
     }
@@ -93,15 +113,15 @@ export default function CardGallery({
   cover,
   videoUrl,
   embedMediaUrl,
-  href,
-  external,
+  postTitle,
+  postDate,
 }: {
   postId: string
   cover: string | null
   videoUrl?: string | null
   embedMediaUrl?: string | null
-  href: string
-  external: boolean
+  postTitle?: string | null
+  postDate?: string | null
 }) {
   const [items, setItems] = useState<GalleryItem[] | null>(null)
   const [layout, setLayout] = useState("grid")
@@ -109,19 +129,27 @@ export default function CardGallery({
   useEffect(() => {
     let live = true
     ;(async () => {
-      const rows = await getImagesMeta("post", postId)
-      if (!live || rows.length === 0) return
-      const lay = await getLayout("post", postId)
+      const [rows, lay] = await Promise.all([
+        getImagesMeta("post", postId),
+        getLayout("post", postId),
+      ])
       if (!live) return
-      if (rows.length >= 2 || lay.startsWith("fb-frame")) {
-        setItems(rows.map((r) => ({ url: r.url, caption: r.caption, credit: r.credit })))
-        setLayout(lay)
+      setLayout(lay || "grid")
+      if (rows.length > 0) {
+        setItems(
+          rows.map((r) => ({
+            url: r.url,
+            caption: r.caption,
+            credit: r.credit,
+            date: r.created_at || postDate || null,
+          }))
+        )
       }
     })()
     return () => {
       live = false
     }
-  }, [postId])
+  }, [postId, postDate])
 
   const embed = parseEmbedMedia(embedMediaUrl)
   const hasDirectVideo = Boolean(videoUrl && videoUrl.trim())
@@ -201,11 +229,17 @@ export default function CardGallery({
     return null
   }
 
-  // ১. একাধিক ছবি (post_images) থাকলে বা fb-frame হলে এজ-টু-এজ কোলাজ দেখাবে
+  // ১. post_images-এ ছবি থাকলে (১টি বা একাধিক) — ক্লিক করলে এডমিনের পছন্দমতো ২ নং বা ৩ নং ভিউ খুলবে
   if (items && items.length > 0) {
     return (
       <div className="w-full space-y-1 overflow-hidden">
-        <RichGallery items={items} layout={layout} compact />
+        <RichGallery
+          items={items}
+          layout={layout}
+          compact
+          postTitle={postTitle}
+          postDate={postDate}
+        />
         {renderVideoBlock()}
       </div>
     )
@@ -217,42 +251,33 @@ export default function CardGallery({
     return <div className="w-full overflow-hidden">{videoBlock}</div>
   }
 
-  // ৩. embed_media_url-এ একাধিক ছবি থাকলে কোলাজ দেখাবে
-  if (embed.images.length >= 2) {
+  // ৩. embed_media_url-এ ছবি থাকলে
+  if (embed.images.length > 0) {
     return (
       <div className="w-full overflow-hidden">
-        <RichGallery items={embed.images} layout="fb-classic" compact />
+        <RichGallery
+          items={embed.images}
+          layout={embed.images.length > 1 ? layout || "fb-classic" : layout}
+          compact
+          postTitle={postTitle}
+          postDate={postDate}
+        />
       </div>
     )
   }
 
-  // ৪. একক ছবি থাকলে ফ্রি-সাইজে পুরো প্রস্থ জুড়ে দেখাবে (কোনো 16:10 ক্রপিং ছাড়া)
-  const singleImg = cover || embed.images[0]?.url || null
-  if (!singleImg) return null
-
-  const imgEl = (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={singleImg}
-      alt=""
-      loading="lazy"
-      className="block w-full h-auto max-h-[680px] md:max-h-[460px] object-contain bg-black/20 mx-auto transition-transform duration-500 md:group-hover:scale-[1.02]"
-    />
-  )
-
-  const linkClass = "block w-full overflow-hidden bg-black/20 select-none"
-
-  if (external) {
-    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={linkClass}>
-        {imgEl}
-      </a>
-    )
-  }
+  // ৪. একক cover ছবি থাকলে — ক্লিক করলে ২ নং বা ৩ নং মোডে খুলবে
+  if (!cover) return null
 
   return (
-    <Link href={href} className={linkClass}>
-      {imgEl}
-    </Link>
+    <div className="w-full overflow-hidden">
+      <RichGallery
+        items={[{ url: cover, date: postDate || null }]}
+        layout={layout}
+        compact
+        postTitle={postTitle}
+        postDate={postDate}
+      />
+    </div>
   )
 }
