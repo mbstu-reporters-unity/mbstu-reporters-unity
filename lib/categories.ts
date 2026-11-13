@@ -7,6 +7,7 @@ function hdr(): Record<string, string> {
   }
 }
 
+// অ্যাডমিন প্যানেলের ক্রম অনুযায়ী দৃশ্যমান সব ক্যাটাগরির নাম আনা
 export async function getVisibleCategoryNames(): Promise<string[]> {
   try {
     const res = await fetch(
@@ -21,6 +22,7 @@ export async function getVisibleCategoryNames(): Promise<string[]> {
   }
 }
 
+// নির্দিষ্ট কোনো ক্যাটাগরির সব সংবাদ লোড করা
 export async function getCategoryPosts(category: string, limit = 100): Promise<Post[]> {
   try {
     const res = await fetch(
