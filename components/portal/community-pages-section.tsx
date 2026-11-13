@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowRight,
+  Check,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -22,7 +23,8 @@ export function CommunityPagesSection() {
   const [filter, setFilter] = useState('All')
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
-  const [, setCopiedId] = useState<string | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [cardsCount, setCardsCount] = useState(3)
 
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
@@ -32,6 +34,17 @@ export function CommunityPagesSection() {
       const activeOnly = (data || []).filter((p) => p.is_active !== false)
       setPages(activeOnly)
     })
+  }, [])
+
+  useEffect(() => {
+    const updateCardsCount = () => {
+      if (window.innerWidth >= 1024) setCardsCount(3)
+      else if (window.innerWidth >= 640) setCardsCount(2)
+      else setCardsCount(1)
+    }
+    updateCardsCount()
+    window.addEventListener('resize', updateCardsCount)
+    return () => window.removeEventListener('resize', updateCardsCount)
   }, [])
 
   const categories = ['All', ...Array.from(new Set(pages.map((p) => p.category || 'ক্যাম্পাস সংগঠন')))]
@@ -99,7 +112,6 @@ export function CommunityPagesSection() {
 
   if (pages.length === 0) return null
 
-  const cardsCount = typeof window !== 'undefined' && window.innerWidth >= 1024 ? 3 : typeof window !== 'undefined' && window.innerWidth >= 640 ? 2 : 1
   const displayedPages: CommunityPage[] = []
   if (total > 0) {
     for (let i = 0; i < Math.min(cardsCount, total); i++) {
@@ -108,10 +120,8 @@ export function CommunityPagesSection() {
   }
 
   return (
-    // ✅ সাদা bg-slate-50 দূর করে ডার্ক গ্লাস ব্লেন্ডিং
     <section id="community-pages" className="py-14 sm:py-20 border-b border-white/10 relative">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        
         <SectionHeading
           inverted
           eyebrow="Community & Organizations"
@@ -153,7 +163,6 @@ export function CommunityPagesSection() {
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayedPages.map((page) => (
-              // ✅ কার্ড এখন প্রিমিয়াম glass-card থিমে দেখাবে
               <article
                 key={page.id}
                 className="glass-card group flex flex-col justify-between overflow-hidden text-white"
@@ -165,6 +174,7 @@ export function CommunityPagesSection() {
                       <img
                         src={page.cover_url}
                         alt=""
+                        loading="lazy"
                         className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
@@ -182,7 +192,7 @@ export function CommunityPagesSection() {
                       <div className="relative size-20 rounded-full bg-slate-900 ring-4 ring-cyan-400/80 shadow-lg overflow-hidden shrink-0 flex items-center justify-center">
                         {page.avatar_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={page.avatar_url} alt={page.name} className="size-full object-cover" />
+                          <img src={page.avatar_url} alt={page.name} loading="lazy" className="size-full object-cover" />
                         ) : (
                           <div className="size-full bg-cyan-600 text-white flex items-center justify-center text-2xl font-bold">
                             {page.name.charAt(0)}
@@ -194,9 +204,14 @@ export function CommunityPagesSection() {
                         type="button"
                         onClick={(e) => handleShare(e, page)}
                         className="rounded-full p-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 transition cursor-pointer"
-                        title="শেয়ার করুন"
+                        title={copiedId === page.id ? 'লিংক কপি হয়েছে' : 'শেয়ার করুন'}
+                        aria-label="শেয়ার করুন"
                       >
-                        <Share2 className="size-3.5" />
+                        {copiedId === page.id ? (
+                          <Check className="size-3.5 text-cyan-300" />
+                        ) : (
+                          <Share2 className="size-3.5" />
+                        )}
                       </button>
                     </div>
 
@@ -206,7 +221,9 @@ export function CommunityPagesSection() {
                           {page.name}
                         </Link>
                         {page.is_verified && (
-                          <CheckCircle2 className="size-4 fill-blue-500 text-white shrink-0" title="ভেরিফাইড পেজ" />
+                          <span title="ভেরিফাইড পেজ" className="inline-flex shrink-0">
+                            <CheckCircle2 className="size-4 fill-blue-500 text-white" />
+                          </span>
                         )}
                       </div>
                       {page.name_en && (
@@ -261,6 +278,7 @@ export function CommunityPagesSection() {
                     key={i}
                     type="button"
                     onClick={() => setCurrentIndex(i)}
+                    aria-label={`স্লাইড ${i + 1}`}
                     className={`h-2 rounded-full transition-all cursor-pointer ${
                       i === currentIndex ? 'w-6 bg-cyan-400 shadow-sm' : 'w-2 bg-white/30 hover:bg-white/50'
                     }`}
@@ -272,6 +290,7 @@ export function CommunityPagesSection() {
                 <button
                   type="button"
                   onClick={() => setIsPaused(!isPaused)}
+                  aria-label={isPaused ? 'চালান' : 'থামান'}
                   className="size-8 rounded-xl bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 cursor-pointer"
                 >
                   {isPaused ? <Play className="size-3 text-cyan-400" /> : <Pause className="size-3 text-amber-400" />}
@@ -279,6 +298,7 @@ export function CommunityPagesSection() {
                 <button
                   type="button"
                   onClick={prevSlide}
+                  aria-label="আগের পেজ"
                   className="size-8 rounded-xl bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 cursor-pointer active:scale-95"
                 >
                   <ChevronLeft className="size-4" />
@@ -286,6 +306,7 @@ export function CommunityPagesSection() {
                 <button
                   type="button"
                   onClick={nextSlide}
+                  aria-label="পরের পেজ"
                   className="size-8 rounded-xl bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 cursor-pointer active:scale-95"
                 >
                   <ChevronRight className="size-4" />
@@ -294,7 +315,6 @@ export function CommunityPagesSection() {
             </div>
           )}
         </div>
-
       </div>
     </section>
   )
