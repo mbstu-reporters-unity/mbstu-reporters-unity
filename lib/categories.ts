@@ -1,4 +1,4 @@
-import { SB_URL, SB_KEY, type Post } from "./sb"
+import { SB_URL, SB_KEY, attachProfileAvatars, type Post } from "./sb"
 
 function hdr(): Record<string, string> {
   return {
@@ -7,7 +7,6 @@ function hdr(): Record<string, string> {
   }
 }
 
-// অ্যাডমিন প্যানেলের ক্রম অনুযায়ী দৃশ্যমান সব ক্যাটাগরির নাম আনা
 export async function getVisibleCategoryNames(): Promise<string[]> {
   try {
     const res = await fetch(
@@ -22,7 +21,6 @@ export async function getVisibleCategoryNames(): Promise<string[]> {
   }
 }
 
-// নির্দিষ্ট কোনো ক্যাটাগরির সব সংবাদ লোড করা
 export async function getCategoryPosts(category: string, limit = 100): Promise<Post[]> {
   try {
     const res = await fetch(
@@ -30,7 +28,8 @@ export async function getCategoryPosts(category: string, limit = 100): Promise<P
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
-    return await res.json()
+    const rows: Post[] = await res.json()
+    return await attachProfileAvatars(rows)
   } catch {
     return []
   }
