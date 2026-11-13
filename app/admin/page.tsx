@@ -31,14 +31,13 @@ import ImageSection, { useImageSection } from "../../components/portal/image-sec
 import {
   Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
-  Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, CheckCircle2
+  Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2
 } from "lucide-react"
 
 const TOKEN_KEY = "mbstu_admin_token"
 const MAX_VIDEO_MB = 50
 const CATS = ["ক্যাম্পাস সংবাদ", "ক্লাব", "একাডেমিক", "গবেষণা", "খেলাধুলা", "সংস্কৃতি", "পরিবেশ"]
 
-// ইনপুট বক্সে স্পষ্ট টেক্সট কালার (text-slate-900)
 const inp = "w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-600 transition"
 const smallInp = "w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs bg-white text-slate-900 focus:outline-none focus:border-cyan-600"
 const btn = "w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-50 cursor-pointer shadow-md transition active:scale-98"
@@ -113,7 +112,7 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false)
   const [cats, setCats] = useState<string[]>(CATS)
   const [linkUrl, setLinkUrl] = useState("")
-  const [homeLimit, setHomeLimit] = useState("12")
+  const [, setHomeLimit] = useState("12")
   const [msg, setMsg] = useState("")
 
   const imgs = useImageSection("post")
@@ -303,6 +302,42 @@ export default function AdminPage() {
     setMediaItems(mediaItems.filter((_, i) => i !== index))
   }
 
+  // ✅ একসাথে একাধিক ফাইল সিলেক্ট ও ব্যাচ আপলোড ফাংশন
+  async function batchUploadMediaFiles(files: File[]) {
+    if (files.length === 0) return
+    setBusy(true)
+    const newItems: PostMediaItem[] = []
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        setMsg(`মিডিয়া আপলোড হচ্ছে (${i + 1}/${files.length})...`)
+        let uploaded = ""
+        if (file.type.startsWith("video/")) {
+          if (file.size > MAX_VIDEO_MB * 1024 * 1024) continue
+          uploaded = await uploadVideo(token, file)
+        } else {
+          uploaded = await uploadImage(token, await shrink(file))
+        }
+        if (uploaded) {
+          newItems.push({
+            id: `media_${Date.now()}_${i}`,
+            title: "",
+            subtitle: "",
+            description: "",
+            date: new Date().toLocaleDateString("bn-BD"),
+            caption: "",
+            url: uploaded,
+          })
+        }
+      }
+      setMediaItems((prev) => [...prev, ...newItems])
+      setMsg(`✅ ${newItems.length}টি মিডিয়া ফাইল সফলভাবে আপলোড হয়েছে`)
+    } catch (err: any) {
+      setMsg("❌ আপলোড ব্যর্থ: " + (err?.message || "নেটওয়ার্ক সমস্যা"))
+    }
+    setBusy(false)
+  }
+
   async function uploadMediaFile(index: number, file: File) {
     setBusy(true)
     setMsg("মিডিয়া ফাইল আপলোড হচ্ছে...")
@@ -430,7 +465,6 @@ export default function AdminPage() {
 
   if (!ready) return null
 
-  // ==================== লগইন ও সাইনআপ স্ক্রিন (লেখা ১০০% স্পষ্ট) ====================
   if (!token) {
     return (
       <main className="min-h-screen bg-[#071030] text-white flex items-center justify-center p-4">
@@ -479,7 +513,6 @@ export default function AdminPage() {
     )
   }
 
-  // অনুমোদনের অপেক্ষা স্ক্রিন
   if (me && !me.approved) {
     return (
       <main className="min-h-screen bg-[#071030] text-white flex items-center justify-center p-4">
@@ -556,7 +589,6 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col lg:flex-row text-slate-800">
       
-      {/* মোবাইল হেডার */}
       <header className="lg:hidden sticky top-0 z-40 bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 shadow-md">
         <div className="flex items-center gap-2.5">
           <button
@@ -583,7 +615,6 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* সাইডবার */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white flex flex-col border-r border-slate-800 shadow-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -668,7 +699,6 @@ export default function AdminPage() {
         <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden" />
       )}
 
-      {/* মূল কাজের ক্যানভাস */}
       <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-5xl mx-auto w-full space-y-4">
         {msg && (
           <div className="p-3 bg-emerald-50 text-emerald-900 border border-emerald-300 rounded-2xl text-xs sm:text-sm font-bold text-center shadow-xs">
@@ -676,7 +706,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* সংবাদ ও রিপোর্ট ট্যাব */}
         {tab === "posts" && (
           <div className="space-y-4">
             <div className="bg-white rounded-2xl shadow p-4 sm:p-5 space-y-3.5 border border-slate-200">
@@ -733,26 +762,78 @@ export default function AdminPage() {
                 </div>
               )}
 
+              {/* ✅ একাধিক ফাইল একসাথে যোগ ও থাম্বনেইল প্রিভিউ সহ মিডিয়া সংযুক্তি সেকশন */}
               <div className="space-y-3 rounded-2xl border-2 border-emerald-200 bg-emerald-50/40 p-3.5">
-                <div className="flex items-center justify-between border-b border-emerald-200 pb-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200 pb-2">
                   <p className="text-xs font-bold text-emerald-950">🎥 সংবাদে মিডিয়া সংযুক্তি (ছবি, ভিডিও বা লিংক):</p>
-                  <button
-                    type="button"
-                    onClick={addMediaItem}
-                    className="text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl px-3 py-1.5 shadow shrink-0 cursor-pointer"
-                  >
-                    + মিডিয়া যোগ
-                  </button>
+                  
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl px-3 py-1.5 shadow flex items-center gap-1.5 cursor-pointer">
+                      <Upload className="size-3.5" />
+                      <span>📁 একাধিক ফাইল যোগ</span>
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            batchUploadMediaFiles(Array.from(e.target.files))
+                            e.target.value = ""
+                          }
+                        }}
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={addMediaItem}
+                      className="text-xs bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl px-2.5 py-1.5 shadow cursor-pointer"
+                    >
+                      + লিংক বক্স
+                    </button>
+                  </div>
                 </div>
 
                 {mediaItems.map((m, idx) => (
                   <div key={idx} className="rounded-xl border bg-white p-3 space-y-2 text-xs shadow-xs">
                     <div className="flex items-center justify-between border-b pb-1">
-                      <span className="font-bold text-emerald-900">মিডিয়া #{idx + 1}</span>
-                      <button type="button" onClick={() => removeMediaItem(idx)} className="text-rose-600 font-semibold hover:underline">
-                        ✕ বাদ দিন
+                      <span className="font-bold text-emerald-900 flex items-center gap-1.5">
+                        <span>মিডিয়া #{idx + 1}</span>
+                        {m.url && <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-semibold">সংযুক্ত</span>}
+                      </span>
+                      <button type="button" onClick={() => removeMediaItem(idx)} className="text-rose-600 font-bold hover:underline flex items-center gap-1">
+                        <Trash2 className="size-3.5" />
+                        <span>মুছুন</span>
                       </button>
                     </div>
+
+                    {/* ✅ লাইভ থাম্বনেইল / ছোট প্রিভিউ বক্স */}
+                    {m.url && (
+                      <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                        {m.url.includes("youtube.com") || m.url.includes("youtu.be") ? (
+                          <div className="size-14 rounded-lg bg-red-600 text-white font-bold flex flex-col items-center justify-center text-[10px] shrink-0">
+                            <span>▶ YouTube</span>
+                          </div>
+                        ) : m.url.includes(".mp4") || m.url.includes("video") ? (
+                          <div className="size-14 rounded-lg bg-slate-900 text-white font-bold flex flex-col items-center justify-center text-[10px] shrink-0">
+                            <span>🎥 Video</span>
+                          </div>
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={m.url}
+                            alt="Preview"
+                            className="size-14 rounded-lg object-cover border shrink-0 bg-white"
+                            onError={(e) => { (e.target as HTMLElement).style.display = 'none' }}
+                          />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-bold text-slate-800 truncate">ফাইল প্রিভিউ</p>
+                          <p className="text-[10px] text-slate-500 font-mono truncate">{m.url}</p>
+                        </div>
+                      </div>
+                    )}
 
                     <input className={smallInp} placeholder="মিডিয়ার শিরোনাম (ঐচ্ছিক)" value={m.title} onChange={(e) => updateMediaItem(idx, "title", e.target.value)} />
                     <textarea className={smallInp} rows={2} placeholder="মিডিয়ার বিবরণ (ঐচ্ছিক)" value={m.description} onChange={(e) => updateMediaItem(idx, "description", e.target.value)} />
@@ -761,7 +842,7 @@ export default function AdminPage() {
                       <label className="text-[11px] font-semibold text-slate-600 block">মিডিয়া লিংক অথবা ফাইল:</label>
                       <input className={smallInp} placeholder="ইউটিউব, ফেসবুক ভিডিও বা ছবির সরাসরি লিংক (https://...)" value={m.url} onChange={(e) => updateMediaItem(idx, "url", e.target.value)} />
                       <div className="flex items-center gap-2 pt-1">
-                        <span className="text-[10px] text-slate-500">অথবা ফাইল দিন:</span>
+                        <span className="text-[10px] text-slate-500">ফাইল পরিবর্তন:</span>
                         <input type="file" accept="image/*,video/*" className="text-xs" onChange={(e) => e.target.files?.[0] && uploadMediaFile(idx, e.target.files[0])} />
                       </div>
                     </div>
@@ -793,7 +874,6 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* বর্তমান সংবাদের তালিকা */}
             <div className="space-y-2.5">
               <h3 className="font-bold text-sm text-slate-800">প্রকাশিত সংবাদসমূহ ({posts.length}টি)</h3>
               {posts.map((p) => (
@@ -831,7 +911,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* অন্যান্য সাব-ম্যানেজারসমূহ */}
         {tab === "notices" && <NoticeManager token={token} isAdmin={!!isAdmin} />}
         {tab === "hero" && isAdmin && <HeroManager token={token} shrink={shrink} />}
         {tab === "hero_banner" && isAdmin && <HeroBannerManager token={token} shrink={shrink} />}
@@ -847,7 +926,6 @@ export default function AdminPage() {
         {tab === "directors" && isAdmin && <DirectorManager token={token} members={active} onChanged={() => refresh(token, me)} />}
         {tab === "categories" && isAdmin && <CategoryManager token={token} onChanged={() => refresh(token, me)} />}
 
-        {/* প্রোফাইল ট্যাব */}
         {tab === "profile" && (
           <div className="bg-white rounded-2xl shadow p-5 space-y-3.5 border">
             <h2 className="font-bold text-base text-slate-800 border-b pb-2">আমার প্রোফাইল তথ্য</h2>
@@ -869,7 +947,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* কমেন্ট অনুমোদন ট্যাব */}
         {tab === "comments" && isAdmin && (
           <div className="space-y-3">
             <h3 className="font-bold text-sm text-slate-800">অনুমোদনের অপেক্ষায় থাকা মন্তব্যসমূহ ({pending.length})</h3>
@@ -890,10 +967,8 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* নেতৃত্ব ট্যাব */}
         {tab === "leaders" && isAdmin && <LeadershipManager token={token} members={active} shrink={shrink} />}
 
-        {/* সাংবাদিক তালিকা ট্যাব */}
         {tab === "reporters" && isAdmin && (
           <div className="space-y-4">
             <div className="space-y-2">
