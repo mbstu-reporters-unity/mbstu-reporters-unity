@@ -1218,6 +1218,7 @@ export default function FbPostComposer({
                                   setPostAuthorAvatar(r.avatar_url || null)
                                   setPostAuthorAvatarFile(null)
                                   setPostAuthorAvatarPreview(null)
+                                  setShowAuthorAvatar(true)
                                 }
                               }}
                             >
@@ -1260,6 +1261,7 @@ export default function FbPostComposer({
                                     createdUrlsRef.current.push(u)
                                     setPostAuthorAvatarFile(f)
                                     setPostAuthorAvatarPreview(u)
+                                    setShowAuthorAvatar(true)
                                   }
                                   e.target.value = ""
                                 }}
@@ -1273,6 +1275,7 @@ export default function FbPostComposer({
                                   setPostAuthorAvatarFile(null)
                                   setPostAuthorAvatarPreview(null)
                                   setPostAuthorAvatar(authorAvatar)
+                                  setShowAuthorAvatar(true)
                                 }}
                                 className="rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-[11px] font-semibold cursor-pointer"
                               >
@@ -1287,6 +1290,7 @@ export default function FbPostComposer({
                                   setPostAuthorAvatarFile(null)
                                   setPostAuthorAvatarPreview(null)
                                   setPostAuthorAvatar(null)
+                                  setShowAuthorAvatar(false)
                                 }}
                                 className="inline-flex items-center gap-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 px-2 py-1 text-[11px] font-bold cursor-pointer"
                               >
@@ -1301,7 +1305,11 @@ export default function FbPostComposer({
                             placeholder="অথবা ছবির সরাসরি লিংক (https://... ঐচ্ছিক)"
                             value={postAuthorAvatarFile ? "" : postAuthorAvatar || ""}
                             disabled={!!postAuthorAvatarFile}
-                            onChange={(e) => setPostAuthorAvatar(e.target.value.trim() || null)}
+                            onChange={(e) => {
+                              const val = e.target.value.trim()
+                              setPostAuthorAvatar(val || null)
+                              if (val) setShowAuthorAvatar(true)
+                            }}
                           />
                         </div>
                       )}
