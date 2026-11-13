@@ -46,8 +46,7 @@
     @apply border-border outline-ring/50;
     box-sizing: border-box;
   }
-  
-  /* মোবাইলে ডানে-বামে স্ক্রিন উপচে পড়া চিরতরে বন্ধ */
+
   html, body {
     overflow-x: hidden !important;
     max-width: 100vw !important;
@@ -91,7 +90,7 @@
 }
 
 /* ========================================================
-   ১৩টি লিকুইড গ্লাস থিম
+   ৪টি লিকুইড গ্লাস থিম
    ======================================================== */
 html,
 html[data-theme='ocean-glass'] {
@@ -175,4 +174,109 @@ html[data-theme='midnight-neon'] {
   border-color: var(--theme-card-hover-border, rgba(0, 210, 255, 0.6)) !important;
   box-shadow: 0 20px 45px -10px rgba(0, 15, 60, 0.8), 0 0 20px rgba(0, 210, 255, 0.2) !important;
   transform: translateY(-2px);
+}
+
+/* ========================================================
+   হিরো স্লাইডার প্রোগ্রেস বার ও ১৫টি ট্রানজিশন ইঞ্জিন (tr_*)
+   ======================================================== */
+@keyframes heroTimer {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes trSlideLeft { from { opacity: 0.4; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes trSlideRight { from { opacity: 0.4; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes trSlideUp { from { opacity: 0.4; transform: translateY(35px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes trSlideDown { from { opacity: 0.4; transform: translateY(-35px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes trFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes trZoomIn { from { opacity: 0; transform: scale(1.08); } to { opacity: 1; transform: scale(1); } }
+@keyframes trZoomOut { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes trFlipH { from { opacity: 0; transform: perspective(900px) rotateY(16deg); } to { opacity: 1; transform: perspective(900px) rotateY(0); } }
+@keyframes trFlipV { from { opacity: 0; transform: perspective(900px) rotateX(14deg); } to { opacity: 1; transform: perspective(900px) rotateX(0); } }
+@keyframes trBlurFade { from { opacity: 0; filter: blur(12px); } to { opacity: 1; filter: blur(0); } }
+@keyframes trCircleReveal { from { clip-path: circle(15% at 50% 50%); } to { clip-path: circle(100% at 50% 50%); } }
+@keyframes trTwistSpin { from { opacity: 0; transform: scale(0.94) rotate(-2deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes trElastic { 0% { opacity: 0; transform: scale(0.9); } 70% { opacity: 1; transform: scale(1.02); } 100% { transform: scale(1); } }
+
+.tr_slide-left, .tr_push-left { animation: trSlideLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.tr_slide-right, .tr_push-right { animation: trSlideRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.tr_slide-up { animation: trSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.tr_slide-down { animation: trSlideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.tr_fade { animation: trFade 0.65s ease both; }
+.tr_zoom-in { animation: trZoomIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.tr_zoom-out { animation: trZoomOut 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.tr_flip-h { animation: trFlipH 0.65s ease-out both; }
+.tr_flip-v { animation: trFlipV 0.65s ease-out both; }
+.tr_blur-fade { animation: trBlurFade 0.7s ease-out both; }
+.tr_circle-reveal { animation: trCircleReveal 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.tr_twist-spin { animation: trTwistSpin 0.65s ease-out both; }
+.tr_elastic { animation: trElastic 0.75s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* ========================================================
+   ৩৫টি টেক্সট অ্যানিমেশন ইঞ্জিন (anim_*)
+   ======================================================== */
+@keyframes animRotateDrop { 0% { opacity: 0; transform: translateY(-28px) rotate(-8deg); } 100% { opacity: 1; transform: translateY(0) rotate(0); } }
+@keyframes animFlashBlink { 0%, 50%, 100% { opacity: 1; } 25%, 75% { opacity: 0.35; } }
+@keyframes animShakeAlert { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+@keyframes animRainbowShift { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+@keyframes animTrackingExpand { 0% { opacity: 0; letter-spacing: -0.15em; } 100% { opacity: 1; letter-spacing: normal; } }
+@keyframes animGoldenShimmer { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35) drop-shadow(0 0 8px #f59e0b); } }
+@keyframes animTwist3d { 0% { opacity: 0; transform: perspective(500px) rotateY(45deg) scale(0.85); } 100% { opacity: 1; transform: perspective(500px) rotateY(0) scale(1); } }
+@keyframes animSwingIn { 0% { opacity: 0; transform: rotate(-6deg); } 60% { opacity: 1; transform: rotate(3deg); } 100% { transform: rotate(0); } }
+@keyframes animKenBurns { 0% { opacity: 0.7; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1.03); } }
+@keyframes animRubberBand { 0% { transform: scale(1); } 30% { transform: scaleX(1.15) scaleY(0.85); } 60% { transform: scaleX(0.92) scaleY(1.08); } 100% { transform: scale(1); } }
+@keyframes animPulseExpand { 0% { opacity: 0; transform: scale(0.8); } 65% { opacity: 1; transform: scale(1.06); } 100% { transform: scale(1); } }
+@keyframes animAutoJello { 0%, 100% { transform: skewX(0); } 25% { transform: skewX(-4deg); } 50% { transform: skewX(4deg); } 75% { transform: skewX(-2deg); } }
+@keyframes animAutoBreathe { 0%, 100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.03); } }
+@keyframes animAutoSwing { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+@keyframes animAutoBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+.anim_rotate-drop { animation: animRotateDrop 0.8s ease-out forwards; display: inline-block; }
+.anim_flash-blink { animation: animFlashBlink 1.8s ease-in-out infinite; display: inline-block; }
+.anim_shake-alert { animation: animShakeAlert 0.9s ease-in-out 2; display: inline-block; }
+.anim_rainbow-shift { animation: animRainbowShift 4s linear infinite; display: inline-block; }
+.anim_tracking-expand { animation: animTrackingExpand 0.9s ease-out forwards; display: inline-block; }
+.anim_golden-shimmer, .anim_auto-golden, .anim_auto-gradient { animation: animGoldenShimmer 2.4s ease-in-out infinite; display: inline-block; }
+.anim_twist-3d, .anim_tilt-in { animation: animTwist3d 0.8s ease-out forwards; display: inline-block; }
+.anim_swing-in { animation: animSwingIn 0.85s ease-out forwards; display: inline-block; }
+.anim_ken-burns, .anim_spotlight { animation: animKenBurns 3s ease-out forwards; display: inline-block; }
+.anim_rubber-band { animation: animRubberBand 0.9s ease-out; display: inline-block; }
+.anim_pulse-expand { animation: animPulseExpand 0.8s ease-out forwards; display: inline-block; }
+.anim_auto-jello { animation: animAutoJello 2.2s ease-in-out infinite; display: inline-block; }
+.anim_auto-breathe { animation: animAutoBreathe 2.8s ease-in-out infinite; display: inline-block; }
+.anim_auto-glitch { animation: anim_cyber-glitch 2.5s infinite; display: inline-block; }
+.anim_auto-swing { animation: animAutoSwing 2.5s ease-in-out infinite; display: inline-block; }
+.anim_auto-bounce { animation: animAutoBounce 1.8s ease-in-out infinite; display: inline-block; }
+
+/* ========================================================
+   ক্লাব স্লাইডার নিরবচ্ছিন্ন স্ক্রল (Continuous Marquee)
+   ======================================================== */
+@keyframes clubScrollRTL {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes clubScrollLTR {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.club-marquee-rtl {
+  display: flex;
+  width: max-content;
+  animation: clubScrollRTL var(--club-scroll-dur, 28s) linear infinite;
+}
+.club-marquee-ltr {
+  display: flex;
+  width: max-content;
+  animation: clubScrollLTR var(--club-scroll-dur, 28s) linear infinite;
+}
+.club-marquee-pause:hover .club-marquee-rtl,
+.club-marquee-pause:hover .club-marquee-ltr {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .club-marquee-rtl, .club-marquee-ltr {
+    animation: none !important;
+  }
 }
