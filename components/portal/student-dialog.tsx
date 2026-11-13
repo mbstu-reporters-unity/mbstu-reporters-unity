@@ -18,6 +18,7 @@ import { ReactionBar } from './reaction-bar'
 import { UniversalMediaEmbed } from './universal-media-embed'
 import { FormattedText } from './formatted-text'
 import RichGallery, { type GalleryItem } from './rich-gallery'
+import { PostMetaBadges } from './post-meta-badges'
 
 type StudentCommentRow = {
   id: string
@@ -193,22 +194,26 @@ export function StudentDialog({
             {item.title}
           </h2>
 
-          <div className="flex flex-wrap items-center gap-2 border-b border-white/15 pb-3 text-xs text-slate-300">
-            {item.author && <span className="font-bold text-white text-sm">{item.author}</span>}
-            {item.dept && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/15 border border-white/20 px-2.5 py-0.5 font-semibold text-cyan-200">
-                <GraduationCap className="size-3" /> {item.dept}
+          <div className="space-y-2 border-b border-white/15 pb-3">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
+              {item.author && <span className="font-bold text-white text-sm">{item.author}</span>}
+              {item.dept && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 border border-white/20 px-2.5 py-0.5 font-semibold text-cyan-200">
+                  <GraduationCap className="size-3" /> {item.dept}
+                </span>
+              )}
+              {item.batch && (
+                <span className="rounded-full bg-white/10 px-2.5 py-0.5 font-semibold text-amber-300 border border-white/15">
+                  {item.batch}
+                </span>
+              )}
+              <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-cyan-200/80">
+                <CalendarDays className="size-3 text-cyan-400" />
+                {new Date(item.created_at).toLocaleDateString('bn-BD')}
               </span>
-            )}
-            {item.batch && (
-              <span className="rounded-full bg-white/10 px-2.5 py-0.5 font-semibold text-amber-300 border border-white/15">
-                {item.batch}
-              </span>
-            )}
-            <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-cyan-200/80">
-              <CalendarDays className="size-3 text-cyan-400" />
-              {new Date(item.created_at).toLocaleDateString('bn-BD')}
-            </span>
+            </div>
+
+            <PostMetaBadges data={item} />
           </div>
 
           <RichGallery items={galleryItems} layout={layout} />
