@@ -13,8 +13,7 @@ import { NoticeBoard } from '@/components/portal/notice-board'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 
-// ⭐ সুপারফাস্ট স্পিডের জন্য স্মার্ট ক্যাশিং (১ সেকেন্ডে পেজ লোড হবে, ৬০ সেকেন্ড পর পর ব্যাকগ্রাউন্ডে অটো আপডেট হবে) ⭐
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 export default function Page() {
   return (
