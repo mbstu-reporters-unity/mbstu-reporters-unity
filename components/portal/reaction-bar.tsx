@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Share2 } from 'lucide-react'
+import { Check, Share2 } from 'lucide-react'
 import { SB_URL, SB_KEY } from '@/lib/sb'
 
 const REACTIONS = [
@@ -36,6 +36,7 @@ export function ReactionBar({ postId, title }: { postId: string; title: string }
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [mine, setMine] = useState<string | null>(null)
   const [msg, setMsg] = useState('')
+  const [copied, setCopied] = useState(false)
 
   async function load() {
     try {
@@ -59,6 +60,7 @@ export function ReactionBar({ postId, title }: { postId: string; title: string }
 
   useEffect(() => {
     load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId])
 
   async function react(key: string) {
@@ -86,7 +88,7 @@ export function ReactionBar({ postId, title }: { postId: string; title: string }
           })
       if (!res.ok) throw new Error()
     } catch {
-      setMsg('❌ রিঅ্যাকশন যায়নি')
+      setMsg('❌ রিঅ্যাকশন সেভ করা যায়নি')
       load()
     }
   }
@@ -99,12 +101,13 @@ export function ReactionBar({ postId, title }: { postId: string; title: string }
         return
       }
       await navigator.clipboard.writeText(url)
-      setMsg('✅ লিংক কপি হয়েছে')
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     } catch {}
   }
 
   return (
-    <div className="mt-4 border-t border-border pt-3">
+    <div className="mt-2 border-t border-white/15 pt-3">
       <div className="flex flex-wrap items-center gap-1.5">
         {REACTIONS.map((r) => (
           <button
@@ -113,23 +116,26 @@ export function ReactionBar({ postId, title }: { postId: string; title: string }
             title={r.label}
             aria-label={r.label}
             onClick={() => react(r.key)}
-            className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-sm transition ${
-              mine === r.key ? 'border-brand bg-brand-soft font-bold' : 'border-border bg-white hover:bg-gray-50'
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs sm:text-sm transition cursor-pointer active:scale-95 ${
+              mine === r.key
+                ? 'border-cyan-400 bg-cyan-500/25 text-white font-bold shadow-sm'
+                : 'border-white/20 bg-white/10 text-white/90 hover:bg-white/20'
             }`}
           >
             <span>{r.icon}</span>
-            {counts[r.key] ? <span className="text-xs">{counts[r.key]}</span> : null}
+            {counts[r.key] ? <span className="text-[11px] tabular-nums">{counts[r.key]}</span> : null}
           </button>
         ))}
         <button
           type="button"
           onClick={share}
-          className="ml-auto inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs font-semibold text-brand hover:bg-gray-50"
+          className="ml-auto inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold text-cyan-300 hover:bg-white/20 hover:text-white transition cursor-pointer active:scale-95"
         >
-          <Share2 className="size-3.5" aria-hidden="true" /> শেয়ার
+          {copied ? <Check className="size-3.5 text-emerald-400" /> : <Share2 className="size-3.5" aria-hidden="true" />}
+          <span>{copied ? 'কপি হয়েছে' : 'শেয়ার'}</span>
         </button>
       </div>
-      {msg && <p className="mt-1 text-xs">{msg}</p>}
+      {msg && <p className="mt-1.5 text-xs text-rose-300">{msg}</p>}
     </div>
   )
 }
