@@ -8,8 +8,10 @@ import {
   deleteCommunityPage,
   type CommunityPage,
 } from "../../lib/pages"
-import { uploadImage } from "../../lib/sb"
-import { ExternalLink, CheckCircle2, Trash2, Edit3, PlusCircle, X, ArrowUp, ArrowDown } from "lucide-react"
+import { getCategoryNames, uploadImage } from "../../lib/sb"
+import { getCampusClubs, type ClubItem } from "../../lib/clubs"
+import FbPostComposer from "../../components/admin/fb-post-composer"
+import { ExternalLink, CheckCircle2, X, ArrowUp, ArrowDown, PlusCircle } from "lucide-react"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-green-600"
 const btn = "w-full bg-green-700 text-white rounded-xl py-2.5 font-semibold text-sm hover:bg-green-800 disabled:opacity-50 cursor-pointer shadow-sm"
@@ -17,14 +19,23 @@ const btn = "w-full bg-green-700 text-white rounded-xl py-2.5 font-semibold text
 export default function CommunityPageManager({
   token,
   shrink,
+  authorName,
+  authorAvatar,
+  onPostCreated,
 }: {
   token: string
   shrink: (f: File) => Promise<Blob>
+  authorName?: string
+  authorAvatar?: string | null
+  onPostCreated?: () => Promise<void> | void
 }) {
   const [list, setList] = useState<CommunityPage[]>([])
+  const [cats, setCats] = useState<string[]>(["ক্যাম্পাস সংবাদ"])
+  const [clubs, setClubs] = useState<ClubItem[]>([])
   const [editId, setEditId] = useState<string | null>(null)
 
-  // পেজ ফর্ম স্টেট
+  const [fbPostPageId, setFbPostPageId] = useState<string | null>(null)
+
   const [name, setName] = useState("")
   const [nameEn, setNameEn] = useState("")
   const [slug, setSlug] = useState("")
@@ -38,7 +49,6 @@ export default function CommunityPageManager({
   const [isVerified, setIsVerified] = useState(false)
   const [isActive, setIsActive] = useState(true)
 
-  // ছবি
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
@@ -48,7 +58,14 @@ export default function CommunityPageManager({
   const [msg, setMsg] = useState("")
 
   async function load() {
-    setList(await getCommunityPages())
+    const [pages, catNames, clubList] = await Promise.all([
+      getCommunityPages(),
+      getCategoryNames(),
+      getCampusClubs(token),
+    ])
+    setList(pages)
+    if (catNames.length) setCats(catNames)
+    setClubs(clubList)
   }
 
   useEffect(() => { load() }, [])
@@ -202,6 +219,39 @@ export default function CommunityPageManager({
 
   return (
     <div className="space-y-4">
+      {fbPostPageId !== null && (
+        <FbPostComposer
+          mode="post"
+          token={token}
+          isAdmin={true}
+          authorName={authorName}
+          authorAvatar={authorAvatar}
+          shrink={shrink}
+          categories={cats}
+          clubs={clubs}
+          communityPages={list}
+          defaultPageId={fbPostPageId}
+          onCancel={() => setFbPostPageId(null)}
+          onSuccess={async (m) => {
+            setFbPostPageId(null)
+            setMsg(m)
+            if (onPostCreated) await onPostCreated()
+          }}
+        />
+      )}
+
+      {/* যেকোনো পেজে দ্রুত ফেসবুক স্টাইল পোস্ট করার বাটন */}
+      {list.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setFbPostPageId(list[0].id)}
+          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white py-3 font-bold text-sm shadow-md transition cursor-pointer"
+        >
+          <PlusCircle className="size-4" />
+          <span>📱 যেকোনো কমিউনিটি পেজে ফেসবুক স্টাইলে পোস্ট করুন</span>
+        </button>
+      )}
+
       {/* নতুন পেজ তৈরি বা এডিট ফর্ম */}
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
         <div className="flex items-center justify-between border-b pb-2">
@@ -220,7 +270,6 @@ export default function CommunityPageManager({
           <input className={inp} placeholder="পেজের নাম (English - ঐচ্ছিক)" value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
         </div>
 
-        {/* পেজের ইউনিক লিংক (Slug) */}
         <div>
           <label className="text-xs font-bold text-gray-700 block mb-1">
             পেজের সরাসরি লিংক (Unique Slug):
@@ -241,7 +290,6 @@ export default function CommunityPageManager({
 
         <input className={inp} placeholder="ক্যাটাগরি (যেমন: ডিবেট ক্লাব, রক্তদান, হল সংসদ, বিভাগীয় সোসাইটি)" value={category} onChange={(e) => setCategory(e.target.value)} />
 
-        {/* ভেরিফাইড টিকচিহ্ন ও হোমপেজ সক্রিয় সুইচ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <label className="flex items-center gap-2 p-2.5 bg-blue-50 rounded-xl border border-blue-200 text-xs font-bold text-blue-900 cursor-pointer">
             <input
@@ -267,7 +315,6 @@ export default function CommunityPageManager({
           </label>
         </div>
 
-        {/* প্রোফাইল লোগো ও কভার ফটো আপলোড */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border">
           <div className="space-y-1">
             <label className="text-xs font-bold text-gray-700 block">১. গোল প্রোফাইল লোগো:</label>
@@ -306,7 +353,7 @@ export default function CommunityPageManager({
         {msg && <p className="text-xs font-bold text-center text-green-800 bg-green-50 p-2.5 rounded-xl border border-green-200">{msg}</p>}
       </div>
 
-      {/* বর্তমান পেজসমূহের তালিকা ও পূর্ণ অ্যাডমিন কন্ট্রোল */}
+      {/* বর্তমান পেজসমূহের তালিকা */}
       <div className="space-y-2.5">
         <h3 className="font-bold text-sm text-gray-800">
           বর্তমান পেজসমূহ ({list.length})
@@ -350,8 +397,14 @@ export default function CommunityPageManager({
               </div>
             </div>
 
-            {/* অ্যাডমিন ক্রম ও অ্যাকশন কন্ট্রোল */}
             <div className="flex flex-wrap items-center gap-3 border-t pt-2 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setFbPostPageId(item.id)}
+                className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 cursor-pointer"
+              >
+                📱 পোস্ট করুন
+              </button>
               <button
                 type="button"
                 onClick={() => move(idx, -1)}
@@ -374,7 +427,7 @@ export default function CommunityPageManager({
                 onClick={() => toggleStatus(item)}
                 className={`ml-auto ${item.is_active !== false ? 'text-amber-600' : 'text-green-700'} hover:underline cursor-pointer`}
               >
-                {item.is_active !== false ? 'হোমপেজ থেকে লুকান' : 'হোমপেজে দেখান'}
+                {item.is_active !== false ? 'লুকান' : 'দেখান'}
               </button>
 
               <button onClick={() => startEdit(item)} className="text-green-700 hover:underline">
