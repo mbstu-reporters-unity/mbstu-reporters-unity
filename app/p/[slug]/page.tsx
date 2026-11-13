@@ -13,7 +13,7 @@ import {
   Share2,
 } from 'lucide-react'
 import { getPageBySlug, getPagePosts } from '@/lib/pages'
-import { getApprovedComments } from '@/lib/sb'
+import { getApprovedComments, getImagesMetaForMany, getLayoutsForMany } from '@/lib/sb'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
@@ -21,6 +21,7 @@ import { BackToTop } from '@/components/portal/back-to-top'
 import { UniversalMediaEmbed } from '@/components/portal/universal-media-embed'
 import { ReactionBar } from '@/components/portal/reaction-bar'
 import { CommentForm } from '@/components/portal/comment-form'
+import RichGallery from '@/components/portal/rich-gallery'
 
 export const revalidate = 60
 
@@ -54,7 +55,13 @@ export default async function PublicCommunityPage({
   if (!page) notFound()
 
   const posts = await getPagePosts(page.id)
-  const commentsByPost = await Promise.all(posts.map((post) => getApprovedComments(post.id)))
+  const postIds = posts.map((p) => p.id)
+
+  const [commentsByPost, imagesMap, layoutsMap] = await Promise.all([
+    Promise.all(posts.map((post) => getApprovedComments(post.id))),
+    getImagesMetaForMany('post', postIds),
+    getLayoutsForMany('post', postIds),
+  ])
 
   const siteUrl = 'https://mbsturu.vercel.app'
   const pageUrl = `${siteUrl}/p/${page.slug}`
@@ -220,67 +227,79 @@ export default async function PublicCommunityPage({
                 </h2>
               </div>
 
-              {posts.map((post, idx) => (
-                <article
-                  key={post.id}
-                  className="glass-card p-5 sm:p-6 space-y-3.5 text-white"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="size-11 rounded-full overflow-hidden bg-slate-900 border border-white/25 shrink-0">
-                      {page.avatar_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={page.avatar_url} loading="lazy" alt="" className="size-full object-cover" />
-                      ) : (
-                        <div className="size-full bg-cyan-600 text-white flex items-center justify-center font-bold text-sm">
-                          {page.name.charAt(0)}
-                        </div>
-                      )}
+              {posts.map((post, idx) => {
+                const rows = imagesMap[post.id] || []
+                const galleryItems =
+                  rows.length > 0
+                    ? rows.map((i) => ({ url: i.url, caption: i.caption, credit: i.credit }))
+                    : post.image_url
+                      ? [{ url: post.image_url }]
+                      : []
+                const galleryLayout = layoutsMap[post.id] || 'grid'
+
+                return (
+                  <article
+                    key={post.id}
+                    className="glass-card p-5 sm:p-6 space-y-3.5 text-white"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="size-11 rounded-full overflow-hidden bg-slate-900 border border-white/25 shrink-0">
+                        {page.avatar_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={page.avatar_url} loading="lazy" alt="" className="size-full object-cover" />
+                        ) : (
+                          <div className="size-full bg-cyan-600 text-white flex items-center justify-center font-bold text-sm">
+                            {page.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm text-white flex items-center gap-1">
+                          <span>{page.name}</span>
+                          {page.is_verified && <CheckCircle2 className="size-3.5 fill-blue-500 text-white" />}
+                        </p>
+                        <p className="text-[11px] text-cyan-200/80 flex items-center gap-1">
+                          <CalendarDays className="size-3 text-cyan-300" />
+                          <span>{new Date(post.created_at).toLocaleDateString('bn-BD')}</span>
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-sm text-white flex items-center gap-1">
-                        <span>{page.name}</span>
-                        {page.is_verified && <CheckCircle2 className="size-3.5 fill-blue-500 text-white" />}
+
+                    <h3 className="font-serif text-lg sm:text-xl font-bold text-white leading-snug">
+                      <Link href={`/post/${post.id}`} className="hover:text-cyan-300 transition-colors">
+                        {post.title}
+                      </Link>
+                    </h3>
+
+                    {post.body && (
+                      <p className="whitespace-pre-line text-sm text-slate-100 leading-relaxed">
+                        {post.body}
                       </p>
-                      <p className="text-[11px] text-cyan-200/80 flex items-center gap-1">
-                        <CalendarDays className="size-3 text-cyan-300" />
-                        <span>{new Date(post.created_at).toLocaleDateString('bn-BD')}</span>
-                      </p>
+                    )}
+
+                    <RichGallery items={galleryItems} layout={galleryLayout} />
+
+                    {post.video_url && (
+                      <video
+                        src={post.video_url}
+                        controls
+                        playsInline
+                        className="w-full rounded-2xl bg-black border border-white/20 shadow-lg"
+                      />
+                    )}
+
+                    {post.embed_media_url && (
+                      <UniversalMediaEmbed url={post.embed_media_url} title={post.title} />
+                    )}
+
+                    <ReactionBar postId={post.id} title={post.title} />
+
+                    <div className="pt-2 border-t border-white/15">
+                      <CommentForm postId={post.id} initialComments={commentsByPost[idx] || []} />
                     </div>
-                  </div>
-
-                  <h3 className="font-serif text-lg sm:text-xl font-bold text-white leading-snug">
-                    <Link href={`/post/${post.id}`} className="hover:text-cyan-300 transition-colors">
-                      {post.title}
-                    </Link>
-                  </h3>
-
-                  {post.body && (
-                    <p className="whitespace-pre-line text-sm text-slate-100 leading-relaxed">
-                      {post.body}
-                    </p>
-                  )}
-
-                  {post.embed_media_url && (
-                    <UniversalMediaEmbed url={post.embed_media_url} title={post.title} />
-                  )}
-
-                  {post.image_url && !post.embed_media_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={post.image_url}
-                      alt={post.title}
-                      loading="lazy"
-                      className="w-full max-h-96 object-cover rounded-2xl border border-white/15"
-                    />
-                  )}
-
-                  <ReactionBar postId={post.id} title={post.title} />
-
-                  <div className="pt-2 border-t border-white/15">
-                    <CommentForm postId={post.id} initialComments={commentsByPost[idx] || []} />
-                  </div>
-                </article>
-              ))}
+                  </article>
+                )
+              })}
 
               {posts.length === 0 && (
                 <div className="glass-card p-10 text-center space-y-2 text-white">
