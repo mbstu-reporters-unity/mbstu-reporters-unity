@@ -65,6 +65,7 @@ export function NewsCard({ p }: { p: Post }) {
   const coverImage = p.image_url || extractFirstImageUrl(p.embed_media_url) || null
   const authorName = p.author?.trim() || 'মাভাবিপ্রবি রিপোর্টার্স ইউনিটি'
   const categoryName = p.category || 'ক্যাম্পাস সংবাদ'
+  const showAvatar = Boolean(p.author_avatar && p.show_author_avatar !== false)
 
   const fullBody = cleanText(p.body)
   const { short: shortBody, hasMore } = truncateText(fullBody, 140)
@@ -94,9 +95,18 @@ export function NewsCard({ p }: { p: Post }) {
       {/* ১. পোস্টকারীর তথ্য: সবার উপরে বামপাশের কোনায় */}
       <div className="flex items-center justify-between gap-2.5 px-3.5 pt-3.5 pb-2.5 sm:px-5">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold text-sm ring-2 ring-white/25 shadow-sm">
-            {authorName ? authorName.charAt(0) : <User className="size-4" />}
-          </div>
+          {showAvatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={p.author_avatar!}
+              alt={authorName}
+              className="size-10 shrink-0 rounded-full object-cover object-top ring-2 ring-cyan-400/50 shadow-sm bg-slate-900"
+            />
+          ) : (
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold text-sm ring-2 ring-white/25 shadow-sm">
+              {authorName ? authorName.charAt(0) : <User className="size-4" />}
+            </div>
+          )}
           <div className="min-w-0">
             <p className="text-sm font-bold text-white truncate leading-tight">
               {authorName}
