@@ -253,9 +253,25 @@ export default async function PublicCommunityPage({
                           <span>{page.name}</span>
                           {page.is_verified && <CheckCircle2 className="size-3.5 fill-blue-500 text-white" />}
                         </p>
-                        <p className="text-[11px] text-cyan-200/80 flex items-center gap-1">
-                          <CalendarDays className="size-3 text-cyan-300" />
-                          <span>{new Date(post.created_at).toLocaleDateString('bn-BD')}</span>
+                        <p className="text-[11px] text-cyan-200/80 flex flex-wrap items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1">
+                            <CalendarDays className="size-3 text-cyan-300" />
+                            <span>{new Date(post.created_at).toLocaleDateString('bn-BD')}</span>
+                          </span>
+                          {post.author && (
+                            <span className="inline-flex items-center gap-1 text-white/85">
+                              <span>·</span>
+                              {post.author_avatar && post.show_author_avatar !== false && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={post.author_avatar}
+                                  alt=""
+                                  className="size-4 rounded-full object-cover object-top"
+                                />
+                              )}
+                              <span>{post.author}</span>
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
