@@ -9,6 +9,7 @@ export type Post = {
   body: string | null
   category: string | null
   club_id?: string | null
+  page_id?: string | null
   author: string | null
   image_url: string | null
   video_url: string | null
@@ -21,7 +22,6 @@ export type Post = {
 
 export type PostInput = Omit<Post, "id" | "created_at" | "user_id">
 
-/* ⭐ রিপ্লাইয়ের সুবিধার্থে parent_id ফিল্ড যুক্ত করা হয়েছে ⭐ */
 export type PublicComment = {
   id: string
   name: string | null
@@ -77,18 +77,59 @@ async function ok(res: Response): Promise<Response> {
   throw new Error(msg)
 }
 
-/* ---------- লগইন, সাইনআপ ও প্রোফাইল ---------- */
+/* ---------- লগইন, টোকেন রিফ্রেশ, সাইনআপ ও প্রোফাইল ---------- */
+
+export function isTokenExpired(tokenStr: string): boolean {
+  try {
+    const parts = tokenStr.split(".")
+    if (parts.length !== 3) return true
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")))
+    if (!payload.exp) return false
+    return Date.now() >= payload.exp * 1000 - 60000
+  } catch {
+    return false
+  }
+}
 
 export async function login(email: string, password: string): Promise<string> {
+  const cleanEmail = email.trim()
   const res = await ok(
     await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
       method: "POST",
       headers: hdr(undefined, true),
-      body: JSON.stringify({ email: email.trim(), password }),
+      body: JSON.stringify({ email: cleanEmail, password }),
     })
   )
   const j = await res.json()
+  if (typeof window !== "undefined" && j.access_token) {
+    try {
+      localStorage.setItem("mbstu_admin_token", j.access_token)
+      if (j.refresh_token) localStorage.setItem("mbstu_admin_refresh_token", j.refresh_token)
+      localStorage.setItem("mbstu_admin_email", cleanEmail)
+    } catch {}
+  }
   return j.access_token as string
+}
+
+export async function refreshSession(): Promise<string | null> {
+  if (typeof window === "undefined") return null
+  try {
+    const rt = localStorage.getItem("mbstu_admin_refresh_token")
+    if (!rt) return null
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: hdr(undefined, true),
+      body: JSON.stringify({ refresh_token: rt }),
+    })
+    if (!res.ok) return null
+    const j = await res.json()
+    if (j.access_token) {
+      localStorage.setItem("mbstu_admin_token", j.access_token)
+      if (j.refresh_token) localStorage.setItem("mbstu_admin_refresh_token", j.refresh_token)
+      return j.access_token as string
+    }
+  } catch {}
+  return null
 }
 
 export async function signUp(email: string, password: string, info: SignupInfo) {
@@ -249,12 +290,30 @@ export async function deletePost(token: string, id: string) {
   )
 }
 
-/* ---------- ছবি ও ভিডিও আপলোড ---------- */
+/* ---------- ছবি ও ভিডিও আপলোড (PNG/WebP স্বচ্ছতা সংরক্ষণসহ) ---------- */
 
 export async function uploadImage(token: string, file: Blob): Promise<string> {
-  const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`
+  const mime = file.type || "image/jpeg"
+  let ext = "jpg"
+  let contentType = "image/jpeg"
+
+  if (mime === "image/png") {
+    ext = "png"
+    contentType = "image/png"
+  } else if (mime === "image/webp") {
+    ext = "webp"
+    contentType = "image/webp"
+  } else if (mime === "image/gif") {
+    ext = "gif"
+    contentType = "image/gif"
+  } else if (mime === "image/svg+xml") {
+    ext = "svg"
+    contentType = "image/svg+xml"
+  }
+
+  const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
   const h = hdr(token)
-  h["Content-Type"] = "image/jpeg"
+  h["Content-Type"] = contentType
   await ok(
     await fetch(`${SB_URL}/storage/v1/object/${BUCKET}/${name}`, {
       method: "POST",
@@ -300,11 +359,11 @@ export async function addComment(postId: string, name: string, message: string, 
     await fetch(`${SB_URL}/rest/v1/comments`, {
       method: "POST",
       headers: { ...hdr(undefined, true), Prefer: "return=minimal" },
-      body: JSON.stringify({ 
-        post_id: postId, 
-        name: name || null, 
+      body: JSON.stringify({
+        post_id: postId,
+        name: name || null,
         message,
-        parent_id: parentId || null
+        parent_id: parentId || null,
       }),
     })
   )
@@ -495,8 +554,6 @@ export async function addCategory(token: string, name: string) {
     })
   )
 }
-
-/* ---------- ক্যাটাগরি ব্যবস্থাপনা (শুধু অ্যাডমিন) ---------- */
 
 export type CategoryRow = {
   name: string
