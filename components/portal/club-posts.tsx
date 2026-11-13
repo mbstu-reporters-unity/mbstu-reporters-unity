@@ -16,8 +16,8 @@ export async function ClubPosts() {
 
   return (
     <section id="club-latest" className="py-12 sm:py-16 border-b border-white/10 relative">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
+      <div className="mx-auto max-w-7xl md:px-6 lg:px-8">
+        <div className="mb-8 px-4 md:px-0">
           <h3 className="font-serif text-2xl font-bold text-white sm:text-3xl drop-shadow-md">
             সর্বশেষ ক্লাব সংবাদ
           </h3>
