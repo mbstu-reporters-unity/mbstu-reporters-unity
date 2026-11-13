@@ -6,7 +6,7 @@ import {
   removeImage, updateImageMeta, saveLayout,
 } from "../../lib/sb"
 import type { ImageMeta, ParentType, NewImage } from "../../lib/sb"
-import { LAYOUTS } from "./rich-gallery"
+import { LAYOUTS, parseLayoutValue } from "./rich-gallery"
 
 const EMOJIS = [
   "😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇",
@@ -101,7 +101,9 @@ export function useImageSection(type: ParentType) {
       toAdd.unshift({ url: legacyUrl, caption: "", credit: "" })
     }
     await addImagesWithMeta(token, type, id, toAdd, visible.length)
-    if (visible.length + toAdd.length > 1) await saveLayout(token, type, id, layout)
+    if (visible.length + toAdd.length > 1 || layout.startsWith("fb-frame")) {
+      await saveLayout(token, type, id, layout)
+    }
   }
 
   return {
@@ -130,6 +132,7 @@ const small = "w-full border rounded-lg px-2 py-1 text-sm bg-white"
 export default function ImageSection({ s }: { s: ImageSectionState }) {
   const [emojiFor, setEmojiFor] = useState<string | null>(null)
   const total = s.visible.length + s.fresh.length
+  const activeBase = parseLayoutValue(s.layout).base
 
   return (
     <div className="space-y-3">
@@ -198,7 +201,7 @@ export default function ImageSection({ s }: { s: ImageSectionState }) {
                 key={l.key}
                 type="button"
                 onClick={() => s.setLayout(l.key)}
-                className={`rounded-lg border px-2 py-2 text-sm ${s.layout === l.key ? "bg-green-700 text-white" : "bg-white"}`}
+                className={`rounded-lg border px-2 py-2 text-sm ${activeBase === l.key ? "bg-green-700 text-white" : "bg-white"}`}
               >
                 {l.bn}
               </button>
