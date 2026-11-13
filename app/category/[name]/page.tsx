@@ -37,40 +37,43 @@ export default async function CategoryPage({
     <>
       <TopBar />
       <SiteHeader />
-      {/* ✅ সাদা ব্যাকগ্রাউন্ড সরিয়ে ডার্ক গ্লাস ব্লেন্ডিং */}
       <main className="min-h-[75vh] py-8 sm:py-14">
-        <div className="mx-auto max-w-7xl px-4 space-y-8">
-          
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-            </Link>
-          </div>
+        <div className="mx-auto max-w-7xl md:px-6 lg:px-8 space-y-6">
 
-          <SectionHeading
-            inverted
-            eyebrow="News Category"
-            title={catName}
-            subtitle={`${catName} বিভাগের সকল খবর ও প্রতিবেদন (${posts.length}টি সংবাদ প্রকাশিত)`}
-          />
+          <div className="px-4 md:px-0 space-y-6">
+            <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
+              </Link>
+            </div>
+
+            <SectionHeading
+              inverted
+              eyebrow="News Category"
+              title={catName}
+              subtitle={`${catName} বিভাগের সকল খবর ও প্রতিবেদন (${posts.length}টি সংবাদ প্রকাশিত)`}
+            />
+          </div>
 
           {posts.length > 0 ? (
             <NewsGrid posts={posts} />
           ) : (
-            <div className="glass-card p-12 text-center text-white space-y-2">
-              <div className="size-12 rounded-full bg-white/10 text-cyan-300 flex items-center justify-center mx-auto border border-white/20">
-                <Newspaper className="size-6" />
+            <div className="px-4 md:px-0">
+              <div className="glass-card p-12 text-center text-white space-y-2">
+                <div className="size-12 rounded-full bg-white/10 text-cyan-300 flex items-center justify-center mx-auto border border-white/20">
+                  <Newspaper className="size-6" />
+                </div>
+                <p className="text-base font-bold text-white">এই ক্যাটাগরিতে এখনো কোনো সংবাদ প্রকাশিত হয়নি।</p>
+                <p className="text-xs text-slate-300">অ্যাডমিন বা মডারেটররা এই ক্যাটাগরিতে পোস্ট দিলেই তা এখানে সরাসরি লাইভ হয়ে যাবে।</p>
               </div>
-              <p className="text-base font-bold text-white">এই ক্যাটাগরিতে এখনো কোনো সংবাদ প্রকাশিত হয়নি।</p>
-              <p className="text-xs text-slate-300">অ্যাডমিন বা মডারেটররা এই ক্যাটাগরিতে পোস্ট দিলেই তা এখানে সরাসরি লাইভ হয়ে যাবে।</p>
             </div>
           )}
 
           {posts.length > 3 && (
-            <div className="pt-6 text-center border-t border-white/15">
+            <div className="px-4 md:px-0 pt-6 text-center border-t border-white/15">
               <Link
                 href="/"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
