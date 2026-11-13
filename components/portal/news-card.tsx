@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import { CalendarDays, Globe, User } from 'lucide-react'
 import type { Post } from '@/lib/sb'
@@ -22,13 +25,17 @@ function formatBanglaDate(val?: string | null): string {
   return val
 }
 
-function cleanExcerpt(text?: string | null, maxLength = 150): string {
+function cleanText(text?: string | null): string {
   if (!text) return ''
-  const clean = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
-  if (clean.length <= maxLength) return clean
+  return text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
+}
+
+function truncateText(clean: string, maxLength = 140): { short: string; hasMore: boolean } {
+  if (clean.length <= maxLength) return { short: clean, hasMore: false }
   const truncated = clean.slice(0, maxLength)
   const lastSpace = truncated.lastIndexOf(' ')
-  return (lastSpace > 60 ? truncated.slice(0, lastSpace) : truncated) + '...'
+  const cut = lastSpace > 60 ? truncated.slice(0, lastSpace) : truncated
+  return { short: cut, hasMore: true }
 }
 
 function extractFirstImageUrl(raw?: string | null): string | null {
@@ -50,6 +57,8 @@ function extractFirstImageUrl(raw?: string | null): string | null {
 }
 
 export function NewsCard({ p }: { p: Post }) {
+  const [expanded, setExpanded] = useState(false)
+
   const href = p.link_url?.trim() || `/post/${p.id}`
   const isExt = /^https?:\/\//i.test(href)
   const formattedDate = formatBanglaDate(p.created_at)
@@ -57,11 +66,13 @@ export function NewsCard({ p }: { p: Post }) {
   const coverImage = p.image_url || extractFirstImageUrl(p.embed_media_url) || null
   const authorName = p.author?.trim() || 'মাভাবিপ্রবি রিপোর্টার্স ইউনিটি'
   const categoryName = p.category || 'ক্যাম্পাস সংবাদ'
-  const bodyExcerpt = cleanExcerpt(p.body, 150)
+
+  const fullBody = cleanText(p.body)
+  const { short: shortBody, hasMore } = truncateText(fullBody, 140)
 
   return (
-    <article className="group flex flex-col overflow-hidden bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card">
-      {/* ১. পোস্টকারীর তথ্য: সবার উপরে বামপাশের কোনায় (ফেসবুকের মতো) */}
+    <article className="group flex flex-col bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card">
+      {/* ১. পোস্টকারীর তথ্য: সবার উপরে বামপাশের কোনায় */}
       <div className="flex items-center justify-between gap-2.5 px-3.5 pt-3.5 pb-2.5 sm:px-5">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold text-sm ring-2 ring-white/25 shadow-sm">
@@ -101,7 +112,7 @@ export function NewsCard({ p }: { p: Post }) {
       />
 
       {/* ৩. শিরোনাম, উপশিরোনাম, বিস্তারিত ও মেটা ব্যাজ */}
-      <div className="flex flex-1 flex-col px-3.5 pt-3 pb-3.5 sm:px-5 sm:pb-5 space-y-2">
+      <div className="flex flex-1 flex-col px-3.5 pt-3 pb-3 sm:px-5 sm:pb-4 space-y-2">
         <h3 className="font-serif text-lg sm:text-xl font-bold leading-snug text-white group-hover:text-cyan-200 transition-colors drop-shadow-sm">
           {isExt ? (
             <a href={href} target="_blank" rel="noopener noreferrer">
@@ -122,20 +133,29 @@ export function NewsCard({ p }: { p: Post }) {
 
         <PostMetaBadges data={p} compact />
 
-        {bodyExcerpt && (
-          <p className="line-clamp-3 text-xs sm:text-sm leading-relaxed text-slate-200 opacity-95">
-            {bodyExcerpt}
+        {fullBody && (
+          <p className="text-xs sm:text-sm leading-relaxed text-slate-200 opacity-95 whitespace-pre-line">
+            {expanded || !hasMore ? fullBody : shortBody}
+            {hasMore && !expanded && (
+              <button
+                type="button"
+                onClick={() => setExpanded(true)}
+                className="ml-1 font-bold text-cyan-300 hover:text-white tracking-wider cursor-pointer"
+                aria-label="আরো পড়ুন"
+              >
+                .........
+              </button>
+            )}
           </p>
         )}
 
-        {/* ৪. বটম অ্যাকশন বার: রিঅ্যাকশন, বিস্তারিত ও শেয়ার */}
-        <div className="mt-auto pt-2.5 border-t border-white/15">
+        {/* ৪. ফেসবুক-স্টাইল বটম বার: ❤️ রিয়েক্ট -> 💬 কমেন্ট -> ↗️ শেয়ার */}
+        <div className="mt-auto pt-2 border-t border-white/15">
           <ReactionBar
             postId={p.id}
             title={p.title}
-            readMoreHref={href}
-            readMoreExternal={isExt}
             noTopBorder
+            inlineComments
           />
         </div>
       </div>
