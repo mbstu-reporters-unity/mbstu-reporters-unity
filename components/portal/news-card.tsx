@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
-import { CalendarDays, Globe, User } from 'lucide-react'
+import { CalendarDays, ExternalLink, Globe, User } from 'lucide-react'
 import type { Post } from '@/lib/sb'
 import { ReactionBar } from './reaction-bar'
 import CardGallery from './card-gallery'
 import { PostMetaBadges } from './post-meta-badges'
+import { FormattedText } from './formatted-text'
 
 function formatBanglaDate(val?: string | null): string {
   if (!val) return ''
@@ -58,20 +59,38 @@ function extractFirstImageUrl(raw?: string | null): string | null {
 
 export function NewsCard({ p }: { p: Post }) {
   const [expanded, setExpanded] = useState(false)
+  const articleRef = useRef<HTMLElement>(null)
 
-  const href = p.link_url?.trim() || `/post/${p.id}`
-  const isExt = /^https?:\/\//i.test(href)
   const formattedDate = formatBanglaDate(p.created_at)
-
   const coverImage = p.image_url || extractFirstImageUrl(p.embed_media_url) || null
   const authorName = p.author?.trim() || 'মাভাবিপ্রবি রিপোর্টার্স ইউনিটি'
   const categoryName = p.category || 'ক্যাম্পাস সংবাদ'
 
   const fullBody = cleanText(p.body)
   const { short: shortBody, hasMore } = truncateText(fullBody, 140)
+  const extLink = p.link_url?.trim() && /^https?:\/\//i.test(p.link_url.trim()) ? p.link_url.trim() : null
+
+  function toggleExpand(e?: React.MouseEvent) {
+    if (e) {
+      const target = e.target as HTMLElement | null
+      if (target && target.closest('a')) return
+    }
+    setExpanded((prev) => {
+      const next = !prev
+      if (!next && articleRef.current && articleRef.current.getBoundingClientRect().top < 75) {
+        setTimeout(() => {
+          articleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 40)
+      }
+      return next
+    })
+  }
 
   return (
-    <article className="group flex flex-col bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card">
+    <article
+      ref={articleRef}
+      className="scroll-mt-20 group flex flex-col bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card"
+    >
       {/* ১. পোস্টকারীর তথ্য: সবার উপরে বামপাশের কোনায় */}
       <div className="flex items-center justify-between gap-2.5 px-3.5 pt-3.5 pb-2.5 sm:px-5">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -101,52 +120,70 @@ export function NewsCard({ p }: { p: Post }) {
         </Link>
       </div>
 
-      {/* ২. মিডিয়া (ছবি / কোলাজ / ডিরেক্ট ভিডিও / লিংক ভিডিও — এজ-টু-এজ ফ্রি সাইজ) */}
+      {/* ২. মিডিয়া (ছবি / কোলাজ / ডিরেক্ট ভিডিও / লিংক ভিডিও — ক্লিকে ২ বা ৩ নং ভিউ) */}
       <CardGallery
         postId={p.id}
         cover={coverImage}
         videoUrl={p.video_url}
         embedMediaUrl={p.embed_media_url}
-        href={href}
-        external={isExt}
+        postTitle={p.title}
+        postDate={p.created_at}
       />
 
-      {/* ৩. শিরোনাম, উপশিরোনাম, বিস্তারিত ও মেটা ব্যাজ */}
+      {/* ৩. শিরোনাম, উপশিরোনাম ও বিস্তারিত (ক্লিকে ওপেন/সংক্ষিপ্ত হবে) */}
       <div className="flex flex-1 flex-col px-3.5 pt-3 pb-3 sm:px-5 sm:pb-4 space-y-2">
-        <h3 className="font-serif text-lg sm:text-xl font-bold leading-snug text-white group-hover:text-cyan-200 transition-colors drop-shadow-sm">
-          {isExt ? (
-            <a href={href} target="_blank" rel="noopener noreferrer">
-              {p.title}
-            </a>
-          ) : (
-            <Link href={href}>
-              {p.title}
-            </Link>
-          )}
+        <h3
+          onClick={() => toggleExpand()}
+          className="font-serif text-lg sm:text-xl font-bold leading-snug text-white hover:text-cyan-200 transition-colors drop-shadow-sm cursor-pointer select-none"
+        >
+          {p.title}
         </h3>
 
         {p.heading && p.heading.trim() !== p.title.trim() && (
-          <p className="text-xs sm:text-sm font-medium text-cyan-100/90 leading-snug border-l-2 border-cyan-400/70 pl-2.5">
+          <p
+            onClick={() => toggleExpand()}
+            className="text-xs sm:text-sm font-medium text-cyan-100/90 leading-snug border-l-2 border-cyan-400/70 pl-2.5 cursor-pointer"
+          >
             {p.heading}
           </p>
         )}
 
-        <PostMetaBadges data={p} compact />
+        <PostMetaBadges data={p} compact={!expanded} />
 
-        {fullBody && (
-          <p className="text-xs sm:text-sm leading-relaxed text-slate-200 opacity-95 whitespace-pre-line">
-            {expanded || !hasMore ? fullBody : shortBody}
-            {hasMore && !expanded && (
-              <button
-                type="button"
-                onClick={() => setExpanded(true)}
-                className="ml-1 font-bold text-cyan-300 hover:text-white tracking-wider cursor-pointer"
-                aria-label="আরো পড়ুন"
-              >
-                .........
-              </button>
+        {p.body && (
+          <div
+            onClick={toggleExpand}
+            className="text-xs sm:text-sm leading-relaxed text-slate-200 opacity-95 cursor-pointer"
+          >
+            {expanded ? (
+              <FormattedText text={p.body} className="text-xs sm:text-sm text-slate-100 leading-relaxed" />
+            ) : (
+              <p className="whitespace-pre-line">
+                {hasMore ? (
+                  <>
+                    <span>{shortBody}</span>
+                    <span className="ml-1 font-bold text-cyan-300 tracking-wider">.........</span>
+                  </>
+                ) : (
+                  fullBody
+                )}
+              </p>
             )}
-          </p>
+          </div>
+        )}
+
+        {expanded && extLink && (
+          <div className="pt-1">
+            <a
+              href={extLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:underline break-all"
+            >
+              <ExternalLink className="size-3.5 shrink-0" />
+              <span>{extLink}</span>
+            </a>
+          </div>
         )}
 
         {/* ৪. ফেসবুক-স্টাইল বটম বার: ❤️ রিয়েক্ট -> 💬 কমেন্ট -> ↗️ শেয়ার */}
