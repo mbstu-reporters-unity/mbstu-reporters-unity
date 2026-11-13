@@ -4,7 +4,6 @@ import { NewsGrid } from './news-card'
 export async function ClubPosts() {
   const [all, limits] = await Promise.all([getVisiblePosts(1000), getLimits()])
 
-  // ✅ ক্লাবের সাথে লিঙ্ক করা অথবা ক্লাব সম্পর্কিত সব পোস্ট নিখুঁতভাবে ফিল্টার করা
   const isClubPost = (p: any) =>
     p.category === CAT_CLUB ||
     (p.category && (p.category.includes('ক্লাব') || p.category.toLowerCase().includes('club'))) ||
@@ -16,11 +15,15 @@ export async function ClubPosts() {
   if (!posts.length) return null
 
   return (
-    <section id="club-latest" className="bg-navy pb-16 sm:pb-20">
-      <div className="mx-auto max-w-7xl px-4">
-        <div className="mb-8 border-t border-white/10 pt-10">
-          <h3 className="font-serif text-2xl font-bold text-white sm:text-3xl">সর্বশেষ ক্লাব সংবাদ</h3>
-          <p className="mt-1 text-sm text-white/60">Latest news posted by our campus club reporters.</p>
+    <section id="club-latest" className="py-12 sm:py-16 border-b border-white/10 relative">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h3 className="font-serif text-2xl font-bold text-white sm:text-3xl drop-shadow-md">
+            সর্বশেষ ক্লাব সংবাদ
+          </h3>
+          <p className="mt-1 text-xs sm:text-sm text-cyan-100/80">
+            Latest news posted by our campus club reporters.
+          </p>
         </div>
         <NewsGrid posts={posts} />
       </div>
