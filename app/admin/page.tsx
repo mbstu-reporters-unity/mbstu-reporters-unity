@@ -28,6 +28,7 @@ import SocialSiteManager from "./social-site-manager"
 import AdministrationManager from "./administration-manager"
 import CommunityPageManager from "./community-page-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
+import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import {
   Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
@@ -143,7 +144,6 @@ export default function AdminPage() {
 
   const isAdmin = me?.role === "admin" && me.approved
 
-  // মডারেটরদের জন্য লুকানো (is_hidden) ও লক করা (is_locked) ক্যাটাগরি ফিল্টার
   const selectableCats = useMemo(() => {
     if (isAdmin) return cats
     if (categoryRows.length === 0) return cats
@@ -1060,6 +1060,7 @@ export default function AdminPage() {
         )}
 
       </main>
+      <GlobalTextStudio />
     </div>
   )
 }
