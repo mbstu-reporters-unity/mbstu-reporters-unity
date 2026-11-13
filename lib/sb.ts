@@ -11,6 +11,8 @@ export type Post = {
   club_id?: string | null
   page_id?: string | null
   author: string | null
+  author_avatar?: string | null
+  show_author_avatar?: boolean | null
   image_url: string | null
   video_url: string | null
   embed_media_url?: string | null
@@ -491,7 +493,7 @@ export async function removeLeader(token: string, id: string) {
   )
 }
 
-/* ---------- হাইড করা সংবাদ নিয়ন্ত্রণ ---------- */
+/* ---------- হাইড করা সংবাদ ও প্রতিবেদকের ছবি নিয়ন্ত্রণ ---------- */
 
 export async function getVisiblePosts(limit = 50): Promise<Post[]> {
   try {
@@ -525,6 +527,16 @@ export async function setPostHidden(token: string, id: string, hidden: boolean) 
       method: "PATCH",
       headers: { ...hdr(token, true), Prefer: "return=minimal" },
       body: JSON.stringify({ hidden }),
+    })
+  )
+}
+
+export async function setPostAuthorAvatarVisible(token: string, id: string, show: boolean) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/posts?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify({ show_author_avatar: show }),
     })
   )
 }
