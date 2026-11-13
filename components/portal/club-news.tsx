@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   Baby,
@@ -79,7 +79,7 @@ function formatClub(c: ClubItem): Club {
   }
 }
 
-const bn = (n: number | string) => String(n).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[Number(d)])
+const bn = (n: number | string) => String(n).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)])
 
 export function ClubNews() {
   const [list, setList] = useState<Club[]>(fallbackClubs)
@@ -121,15 +121,14 @@ export function ClubNews() {
 
   useEffect(() => {
     Promise.all([getCampusClubs(), getClubCarouselConfig()]).then(([items, cfg]) => {
-      const formatted = items && items.length > 0 ? items.map(formatClub) : fallbackClubs
+      const activeItems = (items || []).filter((it) => it.is_active !== false)
+      const formatted = activeItems.length > 0 ? activeItems.map(formatClub) : fallbackClubs
       setList(formatted)
       clubsRef.current = formatted
       if (cfg) setConfig(cfg)
 
       const map: Record<string, ClubItem> = {}
-      if (items) {
-        items.forEach((it) => { map[it.id] = it })
-      }
+      activeItems.forEach((it) => { map[it.id] = it })
       setDbMap(map)
 
       if (typeof window !== 'undefined') {
@@ -167,7 +166,6 @@ export function ClubNews() {
     }
   }, [handleOpenClub])
 
-  // যে কোনো অযাচিত হরিজন্টাল ব্রাউজার স্ক্রল রোধ করে কনটেইনারকে নিখুঁত স্থানে লক রাখা
   useEffect(() => {
     if (sliderContainerRef.current) {
       sliderContainerRef.current.scrollLeft = 0
@@ -196,6 +194,7 @@ export function ClubNews() {
   }, [config.cards_desktop, total])
 
   const maxIndex = Math.max(0, total - itemsPerView)
+  const safeIndex = Math.min(currentIndex, maxIndex)
 
   const nextSlide = useCallback(() => {
     if (total <= 1) return
@@ -207,22 +206,28 @@ export function ClubNews() {
     setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1))
   }, [maxIndex, total])
 
+  const isContinuous = config.enabled && config.effect === 'continuous' && total > itemsPerView
+
   useEffect(() => {
-    if (isPaused || total <= itemsPerView) return
-    const intervalMs = Math.max(3, config.duration_sec || 4) * 1000
-    const timer = setInterval(() => { nextSlide() }, intervalMs)
+    if (!config.enabled || isContinuous || isPaused || total <= itemsPerView) return
+    const intervalMs = Math.max(2, config.duration_sec || 4) * 1000
+    const isReverse = config.direction === 'left-to-right' || config.direction === 'top-to-bottom'
+    const timer = setInterval(() => {
+      if (isReverse) prevSlide()
+      else nextSlide()
+    }, intervalMs)
     return () => clearInterval(timer)
-  }, [isPaused, total, itemsPerView, config.duration_sec, nextSlide])
+  }, [config.enabled, config.direction, config.duration_sec, isContinuous, isPaused, total, itemsPerView, nextSlide, prevSlide])
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setIsPaused(true)
+    if (config.pause_on_hover) setIsPaused(true)
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
   }
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    setTimeout(() => setIsPaused(false), 2000)
-    if (touchStartX.current === null || touchStartY.current === null || total <= 1) return
+    if (config.pause_on_hover) setTimeout(() => setIsPaused(false), 2000)
+    if (touchStartX.current === null || touchStartY.current === null || total <= 1 || isContinuous) return
 
     const diffX = e.changedTouches[0].clientX - touchStartX.current
     const diffY = e.changedTouches[0].clientY - touchStartY.current
@@ -242,11 +247,8 @@ export function ClubNews() {
     const activityMediaList = parseActivityMedia(raw?.embed_media_url)
 
     return (
-      <div
-        className="glass-card flex flex-col justify-between p-4 sm:p-5 select-none text-white h-full min-h-[300px] w-full transition-all"
-      >
+      <div className="glass-card flex flex-col justify-between p-4 sm:p-5 select-none text-white h-full min-h-[300px] w-full transition-all">
         <div className="space-y-3">
-          {/* লোগো, নাম ও ট্যাগ: কিনারার কোনো অংশ কাটবে না */}
           <div className="flex items-start justify-between gap-2 border-b border-white/15 pb-2.5">
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
               {raw?.logo_url ? (
@@ -272,11 +274,10 @@ export function ClubNews() {
             </span>
           </div>
 
-          {/* সাম্প্রতিক কার্যক্রম */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[11px] text-cyan-200/80 gap-1">
               <span className="font-semibold flex items-center gap-1 shrink-0">
-                <Sparkles className="size-3 text-amber-300" /> 
+                <Sparkles className="size-3 text-amber-300" />
                 <span>সাম্প্রতিক কার্যক্রম</span>
               </span>
               {club.date && <span className="font-mono text-[10px] opacity-80 shrink-0">{club.date}</span>}
@@ -286,7 +287,6 @@ export function ClubNews() {
               {club.activityBn || club.activity}
             </p>
 
-            {/* থাম্বনেইল ছবি */}
             {activityMediaList.length > 0 && (
               <div className="relative h-24 w-full rounded-2xl overflow-hidden bg-black/40 border border-white/15 mt-2">
                 {activityMediaList[0].url.includes('youtube') ||
@@ -311,7 +311,6 @@ export function ClubNews() {
           </div>
         </div>
 
-        {/* ফুটার বাটন */}
         <div className="mt-4 pt-2.5 border-t border-white/15 space-y-2">
           <div className="flex items-center justify-between gap-1 text-[11px]">
             <div className="flex items-center gap-1.5">
@@ -360,17 +359,49 @@ export function ClubNews() {
     )
   }
 
+  const animMs = config.anim_speed_ms || 600
+  const useDiscreteGrid =
+    !isContinuous &&
+    (config.effect === 'fade' ||
+      config.effect === 'zoom' ||
+      config.effect === 'flip' ||
+      config.direction === 'bottom-to-top' ||
+      config.direction === 'top-to-bottom')
+
+  const effectClass =
+    config.effect === 'fade'
+      ? 'tr_fade'
+      : config.effect === 'zoom'
+        ? 'tr_zoom-in'
+        : config.effect === 'flip'
+          ? 'tr_flip-h'
+          : config.direction === 'bottom-to-top'
+            ? 'tr_slide-up'
+            : config.direction === 'top-to-bottom'
+              ? 'tr_slide-down'
+              : 'tr_slide-left'
+
+  const discreteSlice: Club[] = []
+  if (useDiscreteGrid && total > 0) {
+    for (let i = 0; i < Math.min(itemsPerView, total); i++) {
+      discreteSlice.push(visible[(safeIndex + i) % total])
+    }
+  }
+
+  const marqueeDurationSec = Math.max(10, total * Math.max(2.5, config.duration_sec || 4))
+  const marqueeClass = config.direction === 'left-to-right' ? 'club-marquee-ltr' : 'club-marquee-rtl'
+
   return (
     <section id="club-news" className="relative py-14 sm:py-20 border-b border-white/10 overflow-hidden">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        
+
         <SectionHeading
           eyebrow="Campus Organizations & Clubs"
           title="ক্যাম্পাস ক্লাব ও সংগঠনসমূহ"
           subtitle="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের সাম্প্রতিক অর্জন, কার্যক্রম এবং পূর্ণাঙ্গ পরিচিতি।"
         />
 
-        {/* ফিল্টার বাটন: স্ক্রিনের শেষ প্রান্ত পর্যন্ত পূর্ণাঙ্গ স্ক্রল */}
+        {/* ফিল্টার বাটন */}
         <div className="-mx-4 px-4 sm:mx-0 sm:px-0 mb-6 flex gap-2.5 overflow-x-auto pb-2.5 pt-1 scrollbar-none" role="group">
           {tags.map((tag) => (
             <button
@@ -395,20 +426,62 @@ export function ClubNews() {
           ))}
         </div>
 
-        {/* ⭐ মূল সমাধান: overflow-hidden সরাসরি -mx-4 এ দেওয়া হয়েছে, ফলে কার্ডটি স্ক্রিনের শেষ ০px কিনারা পর্যন্ত যাবে, মাঝপথে কাটবে না ⭐ */}
+        {/* স্লাইডার বক্স */}
         <div
           ref={sliderContainerRef}
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
+          onMouseEnter={() => { if (config.pause_on_hover) setIsPaused(true) }}
+          onMouseLeave={() => { if (config.pause_on_hover) setIsPaused(false) }}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="-mx-4 sm:mx-0 overflow-hidden relative py-2"
+          className={cn(
+            '-mx-4 sm:mx-0 overflow-hidden relative py-2',
+            config.pause_on_hover && 'club-marquee-pause',
+          )}
         >
-          {total > 0 ? (
+          {total === 0 ? (
+            <div className="px-4">
+              <p className="text-center text-xs text-white/60 py-10 glass-card">
+                কোনো ক্লাব পাওয়া যায়নি।
+              </p>
+            </div>
+          ) : isContinuous ? (
             <div
-              className="flex transition-transform duration-500 ease-out"
+              className={marqueeClass}
               style={{
-                transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
+                '--club-scroll-dur': `${marqueeDurationSec}s`,
+                animationPlayState: isPaused ? 'paused' : 'running',
+              } as React.CSSProperties}
+            >
+              {[...visible, ...visible].map((club, idx) => (
+                <div
+                  key={`${club.id}-${idx < visible.length ? 'a' : 'b'}`}
+                  className="shrink-0 w-[85vw] sm:w-[46vw] lg:w-[370px] px-2.5 box-border"
+                >
+                  {renderCard(club)}
+                </div>
+              ))}
+            </div>
+          ) : useDiscreteGrid ? (
+            <div
+              key={`${filter}-${safeIndex}`}
+              className={cn('grid gap-5 px-4 sm:px-0', effectClass)}
+              style={{
+                gridTemplateColumns: `repeat(${Math.min(itemsPerView, discreteSlice.length)}, minmax(0, 1fr))`,
+                animationDuration: `${animMs}ms`,
+              }}
+            >
+              {discreteSlice.map((club) => (
+                <div key={club.id} className="min-w-0">
+                  {renderCard(club)}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              className="flex transition-transform ease-out"
+              style={{
+                transform: `translateX(-${safeIndex * (100 / itemsPerView)}%)`,
+                transitionDuration: `${animMs}ms`,
               }}
             >
               {visible.map((club) => (
@@ -421,50 +494,69 @@ export function ClubNews() {
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="px-4">
-              <p className="text-center text-xs text-white/60 py-10 glass-card">
-                কোনো ক্লাব পাওয়া যায়নি।
-              </p>
-            </div>
           )}
         </div>
 
         {/* কন্ট্রোল বার */}
         {total > itemsPerView && (
-          <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
-            
-            <button
-              type="button"
-              onClick={() => setIsPaused(!isPaused)}
-              className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 text-xs font-semibold border border-white/20 transition cursor-pointer active:scale-95"
-            >
-              {isPaused ? <Play className="size-3 text-cyan-400" /> : <Pause className="size-3 text-amber-400" />}
-              <span>{isPaused ? 'চালান' : 'থামান'}</span>
-            </button>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
 
-            <span className="text-xs font-bold text-cyan-300 bg-white/10 px-3 py-1 rounded-full border border-white/15">
-              ক্লাব {bn(currentIndex + 1)} / {bn(total)}
-            </span>
-
-            <div className="flex items-center gap-1.5">
+            {config.enabled && (
               <button
                 type="button"
-                onClick={prevSlide}
-                className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
-                aria-label="Previous"
+                onClick={() => setIsPaused(!isPaused)}
+                className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 text-xs font-semibold border border-white/20 transition cursor-pointer active:scale-95"
               >
-                <ChevronLeft className="size-4" />
+                {isPaused ? <Play className="size-3 text-cyan-400" /> : <Pause className="size-3 text-amber-400" />}
+                <span>{isPaused ? 'চালান' : 'থামান'}</span>
               </button>
-              <button
-                type="button"
-                onClick={nextSlide}
-                className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
-                aria-label="Next"
-              >
-                <ChevronRight className="size-4" />
-              </button>
-            </div>
+            )}
+
+            {config.show_dots !== false && !isContinuous && (
+              <div className="flex items-center gap-1.5 mx-auto">
+                {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setCurrentIndex(idx)}
+                    aria-label={`স্লাইড ${idx + 1}`}
+                    className={`h-2 rounded-full transition-all cursor-pointer ${
+                      idx === safeIndex ? 'w-5 bg-cyan-400 shadow-sm' : 'w-2 bg-white/30 hover:bg-white/60'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {isContinuous && (
+              <span className="text-xs font-bold text-cyan-300 bg-white/10 px-3 py-1 rounded-full border border-white/15">
+                মোট {bn(total)}টি ক্লাব
+              </span>
+            )}
+
+            {config.show_arrows !== false && !isContinuous && (
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-xs font-bold text-cyan-300 bg-white/10 px-3 py-1 rounded-full border border-white/15">
+                  ক্লাব {bn(safeIndex + 1)} / {bn(total)}
+                </span>
+                <button
+                  type="button"
+                  onClick={prevSlide}
+                  className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={nextSlide}
+                  className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
+                  aria-label="Next"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
+              </div>
+            )}
 
           </div>
         )}
