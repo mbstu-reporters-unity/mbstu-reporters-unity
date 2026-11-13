@@ -8,6 +8,7 @@ import {
 } from "../../lib/sb"
 import type { StudentItem } from "../../lib/sb"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
+import FbPostComposer from "../../components/admin/fb-post-composer"
 
 const DEFAULT_KINDS = ["Opinion", "Creative Writing", "Achievement", "Research Highlight"]
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
@@ -16,9 +17,13 @@ const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabl
 export default function StudentManager({
   token,
   shrink,
+  authorName,
+  authorAvatar,
 }: {
   token: string
   shrink: (f: File) => Promise<Blob>
+  authorName?: string
+  authorAvatar?: string | null
 }) {
   const [items, setItems] = useState<StudentItem[]>([])
   const [kinds, setKinds] = useState<string[]>(DEFAULT_KINDS)
@@ -37,6 +42,10 @@ export default function StudentManager({
   const [oldImage, setOldImage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState("")
+
+  // ফেসবুক-স্টাইল মোড স্টেট
+  const [fbMode, setFbMode] = useState(false)
+  const [fbEditItem, setFbEditItem] = useState<StudentItem | null>(null)
 
   const imgs = useImageSection("student")
 
@@ -77,7 +86,6 @@ export default function StudentManager({
     if (it.image_url && rows.some((r) => r.url === it.image_url)) setOldImage(null)
   }
 
-  /* --- ক্যাটাগরি যোগ / এডিট / ডিলিট হ্যান্ডলার --- */
   async function handleAddKind() {
     const name = window.prompt("নতুন ক্যাটাগরির নাম লিখুন:")?.trim()
     if (!name) return
@@ -200,10 +208,50 @@ export default function StudentManager({
 
   return (
     <div className="space-y-4">
+      {/* পোস্ট করার মোড সুইচার */}
+      <div className="flex bg-white rounded-2xl p-1.5 shadow-sm border border-slate-200 gap-1.5 text-xs font-bold">
+        <button
+          type="button"
+          onClick={() => { setFbMode(false); setFbEditItem(null) }}
+          className={`flex-1 py-2.5 rounded-xl transition cursor-pointer ${
+            !fbMode ? "bg-green-700 text-white shadow" : "text-slate-600 hover:bg-slate-100"
+          }`}
+        >
+          📝 ক্লাসিক ফর্ম (বর্তমান)
+        </button>
+        <button
+          type="button"
+          onClick={() => { setFbEditItem(null); setFbMode(true) }}
+          className={`flex-1 py-2.5 rounded-xl transition cursor-pointer ${
+            fbMode ? "bg-blue-600 text-white shadow" : "text-slate-600 hover:bg-slate-100"
+          }`}
+        >
+          📱 ফেসবুক স্টাইল পোস্ট (নতুন)
+        </button>
+      </div>
+
+      {fbMode && (
+        <FbPostComposer
+          mode="student"
+          token={token}
+          authorName={authorName}
+          authorAvatar={authorAvatar}
+          shrink={shrink}
+          studentKinds={kinds}
+          editItem={fbEditItem}
+          onCancel={() => { setFbMode(false); setFbEditItem(null) }}
+          onSuccess={async (m) => {
+            setFbMode(false)
+            setFbEditItem(null)
+            setMsg(m)
+            await load()
+          }}
+        />
+      )}
+
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
         <h2 className="font-semibold">{editId ? "লেখা এডিট করুন" : "স্টুডেন্ট কর্নারে নতুন লেখা"}</h2>
 
-        {/* ক্যাটাগরি নির্বাচন এবং ম্যানেজমেন্ট ড্রপডাউন */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-500">ক্যাটাগরি বা বিষয়</span>
@@ -265,7 +313,6 @@ export default function StudentManager({
         <input className={inp} placeholder="বিভাগ (যেমন: Pharmacy)" value={dept} onChange={(e) => setDept(e.target.value)} />
         <input className={inp} placeholder="ব্যাচ (যেমন: 18th Batch)" value={batch} onChange={(e) => setBatch(e.target.value)} />
 
-        {/* ⭐ নতুন: ইউটিউব, ফেসবুক বা ছবির লিংক দেওয়ার ঐচ্ছিক বক্স ⭐ */}
         <div className="space-y-1 rounded-xl border border-emerald-300 bg-emerald-50/60 p-3">
           <label className="text-xs font-bold text-emerald-900 block">
             🎥 ভিডিও / ছবির লিংক (YouTube, Facebook ভিডিও বা ছবির সরাসরি লিংক - ঐচ্ছিক):
@@ -308,7 +355,7 @@ export default function StudentManager({
           {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "যোগ করুন"}
         </button>
         {editId && <button onClick={reset} className="w-full text-sm underline">বাতিল</button>}
-        {msg && <p className="text-sm">{msg}</p>}
+        {msg && <p className="text-sm font-semibold">{msg}</p>}
       </div>
 
       <div className="space-y-3">
@@ -321,8 +368,17 @@ export default function StudentManager({
             </div>
             <p className="font-semibold mt-1">{it.hidden ? "🙈 " : ""}{it.title}</p>
             <p className="text-xs text-gray-500">{it.author} {it.dept ? "· " + it.dept : ""}</p>
-            <div className="flex gap-4 mt-2">
-              <button onClick={() => edit(it)} className="text-green-700">এডিট</button>
+            <div className="flex flex-wrap gap-4 mt-2">
+              <button onClick={() => edit(it)} className="text-green-700 font-semibold">এডিট</button>
+              <button
+                onClick={() => {
+                  setFbEditItem(it)
+                  setFbMode(true)
+                }}
+                className="text-blue-600 font-semibold"
+              >
+                FB এডিট
+              </button>
               <button onClick={() => run(() => saveStudentItem(token, it.id, { hidden: !it.hidden }))} className="text-amber-600">
                 {it.hidden ? "দেখান" : "হাইড"}
               </button>
