@@ -1,17 +1,46 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { X, Share2, Check, GraduationCap, CalendarDays, MessageSquareQuote, Feather, Award, BookOpen, Send } from 'lucide-react'
-import type { StudentItem } from '@/lib/sb'
-import { getImages } from '@/lib/sb'
+import { useCallback, useEffect, useState } from 'react'
+import {
+  X,
+  Share2,
+  Check,
+  GraduationCap,
+  CalendarDays,
+  MessageSquareQuote,
+  Feather,
+  Award,
+  BookOpen,
+  Send,
+} from 'lucide-react'
+import { SB_URL, SB_KEY, getImages, type StudentItem } from '@/lib/sb'
 import { ReactionBar } from './reaction-bar'
 import { UniversalMediaEmbed } from './universal-media-embed'
+import { FormattedText } from './formatted-text'
+
+type StudentCommentRow = {
+  id: string
+  name: string | null
+  message: string
+  created_at: string
+}
 
 const kindIcons: Record<string, any> = {
   Opinion: MessageSquareQuote,
   'Creative Writing': Feather,
   Achievement: Award,
   'Research Highlight': BookOpen,
+}
+
+function timeAgo(iso: string) {
+  const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000)
+  const n = (x: number) => Math.floor(x).toLocaleString('bn-BD')
+  if (s < 60) return 'এইমাত্র'
+  if (s < 3600) return `${n(s / 60)} মিনিট আগে`
+  if (s < 86400) return `${n(s / 3600)} ঘণ্টা আগে`
+  if (s < 86400 * 30) return `${n(s / 86400)} দিন আগে`
+  if (s < 86400 * 365) return `${n(s / (86400 * 30))} মাস আগে`
+  return `${n(s / (86400 * 365))} বছর আগে`
 }
 
 export function StudentDialog({
@@ -23,9 +52,27 @@ export function StudentDialog({
 }) {
   const [copied, setCopied] = useState(false)
   const [images, setImages] = useState<string[]>([])
-  const [comments, setComments] = useState<Array<{ name: string; text: string; time: string }>>([])
+  const [comments, setComments] = useState<StudentCommentRow[]>([])
   const [cName, setCName] = useState('')
   const [cText, setCText] = useState('')
+  const [cBusy, setCBusy] = useState(false)
+  const [cErr, setCErr] = useState('')
+
+  const loadComments = useCallback(async (studentId: string) => {
+    try {
+      const res = await fetch(
+        `${SB_URL}/rest/v1/student_comments?select=id,name,message,created_at&student_id=eq.${encodeURIComponent(studentId)}&order=created_at.asc`,
+        {
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+          cache: 'no-store',
+        }
+      )
+      if (res.ok) setComments(await res.json())
+      else setComments([])
+    } catch {
+      setComments([])
+    }
+  }, [])
 
   useEffect(() => {
     if (!item) return
@@ -45,16 +92,14 @@ export function StudentDialog({
       }
     })
 
-    try {
-      const saved = localStorage.getItem(`student_comments_${item.id}`)
-      if (saved) setComments(JSON.parse(saved))
-    } catch {}
+    setCErr('')
+    loadComments(item.id)
 
     return () => {
       document.body.style.overflow = prev
       window.removeEventListener('keydown', onKey)
     }
-  }, [item, onClose])
+  }, [item, onClose, loadComments])
 
   if (!item) return null
 
@@ -79,24 +124,38 @@ export function StudentDialog({
     } catch {}
   }
 
-  function handleAddComment() {
-    if (!cText.trim()) return
-    const newC = {
-      name: cName.trim() || 'নামহীন পাঠক',
-      text: cText.trim(),
-      time: 'এইমাত্র',
-    }
-    const updated = [...comments, newC]
-    setComments(updated)
+  async function handleAddComment() {
+    if (!item) return
+    const text = cText.trim()
+    if (!text) return
+    setCBusy(true)
+    setCErr('')
     try {
-      localStorage.setItem(`student_comments_${item!.id}`, JSON.stringify(updated))
-    } catch {}
-    setCText('')
+      const res = await fetch(`${SB_URL}/rest/v1/student_comments`, {
+        method: 'POST',
+        headers: {
+          apikey: SB_KEY,
+          Authorization: `Bearer ${SB_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({
+          student_id: item.id,
+          name: cName.trim() || null,
+          message: text,
+        }),
+      })
+      if (!res.ok) throw new Error('কমেন্ট পাঠানো যায়নি')
+      setCText('')
+      await loadComments(item.id)
+    } catch (e) {
+      setCErr('❌ ' + (e instanceof Error ? e.message : 'মন্তব্য পাঠানো যায়নি'))
+    }
+    setCBusy(false)
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
-      {/* ব্যাকড্রপ */}
       <button
         type="button"
         aria-label="Close"
@@ -162,9 +221,7 @@ export function StudentDialog({
           )}
 
           {item.excerpt && (
-            <div className="whitespace-pre-line text-sm sm:text-base leading-relaxed text-slate-100 py-1">
-              {item.excerpt}
-            </div>
+            <FormattedText text={item.excerpt} className="text-sm sm:text-base text-slate-100 py-1" />
           )}
 
           {item.embed_media_url && (
@@ -217,31 +274,37 @@ export function StudentDialog({
 
           <ReactionBar postId={item.id} title={item.title} />
 
-          {/* কমেন্ট সেকশন */}
+          {/* কমেন্ট সেকশন (Supabase ডাটাবেজে সংরক্ষিত) */}
           <div className="space-y-3 pt-3 border-t border-white/15">
             <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-300">
               মন্তব্য ({comments.length})
             </h4>
 
-            {comments.map((c, i) => (
-              <div key={i} className="rounded-xl bg-white/5 border border-white/10 p-2.5 text-xs space-y-1">
-                <p className="font-bold text-white flex justify-between">
-                  <span>{c.name}</span>
-                  <span className="text-[10px] text-white/50">{c.time}</span>
+            {comments.map((c) => (
+              <div key={c.id} className="rounded-xl bg-white/5 border border-white/10 p-2.5 text-xs space-y-1">
+                <p className="font-bold text-cyan-200 flex justify-between">
+                  <span>{c.name || 'নামহীন পাঠক'}</span>
+                  <span className="text-[10px] text-white/50 font-normal">{timeAgo(c.created_at)}</span>
                 </p>
-                <p className="text-slate-200 leading-relaxed">{c.text}</p>
+                <p className="whitespace-pre-line text-slate-200 leading-relaxed">{c.message}</p>
               </div>
             ))}
+
+            {comments.length === 0 && (
+              <p className="text-xs text-white/50">এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি আপনিই করুন!</p>
+            )}
 
             <div className="space-y-2 pt-1">
               <input
                 className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400"
                 placeholder="আপনার নাম (ঐচ্ছিক)"
+                maxLength={60}
                 value={cName}
                 onChange={(e) => setCName(e.target.value)}
               />
               <textarea
                 rows={2}
+                maxLength={1000}
                 className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400"
                 placeholder="এই লেখার ওপর আপনার মন্তব্য লিখুন..."
                 value={cText}
@@ -249,12 +312,14 @@ export function StudentDialog({
               />
               <button
                 type="button"
+                disabled={cBusy || !cText.trim()}
                 onClick={handleAddComment}
-                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-4 py-1.5 text-xs font-bold cursor-pointer shadow"
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-4 py-1.5 text-xs font-bold cursor-pointer shadow disabled:opacity-50"
               >
                 <Send className="size-3" />
-                <span>মন্তব্য পাঠান</span>
+                <span>{cBusy ? 'পাঠানো হচ্ছে...' : 'মন্তব্য পাঠান'}</span>
               </button>
+              {cErr && <p className="text-xs text-rose-300">{cErr}</p>}
             </div>
           </div>
         </div>
