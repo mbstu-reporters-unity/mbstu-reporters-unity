@@ -3,16 +3,28 @@
 import React, { useState, useEffect, useRef } from "react"
 import { Plus, X, ChevronLeft, ChevronRight, Play, Pause, Sparkles } from "lucide-react"
 import { getActiveStories, type StoryItem } from "@/lib/stories"
+import { getMe } from "@/lib/sb"
 
 export function FbStoriesTray() {
   const [stories, setStories] = useState<StoryItem[]>([])
   const [activeStoryIdx, setActiveStoryIdx] = useState<number | null>(null)
   const [progress, setProgress] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [myAvatar, setMyAvatar] = useState<string | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     getActiveStories().then(setStories)
+
+    // লগইন থাকা ইউজারের ছবি আনা
+    try {
+      const token = localStorage.getItem("mbstu_admin_token")
+      if (token) {
+        getMe(token).then((profile) => {
+          if (profile?.avatar_url) setMyAvatar(profile.avatar_url)
+        })
+      }
+    } catch {}
   }, [])
 
   useEffect(() => {
@@ -54,14 +66,20 @@ export function FbStoriesTray() {
       <div className="w-full overflow-x-auto py-1 px-3 sm:px-4 scrollbar-none select-none">
         <div className="flex gap-2 sm:gap-2.5 min-w-max">
           
-          {/* Create Story বাটন (অ্যাডমিন প্যানেলে নিয়ে যাবে) */}
+          {/* Create Story কার্ড (ইউজারের আসল ছবি সহ) */}
           <a
             href="/admin"
             className="relative w-[105px] sm:w-[125px] h-[175px] sm:h-[200px] rounded-2xl overflow-hidden bg-slate-900 border border-white/20 shadow-md cursor-pointer flex flex-col justify-between group active:scale-95 transition-all"
           >
             <div className="h-[68%] w-full overflow-hidden bg-slate-800 flex items-center justify-center">
-              <span className="text-3xl">👤</span>
+              {myAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={myAvatar} alt="" className="size-full object-cover object-top" />
+              ) : (
+                <span className="text-3xl text-white/50">👤</span>
+              )}
             </div>
+
             <div className="relative h-[32%] bg-slate-950 flex flex-col items-center justify-center p-1">
               <div className="absolute -top-4 size-8 rounded-full bg-blue-600 border-2 border-slate-950 flex items-center justify-center text-white shadow-md">
                 <Plus className="size-5" />
@@ -143,12 +161,12 @@ export function FbStoriesTray() {
 
             <div className="absolute top-6 inset-x-4 z-30 flex items-center justify-between text-white">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold">{currentActiveStory.author_name}</span>
+                <span className="text-xs font-bold drop-shadow">{currentActiveStory.author_name}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveStoryIdx(null)}
-                className="p-1.5 rounded-full bg-black/40 text-white"
+                className="p-1.5 rounded-full bg-black/50 text-white"
               >
                 <X className="size-5" />
               </button>
