@@ -8,8 +8,11 @@ export interface StoryItem {
   media_url: string
   media_type: 'image' | 'video'
   caption?: string | null
+  link_url?: string | null
+  post_id?: string | null
   is_highlight: boolean
   highlight_title?: string | null
+  is_active: boolean
   created_at: string
   expires_at?: string
 }
@@ -21,11 +24,11 @@ function hdr(token?: string, json = false): Record<string, string> {
   return h
 }
 
-// সকল সক্রিয় স্টোরি ও হাইলাইটস আনা
+// হোমপেজের সক্রিয় স্টোরি ও হাইলাইটস
 export async function getActiveStories(): Promise<StoryItem[]> {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/stories?select=*&or=(is_highlight.eq.true,expires_at.gt.now())&order=created_at.desc`,
+      `${SB_URL}/rest/v1/stories?select=*&is_active=eq.true&or=(is_highlight.eq.true,expires_at.gt.now())&order=created_at.desc`,
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
@@ -35,7 +38,7 @@ export async function getActiveStories(): Promise<StoryItem[]> {
   }
 }
 
-// এডমিন প্যানেলের জন্য সব স্টোরি লোড
+// অ্যাডমিনের জন্য সব স্টোরি
 export async function getAllStoriesAdmin(token: string): Promise<StoryItem[]> {
   try {
     const res = await fetch(
@@ -61,6 +64,16 @@ export async function createStory(token: string, data: Partial<StoryItem>) {
     throw new Error(err.message || "স্টোরি সংরক্ষণ করা যায়নি")
   }
   return await res.json()
+}
+
+// স্টোরি আপডেট
+export async function updateStory(token: string, id: string, data: Partial<StoryItem>) {
+  const res = await fetch(`${SB_URL}/rest/v1/stories?id=eq.${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { ...hdr(token, true), Prefer: "return=minimal" },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) throw new Error("স্টোরি আপডেট করা যায়নি")
 }
 
 // স্টোরি মুছে ফেলা
