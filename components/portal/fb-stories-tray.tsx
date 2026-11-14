@@ -15,6 +15,15 @@ export function FbStoriesTray() {
     getActiveStories().then(setStories)
   }, [])
 
+  // মোবাইলের ব্যাক বাটন চাপলে সাইট থেকে বের না হয়ে স্টোরি বন্ধ হওয়া
+  useEffect(() => {
+    const handlePopState = () => {
+      setActiveStoryIdx(null)
+    }
+    window.addEventListener("popstate", handlePopState)
+    return () => window.removeEventListener("popstate", handlePopState)
+  }, [])
+
   useEffect(() => {
     if (activeStoryIdx === null || isPaused) return
 
@@ -28,7 +37,7 @@ export function FbStoriesTray() {
             setActiveStoryIdx((i) => (i !== null ? i + 1 : null))
             return 0
           } else {
-            setActiveStoryIdx(null)
+            closeStory()
             return 0
           }
         }
@@ -41,24 +50,32 @@ export function FbStoriesTray() {
     }
   }, [activeStoryIdx, isPaused, stories.length])
 
-  // কোনো স্টোরি না থাকলে হোমপেজে ফাঁকা কিছুই দেখাবে না
+  const openStory = (index: number) => {
+    setActiveStoryIdx(index)
+    setProgress(0)
+    setIsPaused(false)
+    window.history.pushState({ storyOpen: true }, "")
+  }
+
+  const closeStory = () => {
+    setActiveStoryIdx(null)
+    if (window.history.state?.storyOpen) {
+      window.history.back()
+    }
+  }
+
   if (stories.length === 0) return null
 
   const currentActiveStory = activeStoryIdx !== null ? stories[activeStoryIdx] : null
 
   return (
     <div className="w-full my-3">
-      {/* শুধু অ্যাডমিন ও মডারেটরদের দেওয়া স্টোরিজের তালিকা */}
       <div className="w-full overflow-x-auto py-1 px-3 sm:px-4 scrollbar-none select-none">
         <div className="flex gap-2 sm:gap-2.5 min-w-max">
           {stories.map((st, idx) => (
             <div
               key={st.id}
-              onClick={() => {
-                setActiveStoryIdx(idx)
-                setProgress(0)
-                setIsPaused(false)
-              }}
+              onClick={() => openStory(idx)}
               className="relative w-[110px] sm:w-[130px] h-[180px] sm:h-[210px] rounded-2xl overflow-hidden border border-white/20 shadow-lg cursor-pointer group active:scale-95 transition-all"
             >
               {st.media_type === "video" ? (
@@ -106,7 +123,7 @@ export function FbStoriesTray() {
 
       {/* ফুলস্ক্রিন স্টোরি ভিউয়ার */}
       {currentActiveStory && (
-        <div className="fixed inset-0 z-[99999] bg-black/95 flex flex-col items-center justify-center p-0 sm:p-4 backdrop-blur-xl animate-in fade-in">
+        <div className="fixed inset-0 z-[999999] bg-black/95 flex flex-col items-center justify-center p-0 sm:p-4 backdrop-blur-xl animate-in fade-in">
           <div className="relative w-full h-[100dvh] sm:h-[90vh] sm:max-w-md bg-slate-950 sm:rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl border border-white/10">
             
             <div className="absolute top-3 inset-x-3 z-30 flex gap-1">
@@ -134,7 +151,7 @@ export function FbStoriesTray() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveStoryIdx(null)}
+                  onClick={closeStory}
                   className="p-1.5 rounded-full bg-black/50 text-white"
                 >
                   <X className="size-5" />
