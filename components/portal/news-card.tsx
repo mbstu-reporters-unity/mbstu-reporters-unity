@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import Link from 'next/link'
-import { CalendarDays, ExternalLink, Globe, User } from 'lucide-react'
+import { CalendarDays, Globe, User } from 'lucide-react'
 import type { Post } from '@/lib/sb'
 import { ReactionBar } from './reaction-bar'
 import CardGallery from './card-gallery'
@@ -39,60 +39,28 @@ function truncateText(clean: string, maxLength = 140): { short: string; hasMore:
   return { short: cut, hasMore: true }
 }
 
-function extractFirstImageUrl(raw?: string | null): string | null {
-  if (!raw || !raw.trim()) return null
-  const s = raw.trim()
-  const isVideo = (u: string) =>
-    /youtube\.com|youtu\.be|facebook\.com|fb\.watch|\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(u)
-
-  if (s.startsWith('[') || s.startsWith('{')) {
-    try {
-      const parsed = JSON.parse(s)
-      const arr = Array.isArray(parsed) ? parsed : [parsed]
-      const firstImg = arr.find((x) => x?.url && !isVideo(x.url))
-      return firstImg?.url || null
-    } catch {}
-  }
-  if (/^https?:\/\//i.test(s) && !isVideo(s)) return s
-  return null
-}
-
 export function NewsCard({ p }: { p: Post }) {
   const [expanded, setExpanded] = useState(false)
   const articleRef = useRef<HTMLElement>(null)
 
   const formattedDate = formatBanglaDate(p.created_at)
-  const coverImage = p.image_url || extractFirstImageUrl(p.embed_media_url) || null
   const authorName = p.author?.trim() || 'মাভাবিপ্রবি রিপোর্টার্স ইউনিটি'
   const categoryName = p.category || 'ক্যাম্পাস সংবাদ'
   const showAvatar = Boolean(p.author_avatar && p.show_author_avatar !== false)
 
   const fullBody = cleanText(p.body)
   const { short: shortBody, hasMore } = truncateText(fullBody, 140)
-  const extLink = p.link_url?.trim() && /^https?:\/\//i.test(p.link_url.trim()) ? p.link_url.trim() : null
 
-  function toggleExpand(e?: React.MouseEvent) {
-    if (e) {
-      const target = e.target as HTMLElement | null
-      if (target && target.closest('a')) return
-    }
-    setExpanded((prev) => {
-      const next = !prev
-      if (!next && articleRef.current && articleRef.current.getBoundingClientRect().top < 75) {
-        setTimeout(() => {
-          articleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }, 40)
-      }
-      return next
-    })
+  function toggleExpand() {
+    setExpanded((prev) => !prev)
   }
 
   return (
     <article
       ref={articleRef}
-      className="scroll-mt-20 group flex flex-col bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card"
+      className="scroll-mt-20 group flex flex-col bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card rounded-2xl border border-white/10"
     >
-      {/* ১. পোস্টকারীর তথ্য: সবার উপরে বামপাশের কোনায় */}
+      {/* ১. পোস্টদাতার তথ্য */}
       <div className="flex items-center justify-between gap-2.5 px-3.5 pt-3.5 pb-2.5 sm:px-5">
         <div className="flex items-center gap-2.5 min-w-0">
           {showAvatar ? (
@@ -122,6 +90,7 @@ export function NewsCard({ p }: { p: Post }) {
           </div>
         </div>
 
+        {/* ক্যাটাগরি ফিল্টার পেজের লিংক (ক্যাটাগরি পেজে খবর সংরক্ষিত থাকবে) */}
         <Link
           href={`/category/${encodeURIComponent(categoryName)}`}
           className="shrink-0 rounded-full bg-white/15 hover:bg-white/25 px-3 py-1 text-[11px] font-bold text-cyan-200 border border-white/20 backdrop-blur-md transition"
@@ -130,20 +99,20 @@ export function NewsCard({ p }: { p: Post }) {
         </Link>
       </div>
 
-      {/* ২. মিডিয়া (ছবি / কোলাজ / ডিরেক্ট ভিডিও / লিংক ভিডিও — ক্লিকে ২ বা ৩ নং ভিউ) */}
+      {/* ২. মিডিয়া (ভিডিও বা ছবি) */}
       <CardGallery
         postId={p.id}
-        cover={coverImage}
+        cover={p.image_url}
         videoUrl={p.video_url}
         embedMediaUrl={p.embed_media_url}
         postTitle={p.title}
         postDate={p.created_at}
       />
 
-      {/* ৩. শিরোনাম, উপশিরোনাম ও বিস্তারিত (ক্লিকে ওপেন/সংক্ষিপ্ত হবে) */}
+      {/* ৩. শিরোনাম ও লেখা (ট্যাপ করলেই বড় হবে, আলাদা পেজে যাবে না) */}
       <div className="flex flex-1 flex-col px-3.5 pt-3 pb-3 sm:px-5 sm:pb-4 space-y-2">
         <h3
-          onClick={() => toggleExpand()}
+          onClick={toggleExpand}
           className="font-serif text-lg sm:text-xl font-bold leading-snug text-white hover:text-cyan-200 transition-colors drop-shadow-sm cursor-pointer select-none"
         >
           {p.title}
@@ -151,7 +120,7 @@ export function NewsCard({ p }: { p: Post }) {
 
         {p.heading && p.heading.trim() !== p.title.trim() && (
           <p
-            onClick={() => toggleExpand()}
+            onClick={toggleExpand}
             className="text-xs sm:text-sm font-medium text-cyan-100/90 leading-snug border-l-2 border-cyan-400/70 pl-2.5 cursor-pointer"
           >
             {p.heading}
@@ -172,7 +141,7 @@ export function NewsCard({ p }: { p: Post }) {
                 {hasMore ? (
                   <>
                     <span>{shortBody}</span>
-                    <span className="ml-1 font-bold text-cyan-300 tracking-wider">.........</span>
+                    <span className="ml-1 font-bold text-cyan-300">...আরও দেখুন</span>
                   </>
                 ) : (
                   fullBody
@@ -182,21 +151,7 @@ export function NewsCard({ p }: { p: Post }) {
           </div>
         )}
 
-        {expanded && extLink && (
-          <div className="pt-1">
-            <a
-              href={extLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:underline break-all"
-            >
-              <ExternalLink className="size-3.5 shrink-0" />
-              <span>{extLink}</span>
-            </a>
-          </div>
-        )}
-
-        {/* ৪. ফেসবুক-স্টাইল বটম বার: ❤️ রিয়েক্ট -> 💬 কমেন্ট -> ↗️ শেয়ার */}
+        {/* ৪. ইনলাইন রিয়েক্ট ও ফেসবুক কমেন্ট */}
         <div className="mt-auto pt-2 border-t border-white/15">
           <ReactionBar
             postId={p.id}
