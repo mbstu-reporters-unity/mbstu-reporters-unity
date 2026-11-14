@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { ArrowLeft, ArrowUpRight, Award, BookOpen, Feather, MessageSquareQuote, Sparkles } from 'lucide-react'
+import { ArrowUpRight, Award, BookOpen, Feather, MessageSquareQuote } from 'lucide-react'
 import { getStudentItems, getStudentCategories, type StudentItem } from '@/lib/sb'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
@@ -10,6 +9,7 @@ import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { SectionHeading } from '@/components/portal/section-heading'
 import { StudentDialog } from '@/components/portal/student-dialog'
+import { BackNavigation } from '@/components/portal/back-navigation'
 
 const kindIcons: Record<string, any> = {
   Opinion: MessageSquareQuote,
@@ -45,17 +45,11 @@ export default function StudentCornerPage() {
     <>
       <TopBar />
       <SiteHeader />
-      <main className="min-h-[75vh] py-10 sm:py-16">
-        <div className="mx-auto max-w-7xl px-4 space-y-8">
+      <main className="min-h-[75vh] py-6 sm:py-12">
+        <div className="mx-auto max-w-7xl px-4 space-y-6">
           
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-            </Link>
-          </div>
+          {/* ✅ ধাপে ধাপে ফেরা ও ব্রেডক্রাম্ব */}
+          <BackNavigation items={[{ label: 'কমিউনিটি' }, { label: 'স্টুডেন্ট কর্নার' }]} />
 
           <SectionHeading
             inverted
@@ -85,7 +79,7 @@ export default function StudentCornerPage() {
             ))}
           </div>
 
-          {/* পোস্টগুলোর কার্ড গ্রিড */}
+          {/* পোস্ট গ্রিড */}
           {visible.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {visible.map((item) => {
@@ -96,7 +90,6 @@ export default function StudentCornerPage() {
                     onClick={() => setSelected(item)}
                     className="glass-card group flex flex-col overflow-hidden text-white cursor-pointer hover:border-cyan-400"
                   >
-                    {/* কার্ডের ছবি অথবা দৃষ্টিনন্দন আর্ট প্লেসহোল্ডার */}
                     {item.image_url ? (
                       <div className="h-44 w-full overflow-hidden bg-black/40">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -163,7 +156,6 @@ export default function StudentCornerPage() {
 
       <SiteFooter />
       <BackToTop />
-
       <StudentDialog item={selected} onClose={() => setSelected(null)} />
     </>
   )
