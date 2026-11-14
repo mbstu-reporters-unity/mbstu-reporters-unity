@@ -21,7 +21,7 @@ function hdr(token?: string, json = false): Record<string, string> {
   return h
 }
 
-// সক্রিয় স্টোরি এবং হাইলাইটস লোড
+// সকল সক্রিয় স্টোরি ও হাইলাইটস আনা
 export async function getActiveStories(): Promise<StoryItem[]> {
   try {
     const res = await fetch(
@@ -35,7 +35,21 @@ export async function getActiveStories(): Promise<StoryItem[]> {
   }
 }
 
-// নতুন স্টোরি/হাইলাইট আপলোড
+// এডমিন প্যানেলের জন্য সব স্টোরি লোড
+export async function getAllStoriesAdmin(token: string): Promise<StoryItem[]> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/stories?select=*&order=created_at.desc&limit=100`,
+      { headers: hdr(token), cache: "no-store" }
+    )
+    if (!res.ok) return []
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
+// স্টোরি তৈরি
 export async function createStory(token: string, data: Partial<StoryItem>) {
   const res = await fetch(`${SB_URL}/rest/v1/stories`, {
     method: "POST",
@@ -44,15 +58,16 @@ export async function createStory(token: string, data: Partial<StoryItem>) {
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err.message || "স্টোরি পাবলিশ করা যায়নি")
+    throw new Error(err.message || "স্টোরি সংরক্ষণ করা যায়নি")
   }
   return await res.json()
 }
 
 // স্টোরি মুছে ফেলা
 export async function deleteStory(token: string, id: string) {
-  await fetch(`${SB_URL}/rest/v1/stories?id=eq.${encodeURIComponent(id)}`, {
+  const res = await fetch(`${SB_URL}/rest/v1/stories?id=eq.${encodeURIComponent(id)}`, {
     method: "DELETE",
     headers: hdr(token),
   })
+  if (!res.ok) throw new Error("স্টোরি ডিলিট করা যায়নি")
 }
