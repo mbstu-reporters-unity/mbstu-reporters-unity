@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Bell, Download, ExternalLink, MessageSquare, Pin, Search } from "lucide-react"
+import { Bell, Download, ExternalLink, MessageSquare, Pin, Search } from "lucide-react"
 import {
   BRANCHES, getNotices, getNoticeComments, addNoticeComment,
   downloadUrl, fmtDateTime, timeAgo, isImageType,
@@ -19,6 +19,7 @@ import { TopBar } from "../../components/portal/top-bar"
 import { SiteHeader } from "../../components/portal/site-header"
 import { SiteFooter } from "../../components/portal/site-footer"
 import { BackToTop } from "../../components/portal/back-to-top"
+import { BackNavigation } from "@/components/portal/back-navigation"
 
 const safeUrl = (u: string | null) => !!u && /^https?:\/\//i.test(u)
 
@@ -330,17 +331,11 @@ export default function NoticesPage() {
     <>
       <TopBar />
       <SiteHeader />
-      <main className="min-h-screen py-8 px-4 pb-20">
+      <main className="min-h-screen py-6 sm:py-10 px-4 pb-20">
         <div className="max-w-2xl mx-auto space-y-5">
 
-          <div className="flex items-center justify-between">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-            </Link>
-          </div>
+          {/* ✅ ধাপে ধাপে ফেরা ও ব্রেডক্রাম্ব */}
+          <BackNavigation items={[{ label: 'ডিজিটাল নোটিশ' }]} />
 
           <div className="text-center space-y-1">
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white flex items-center justify-center gap-2 drop-shadow-md">
@@ -391,13 +386,8 @@ export default function NoticesPage() {
             ))}
           </div>
 
-          <div className="flex justify-center gap-6 pt-4 text-xs font-bold border-t border-white/15">
-            <Link href="/" className="text-white/80 hover:text-cyan-300 transition cursor-pointer">
-              ← হোমপেজে ফিরুন
-            </Link>
-            <Link href="/admin" className="text-cyan-300 hover:text-white transition cursor-pointer">
-              নোটিশ দিন (সদস্য) →
-            </Link>
+          <div className="pt-4 border-t border-white/15">
+            <BackNavigation fallbackHref="/" />
           </div>
         </div>
       </main>
