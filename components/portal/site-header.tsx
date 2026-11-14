@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import {
+  ArrowLeft,
   Bell,
   BookOpen,
   Building2,
@@ -41,10 +42,8 @@ import { useLang } from '@/lib/i18n'
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   
-  // লেভেল ১ মেনু স্টেট
-  const [activeMobileTab, setActiveMobileTab] = useState<string | null>(null)
-  // লেভেল ২ সাব-ড্রপডাউন স্টেট (ধাপে ধাপে তালিকা খোলার জন্য)
-  const [activeSubTab, setActiveSubTab] = useState<string | null>(null)
+  // ড্রয়ারের ধাপে ধাপে নেভিগেশন স্ট্যাক (যেমন: ['root'] -> ['root', 'univ'] -> ['root', 'univ', 'faculties'])
+  const [navStack, setNavStack] = useState<string[]>(['root'])
 
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
   const [categoriesList, setCategoriesList] = useState<string[]>([])
@@ -88,8 +87,57 @@ export function SiteHeader() {
     getAdministrationOfficials().then(setAdminOfficialsList)
   }, [])
 
-  function scrollToSection(sectionId: string) {
+  // ✅ মোবাইলের ফিজিক্যাল / সোয়াইপ ব্যাক বাটনে ধাপে ধাপে ব্যাকে আসা
+  useEffect(() => {
+    const handlePopState = () => {
+      if (menuOpen) {
+        if (navStack.length > 1) {
+          setNavStack((prev) => prev.slice(0, -1))
+        } else {
+          setMenuOpen(false)
+        }
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [menuOpen, navStack.length])
+
+  // ড্রয়ার ওপেন করা
+  const openMenuDrawer = () => {
+    setMenuOpen(true)
+    setNavStack(['root'])
+    window.history.pushState({ menuOpen: true }, '')
+  }
+
+  // ড্রয়ার বন্ধ করা
+  const closeMenuDrawer = () => {
     setMenuOpen(false)
+    setNavStack(['root'])
+    if (window.history.state?.menuOpen) {
+      window.history.back()
+    }
+  }
+
+  // এক ধাপ সামনে যাওয়া
+  const goToNextLevel = (levelKey: string) => {
+    setNavStack((prev) => [...prev, levelKey])
+    window.history.pushState({ menuLevel: navStack.length + 1 }, '')
+  }
+
+  // এক ধাপ পেছনে ফেরা (UI Button)
+  const goStepBack = () => {
+    if (navStack.length > 1) {
+      setNavStack((prev) => prev.slice(0, -1))
+      if (window.history.state?.menuLevel) {
+        window.history.back()
+      }
+    } else {
+      closeMenuDrawer()
+    }
+  }
+
+  function scrollToSection(sectionId: string) {
+    closeMenuDrawer()
     if (typeof window === 'undefined') return
 
     const isHome = window.location.pathname === '/' || window.location.pathname === ''
@@ -112,7 +160,7 @@ export function SiteHeader() {
   }
 
   function openClubWindow(clubId: string) {
-    setMenuOpen(false)
+    closeMenuDrawer()
     if (typeof window !== 'undefined') {
       const isHome = window.location.pathname === '/' || window.location.pathname === ''
       if (isHome) {
@@ -128,13 +176,24 @@ export function SiteHeader() {
     }
   }
 
-  const toggleMobileTab = (key: string) => {
-    setActiveMobileTab((prev) => (prev === key ? null : key))
-    setActiveSubTab(null) // মূল ট্যাব বদলালে ভেতরের সাব-ট্যাব রিসেট
-  }
+  // বর্তমান সক্রিয় লেভেল
+  const currentLevel = navStack[navStack.length - 1]
 
-  const toggleSubTab = (key: string) => {
-    setActiveSubTab((prev) => (prev === key ? null : key))
+  // ব্রেডক্রাম্ব টেক্সট জেনারেটর
+  const getBreadcrumbTitle = () => {
+    switch (currentLevel) {
+      case 'univ': return 'বিশ্ববিদ্যালয় ও প্রশাসন'
+      case 'admin_tier': return 'প্রশাসন ও দপ্তরসমূহ'
+      case 'faculties_dept': return 'অনুষদ ও বিভাগসমূহ'
+      case 'social_sites': return 'সোশ্যাল সাইট ও গ্রুপ'
+      case 'news': return 'সংবাদ, রিলস ও নোটিশ'
+      case 'associations_tier': return 'সাংবাদিক সমিতিসমূহ'
+      case 'community': return 'ক্যাম্পাস ক্লাব ও পেজ'
+      case 'clubs_tier': return 'ক্যাম্পাস ক্লাব তালিকা'
+      case 'pages_tier': return 'ক্যাম্পাস পেজসমূহ'
+      case 'about': return 'কার্যনির্বাহী পরিষদ ও পরিচিতি'
+      default: return 'মূল মেনু (Main Menu)'
+    }
   }
 
   return (
@@ -324,7 +383,7 @@ export function SiteHeader() {
 
             <button
               type="button"
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={menuOpen ? closeMenuDrawer : openMenuDrawer}
               className="flex size-8 sm:size-9 items-center justify-center rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/20 lg:hidden cursor-pointer shrink-0 active:scale-95"
               aria-label="Toggle Navigation Menu"
             >
@@ -334,372 +393,375 @@ export function SiteHeader() {
 
         </div>
 
-        {/* ==================== মোবাইল মাল্টি-লেভেল ড্রপডাউন মেনু ==================== */}
+        {/* ==================== আধুনিক মোবাইল ড্রিল-ডাউন (Drill-Down) মেনু ==================== */}
         {menuOpen && (
-          <nav className="border-t border-white/10 bg-slate-950/95 lg:hidden max-h-[82vh] overflow-y-auto px-3.5 py-3 space-y-2 backdrop-blur-2xl animate-in slide-in-from-top-2 select-none scrollbar-none">
+          <nav className="border-t border-white/10 bg-slate-950/98 lg:hidden max-h-[82vh] overflow-y-auto px-3.5 py-3 space-y-3 backdrop-blur-2xl animate-in slide-in-from-top-2 select-none scrollbar-none">
             
-            {/* হোমপেজ */}
-            <Link
-              href="/"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center justify-between p-2.5 rounded-xl bg-white/10 text-white text-xs font-bold border border-white/15"
-            >
-              <span className="flex items-center gap-2"><Home className="size-4 text-cyan-400" /><span>হোমপেজ (Home)</span></span>
-              <ChevronRight className="size-4 text-white/50" />
-            </Link>
-
-            {/* ১. বিশ্ববিদ্যালয় ও প্রশাসন (লেভেল ১) */}
-            <div className="rounded-xl border border-white/15 bg-white/5 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => toggleMobileTab('univ')}
-                className="w-full flex items-center justify-between p-2.5 text-xs font-bold text-white hover:bg-white/10"
-              >
-                <span className="flex items-center gap-2"><Building2 className="size-4 text-cyan-400" /><span>বিশ্ববিদ্যালয় ও প্রশাসন</span></span>
-                <ChevronDown className={`size-4 transition-transform ${activeMobileTab === 'univ' ? 'rotate-180 text-cyan-400' : 'text-white/50'}`} />
-              </button>
-
-              {activeMobileTab === 'univ' && (
-                <div className="p-2 border-t border-white/10 bg-black/40 space-y-1.5 text-xs">
-                  
-                  {/* ১.১ শীর্ষ প্রশাসন ও দপ্তরসমূহ (লেভেল ২ সাব-ড্রপডাউন) */}
-                  <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => toggleSubTab('admin_tier')}
-                      className="w-full flex items-center justify-between p-2 text-cyan-300 font-bold hover:bg-white/10"
-                    >
-                      <span className="flex items-center gap-2"><Landmark className="size-3.5 text-cyan-400" /><span>শীর্ষ প্রশাসন ও দপ্তরসমূহ</span></span>
-                      <ChevronDown className={`size-3.5 transition-transform ${activeSubTab === 'admin_tier' ? 'rotate-180 text-cyan-400' : 'text-white/40'}`} />
-                    </button>
-
-                    {activeSubTab === 'admin_tier' && (
-                      <div className="p-2 border-t border-white/10 bg-black/60 space-y-1.5">
-                        {ADMIN_CATEGORIES.map((cat, idx) => (
-                          <Link
-                            key={idx}
-                            href="/administration"
-                            onClick={() => setMenuOpen(false)}
-                            className="flex items-center justify-between p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-[11px] text-white/90"
-                          >
-                            <span>🏛️ {cat}</span>
-                            <ChevronRight className="size-3 text-cyan-400" />
-                          </Link>
-                        ))}
-                        <Link
-                          href="/administration"
-                          onClick={() => setMenuOpen(false)}
-                          className="block text-center font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-800/60 rounded-md py-1.5 text-[11px] mt-1"
-                        >
-                          🔗 সকল কর্মকর্তার তালিকা পেজে যান →
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* ১.২ অনুষদ ও বিভাগসমূহ (লেভেল ২ সাব-ড্রপডাউন) */}
-                  <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => toggleSubTab('faculties_dept')}
-                      className="w-full flex items-center justify-between p-2 text-white font-bold hover:bg-white/10"
-                    >
-                      <span className="flex items-center gap-2"><GraduationCap className="size-3.5 text-amber-400" /><span>অনুষদ ও বিভাগসমূহ</span></span>
-                      <ChevronDown className={`size-3.5 transition-transform ${activeSubTab === 'faculties_dept' ? 'rotate-180 text-amber-400' : 'text-white/40'}`} />
-                    </button>
-
-                    {activeSubTab === 'faculties_dept' && (
-                      <div className="p-2 border-t border-white/10 bg-black/60 space-y-1.5 max-h-56 overflow-y-auto scrollbar-none">
-                        {facultiesList.map((f) => (
-                          <div key={f.id} className="bg-white/5 rounded-md p-1.5 border border-white/10">
-                            <p className="font-bold text-cyan-200 text-[11px] truncate">🏛️ {f.name}</p>
-                            <div className="pl-3 pt-1 space-y-0.5">
-                              {f.departments.map((d) => (
-                                <Link
-                                  key={d.id}
-                                  href={`/department/${d.id}`}
-                                  onClick={() => setMenuOpen(false)}
-                                  className="block text-[10px] text-white/80 hover:text-cyan-300 truncate py-0.5"
-                                >
-                                  ➔ {d.name} {d.code ? `(${d.code})` : ''}
-                                </Link>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* ১.৩ ক্যাম্পাস সোশ্যাল সাইট ও গ্রুপসমূহ (লেভেল ২ সাব-ড্রপডাউন) */}
-                  <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => toggleSubTab('social_sites')}
-                      className="w-full flex items-center justify-between p-2 text-white font-bold hover:bg-white/10"
-                    >
-                      <span className="flex items-center gap-2"><Globe2 className="size-3.5 text-blue-400" /><span>সোশ্যাল সাইট ও গ্রুপসমূহ</span></span>
-                      <ChevronDown className={`size-3.5 transition-transform ${activeSubTab === 'social_sites' ? 'rotate-180 text-blue-400' : 'text-white/40'}`} />
-                    </button>
-
-                    {activeSubTab === 'social_sites' && (
-                      <div className="p-2 border-t border-white/10 bg-black/60 space-y-1">
-                        {socialSitesList.length > 0 ? (
-                          socialSitesList.map((s) => (
-                            <Link
-                              key={s.id}
-                              href="/social-sites"
-                              onClick={() => setMenuOpen(false)}
-                              className="flex items-center justify-between p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-[11px] text-white/90"
-                            >
-                              <span className="truncate">🌐 {s.name}</span>
-                              <ChevronRight className="size-3 text-cyan-400" />
-                            </Link>
-                          ))
-                        ) : (
-                          <p className="text-[10px] text-slate-400 p-1">কোনো সোশ্যাল সাইট যুক্ত নেই</p>
-                        )}
-                        <Link
-                          href="/social-sites"
-                          onClick={() => setMenuOpen(false)}
-                          className="block text-center font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-800/60 rounded-md py-1.5 text-[11px] mt-1"
-                        >
-                          🔗 সকল সোশ্যাল সাইটের মূল পেজ →
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-
-                </div>
+            {/* ১. শীর্ষ ন্যাভিগেশন বার (যেখানে অবস্থান ও 'এক ধাপ পেছনে' বাটন পরিষ্কার দেখা যাবে) */}
+            <div className="flex items-center justify-between pb-2 border-b border-white/15">
+              {navStack.length > 1 ? (
+                <button
+                  type="button"
+                  onClick={goStepBack}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-bold text-xs active:scale-95 transition"
+                >
+                  <ArrowLeft className="size-3.5" />
+                  <span>এক ধাপ পেছনে</span>
+                </button>
+              ) : (
+                <span className="text-xs font-bold text-white/60 flex items-center gap-1.5">
+                  <Menu className="size-3.5" />
+                  <span>ন্যাভিগেশন মেনু</span>
+                </span>
               )}
+
+              <span className="text-[11px] font-bold text-amber-300 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full truncate max-w-[170px]">
+                {getBreadcrumbTitle()}
+              </span>
             </div>
 
-            {/* ২. সংবাদ, রিলস ও নোটিশ (লেভেল ১) */}
-            <div className="rounded-xl border border-white/15 bg-white/5 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => toggleMobileTab('news')}
-                className="w-full flex items-center justify-between p-2.5 text-xs font-bold text-white hover:bg-white/10"
-              >
-                <span className="flex items-center gap-2"><Newspaper className="size-4 text-cyan-400" /><span>সংবাদ, রিলস ও নোটিশ</span></span>
-                <ChevronDown className={`size-4 transition-transform ${activeMobileTab === 'news' ? 'rotate-180 text-cyan-400' : 'text-white/50'}`} />
-              </button>
+            {/* ================= লেভেল ০: মূল মেনু তালিকা ================= */}
+            {currentLevel === 'root' && (
+              <div className="space-y-2 animate-in fade-in">
+                <Link
+                  href="/"
+                  onClick={closeMenuDrawer}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold border border-white/15 active:scale-98 transition"
+                >
+                  <span className="flex items-center gap-2.5"><Home className="size-4 text-cyan-400" /><span>হোমপেজ (Home)</span></span>
+                  <ChevronRight className="size-4 text-white/40" />
+                </Link>
 
-              {activeMobileTab === 'news' && (
-                <div className="p-2 border-t border-white/10 bg-black/40 space-y-1.5 text-xs">
-                  <Link href="/notices" onClick={() => setMenuOpen(false)} className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white font-semibold">
-                    <span className="flex items-center gap-2"><Bell className="size-3.5 text-cyan-400" /><span>ডিজিটাল নোটিশ বোর্ড</span></span>
-                    <ChevronRight className="size-3 text-cyan-400" />
-                  </Link>
+                <button
+                  type="button"
+                  onClick={() => goToNextLevel('univ')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 active:scale-98 transition cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5"><Building2 className="size-4 text-cyan-400" /><span>বিশ্ববিদ্যালয় ও প্রশাসন</span></span>
+                  <ChevronRight className="size-4 text-cyan-400" />
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => scrollToSection('home')}
-                    className="w-full flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white font-semibold text-left"
+                <button
+                  type="button"
+                  onClick={() => goToNextLevel('news')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 active:scale-98 transition cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5"><Newspaper className="size-4 text-rose-400" /><span>সংবাদ, রিলস ও নোটিশ</span></span>
+                  <ChevronRight className="size-4 text-rose-400" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => goToNextLevel('community')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 active:scale-98 transition cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5"><Star className="size-4 text-amber-400" /><span>ক্যাম্পাস ক্লাব ও পেজসমূহ</span></span>
+                  <ChevronRight className="size-4 text-amber-400" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => goToNextLevel('about')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 active:scale-98 transition cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5"><Users className="size-4 text-emerald-400" /><span>কার্যনির্বাহী পরিষদ ও পরিচিতি</span></span>
+                  <ChevronRight className="size-4 text-emerald-400" />
+                </button>
+              </div>
+            )}
+
+            {/* ================= লেভেল ১: বিশ্ববিদ্যালয় ও প্রশাসন ================= */}
+            {currentLevel === 'univ' && (
+              <div className="space-y-2 animate-in fade-in">
+                <button
+                  type="button"
+                  onClick={() => goToNextLevel('admin_tier')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-cyan-950/40 hover:bg-cyan-900/40 text-cyan-200 text-xs font-bold border border-cyan-800/40 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><Landmark className="size-4 text-cyan-400" /><span>শীর্ষ প্রশাসন ও দপ্তরসমূহ</span></span>
+                  <ChevronRight className="size-4 text-cyan-400" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => goToNextLevel('faculties_dept')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><GraduationCap className="size-4 text-amber-400" /><span>অনুষদ ও বিভাগসমূহ</span></span>
+                  <ChevronRight className="size-4 text-amber-400" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => goToNextLevel('social_sites')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><Globe2 className="size-4 text-blue-400" /><span>সোশ্যাল সাইট ও গ্রুপসমূহ</span></span>
+                  <ChevronRight className="size-4 text-blue-400" />
+                </button>
+              </div>
+            )}
+
+            {/* ================= লেভেল ২: শীর্ষ প্রশাসন তালিকা ================= */}
+            {currentLevel === 'admin_tier' && (
+              <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
+                {ADMIN_CATEGORIES.map((cat, idx) => (
+                  <Link
+                    key={idx}
+                    href="/administration"
+                    onClick={closeMenuDrawer}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-white border border-white/10"
                   >
-                    <span className="flex items-center gap-2"><Film className="size-3.5 text-rose-400" /><span>ক্যাম্পাস রিলস ও ভিডিও হাব</span></span>
-                    <span className="text-[9px] bg-red-600 text-white font-bold px-1.5 py-0.2 rounded-full">LIVE</span>
-                  </button>
-
-                  {/* ২.১ অন্যান্য বিশ্ববিদ্যালয় সাংবাদিক সমিতি (লেভেল ২ সাব-ড্রপডাউন) */}
-                  <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => toggleSubTab('associations_tier')}
-                      className="w-full flex items-center justify-between p-2 text-white font-bold hover:bg-white/10"
-                    >
-                      <span className="flex items-center gap-2"><Users className="size-3.5 text-cyan-400" /><span>অন্যান্য সাংবাদিক সমিতি</span></span>
-                      <ChevronDown className={`size-3.5 transition-transform ${activeSubTab === 'associations_tier' ? 'rotate-180 text-cyan-400' : 'text-white/40'}`} />
-                    </button>
-
-                    {activeSubTab === 'associations_tier' && (
-                      <div className="p-2 border-t border-white/10 bg-black/60 space-y-1">
-                        {associationsList.length > 0 ? (
-                          associationsList.map((assoc) => (
-                            <Link
-                              key={assoc.id}
-                              href="/associations"
-                              onClick={() => setMenuOpen(false)}
-                              className="flex items-center justify-between p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-[11px] text-white/90"
-                            >
-                              <span className="truncate">📰 {assoc.name}</span>
-                              <ChevronRight className="size-3 text-cyan-400" />
-                            </Link>
-                          ))
-                        ) : (
-                          <p className="text-[10px] text-slate-400 p-1">কোনো সমিতি যুক্ত নেই</p>
-                        )}
-                        <Link
-                          href="/associations"
-                          onClick={() => setMenuOpen(false)}
-                          className="block text-center font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-800/60 rounded-md py-1.5 text-[11px] mt-1"
-                        >
-                          🔗 সকল সাংবাদিক সমিতির পেজ →
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* সংবাদের বিষয়সমূহ */}
-                  {categoriesList.length > 0 && (
-                    <div className="border-t border-white/10 pt-2 p-1 space-y-1.5">
-                      <p className="font-bold text-[11px] text-amber-300 flex items-center gap-1">
-                        <Tag className="size-3" />
-                        <span>সংবাদের বিষয়সমূহ:</span>
-                      </p>
-                      <div className="flex flex-wrap gap-1.5 pt-0.5">
-                        {categoriesList.map((cat) => (
-                          <Link
-                            key={cat}
-                            href={`/category/${encodeURIComponent(cat)}`}
-                            onClick={() => setMenuOpen(false)}
-                            className="bg-white/10 text-cyan-200 border border-white/15 px-2.5 py-1 rounded-md text-[10px] font-semibold hover:bg-white/20"
-                          >
-                            #{cat}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* ৩. ক্যাম্পাস কমিউনিটি, ক্লাব ও পেজসমূহ (লেভেল ১) */}
-            <div className="rounded-xl border border-white/15 bg-white/5 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => toggleMobileTab('community')}
-                className="w-full flex items-center justify-between p-2.5 text-xs font-bold text-white hover:bg-white/10"
-              >
-                <span className="flex items-center gap-2"><Star className="size-4 text-cyan-400" /><span>ক্যাম্পাস ক্লাব ও পেজসমূহ</span></span>
-                <ChevronDown className={`size-4 transition-transform ${activeMobileTab === 'community' ? 'rotate-180 text-cyan-400' : 'text-white/50'}`} />
-              </button>
-
-              {activeMobileTab === 'community' && (
-                <div className="p-2 border-t border-white/10 bg-black/40 space-y-1.5 text-xs">
-                  
-                  {/* ৩.১ ক্যাম্পাস ক্লাবসমূহ (লেভেল ২ সাব-ড্রপডাউন) */}
-                  <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => toggleSubTab('clubs_tier')}
-                      className="w-full flex items-center justify-between p-2 text-cyan-300 font-bold hover:bg-white/10"
-                    >
-                      <span className="flex items-center gap-2"><Star className="size-3.5 text-amber-400" /><span>ক্যাম্পাস ক্লাবসমূহ ({clubsList.length})</span></span>
-                      <ChevronDown className={`size-3.5 transition-transform ${activeSubTab === 'clubs_tier' ? 'rotate-180 text-amber-400' : 'text-white/40'}`} />
-                    </button>
-
-                    {activeSubTab === 'clubs_tier' && (
-                      <div className="p-2 border-t border-white/10 bg-black/60 space-y-1 max-h-56 overflow-y-auto scrollbar-none">
-                        {clubsList.map((club) => (
-                          <button
-                            key={club.id}
-                            type="button"
-                            onClick={() => openClubWindow(club.id)}
-                            className="w-full flex items-center justify-between p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-[11px] text-white/90 text-left cursor-pointer"
-                          >
-                            <span className="truncate">⭐ {club.name_bn || club.name}</span>
-                            <span className="text-[9px] text-cyan-300 bg-white/10 px-1.5 py-0.2 rounded shrink-0">দেখুন</span>
-                          </button>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => scrollToSection('club-news')}
-                          className="w-full text-center font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-800/60 rounded-md py-1.5 text-[11px] mt-1 cursor-pointer"
-                        >
-                          🔗 ক্লাব নিউজ ফিডে যান →
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* ৩.২ ক্যাম্পাস পেজসমূহ (লেভেল ২ সাব-ড্রপডাউন) */}
-                  <div className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => toggleSubTab('pages_tier')}
-                      className="w-full flex items-center justify-between p-2 text-white font-bold hover:bg-white/10"
-                    >
-                      <span className="flex items-center gap-2"><FileText className="size-3.5 text-emerald-400" /><span>ক্যাম্পাস পেজ ও সোসাইটি</span></span>
-                      <ChevronDown className={`size-3.5 transition-transform ${activeSubTab === 'pages_tier' ? 'rotate-180 text-emerald-400' : 'text-white/40'}`} />
-                    </button>
-
-                    {activeSubTab === 'pages_tier' && (
-                      <div className="p-2 border-t border-white/10 bg-black/60 space-y-1 max-h-48 overflow-y-auto scrollbar-none">
-                        {communityPagesList.length > 0 ? (
-                          communityPagesList.map((cp) => (
-                            <Link
-                              key={cp.id}
-                              href={`/p/${cp.slug}`}
-                              onClick={() => setMenuOpen(false)}
-                              className="flex items-center justify-between p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-[11px] text-white/90"
-                            >
-                              <span className="truncate">📄 {cp.name}</span>
-                              <ChevronRight className="size-3 text-cyan-400" />
-                            </Link>
-                          ))
-                        ) : (
-                          <p className="text-[10px] text-slate-400 p-1">কোনো পেজ তৈরি নেই</p>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => scrollToSection('community-pages')}
-                          className="w-full text-center font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-800/60 rounded-md py-1.5 text-[11px] mt-1 cursor-pointer"
-                        >
-                          🔗 সকল পেজের শোকেসে যান →
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  <Link href="/student-corner" onClick={() => setMenuOpen(false)} className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white font-semibold">
-                    <span className="flex items-center gap-2"><BookOpen className="size-3.5 text-cyan-400" /><span>স্টুডেন্ট কর্নার</span></span>
-                    <ChevronRight className="size-3 text-cyan-400" />
-                  </Link>
-
-                </div>
-              )}
-            </div>
-
-            {/* ৪. কার্যনির্বাহী পরিষদ ও পরিচিতি (লেভেল ১) */}
-            <div className="rounded-xl border border-white/15 bg-white/5 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => toggleMobileTab('about')}
-                className="w-full flex items-center justify-between p-2.5 text-xs font-bold text-white hover:bg-white/10"
-              >
-                <span className="flex items-center gap-2"><Users className="size-4 text-cyan-400" /><span>কার্যনির্বাহী পরিষদ ও পরিচিতি</span></span>
-                <ChevronDown className={`size-4 transition-transform ${activeMobileTab === 'about' ? 'rotate-180 text-cyan-400' : 'text-white/50'}`} />
-              </button>
-
-              {activeMobileTab === 'about' && (
-                <div className="p-2 border-t border-white/10 bg-black/40 space-y-1.5 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => scrollToSection('leadership')}
-                    className="w-full flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 text-cyan-300 font-bold text-left cursor-pointer"
-                  >
-                    <span>👥 কার্যনির্বাহী পরিষদ একনজরে</span>
+                    <span>🏛️ {cat}</span>
                     <ChevronRight className="size-3.5 text-cyan-400" />
-                  </button>
-
-                  <Link href="/council" onClick={() => setMenuOpen(false)} className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white font-semibold">
-                    <span className="flex items-center gap-2"><ShieldCheck className="size-3.5 text-cyan-400" /><span>ডিরেক্টর প্যানেল (মডারেটর)</span></span>
-                    <ChevronRight className="size-3 text-cyan-400" />
                   </Link>
+                ))}
+                <Link
+                  href="/administration"
+                  onClick={closeMenuDrawer}
+                  className="block text-center font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-700/60 rounded-xl py-2 text-xs mt-2"
+                >
+                  🔗 সকল কর্মকর্তার পূর্ণাঙ্গ তালিকা পেজে যান →
+                </Link>
+              </div>
+            )}
 
-                  <button
-                    type="button"
-                    onClick={() => scrollToSection('about')}
-                    className="w-full flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/90 font-semibold text-left cursor-pointer border-t border-white/10 pt-1.5"
+            {/* ================= লেভেল ২: অনুষদ ও বিভাগসমূহ তালিকা ================= */}
+            {currentLevel === 'faculties_dept' && (
+              <div className="space-y-2 animate-in fade-in max-h-72 overflow-y-auto scrollbar-none">
+                {facultiesList.map((f) => (
+                  <div key={f.id} className="bg-white/5 rounded-xl p-2.5 border border-white/10 space-y-1">
+                    <p className="font-bold text-cyan-300 text-xs truncate">🏛️ {f.name}</p>
+                    <div className="pl-3 space-y-1 border-l-2 border-cyan-400/50 mt-1">
+                      {f.departments.map((d) => (
+                        <Link
+                          key={d.id}
+                          href={`/department/${d.id}`}
+                          onClick={closeMenuDrawer}
+                          className="flex items-center justify-between text-[11px] text-white/80 hover:text-cyan-200 py-0.5"
+                        >
+                          <span className="truncate">➔ {d.name} {d.code ? `(${d.code})` : ''}</span>
+                          <ChevronRight className="size-3 text-cyan-400 shrink-0" />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ================= লেভেল ২: সোশ্যাল সাইট ও গ্রুপসমূহ ================= */}
+            {currentLevel === 'social_sites' && (
+              <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
+                {socialSitesList.map((s) => (
+                  <Link
+                    key={s.id}
+                    href="/social-sites"
+                    onClick={closeMenuDrawer}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-white border border-white/10"
                   >
-                    <span className="flex items-center gap-2"><Info className="size-3.5 text-cyan-400" /><span>রিপোর্টার্স ইউনিটি পরিচিতি</span></span>
-                    <ChevronRight className="size-3.5 text-white/50" />
+                    <span className="truncate">🌐 {s.name}</span>
+                    <ChevronRight className="size-3.5 text-cyan-400" />
+                  </Link>
+                ))}
+                <Link
+                  href="/social-sites"
+                  onClick={closeMenuDrawer}
+                  className="block text-center font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-700/60 rounded-xl py-2 text-xs mt-2"
+                >
+                  🔗 সকল সোশ্যাল সাইটের মূল পেজে যান →
+                </Link>
+              </div>
+            )}
+
+            {/* ================= লেভেল ১: সংবাদ, রিলস ও নোটিশ ================= */}
+            {currentLevel === 'news' && (
+              <div className="space-y-2 animate-in fade-in">
+                <Link
+                  href="/notices"
+                  onClick={closeMenuDrawer}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15"
+                >
+                  <span className="flex items-center gap-2.5"><Bell className="size-4 text-cyan-400" /><span>ডিজিটাল নোটিশ বোর্ড</span></span>
+                  <ChevronRight className="size-4 text-cyan-400" />
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('home')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 text-left cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5"><Film className="size-4 text-rose-400" /><span>ক্যাম্পাস রিলস ও ভিডিও হাব</span></span>
+                  <span className="text-[9px] bg-red-600 text-white font-bold px-2 py-0.5 rounded-full">LIVE</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => goToNextLevel('associations_tier')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5"><Users className="size-4 text-cyan-400" /><span>অন্যান্য সাংবাদিক সমিতি</span></span>
+                  <ChevronRight className="size-4 text-cyan-400" />
+                </button>
+
+                {categoriesList.length > 0 && (
+                  <div className="border-t border-white/15 pt-2.5 p-1 space-y-1.5">
+                    <p className="font-bold text-xs text-amber-300 flex items-center gap-1.5">
+                      <Tag className="size-3.5" />
+                      <span>সংবাদের ক্যাটাগরিসমূহ:</span>
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {categoriesList.map((cat) => (
+                        <Link
+                          key={cat}
+                          href={`/category/${encodeURIComponent(cat)}`}
+                          onClick={closeMenuDrawer}
+                          className="bg-white/10 hover:bg-white/20 text-cyan-200 border border-white/15 px-3 py-1 rounded-lg text-xs font-semibold"
+                        >
+                          #{cat}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ================= লেভেল ২: সাংবাদিক সমিতি তালিকা ================= */}
+            {currentLevel === 'associations_tier' && (
+              <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
+                {associationsList.map((assoc) => (
+                  <Link
+                    key={assoc.id}
+                    href="/associations"
+                    onClick={closeMenuDrawer}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-white border border-white/10"
+                  >
+                    <span className="truncate">📰 {assoc.name}</span>
+                    <ChevronRight className="size-3.5 text-cyan-400" />
+                  </Link>
+                ))}
+                <Link
+                  href="/associations"
+                  onClick={closeMenuDrawer}
+                  className="block text-center font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-700/60 rounded-xl py-2 text-xs mt-2"
+                >
+                  🔗 সকল সাংবাদিক সমিতির পেজে যান →
+                </Link>
+              </div>
+            )}
+
+            {/* ================= লেভেল ১: ক্যাম্পাস কমিউনিটি, ক্লাব ও পেজ ================= */}
+            {currentLevel === 'community' && (
+              <div className="space-y-2 animate-in fade-in">
+                <button
+                  type="button"
+                  onClick={() => goToNextLevel('clubs_tier')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5"><Star className="size-4 text-amber-400" /><span>ক্যাম্পাস ক্লাবসমূহ ({clubsList.length})</span></span>
+                  <ChevronRight className="size-4 text-amber-400" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => goToNextLevel('pages_tier')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5"><FileText className="size-4 text-emerald-400" /><span>ক্যাম্পাস পেজ ও সোসাইটি</span></span>
+                  <ChevronRight className="size-4 text-emerald-400" />
+                </button>
+
+                <Link
+                  href="/student-corner"
+                  onClick={closeMenuDrawer}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15"
+                >
+                  <span className="flex items-center gap-2.5"><BookOpen className="size-4 text-cyan-400" /><span>স্টুডেন্ট কর্নার</span></span>
+                  <ChevronRight className="size-4 text-cyan-400" />
+                </Link>
+              </div>
+            )}
+
+            {/* ================= লেভেল ২: ১০টি ক্লাবের তালিকা (এক ক্লিকে ওপেন) ================= */}
+            {currentLevel === 'clubs_tier' && (
+              <div className="space-y-1.5 animate-in fade-in max-h-72 overflow-y-auto scrollbar-none">
+                {clubsList.map((club) => (
+                  <button
+                    key={club.id}
+                    type="button"
+                    onClick={() => openClubWindow(club.id)}
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-white text-left cursor-pointer border border-white/10"
+                  >
+                    <span className="truncate">⭐ {club.name_bn || club.name}</span>
+                    <span className="text-[10px] text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-800">পপআপ খুলুন</span>
                   </button>
-                </div>
-              )}
-            </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('club-news')}
+                  className="w-full text-center font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-700/60 rounded-xl py-2 text-xs mt-2 cursor-pointer"
+                >
+                  🔗 ক্লাব ফিড সেকশনে যান →
+                </button>
+              </div>
+            )}
+
+            {/* ================= লেভেল ২: ক্যাম্পাস পেজ তালিকা ================= */}
+            {currentLevel === 'pages_tier' && (
+              <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
+                {communityPagesList.map((cp) => (
+                  <Link
+                    key={cp.id}
+                    href={`/p/${cp.slug}`}
+                    onClick={closeMenuDrawer}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-white border border-white/10"
+                  >
+                    <span className="truncate">📄 {cp.name}</span>
+                    <ChevronRight className="size-3.5 text-cyan-400" />
+                  </Link>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('community-pages')}
+                  className="w-full text-center font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-700/60 rounded-xl py-2 text-xs mt-2 cursor-pointer"
+                >
+                  🔗 পেজ শোকেস সেকশনে যান →
+                </button>
+              </div>
+            )}
+
+            {/* ================= লেভেল ১: কার্যনির্বাহী পরিষদ ও পরিচিতি ================= */}
+            {currentLevel === 'about' && (
+              <div className="space-y-2 animate-in fade-in">
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('leadership')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-cyan-300 font-bold text-xs border border-white/15 text-left cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><Users className="size-4 text-cyan-400" /><span>কার্যনির্বাহী পরিষদ একনজরে</span></span>
+                  <ChevronRight className="size-4 text-cyan-400" />
+                </button>
+
+                <Link
+                  href="/council"
+                  onClick={closeMenuDrawer}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-semibold text-xs border border-white/15"
+                >
+                  <span className="flex items-center gap-2"><ShieldCheck className="size-4 text-emerald-400" /><span>ডিরেক্টর প্যানেল (মডারেটর)</span></span>
+                  <ChevronRight className="size-4 text-emerald-400" />
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('about')}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-semibold text-xs border border-white/15 text-left cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><Info className="size-4 text-amber-400" /><span>রিপোর্টার্স ইউনিটি পরিচিতি</span></span>
+                  <ChevronRight className="size-4 text-amber-400" />
+                </button>
+              </div>
+            )}
 
           </nav>
         )}
