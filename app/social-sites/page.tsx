@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ArrowLeft, CalendarDays, Globe, Megaphone, Share2 } from 'lucide-react'
+import { CalendarDays, Globe, Megaphone, Share2 } from 'lucide-react'
 import { getSocialSites, getSocialSiteNotices, type SocialSite } from '@/lib/social-sites'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
+import { BackNavigation } from '@/components/portal/back-navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +23,6 @@ async function SocialSiteCard({ site }: { site: SocialSite }) {
   return (
     <div id={`site-${site.id}`} className="glass-card flex flex-col justify-between p-5 sm:p-6 text-white">
       <div className="space-y-4">
-        {/* লগো ও নাম */}
         <div className="flex items-start gap-3.5">
           {site.logo_url ? (
             targetLink ? (
@@ -193,15 +192,11 @@ export default async function SocialSitesPage() {
     <>
       <TopBar />
       <SiteHeader />
-      <main className="min-h-screen py-8 sm:py-12">
-        <div className="mx-auto max-w-6xl px-4 space-y-8">
+      <main className="min-h-screen py-6 sm:py-10">
+        <div className="mx-auto max-w-6xl px-4 space-y-6">
 
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-          </Link>
+          {/* ✅ ধাপে ধাপে ফেরা ও ব্রেডক্রাম্ব */}
+          <BackNavigation items={[{ label: 'সোশ্যাল সাইট ও গ্রুপ' }]} />
 
           {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center">
@@ -229,13 +224,8 @@ export default async function SocialSitesPage() {
             </div>
           )}
 
-          <div className="pt-4 text-center border-t border-white/15">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-            </Link>
+          <div className="pt-4 border-t border-white/15">
+            <BackNavigation fallbackHref="/" />
           </div>
 
         </div>
