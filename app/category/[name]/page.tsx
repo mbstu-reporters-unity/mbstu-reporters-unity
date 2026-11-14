@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ArrowLeft, Newspaper } from 'lucide-react'
+import { Newspaper } from 'lucide-react'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
@@ -8,6 +7,7 @@ import { BackToTop } from '@/components/portal/back-to-top'
 import { NewsGrid } from '@/components/portal/news-card'
 import { SectionHeading } from '@/components/portal/section-heading'
 import { getCategoryPosts } from '@/lib/categories'
+import { BackNavigation } from '@/components/portal/back-navigation'
 
 export const revalidate = 60
 
@@ -37,18 +37,12 @@ export default async function CategoryPage({
     <>
       <TopBar />
       <SiteHeader />
-      <main className="min-h-[75vh] py-8 sm:py-14">
+      <main className="min-h-[75vh] py-6 sm:py-10">
         <div className="mx-auto max-w-7xl md:px-6 lg:px-8 space-y-6">
 
-          <div className="px-4 md:px-0 space-y-6">
-            <div className="flex items-center gap-2">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
-              >
-                <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-              </Link>
-            </div>
+          <div className="px-4 md:px-0 space-y-4">
+            {/* ✅ ধাপে ধাপে ফেরা ও ক্যাটাগরি ব্রেডক্রাম্ব */}
+            <BackNavigation items={[{ label: 'সংবাদ' }, { label: catName }]} />
 
             <SectionHeading
               inverted
@@ -73,13 +67,8 @@ export default async function CategoryPage({
           )}
 
           {posts.length > 3 && (
-            <div className="px-4 md:px-0 pt-6 text-center border-t border-white/15">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
-              >
-                <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-              </Link>
+            <div className="px-4 md:px-0 pt-6 border-t border-white/15">
+              <BackNavigation fallbackHref="/" />
             </div>
           )}
 
