@@ -51,7 +51,7 @@ type Tab =
   | "posts" | "comments" | "reporters" | "profile" | "leaders" | "notices"
   | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "directors" | "categories"
   | "clubs" | "faculties" | "associations" | "social_sites" | "administration"
-  | "community_pages"
+  | "community_pages" | "stories"
 
 export type PostMediaItem = {
   id?: string
