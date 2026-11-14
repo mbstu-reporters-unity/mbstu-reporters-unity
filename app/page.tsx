@@ -2,6 +2,8 @@ import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { NewsTicker } from '@/components/portal/news-ticker'
 import { HeroCarousel } from '@/components/hero/HeroCarousel'
+import { FbStoriesTray } from '@/components/portal/fb-stories-tray'
+import { FbReelsSection } from '@/components/portal/fb-reels-section'
 import { LeadershipSection } from '@/components/portal/leadership-section'
 import { GeneralNews } from '@/components/portal/general-news'
 import { CategorySections } from '@/components/portal/category-sections'
@@ -22,14 +24,22 @@ export default function Page() {
       <SiteHeader />
       <NewsTicker />
       <main>
+        {/* ১. হিরো ব্যানার ও স্লাইডার */}
         <HeroCarousel />
-        <LeadershipSection />
+
+        {/* ২. ⭐ ফেসবুক স্টোরিজ ও হাইলাইটস ট্রে ⭐ */}
+        <FbStoriesTray />
+
+        {/* ৩. ⭐ ফেসবুক রিলস ও দৃষ্টিবহুল ভিডিও সেকশন ⭐ */}
+        <FbReelsSection />
+
+        {/* ৪. ফেসবুক স্টাইল পোস্ট ফিড ও বিভাগসমূহ */}
         <GeneralNews />
+        <LeadershipSection />
         <CategorySections />
         <StudentCorner />
         <ClubNews />
         <ClubPosts />
-        {/* ⭐ ফেসবুক স্টাইল কমিউনিটি পেজ স্লাইডার সেকশন ⭐ */}
         <CommunityPagesSection />
         <NoticeBoard />
       </main>
