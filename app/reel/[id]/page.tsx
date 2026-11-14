@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ExternalLink, Calendar, User, Film, Share2 } from 'lucide-react'
+import { ExternalLink, Film } from 'lucide-react'
 import { getPost } from '@/lib/sb'
+import { BackNavigation } from '@/components/portal/back-navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +12,6 @@ function extractVideoInfo(rawUrl?: string | null): { isVideo: boolean; url: stri
   const str = rawUrl.trim()
   if (!str) return null
 
-  // JSON চেক (যদি একাধিক মিডিয়া থাকে)
   if (str.startsWith('[') || str.startsWith('{')) {
     try {
       const parsed = JSON.parse(str)
@@ -24,18 +24,15 @@ function extractVideoInfo(rawUrl?: string | null): { isVideo: boolean; url: stri
     return null
   }
 
-  // YouTube চেক
   const ytMatch = str.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/|shorts\/))([^?&"'>]+)/i)
   if (ytMatch && ytMatch[1]?.length === 11) {
     return { isVideo: true, url: str, platform: 'youtube', ytId: ytMatch[1] }
   }
 
-  // Facebook ভিডিও
   if (str.includes('facebook.com') || str.includes('fb.watch')) {
     return { isVideo: true, url: str, platform: 'facebook' }
   }
 
-  // সরাসরি MP4
   if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(str)) {
     return { isVideo: true, url: str, platform: 'direct' }
   }
@@ -70,22 +67,16 @@ export default async function ReelPlayerPage({
   return (
     <main className="min-h-screen bg-black text-white flex flex-col justify-between selection:bg-rose-500">
       
-      {/* ১. টপ ব্যাক বার: এক ট্যাপেই হোমপেজে এক ধাপ পিছিয়ে যাওয়ার বাটন */}
+      {/* ১. টপ ব্যাক বার: স্মার্ট ব্যাক নেভিগেশন */}
       <header className="sticky top-0 z-50 flex items-center justify-between p-3 sm:p-4 bg-gradient-to-b from-black/90 via-black/50 to-transparent">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/20 backdrop-blur-md transition active:scale-95"
-        >
-          <ArrowLeft className="size-4" />
-          <span>হোমপেজে ফিরুন</span>
-        </Link>
+        <BackNavigation showHome={false} />
 
         <span className="text-xs font-bold bg-red-600/90 text-white px-3 py-1 rounded-full flex items-center gap-1 shadow">
           <Film className="size-3.5" /> Reels
         </span>
       </header>
 
-      {/* ২. হুবহু আপনার স্ক্রিনশটের মতো ব্ল্যাক সেন্ট্রাল প্লেয়ার (ইউটিউবের সব কন্ট্রোল আনলকড) */}
+      {/* ২. প্লেয়ার ফ্রেম */}
       <div className="relative w-full flex-1 flex items-center justify-center bg-black my-auto">
         {detected?.platform === 'youtube' && detected.ytId ? (
           <div className="w-full aspect-video max-h-[80vh] flex items-center justify-center">
@@ -116,7 +107,7 @@ export default async function ReelPlayerPage({
         )}
       </div>
 
-      {/* ৩. নিচের তথ্য ও মূল সংবাদের লিংক (ভিডিওর ওপর কোনো ওভারল্যাপ নেই) */}
+      {/* ৩. নিচের তথ্য ও মূল সংবাদের লিংক */}
       <footer className="p-4 sm:p-6 bg-gradient-to-t from-black via-slate-950 to-transparent space-y-3 z-10 border-t border-white/10">
         <div className="max-w-3xl mx-auto space-y-2.5">
           <h1 className="font-serif text-base sm:text-xl font-bold text-white leading-snug drop-shadow-md">
