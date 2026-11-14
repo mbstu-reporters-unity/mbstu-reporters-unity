@@ -27,16 +27,15 @@ import AssociationManager from "./association-manager"
 import SocialSiteManager from "./social-site-manager"
 import AdministrationManager from "./administration-manager"
 import CommunityPageManager from "./community-page-manager"
+import StoryManager from "./story-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
-import StoryManager from "./story-manager"
-import { Film } from "lucide-react"
 import {
   Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
   Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2,
-  Camera, Eye, EyeOff
+  Camera, Eye, EyeOff, Film
 } from "lucide-react"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -48,10 +47,10 @@ const smallInp = "w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-x
 const btn = "w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-50 cursor-pointer shadow-md transition active:scale-98"
 
 type Tab =
-  | "posts" | "comments" | "reporters" | "profile" | "leaders" | "notices"
+  | "posts" | "stories" | "comments" | "reporters" | "profile" | "leaders" | "notices"
   | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "directors" | "categories"
   | "clubs" | "faculties" | "associations" | "social_sites" | "administration"
-  | "community_pages" | "stories"
+  | "community_pages"
 
 export type PostMediaItem = {
   id?: string
@@ -640,6 +639,7 @@ export default function AdminPage() {
       groupTitle: "১. কন্টেন্ট ও সংবাদ",
       items: [
         { id: "posts", label: "সংবাদ ও রিপোর্ট", icon: Newspaper },
+        { id: "stories", label: "ফেসবুক স্টোরিজ ও রিলস", icon: Film },
         { id: "notices", label: "ডিজিটাল নোটিশ", icon: Bell },
         { id: "ticker", label: "ব্রেকিং টিকার", icon: Radio, adminOnly: true },
         { id: "comments", label: "কমেন্ট মডারেশন", icon: MessageSquare, badge: pending.length, adminOnly: true },
@@ -1212,6 +1212,15 @@ export default function AdminPage() {
               ))}
             </div>
           </div>
+        )}
+
+        {tab === "stories" && (
+          <StoryManager
+            token={token}
+            authorName={me.full_name}
+            authorAvatar={me.avatar_url}
+            shrink={shrink}
+          />
         )}
 
         {tab === "notices" && (
