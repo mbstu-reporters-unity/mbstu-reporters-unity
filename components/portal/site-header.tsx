@@ -8,7 +8,7 @@ import {
   Building2,
   ChevronDown,
   ChevronRight,
-  Globe2,
+  Film,
   GraduationCap,
   Home,
   Info,
@@ -17,20 +17,20 @@ import {
   Menu,
   Newspaper,
   Star,
-  UserCheck,
   Users,
   X,
+  FileText,
+  Globe2,
+  ShieldCheck,
+  Tag,
 } from 'lucide-react'
 import { getCampusClubs, type ClubItem } from '@/lib/clubs'
 import { getVisibleCategoryNames } from '@/lib/categories'
 import { getFacultiesWithDepartments, type FacultyWithDepartments } from '@/lib/faculties'
-import { getUniversityAssociations, type UniversityAssociation } from '@/lib/associations'
-import { getSocialSites, type SocialSite } from '@/lib/social-sites'
-import { getLeaders, POSITIONS, type Leader } from '@/lib/sb'
-import { getAdministrationOfficials, type AdministrationOfficial } from '@/lib/administration'
+import { getCommunityPages, type CommunityPage } from '@/lib/pages'
 import { SB_URL, SB_KEY } from '@/lib/sb'
 import { Logo } from './logo'
-import { Tx, useLang } from '@/lib/i18n'
+import { useLang } from '@/lib/i18n'
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -39,11 +39,8 @@ export function SiteHeader() {
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
   const [categoriesList, setCategoriesList] = useState<string[]>([])
   const [facultiesList, setFacultiesList] = useState<FacultyWithDepartments[]>([])
-  const [associationsList, setAssociationsList] = useState<UniversityAssociation[]>([])
-  const [socialSitesList, setSocialSitesList] = useState<SocialSite[]>([])
-  const [leadersList, setLeadersList] = useState<Leader[]>([])
-  const [adminOfficialsList, setAdminOfficialsList] = useState<AdministrationOfficial[]>([])
-  
+  const [communityPagesList, setCommunityPagesList] = useState<CommunityPage[]>([])
+
   const { pick } = useLang()
 
   const [univLogo, setUnivLogo] = useState('https://mbstu.ac.bd/images/logo.png')
@@ -70,19 +67,11 @@ export function SiteHeader() {
     getCampusClubs().then((res) => { if (res && res.length > 0) setClubsList(res) })
     getVisibleCategoryNames().then(setCategoriesList)
     getFacultiesWithDepartments().then(setFacultiesList)
-    getUniversityAssociations().then(setAssociationsList)
-    getSocialSites().then(setSocialSitesList)
-
-    getLeaders().then((rows) => {
-      if (Array.isArray(rows)) setLeadersList(rows.filter((l) => l.is_visible))
-    })
-
-    getAdministrationOfficials().then((rows) => {
-      if (Array.isArray(rows)) setAdminOfficialsList(rows)
+    getCommunityPages().then((res) => {
+      if (res && res.length > 0) setCommunityPagesList(res.filter(p => p.is_active !== false))
     })
   }, [])
 
-  // ✅ নিখুঁত স্মুথ স্ক্রল ফাংশন (যতবারই ক্লিক করবেন প্রতিবারই স্ক্রল করবে)
   function scrollToSection(sectionId: string) {
     setMenuOpen(false)
     if (typeof window === 'undefined') return
@@ -92,7 +81,7 @@ export function SiteHeader() {
     if (isHome) {
       const el = document.getElementById(sectionId)
       if (el) {
-        const headerOffset = 70 // স্টিকি হেডারের জন্য অফসেট
+        const headerOffset = 70
         const elementPosition = el.getBoundingClientRect().top
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset
 
@@ -106,23 +95,6 @@ export function SiteHeader() {
     }
   }
 
-  function openClubWindow(clubId: string) {
-    setMenuOpen(false)
-    if (typeof window !== 'undefined') {
-      const isHome = window.location.pathname === '/' || window.location.pathname === ''
-      if (isHome) {
-        const url = new URL(window.location.href)
-        url.searchParams.set('club', clubId)
-        window.history.pushState({}, '', url.toString())
-        window.dispatchEvent(new CustomEvent('open-club-modal', { detail: clubId }))
-        const el = document.getElementById(`club-${clubId}`)
-        if (el) el.scrollIntoView({ behavior: 'smooth' })
-      } else {
-        window.location.href = `/?club=${clubId}#club-${clubId}`
-      }
-    }
-  }
-
   const toggleMobileTab = (key: string) => {
     setActiveMobileTab((prev) => (prev === key ? null : key))
   }
@@ -132,7 +104,7 @@ export function SiteHeader() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#071030]/90 shadow-lg backdrop-blur-2xl w-full">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5">
           
-          {/* লোগো ও বিশ্ববিদ্যালয়ের তথ্য */}
+          {/* লোগো ও বিশ্ববিদ্যালয়ের লিংক */}
           <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 mr-2 overflow-hidden">
             <Logo inverted />
             <span className="h-5 w-px bg-white/20 shrink-0 hidden xs:block" aria-hidden="true" />
@@ -175,7 +147,11 @@ export function SiteHeader() {
                 </button>
                 <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full pt-2 w-80 z-50">
                   <div className="rounded-3xl border border-white/20 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-2xl max-h-[80vh] overflow-y-auto scrollbar-none space-y-2">
-                    <div className="border-b border-white/10 pb-2">
+                    <Link href="/administration" className="flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs text-white/90 hover:bg-white/10 transition-colors">
+                      <span className="font-bold text-cyan-300">🏛️ শীর্ষ প্রশাসন ও দপ্তরসমূহ</span>
+                      <ChevronRight className="size-3 text-cyan-400" />
+                    </Link>
+                    <div className="border-t border-white/10 pt-2">
                       <p className="text-[11px] font-bold uppercase tracking-wider text-cyan-300 px-2 mb-1 flex items-center gap-1.5">
                         <GraduationCap className="size-3.5" />
                         <span>অনুষদ ও বিভাগসমূহ</span>
@@ -195,11 +171,7 @@ export function SiteHeader() {
                         ))}
                       </div>
                     </div>
-                    <Link href="/administration" className="flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs text-white/90 hover:bg-white/10 transition-colors">
-                      <span>শীর্ষ প্রশাসন ও কর্মকর্তা</span>
-                      <ChevronRight className="size-3 text-cyan-400" />
-                    </Link>
-                    <Link href="/social-sites" className="flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs text-white/90 hover:bg-white/10 transition-colors">
+                    <Link href="/social-sites" className="flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs text-white/90 hover:bg-white/10 transition-colors border-t border-white/10">
                       <span>ক্যাম্পাস সোশ্যাল সাইট ও গ্রুপ</span>
                       <ChevronRight className="size-3 text-cyan-400" />
                     </Link>
@@ -220,38 +192,33 @@ export function SiteHeader() {
                       <span className="flex items-center gap-2"><Bell className="size-3.5 text-cyan-400" /><span>ডিজিটাল নোটিশ বোর্ড</span></span>
                       <ChevronRight className="size-3 opacity-50" />
                     </Link>
-                    <Link href="/student-corner" className="flex items-center justify-between rounded-2xl px-3 py-2 text-xs text-white/90 hover:bg-white/15 hover:text-cyan-300 transition-colors">
-                      <span className="flex items-center gap-2"><BookOpen className="size-3.5 text-cyan-400" /><span>স্টুডেন্ট কর্নার</span></span>
-                      <ChevronRight className="size-3 opacity-50" />
-                    </Link>
                     <Link href="/associations" className="flex items-center justify-between rounded-2xl px-3 py-2 text-xs text-white/90 hover:bg-white/15 hover:text-cyan-300 transition-colors">
                       <span className="flex items-center gap-2"><Users className="size-3.5 text-cyan-400" /><span>অন্যান্য সাংবাদিক সমিতি</span></span>
                       <ChevronRight className="size-3 opacity-50" />
                     </Link>
+                    {categoriesList.length > 0 && (
+                      <div className="border-t border-white/10 pt-1.5 mt-1">
+                        <p className="text-[10px] uppercase font-bold text-slate-400 px-3 py-1">সংবাদের ক্যাটাগরিসমূহ:</p>
+                        {categoriesList.slice(0, 6).map((cat) => (
+                          <Link key={cat} href={`/category/${encodeURIComponent(cat)}`} className="flex items-center justify-between px-3 py-1.5 text-xs text-white/80 hover:text-cyan-300">
+                            <span># {cat}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </li>
 
-              {/* ক্লাব ও পরিষদ */}
+              {/* ক্যাম্পাস কমিউনিটি */}
               <li className="relative group">
                 <button type="button" className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/15 hover:text-cyan-300 transition-colors cursor-pointer">
                   <Star className="size-4 text-cyan-400" />
-                  <span>{pick('ক্লাব ও পরিষদ', 'Clubs & Council')}</span>
+                  <span>{pick('কমিউনিটি ও ক্লাব', 'Community')}</span>
                   <ChevronDown className="size-3.5 opacity-70 transition-transform group-hover:rotate-180" />
                 </button>
                 <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full pt-2 w-80 z-50">
                   <div className="rounded-3xl border border-white/20 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-2xl space-y-2">
-                    <button
-                      type="button"
-                      onClick={() => scrollToSection('leadership')}
-                      className="w-full text-left text-xs font-bold text-cyan-300 p-2 hover:bg-white/10 rounded-xl cursor-pointer"
-                    >
-                      👥 কার্যনির্বাহী পরিষদ একনজরে →
-                    </button>
-                    <Link href="/council" className="flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs text-white/90 hover:bg-white/10 transition-colors">
-                      <span>ডিরেক্টর প্যানেল</span>
-                      <ChevronRight className="size-3 text-cyan-400" />
-                    </Link>
                     <button
                       type="button"
                       onClick={() => scrollToSection('club-news')}
@@ -259,23 +226,55 @@ export function SiteHeader() {
                     >
                       ⭐ ক্যাম্পাস ক্লাবসমূহ ({clubsList.length}) →
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection('community-pages')}
+                      className="w-full text-left text-xs font-bold text-white/90 p-2 hover:bg-white/10 rounded-xl cursor-pointer"
+                    >
+                      📄 ক্যাম্পাস পেজ ও সোসাইটিসমূহ →
+                    </button>
+                    <Link href="/student-corner" className="flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs text-white/90 hover:bg-white/10 transition-colors">
+                      <span className="flex items-center gap-1.5"><BookOpen className="size-3.5 text-cyan-400" /><span>স্টুডেন্ট কর্নার</span></span>
+                      <ChevronRight className="size-3 text-cyan-400" />
+                    </Link>
                   </div>
                 </div>
               </li>
 
-              <li>
-                <button
-                  type="button"
-                  onClick={() => scrollToSection('about')}
-                  className="rounded-full px-3 py-1.5 hover:bg-white/15 hover:text-cyan-300 transition-colors cursor-pointer"
-                >
-                  {pick('পরিচিতি', 'About')}
+              {/* পরিষদ */}
+              <li className="relative group">
+                <button type="button" className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/15 hover:text-cyan-300 transition-colors cursor-pointer">
+                  <Users className="size-4 text-cyan-400" />
+                  <span>{pick('পরিষদ ও পরিচিতি', 'About')}</span>
+                  <ChevronDown className="size-3.5 opacity-70 transition-transform group-hover:rotate-180" />
                 </button>
+                <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute right-0 top-full pt-2 w-64 z-50">
+                  <div className="rounded-3xl border border-white/20 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-2xl space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection('leadership')}
+                      className="w-full text-left text-xs font-bold text-cyan-300 p-2 hover:bg-white/10 rounded-xl cursor-pointer"
+                    >
+                      👥 কার্যনির্বাহী পরিষদ →
+                    </button>
+                    <Link href="/council" className="flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs text-white/90 hover:bg-white/10 transition-colors">
+                      <span>🛡️ ডিরেক্টর প্যানেল</span>
+                      <ChevronRight className="size-3 text-cyan-400" />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection('about')}
+                      className="w-full text-left text-xs text-white/90 p-2 hover:bg-white/10 rounded-xl cursor-pointer"
+                    >
+                      ℹ️ ইউনিটি পরিচিতি →
+                    </button>
+                  </div>
+                </div>
               </li>
             </ul>
           </nav>
 
-          {/* ডানপাশ: লগইন ও ৩-দাগের মোবাইল মেনু বাটন */}
+          {/* ডানপাশ: লগইন ও মোবাইল মেনু বাটন */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Link
               href="/admin"
@@ -297,9 +296,11 @@ export function SiteHeader() {
 
         </div>
 
-        {/* মোবাইল ড্রয়ার মেনু */}
+        {/* ==================== মোবাইল ড্রয়ার মেনু ==================== */}
         {menuOpen && (
-          <nav className="border-t border-white/10 bg-slate-950/95 lg:hidden max-h-[80vh] overflow-y-auto px-4 py-3 space-y-2.5 backdrop-blur-2xl animate-in slide-in-from-top-2">
+          <nav className="border-t border-white/10 bg-slate-950/95 lg:hidden max-h-[82vh] overflow-y-auto px-4 py-3 space-y-2 backdrop-blur-2xl animate-in slide-in-from-top-2 select-none scrollbar-none">
+            
+            {/* হোমপেজ */}
             <Link
               href="/"
               onClick={() => setMenuOpen(false)}
@@ -309,7 +310,7 @@ export function SiteHeader() {
               <ChevronRight className="size-4 text-white/50" />
             </Link>
 
-            {/* বিশ্ববিদ্যালয় */}
+            {/* ১. বিশ্ববিদ্যালয় ও প্রশাসন (অনুষদ ও বিভাগসমূহ সহ) */}
             <div className="rounded-xl border border-white/15 bg-white/5 overflow-hidden">
               <button
                 type="button"
@@ -320,78 +321,188 @@ export function SiteHeader() {
                 <ChevronDown className={`size-4 transition-transform ${activeMobileTab === 'univ' ? 'rotate-180 text-cyan-400' : 'text-white/50'}`} />
               </button>
               {activeMobileTab === 'univ' && (
-                <div className="p-2.5 border-t border-white/10 bg-black/30 space-y-1.5 text-xs">
-                  <Link href="/administration" onClick={() => setMenuOpen(false)} className="block font-semibold text-cyan-300 py-1">🏛️ শীর্ষ প্রশাসন ও দপ্তরসমূহ →</Link>
-                  <Link href="/social-sites" onClick={() => setMenuOpen(false)} className="block font-semibold text-cyan-300 py-1">🌐 সোশ্যাল সাইট ও গ্রুপসমূহ →</Link>
+                <div className="p-2.5 border-t border-white/10 bg-black/40 space-y-2 text-xs">
+                  <Link href="/administration" onClick={() => setMenuOpen(false)} className="flex items-center justify-between py-1 font-bold text-cyan-300">
+                    <span>🏛️ শীর্ষ প্রশাসন ও দপ্তরসমূহ</span>
+                    <ChevronRight className="size-3.5" />
+                  </Link>
+
+                  {/* অনুষদ ও বিভাগসমূহ */}
+                  <div className="space-y-1.5 border-t border-white/10 pt-2">
+                    <p className="font-bold text-[11px] text-amber-300 flex items-center gap-1">
+                      <GraduationCap className="size-3.5" />
+                      <span>অনুষদ ও বিভাগসমূহ:</span>
+                    </p>
+                    <div className="space-y-1 pl-1 max-h-48 overflow-y-auto scrollbar-none">
+                      {facultiesList.map((f) => (
+                        <div key={f.id} className="bg-white/5 rounded-lg p-1.5 border border-white/10">
+                          <p className="font-semibold text-white text-[11px] truncate">🏛️ {f.name}</p>
+                          <div className="pl-3 pt-0.5 space-y-0.5">
+                            {f.departments.map((d) => (
+                              <Link
+                                key={d.id}
+                                href={`/department/${d.id}`}
+                                onClick={() => setMenuOpen(false)}
+                                className="block text-[10px] text-cyan-200/90 hover:underline truncate"
+                              >
+                                ➔ {d.name} {d.code ? `(${d.code})` : ''}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Link href="/social-sites" onClick={() => setMenuOpen(false)} className="flex items-center justify-between py-1 font-semibold text-white/90 border-t border-white/10 pt-1.5">
+                    <span>🌐 সোশ্যাল সাইট ও গ্রুপসমূহ</span>
+                    <ChevronRight className="size-3.5 text-cyan-400" />
+                  </Link>
                 </div>
               )}
             </div>
 
-            {/* সংবাদ ও নোটিশ */}
+            {/* ২. সংবাদ, ভিডিও ও নোটিশ */}
             <div className="rounded-xl border border-white/15 bg-white/5 overflow-hidden">
               <button
                 type="button"
                 onClick={() => toggleMobileTab('news')}
                 className="w-full flex items-center justify-between p-2.5 text-xs font-bold text-white hover:bg-white/10"
               >
-                <span className="flex items-center gap-2"><Newspaper className="size-4 text-cyan-400" /><span>সংবাদ, নোটিশ ও স্টুডেন্ট কর্নার</span></span>
+                <span className="flex items-center gap-2"><Newspaper className="size-4 text-cyan-400" /><span>সংবাদ, রিলস ও নোটিশ</span></span>
                 <ChevronDown className={`size-4 transition-transform ${activeMobileTab === 'news' ? 'rotate-180 text-cyan-400' : 'text-white/50'}`} />
               </button>
               {activeMobileTab === 'news' && (
-                <div className="p-2.5 border-t border-white/10 bg-black/30 space-y-1.5 text-xs">
-                  <Link href="/notices" onClick={() => setMenuOpen(false)} className="flex items-center justify-between py-1 text-white"><span>📢 ডিজিটাল নোটিশ বোর্ড</span><ChevronRight className="size-3 text-cyan-400" /></Link>
-                  <Link href="/student-corner" onClick={() => setMenuOpen(false)} className="flex items-center justify-between py-1 text-white"><span>✍️ স্টুডেন্ট কর্নার</span><ChevronRight className="size-3 text-cyan-400" /></Link>
-                  <Link href="/associations" onClick={() => setMenuOpen(false)} className="flex items-center justify-between py-1 text-white"><span>📰 অন্যান্য সাংবাদিক সমিতি</span><ChevronRight className="size-3 text-cyan-400" /></Link>
+                <div className="p-2.5 border-t border-white/10 bg-black/40 space-y-1.5 text-xs">
+                  <Link href="/notices" onClick={() => setMenuOpen(false)} className="flex items-center justify-between py-1 text-white font-semibold">
+                    <span className="flex items-center gap-1.5"><Bell className="size-3.5 text-cyan-400" /><span>ডিজিটাল নোটিশ বোর্ড</span></span>
+                    <ChevronRight className="size-3 text-cyan-400" />
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection('home')}
+                    className="w-full flex items-center justify-between py-1 text-white font-semibold text-left"
+                  >
+                    <span className="flex items-center gap-1.5"><Film className="size-3.5 text-rose-400" /><span>ক্যাম্পাস রিলস ও ভিডিও হাব</span></span>
+                    <span className="text-[9px] bg-red-600 text-white font-bold px-1.5 py-0.2 rounded-full">LIVE</span>
+                  </button>
+
+                  <Link href="/associations" onClick={() => setMenuOpen(false)} className="flex items-center justify-between py-1 text-white font-semibold">
+                    <span className="flex items-center gap-1.5"><Users className="size-3.5 text-cyan-400" /><span>অন্যান্য সাংবাদিক সমিতি</span></span>
+                    <ChevronRight className="size-3 text-cyan-400" />
+                  </Link>
+
+                  {/* বিষয়ভিত্তিক ক্যাটাগরি */}
+                  {categoriesList.length > 0 && (
+                    <div className="border-t border-white/10 pt-1.5 space-y-1">
+                      <p className="font-bold text-[11px] text-amber-300 flex items-center gap-1">
+                        <Tag className="size-3" />
+                        <span>সংবাদের বিষয়সমূহ:</span>
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
+                        {categoriesList.map((cat) => (
+                          <Link
+                            key={cat}
+                            href={`/category/${encodeURIComponent(cat)}`}
+                            onClick={() => setMenuOpen(false)}
+                            className="bg-white/10 text-cyan-200 border border-white/15 px-2 py-0.5 rounded-md text-[10px] font-semibold hover:bg-white/20"
+                          >
+                            #{cat}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* ক্লাব ও পরিষদ */}
+            {/* ৩. ক্যাম্পাস কমিউনিটি ও পেজসমূহ */}
             <div className="rounded-xl border border-white/15 bg-white/5 overflow-hidden">
               <button
                 type="button"
-                onClick={() => toggleMobileTab('clubs')}
+                onClick={() => toggleMobileTab('community')}
                 className="w-full flex items-center justify-between p-2.5 text-xs font-bold text-white hover:bg-white/10"
               >
-                <span className="flex items-center gap-2"><Star className="size-4 text-cyan-400" /><span>ক্লাব ও কার্যনির্বাহী পরিষদ</span></span>
-                <ChevronDown className={`size-4 transition-transform ${activeMobileTab === 'clubs' ? 'rotate-180 text-cyan-400' : 'text-white/50'}`} />
+                <span className="flex items-center gap-2"><Star className="size-4 text-cyan-400" /><span>ক্যাম্পাস ক্লাব ও পেজসমূহ</span></span>
+                <ChevronDown className={`size-4 transition-transform ${activeMobileTab === 'community' ? 'rotate-180 text-cyan-400' : 'text-white/50'}`} />
               </button>
-              {activeMobileTab === 'clubs' && (
-                <div className="p-2.5 border-t border-white/10 bg-black/30 space-y-1.5 text-xs">
-                  {/* কার্যনির্বাহী পরিষদে স্ক্রল */}
-                  <button
-                    type="button"
-                    onClick={() => scrollToSection('leadership')}
-                    className="block w-full text-left font-semibold text-cyan-300 py-1 cursor-pointer"
-                  >
-                    👥 কার্যনির্বাহী পরিষদ →
-                  </button>
-
-                  <Link href="/council" onClick={() => setMenuOpen(false)} className="block font-semibold text-cyan-300 py-1">
-                    🛡️ ডিরেক্টর প্যানেল →
-                  </Link>
-
-                  {/* ✅ ক্যাম্পাস ক্লাবসমূহে স্ক্রল (প্রতিবার কাজ করবে) */}
+              {activeMobileTab === 'community' && (
+                <div className="p-2.5 border-t border-white/10 bg-black/40 space-y-2 text-xs">
                   <button
                     type="button"
                     onClick={() => scrollToSection('club-news')}
-                    className="block w-full text-left font-semibold text-cyan-300 py-1 cursor-pointer"
+                    className="block w-full text-left font-semibold text-cyan-300 py-1"
                   >
                     ⭐ ক্যাম্পাস ক্লাবসমূহ ({clubsList.length}) →
+                  </button>
+
+                  <Link href="/student-corner" onClick={() => setMenuOpen(false)} className="flex items-center justify-between py-1 text-white font-semibold">
+                    <span className="flex items-center gap-1.5"><BookOpen className="size-3.5 text-cyan-400" /><span>স্টুডেন্ট কর্নার</span></span>
+                    <ChevronRight className="size-3 text-cyan-400" />
+                  </Link>
+
+                  {/* কমিউনিটি পেজের তালিকা */}
+                  {communityPagesList.length > 0 && (
+                    <div className="border-t border-white/10 pt-1.5 space-y-1">
+                      <p className="font-bold text-[11px] text-amber-300 flex items-center gap-1">
+                        <FileText className="size-3" />
+                        <span>ক্যাম্পাস পেজসমূহ:</span>
+                      </p>
+                      <div className="space-y-1 pl-1">
+                        {communityPagesList.map((cp) => (
+                          <Link
+                            key={cp.id}
+                            href={`/p/${cp.slug}`}
+                            onClick={() => setMenuOpen(false)}
+                            className="flex items-center justify-between py-0.5 text-white/80 hover:text-cyan-300 text-[11px]"
+                          >
+                            <span className="truncate">📄 {cp.name}</span>
+                            <ChevronRight className="size-3 text-white/40 shrink-0" />
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* ৪. কার্যনির্বাহী পরিষদ ও পরিচিতি */}
+            <div className="rounded-xl border border-white/15 bg-white/5 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleMobileTab('about')}
+                className="w-full flex items-center justify-between p-2.5 text-xs font-bold text-white hover:bg-white/10"
+              >
+                <span className="flex items-center gap-2"><Users className="size-4 text-cyan-400" /><span>কার্যনির্বাহী পরিষদ ও পরিচিতি</span></span>
+                <ChevronDown className={`size-4 transition-transform ${activeMobileTab === 'about' ? 'rotate-180 text-cyan-400' : 'text-white/50'}`} />
+              </button>
+              {activeMobileTab === 'about' && (
+                <div className="p-2.5 border-t border-white/10 bg-black/40 space-y-1.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection('leadership')}
+                    className="block w-full text-left font-semibold text-cyan-300 py-1"
+                  >
+                    👥 কার্যনির্বাহী পরিষদ একনজরে →
+                  </button>
+                  <Link href="/council" onClick={() => setMenuOpen(false)} className="flex items-center justify-between py-1 text-white font-semibold">
+                    <span className="flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-cyan-400" /><span>ডিরেক্টর প্যানেল</span></span>
+                    <ChevronRight className="size-3 text-cyan-400" />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection('about')}
+                    className="block w-full text-left font-semibold text-white/80 py-1 border-t border-white/10 pt-1.5"
+                  >
+                    ℹ️ রিপোর্টার্স ইউনিটি পরিচিতি →
                   </button>
                 </div>
               )}
             </div>
 
-            {/* পরিচিতি */}
-            <button
-              type="button"
-              onClick={() => scrollToSection('about')}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 text-white text-xs font-bold border border-white/10 cursor-pointer text-left"
-            >
-              <span className="flex items-center gap-2"><Info className="size-4 text-cyan-400" /><span>পরিচিতি (About)</span></span>
-              <ChevronRight className="size-4 text-white/50" />
-            </button>
           </nav>
         )}
       </header>
