@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
-import { ArrowLeft, ShieldCheck, Users } from "lucide-react"
+import { ShieldCheck, Users } from "lucide-react"
 import { SB_URL, SB_KEY } from "../../lib/sb"
 import { DEFAULT_STYLE, getGlobalStyle } from "@/lib/photo-style"
 import type { PhotoStyle } from "@/lib/photo-style"
@@ -11,6 +10,7 @@ import { TopBar } from "@/components/portal/top-bar"
 import { SiteHeader } from "@/components/portal/site-header"
 import { SiteFooter } from "@/components/portal/site-footer"
 import { BackToTop } from "@/components/portal/back-to-top"
+import { BackNavigation } from "@/components/portal/back-navigation"
 
 type Member = {
   id: string
@@ -91,17 +91,16 @@ export default function CouncilPage() {
     <>
       <TopBar />
       <SiteHeader />
-      <main className="min-h-screen py-8 px-4 pb-20">
+      <main className="min-h-screen py-6 sm:py-10 px-4 pb-20">
         <div className="max-w-2xl mx-auto space-y-6">
           
-          <div>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-            </Link>
-          </div>
+          {/* ✅ ধাপে ধাপে ফেরা ও ব্রেডক্রাম্ব */}
+          <BackNavigation
+            items={[
+              { label: 'ইউনিটি পরিষদ' },
+              { label: 'ডিরেক্টর প্যানেল' }
+            ]}
+          />
 
           {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-8 shadow-2xl border border-white/20 text-center">
@@ -144,13 +143,8 @@ export default function CouncilPage() {
             </div>
           )}
 
-          <div className="pt-4 text-center border-t border-white/15">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-            </Link>
+          <div className="pt-4 border-t border-white/15">
+            <BackNavigation fallbackHref="/" />
           </div>
 
         </div>
