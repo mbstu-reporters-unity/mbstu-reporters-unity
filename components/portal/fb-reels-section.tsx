@@ -1,8 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import Link from "next/link"
-import { Play, Film } from "lucide-react"
+import { Play, Film, X, Share2 } from "lucide-react"
 import { getAllPosts } from "@/lib/sb"
 
 export interface ReelVideoItem {
@@ -12,9 +11,11 @@ export interface ReelVideoItem {
   authorAvatar?: string | null
   videoUrl: string
   thumbnail?: string
+  platform: "youtube" | "facebook" | "direct"
+  ytId?: string
 }
 
-function detectVideo(rawUrl?: string | null): { isVideo: boolean; url: string; ytId?: string } | null {
+function detectVideo(rawUrl?: string | null): { isVideo: boolean; url: string; platform: "youtube" | "facebook" | "direct"; ytId?: string } | null {
   if (!rawUrl || typeof rawUrl !== "string") return null
   const str = rawUrl.trim()
   if (!str) return null
@@ -33,15 +34,15 @@ function detectVideo(rawUrl?: string | null): { isVideo: boolean; url: string; y
 
   const ytMatch = str.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/|shorts\/))([^?&"'>]+)/i)
   if (ytMatch && ytMatch[1]?.length === 11) {
-    return { isVideo: true, url: str, ytId: ytMatch[1] }
+    return { isVideo: true, url: str, platform: "youtube", ytId: ytMatch[1] }
   }
 
   if (str.includes("facebook.com") || str.includes("fb.watch")) {
-    return { isVideo: true, url: str }
+    return { isVideo: true, url: str, platform: "facebook" }
   }
 
   if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(str)) {
-    return { isVideo: true, url: str }
+    return { isVideo: true, url: str, platform: "direct" }
   }
 
   return null
@@ -49,6 +50,7 @@ function detectVideo(rawUrl?: string | null): { isVideo: boolean; url: string; y
 
 export function FbReelsSection() {
   const [videoList, setVideoList] = useState<ReelVideoItem[]>([])
+  const [activeReel, setActiveReel] = useState<ReelVideoItem | null>(null)
 
   useEffect(() => {
     getAllPosts(100).then((posts) => {
@@ -72,6 +74,8 @@ export function FbReelsSection() {
             author: p.author || "ক্যাম্পাস সাংবাদিক",
             authorAvatar: p.author_avatar,
             videoUrl: detected.url,
+            platform: detected.platform,
+            ytId: detected.ytId,
             thumbnail: thumb,
           })
         }
@@ -79,6 +83,27 @@ export function FbReelsSection() {
       setVideoList(vids)
     })
   }, [])
+
+  // মোবাইলের ব্যাক বাটন চাপলে সাইট থেকে বের না হয়ে প্লেয়ার বন্ধ হওয়া
+  useEffect(() => {
+    const handlePopState = () => {
+      setActiveReel(null)
+    }
+    window.addEventListener("popstate", handlePopState)
+    return () => window.removeEventListener("popstate", handlePopState)
+  }, [])
+
+  const openReelInstant = (reel: ReelVideoItem) => {
+    setActiveReel(reel)
+    window.history.pushState({ reelOpen: true }, "")
+  }
+
+  const closeReel = () => {
+    setActiveReel(null)
+    if (window.history.state?.reelOpen) {
+      window.history.back()
+    }
+  }
 
   if (videoList.length === 0) return null
 
@@ -96,12 +121,12 @@ export function FbReelsSection() {
         <span className="text-xs text-cyan-300 font-semibold">{videoList.length}টি ভিডিও</span>
       </div>
 
-      {/* রিলস কার্ড স্লাইডার: ক্লিকে সোজা ফুলস্ক্রিন ভিডিও পেজে নিয়ে যাবে */}
+      {/* কার্ড তালিকা (ক্লিক করলেই সাথে সাথে ইনস্ট্যান্ট প্লে হবে) */}
       <div className="flex gap-2.5 overflow-x-auto px-4 pb-2 scrollbar-none select-none">
         {videoList.map((reel) => (
-          <Link
+          <div
             key={reel.id}
-            href={`/reel/${reel.id}`}
+            onClick={() => openReelInstant(reel)}
             className="relative w-[135px] sm:w-[160px] h-[225px] sm:h-[265px] rounded-2xl overflow-hidden bg-slate-900 border border-white/20 shadow-lg shrink-0 group active:scale-95 transition-all block cursor-pointer"
           >
             {reel.thumbnail ? (
@@ -142,9 +167,86 @@ export function FbReelsSection() {
                 <span className="text-[10px] text-slate-300 truncate">{reel.author}</span>
               </div>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
+
+      {/* ফুলস্ক্রিন ইনস্ট্যান্ট ব্ল্যাক প্লেয়ার (ইউটিউবের আসল কন্ট্রোল, সাউন্ড ও সিসি সহ) */}
+      {activeReel && (
+        <div
+          className="fixed inset-0 z-[999999] bg-black flex flex-col justify-between p-0 animate-in fade-in"
+          onClick={closeReel}
+        >
+          {/* হেডার */}
+          <div
+            className="flex items-center justify-between p-3.5 bg-gradient-to-b from-black/90 to-transparent z-50 text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={closeReel}
+              className="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/25 cursor-pointer"
+            >
+              ✕ বন্ধ করুন
+            </button>
+            <span className="text-xs font-bold bg-red-600 px-3 py-1 rounded-full">Reels</span>
+          </div>
+
+          {/* প্লেয়ার (কোনো ওভারল্যাপিং ছাড়াই সরাসরি ইউটিউবের কন্ট্রোল) */}
+          <div
+            className="relative w-full flex-1 flex items-center justify-center bg-black my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {activeReel.platform === "youtube" && activeReel.ytId ? (
+              <iframe
+                src={`https://www.youtube.com/embed/${activeReel.ytId}?autoplay=1&controls=1&rel=0&playsinline=1&enablejsapi=1`}
+                className="w-full aspect-video max-h-[85vh] border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowFullScreen
+              />
+            ) : activeReel.platform === "facebook" ? (
+              <iframe
+                src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(activeReel.videoUrl)}&show_text=false&autoplay=true`}
+                className="w-full aspect-video max-h-[85vh] border-0"
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                allowFullScreen
+              />
+            ) : (
+              <video
+                src={activeReel.videoUrl}
+                controls
+                autoPlay
+                playsInline
+                className="w-full max-h-[85vh] object-contain"
+              />
+            )}
+          </div>
+
+          {/* ফুটার */}
+          <div
+            className="p-4 bg-gradient-to-t from-black via-slate-950 to-transparent space-y-2 z-50 text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="font-serif text-sm sm:text-base font-bold drop-shadow">
+              {activeReel.title}
+            </p>
+            <div className="flex items-center justify-between text-xs text-slate-300 border-t border-white/10 pt-2">
+              <span className="font-semibold">{activeReel.author}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({ title: activeReel.title, url: activeReel.videoUrl })
+                  }
+                }}
+                className="inline-flex items-center gap-1 text-cyan-300"
+              >
+                <Share2 className="size-3.5" /> শেয়ার
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
