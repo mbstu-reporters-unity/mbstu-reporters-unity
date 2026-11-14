@@ -1,8 +1,6 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
-  ArrowLeft,
   Award,
   BookOpen,
   CalendarDays,
@@ -18,6 +16,7 @@ import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
+import { BackNavigation } from '@/components/portal/back-navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,15 +58,16 @@ export default async function DepartmentDetailPage({
     <>
       <TopBar />
       <SiteHeader />
-      <main className="min-h-screen py-8 sm:py-12">
-        <div className="mx-auto max-w-6xl px-4 space-y-8">
+      <main className="min-h-screen py-6 sm:py-10">
+        <div className="mx-auto max-w-6xl px-4 space-y-6">
 
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-          </Link>
+          {/* ✅ ধাপে ধাপে ফেরা ও অনুষদ-বিভাগ ব্রেডক্রাম্ব */}
+          <BackNavigation
+            items={[
+              { label: faculty?.name || 'অনুষদ' },
+              { label: dept.name }
+            ]}
+          />
 
           {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20">
@@ -333,13 +333,9 @@ export default async function DepartmentDetailPage({
 
           </div>
 
-          <div className="pt-4 text-center border-t border-white/15">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-            </Link>
+          {/* পেজের নিচের নেভিগেশন */}
+          <div className="pt-4 border-t border-white/15">
+            <BackNavigation fallbackHref="/" />
           </div>
 
         </div>
