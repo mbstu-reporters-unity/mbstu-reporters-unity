@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { getImagesMeta, getLayout } from "@/lib/sb"
 import RichGallery from "./rich-gallery"
 import type { GalleryItem } from "./rich-gallery"
@@ -28,10 +28,11 @@ function classifyMediaUrl(raw: string):
   )
   if (ytMatch && ytMatch[2]?.length === 11) {
     const isShort = /\/shorts\//i.test(url)
+    // enablejsapi=1 যুক্ত করা হয়েছে যাতে স্ক্রল করার সাথে সাথে ব্যাকগ্রাউন্ড সাউন্ড বন্ধ করা যায়
     return {
       kind: "youtube",
       isShort,
-      embedSrc: `https://www.youtube.com/embed/${ytMatch[2]}?rel=0&modestbranding=1&playsinline=1`,
+      embedSrc: `https://www.youtube.com/embed/${ytMatch[2]}?enablejsapi=1&rel=0&modestbranding=1&playsinline=1`,
     }
   }
 
@@ -108,6 +109,150 @@ function parseEmbedMedia(raw?: string | null): EmbedParsed {
   return out
 }
 
+/* ==================== স্বয়ংক্রিয় স্ক্রল ডিটেকশন ও অটো-পজ প্লেয়ার ==================== */
+function SmartFeedVideoPlayer({
+  directVideoUrl,
+  primaryEmbedVideo,
+  cover,
+}: {
+  directVideoUrl?: string | null
+  primaryEmbedVideo?: { kind: "youtube" | "facebook" | "video"; embedSrc?: string; src?: string; isShort?: boolean } | null
+  cover: string | null
+}) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  // স্ক্রল করে ভিডিও স্ক্রিন থেকে আড়াল হওয়ামাত্র সাউন্ড ও প্লেয়িং বন্ধ করা
+  useEffect(() => {
+    const target = containerRef.current
+    if (!target) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // ভিডিও স্ক্রিনে ২০% এর কম থাকলে বা উপরে/নিচে চলে গেলে তৎক্ষণাৎ পজ হবে
+          if (!entry.isIntersecting || entry.intersectionRatio < 0.2) {
+            // ১. সাধারণ MP4 ভিডিও পজ করা
+            if (videoRef.current && !videoRef.current.paused) {
+              videoRef.current.pause()
+            }
+
+            // ২. ইউটিউব ভিডিও পজ করা (ব্যাকগ্রাউন্ড সাউন্ড বন্ধ হবে)
+            if (iframeRef.current?.contentWindow) {
+              iframeRef.current.contentWindow.postMessage(
+                JSON.stringify({ event: "command", func: "pauseVideo", args: [] }),
+                "*"
+              )
+            }
+          }
+        })
+      },
+      {
+        threshold: [0, 0.2], // স্ক্রিনে ২০% দৃশ্যমানতা
+      }
+    )
+
+    observer.observe(target)
+
+    // ব্রাউজার ট্যাব পরিবর্তন করলেও ভিডিও থেমে যাবে
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (videoRef.current && !videoRef.current.paused) videoRef.current.pause()
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: "command", func: "pauseVideo", args: [] }),
+            "*"
+          )
+        }
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      observer.disconnect()
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [])
+
+  if (directVideoUrl) {
+    return (
+      <div ref={containerRef} className="w-full bg-black overflow-hidden">
+        <video
+          ref={videoRef}
+          src={directVideoUrl}
+          poster={cover || undefined}
+          controls
+          playsInline
+          preload="metadata"
+          className="block w-full h-auto max-h-[600px] md:max-h-[440px] mx-auto bg-black"
+        />
+      </div>
+    )
+  }
+
+  if (primaryEmbedVideo) {
+    if (primaryEmbedVideo.kind === "video" && primaryEmbedVideo.src) {
+      return (
+        <div ref={containerRef} className="w-full bg-black overflow-hidden">
+          <video
+            ref={videoRef}
+            src={primaryEmbedVideo.src}
+            poster={cover || undefined}
+            controls
+            playsInline
+            preload="metadata"
+            className="block w-full h-auto max-h-[600px] md:max-h-[440px] mx-auto bg-black"
+          />
+        </div>
+      )
+    }
+
+    if (primaryEmbedVideo.kind === "youtube" && primaryEmbedVideo.embedSrc) {
+      return (
+        <div ref={containerRef} className="w-full bg-black overflow-hidden">
+          <div
+            className={
+              primaryEmbedVideo.isShort
+                ? "relative w-full max-w-sm mx-auto aspect-[9/16] max-h-[560px]"
+                : "relative w-full aspect-video"
+            }
+          >
+            <iframe
+              ref={iframeRef}
+              src={primaryEmbedVideo.embedSrc}
+              className="size-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+              allowFullScreen
+              loading="lazy"
+              title="YouTube Video"
+            />
+          </div>
+        </div>
+      )
+    }
+
+    if (primaryEmbedVideo.kind === "facebook" && primaryEmbedVideo.embedSrc) {
+      return (
+        <div ref={containerRef} className="relative w-full aspect-video bg-black overflow-hidden">
+          <iframe
+            ref={iframeRef}
+            src={primaryEmbedVideo.embedSrc}
+            className="size-full border-0"
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen"
+            allowFullScreen
+            loading="lazy"
+            title="Facebook Video"
+          />
+        </div>
+      )
+    }
+  }
+
+  return null
+}
+
 export default function CardGallery({
   postId,
   cover,
@@ -155,81 +300,7 @@ export default function CardGallery({
   const hasDirectVideo = Boolean(videoUrl && videoUrl.trim())
   const primaryEmbedVideo = embed.videos[0] || null
 
-  const renderVideoBlock = () => {
-    if (hasDirectVideo) {
-      return (
-        <div className="w-full bg-black overflow-hidden">
-          <video
-            src={videoUrl!}
-            poster={cover || undefined}
-            controls
-            playsInline
-            preload="metadata"
-            className="block w-full h-auto max-h-[600px] md:max-h-[440px] mx-auto bg-black"
-          />
-        </div>
-      )
-    }
-
-    if (primaryEmbedVideo) {
-      if (primaryEmbedVideo.kind === "video") {
-        return (
-          <div className="w-full bg-black overflow-hidden">
-            <video
-              src={primaryEmbedVideo.src}
-              poster={cover || undefined}
-              controls
-              playsInline
-              preload="metadata"
-              className="block w-full h-auto max-h-[600px] md:max-h-[440px] mx-auto bg-black"
-            />
-          </div>
-        )
-      }
-
-      if (primaryEmbedVideo.kind === "youtube") {
-        return (
-          <div className="w-full bg-black overflow-hidden">
-            <div
-              className={
-                primaryEmbedVideo.isShort
-                  ? "relative w-full max-w-sm mx-auto aspect-[9/16] max-h-[560px]"
-                  : "relative w-full aspect-video"
-              }
-            >
-              <iframe
-                src={primaryEmbedVideo.embedSrc}
-                className="size-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                allowFullScreen
-                loading="lazy"
-                title="YouTube Video"
-              />
-            </div>
-          </div>
-        )
-      }
-
-      if (primaryEmbedVideo.kind === "facebook") {
-        return (
-          <div className="relative w-full aspect-video bg-black overflow-hidden">
-            <iframe
-              src={primaryEmbedVideo.embedSrc}
-              className="size-full border-0"
-              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen"
-              allowFullScreen
-              loading="lazy"
-              title="Facebook Video"
-            />
-          </div>
-        )
-      }
-    }
-
-    return null
-  }
-
-  // ১. post_images-এ ছবি থাকলে (১টি বা একাধিক) — ক্লিক করলে এডমিনের পছন্দমতো ২ নং বা ৩ নং ভিউ খুলবে
+  // ১. ছবিতে ক্লিক করলে অ্যালবামে বা লাইটবক্সে ওপেন হবে
   if (items && items.length > 0) {
     return (
       <div className="w-full space-y-1 overflow-hidden">
@@ -240,15 +311,26 @@ export default function CardGallery({
           postTitle={postTitle}
           postDate={postDate}
         />
-        {renderVideoBlock()}
+        {(hasDirectVideo || primaryEmbedVideo) && (
+          <SmartFeedVideoPlayer
+            directVideoUrl={videoUrl}
+            primaryEmbedVideo={primaryEmbedVideo}
+            cover={cover}
+          />
+        )}
       </div>
     )
   }
 
-  // ২. সরাসরি ভিডিও বা লিংক ভিডিও (YouTube / Facebook / MP4) থাকলে
-  const videoBlock = renderVideoBlock()
-  if (videoBlock) {
-    return <div className="w-full overflow-hidden">{videoBlock}</div>
+  // ২. সরাসরি ভিডিও বা ইউটিউব ভিডিও (স্ক্রল করলে অটো-পজ হবে)
+  if (hasDirectVideo || primaryEmbedVideo) {
+    return (
+      <SmartFeedVideoPlayer
+        directVideoUrl={videoUrl}
+        primaryEmbedVideo={primaryEmbedVideo}
+        cover={cover}
+      />
+    )
   }
 
   // ৩. embed_media_url-এ ছবি থাকলে
@@ -266,7 +348,7 @@ export default function CardGallery({
     )
   }
 
-  // ৪. একক cover ছবি থাকলে — ক্লিক করলে ২ নং বা ৩ নং মোডে খুলবে
+  // ৪. একক cover ছবি থাকলে
   if (!cover) return null
 
   return (
