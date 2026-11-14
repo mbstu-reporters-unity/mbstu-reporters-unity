@@ -2,7 +2,7 @@ import { cache } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, CalendarDays, User, Tag } from 'lucide-react'
+import { CalendarDays, User, Tag } from 'lucide-react'
 import { ReactionBar } from '@/components/portal/reaction-bar'
 import { getPost, getApprovedComments, getImagesMeta, getLayout } from '@/lib/sb'
 import { CommentForm } from '@/components/portal/comment-form'
@@ -14,6 +14,7 @@ import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
+import { BackNavigation } from '@/components/portal/back-navigation'
 
 export const revalidate = 60
 
@@ -90,12 +91,12 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         <article className="glass-card mx-auto max-w-3xl space-y-6 p-5 sm:p-9 text-white">
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 pb-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors"
-            >
-              <ArrowLeft className="size-3.5" /> হোমপেজে ফিরুন
-            </Link>
+            {/* ✅ ধাপে ধাপে ফেরা ও ক্যাটাগরি লিংক */}
+            <BackNavigation
+              items={[
+                { label: post.category || 'সংবাদ', href: post.category ? `/category/${encodeURIComponent(post.category)}` : undefined }
+              ]}
+            />
 
             {post.category && (
               <Link
