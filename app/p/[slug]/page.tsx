@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
-  ArrowLeft,
   CalendarDays,
   CheckCircle2,
   Globe,
@@ -23,6 +22,7 @@ import { ReactionBar } from '@/components/portal/reaction-bar'
 import { CommentForm } from '@/components/portal/comment-form'
 import RichGallery from '@/components/portal/rich-gallery'
 import { PostMetaBadges } from '@/components/portal/post-meta-badges'
+import { BackNavigation } from '@/components/portal/back-navigation'
 
 export const revalidate = 60
 
@@ -74,8 +74,17 @@ export default async function PublicCommunityPage({
       <main className="min-h-screen pb-20">
 
         <div className="bg-white/[0.06] border-b border-white/15 backdrop-blur-xl shadow-lg">
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-5xl mx-auto px-4 pt-4 pb-2">
+            {/* ✅ কভারের উপরে ধাপে ধাপে ফেরা ও ব্রেডক্রাম্ব */}
+            <BackNavigation
+              items={[
+                { label: 'কমিউনিটি পেজসমূহ', href: '/#community-pages' },
+                { label: page.name }
+              ]}
+            />
+          </div>
 
+          <div className="max-w-5xl mx-auto">
             <div className="relative h-44 sm:h-72 w-full overflow-hidden bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 sm:rounded-b-3xl border-x border-b border-white/15">
               {page.cover_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -90,12 +99,6 @@ export default async function PublicCommunityPage({
                   {page.name}
                 </div>
               )}
-              <Link
-                href="/"
-                className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/25 px-3 py-1 text-xs font-bold backdrop-blur-md transition"
-              >
-                <ArrowLeft className="size-3.5" /> হোমপেজ
-              </Link>
             </div>
 
             <div className="px-4 sm:px-8 pb-6">
