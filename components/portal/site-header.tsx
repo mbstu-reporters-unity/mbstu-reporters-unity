@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -24,9 +24,6 @@ import {
   ShieldCheck,
   Tag,
   Landmark,
-  Share2,
-  ExternalLink,
-  Sparkles,
 } from 'lucide-react'
 import { getCampusClubs, type ClubItem } from '@/lib/clubs'
 import { getVisibleCategoryNames } from '@/lib/categories'
@@ -34,7 +31,7 @@ import { getFacultiesWithDepartments, type FacultyWithDepartments } from '@/lib/
 import { getCommunityPages, type CommunityPage } from '@/lib/pages'
 import { getUniversityAssociations, type UniversityAssociation } from '@/lib/associations'
 import { getSocialSites, type SocialSite } from '@/lib/social-sites'
-import { getAdministrationOfficials, ADMIN_CATEGORIES, type AdministrationOfficial } from '@/lib/administration'
+import { ADMIN_CATEGORIES } from '@/lib/administration'
 import { SB_URL, SB_KEY } from '@/lib/sb'
 import { Logo } from './logo'
 import { useLang } from '@/lib/i18n'
@@ -42,7 +39,7 @@ import { useLang } from '@/lib/i18n'
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   
-  // ড্রয়ারের ধাপে ধাপে নেভিগেশন স্ট্যাক (যেমন: ['root'] -> ['root', 'univ'] -> ['root', 'univ', 'faculties'])
+  // ড্রয়ারের ধাপে ধাপে নেভিগেশন স্ট্যাক (সম্পূর্ণ ইন্টারনাল স্টেট, কোনো ব্রাউজার রিলোড নেই)
   const [navStack, setNavStack] = useState<string[]>(['root'])
 
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
@@ -51,7 +48,6 @@ export function SiteHeader() {
   const [communityPagesList, setCommunityPagesList] = useState<CommunityPage[]>([])
   const [associationsList, setAssociationsList] = useState<UniversityAssociation[]>([])
   const [socialSitesList, setSocialSitesList] = useState<SocialSite[]>([])
-  const [adminOfficialsList, setAdminOfficialsList] = useState<AdministrationOfficial[]>([])
 
   const { pick } = useLang()
 
@@ -84,56 +80,40 @@ export function SiteHeader() {
     })
     getUniversityAssociations().then(setAssociationsList)
     getSocialSites().then(setSocialSitesList)
-    getAdministrationOfficials().then(setAdminOfficialsList)
   }, [])
 
-  // ✅ মোবাইলের ফিজিক্যাল / সোয়াইপ ব্যাক বাটনে ধাপে ধাপে ব্যাকে আসা
-  useEffect(() => {
-    const handlePopState = () => {
-      if (menuOpen) {
-        if (navStack.length > 1) {
-          setNavStack((prev) => prev.slice(0, -1))
-        } else {
-          setMenuOpen(false)
-        }
-      }
-    }
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [menuOpen, navStack.length])
-
-  // ড্রয়ার ওপেন করা
+  // ড্রয়ার ওপেন ও ক্লোজ
   const openMenuDrawer = () => {
-    setMenuOpen(true)
     setNavStack(['root'])
-    window.history.pushState({ menuOpen: true }, '')
+    setMenuOpen(true)
   }
 
-  // ড্রয়ার বন্ধ করা
   const closeMenuDrawer = () => {
-    setMenuOpen(false)
     setNavStack(['root'])
-    if (window.history.state?.menuOpen) {
-      window.history.back()
-    }
+    setMenuOpen(false)
   }
 
   // এক ধাপ সামনে যাওয়া
-  const goToNextLevel = (levelKey: string) => {
+  const goToNextLevel = (levelKey: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
     setNavStack((prev) => [...prev, levelKey])
-    window.history.pushState({ menuLevel: navStack.length + 1 }, '')
   }
 
-  // এক ধাপ পেছনে ফেরা (UI Button)
-  const goStepBack = () => {
-    if (navStack.length > 1) {
-      setNavStack((prev) => prev.slice(0, -1))
-      if (window.history.state?.menuLevel) {
-        window.history.back()
-      }
-    } else {
-      closeMenuDrawer()
+  // ✅ এক ধাপ পেছনে ফেরা (কোনো পেজ রিলোড হবে না, খাঁটি রিঅ্যাক্ট স্টেট)
+  const goStepBack = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
     }
+    setNavStack((prev) => {
+      if (prev.length > 1) {
+        return prev.slice(0, -1) // শুধু এক ধাপ পূর্বের মেনুতে যাবে
+      }
+      return ['root']
+    })
   }
 
   function scrollToSection(sectionId: string) {
@@ -176,25 +156,26 @@ export function SiteHeader() {
     }
   }
 
-  // বর্তমান সক্রিয় লেভেল
   const currentLevel = navStack[navStack.length - 1]
 
-  // ব্রেডক্রাম্ব টেক্সট জেনারেটর
-  const getBreadcrumbTitle = () => {
+  // বর্তমান অবস্থান ও আগের ধাপের নাম
+  const getBreadcrumbInfo = () => {
     switch (currentLevel) {
-      case 'univ': return 'বিশ্ববিদ্যালয় ও প্রশাসন'
-      case 'admin_tier': return 'প্রশাসন ও দপ্তরসমূহ'
-      case 'faculties_dept': return 'অনুষদ ও বিভাগসমূহ'
-      case 'social_sites': return 'সোশ্যাল সাইট ও গ্রুপ'
-      case 'news': return 'সংবাদ, রিলস ও নোটিশ'
-      case 'associations_tier': return 'সাংবাদিক সমিতিসমূহ'
-      case 'community': return 'ক্যাম্পাস ক্লাব ও পেজ'
-      case 'clubs_tier': return 'ক্যাম্পাস ক্লাব তালিকা'
-      case 'pages_tier': return 'ক্যাম্পাস পেজসমূহ'
-      case 'about': return 'কার্যনির্বাহী পরিষদ ও পরিচিতি'
-      default: return 'মূল মেনু (Main Menu)'
+      case 'univ': return { parent: 'মূল মেনু', current: 'বিশ্ববিদ্যালয় ও প্রশাসন' }
+      case 'admin_tier': return { parent: 'বিশ্ববিদ্যালয়', current: 'প্রশাসন ও দপ্তরসমূহ' }
+      case 'faculties_dept': return { parent: 'বিশ্ববিদ্যালয়', current: 'অনুষদ ও বিভাগসমূহ' }
+      case 'social_sites': return { parent: 'বিশ্ববিদ্যালয়', current: 'সোশ্যাল সাইট ও গ্রুপ' }
+      case 'news': return { parent: 'মূল মেনু', current: 'সংবাদ, রিলস ও নোটিশ' }
+      case 'associations_tier': return { parent: 'সংবাদ ও মিডিয়া', current: 'সাংবাদিক সমিতিসমূহ' }
+      case 'community': return { parent: 'মূল মেনু', current: 'ক্যাম্পাস ক্লাব ও পেজ' }
+      case 'clubs_tier': return { parent: 'কমিউনিটি', current: 'ক্যাম্পাস ক্লাবসমূহ' }
+      case 'pages_tier': return { parent: 'কমিউনিটি', current: 'ক্যাম্পাস পেজসমূহ' }
+      case 'about': return { parent: 'মূল মেনু', current: 'পরিষদ ও পরিচিতি' }
+      default: return { parent: '', current: 'মূল মেনু' }
     }
   }
+
+  const breadcrumb = getBreadcrumbInfo()
 
   return (
     <>
@@ -235,7 +216,6 @@ export function SiteHeader() {
                 </Link>
               </li>
 
-              {/* বিশ্ববিদ্যালয় */}
               <li className="relative group">
                 <button type="button" className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/15 hover:text-cyan-300 transition-colors cursor-pointer">
                   <Building2 className="size-4 text-cyan-400" />
@@ -276,7 +256,6 @@ export function SiteHeader() {
                 </div>
               </li>
 
-              {/* সংবাদ ও মিডিয়া */}
               <li className="relative group">
                 <button type="button" className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/15 hover:text-cyan-300 transition-colors cursor-pointer">
                   <Newspaper className="size-4 text-cyan-400" />
@@ -307,7 +286,6 @@ export function SiteHeader() {
                 </div>
               </li>
 
-              {/* ক্যাম্পাস কমিউনিটি */}
               <li className="relative group">
                 <button type="button" className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/15 hover:text-cyan-300 transition-colors cursor-pointer">
                   <Star className="size-4 text-cyan-400" />
@@ -338,7 +316,6 @@ export function SiteHeader() {
                 </div>
               </li>
 
-              {/* পরিষদ */}
               <li className="relative group">
                 <button type="button" className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/15 hover:text-cyan-300 transition-colors cursor-pointer">
                   <Users className="size-4 text-cyan-400" />
@@ -393,31 +370,35 @@ export function SiteHeader() {
 
         </div>
 
-        {/* ==================== আধুনিক মোবাইল ড্রিল-ডাউন (Drill-Down) মেনু ==================== */}
+        {/* ==================== মোবাইল ড্রিল-ডাউন মেনু (রিলোডহীন নিখুঁত ফেরা) ==================== */}
         {menuOpen && (
-          <nav className="border-t border-white/10 bg-slate-950/98 lg:hidden max-h-[82vh] overflow-y-auto px-3.5 py-3 space-y-3 backdrop-blur-2xl animate-in slide-in-from-top-2 select-none scrollbar-none">
+          <nav className="border-t border-white/10 bg-[#071030]/98 lg:hidden max-h-[84vh] overflow-y-auto px-3.5 py-3 space-y-3 backdrop-blur-2xl animate-in slide-in-from-top-2 select-none scrollbar-none">
             
-            {/* ১. শীর্ষ ন্যাভিগেশন বার (যেখানে অবস্থান ও 'এক ধাপ পেছনে' বাটন পরিষ্কার দেখা যাবে) */}
-            <div className="flex items-center justify-between pb-2 border-b border-white/15">
+            {/* ১. ন্যাভিগেশন বার (যেখানে অবস্থান ও 'এক ধাপ পেছনে' বাটন ১০০% লোকাল স্টেটে কাজ করবে) */}
+            <div className="flex items-center justify-between pb-2.5 border-b border-white/15 gap-2">
               {navStack.length > 1 ? (
                 <button
                   type="button"
                   onClick={goStepBack}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-bold text-xs active:scale-95 transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs active:scale-95 transition shadow cursor-pointer shrink-0"
                 >
                   <ArrowLeft className="size-3.5" />
                   <span>এক ধাপ পেছনে</span>
                 </button>
               ) : (
-                <span className="text-xs font-bold text-white/60 flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-300">
                   <Menu className="size-3.5" />
-                  <span>ন্যাভিগেশন মেনু</span>
-                </span>
+                  <span>ক্যাম্পাস মেনু</span>
+                </div>
               )}
 
-              <span className="text-[11px] font-bold text-amber-300 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full truncate max-w-[170px]">
-                {getBreadcrumbTitle()}
-              </span>
+              {/* অবস্থান ট্র্যাকিং পাথ */}
+              <div className="flex items-center gap-1 text-[11px] font-bold text-amber-300 bg-amber-400/15 border border-amber-400/30 px-2.5 py-1 rounded-full truncate">
+                {breadcrumb.parent && (
+                  <span className="text-white/60 font-normal truncate max-w-[85px]">{breadcrumb.parent} ›</span>
+                )}
+                <span className="truncate max-w-[130px]">{breadcrumb.current}</span>
+              </div>
             </div>
 
             {/* ================= লেভেল ০: মূল মেনু তালিকা ================= */}
@@ -434,7 +415,7 @@ export function SiteHeader() {
 
                 <button
                   type="button"
-                  onClick={() => goToNextLevel('univ')}
+                  onClick={(e) => goToNextLevel('univ', e)}
                   className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 active:scale-98 transition cursor-pointer"
                 >
                   <span className="flex items-center gap-2.5"><Building2 className="size-4 text-cyan-400" /><span>বিশ্ববিদ্যালয় ও প্রশাসন</span></span>
@@ -443,7 +424,7 @@ export function SiteHeader() {
 
                 <button
                   type="button"
-                  onClick={() => goToNextLevel('news')}
+                  onClick={(e) => goToNextLevel('news', e)}
                   className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 active:scale-98 transition cursor-pointer"
                 >
                   <span className="flex items-center gap-2.5"><Newspaper className="size-4 text-rose-400" /><span>সংবাদ, রিলস ও নোটিশ</span></span>
@@ -452,7 +433,7 @@ export function SiteHeader() {
 
                 <button
                   type="button"
-                  onClick={() => goToNextLevel('community')}
+                  onClick={(e) => goToNextLevel('community', e)}
                   className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 active:scale-98 transition cursor-pointer"
                 >
                   <span className="flex items-center gap-2.5"><Star className="size-4 text-amber-400" /><span>ক্যাম্পাস ক্লাব ও পেজসমূহ</span></span>
@@ -461,7 +442,7 @@ export function SiteHeader() {
 
                 <button
                   type="button"
-                  onClick={() => goToNextLevel('about')}
+                  onClick={(e) => goToNextLevel('about', e)}
                   className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 active:scale-98 transition cursor-pointer"
                 >
                   <span className="flex items-center gap-2.5"><Users className="size-4 text-emerald-400" /><span>কার্যনির্বাহী পরিষদ ও পরিচিতি</span></span>
@@ -475,28 +456,28 @@ export function SiteHeader() {
               <div className="space-y-2 animate-in fade-in">
                 <button
                   type="button"
-                  onClick={() => goToNextLevel('admin_tier')}
+                  onClick={(e) => goToNextLevel('admin_tier', e)}
                   className="w-full flex items-center justify-between p-3 rounded-2xl bg-cyan-950/40 hover:bg-cyan-900/40 text-cyan-200 text-xs font-bold border border-cyan-800/40 cursor-pointer"
                 >
-                  <span className="flex items-center gap-2"><Landmark className="size-4 text-cyan-400" /><span>শীর্ষ প্রশাসন ও দপ্তরসমূহ</span></span>
+                  <span className="flex items-center gap-2.5"><Landmark className="size-4 text-cyan-400" /><span>শীর্ষ প্রশাসন ও দপ্তরসমূহ</span></span>
                   <ChevronRight className="size-4 text-cyan-400" />
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => goToNextLevel('faculties_dept')}
+                  onClick={(e) => goToNextLevel('faculties_dept', e)}
                   className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 cursor-pointer"
                 >
-                  <span className="flex items-center gap-2"><GraduationCap className="size-4 text-amber-400" /><span>অনুষদ ও বিভাগসমূহ</span></span>
+                  <span className="flex items-center gap-2.5"><GraduationCap className="size-4 text-amber-400" /><span>অনুষদ ও বিভাগসমূহ ({facultiesList.length})</span></span>
                   <ChevronRight className="size-4 text-amber-400" />
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => goToNextLevel('social_sites')}
+                  onClick={(e) => goToNextLevel('social_sites', e)}
                   className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 cursor-pointer"
                 >
-                  <span className="flex items-center gap-2"><Globe2 className="size-4 text-blue-400" /><span>সোশ্যাল সাইট ও গ্রুপসমূহ</span></span>
+                  <span className="flex items-center gap-2.5"><Globe2 className="size-4 text-blue-400" /><span>সোশ্যাল সাইট ও গ্রুপসমূহ</span></span>
                   <ChevronRight className="size-4 text-blue-400" />
                 </button>
               </div>
@@ -597,7 +578,7 @@ export function SiteHeader() {
 
                 <button
                   type="button"
-                  onClick={() => goToNextLevel('associations_tier')}
+                  onClick={(e) => goToNextLevel('associations_tier', e)}
                   className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 cursor-pointer"
                 >
                   <span className="flex items-center gap-2.5"><Users className="size-4 text-cyan-400" /><span>অন্যান্য সাংবাদিক সমিতি</span></span>
@@ -656,7 +637,7 @@ export function SiteHeader() {
               <div className="space-y-2 animate-in fade-in">
                 <button
                   type="button"
-                  onClick={() => goToNextLevel('clubs_tier')}
+                  onClick={(e) => goToNextLevel('clubs_tier', e)}
                   className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 cursor-pointer"
                 >
                   <span className="flex items-center gap-2.5"><Star className="size-4 text-amber-400" /><span>ক্যাম্পাস ক্লাবসমূহ ({clubsList.length})</span></span>
@@ -665,7 +646,7 @@ export function SiteHeader() {
 
                 <button
                   type="button"
-                  onClick={() => goToNextLevel('pages_tier')}
+                  onClick={(e) => goToNextLevel('pages_tier', e)}
                   className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/15 cursor-pointer"
                 >
                   <span className="flex items-center gap-2.5"><FileText className="size-4 text-emerald-400" /><span>ক্যাম্পাস পেজ ও সোসাইটি</span></span>
@@ -755,7 +736,7 @@ export function SiteHeader() {
                 <button
                   type="button"
                   onClick={() => scrollToSection('about')}
-                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-semibold text-xs border border-white/15 text-left cursor-pointer"
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-semibold text-xs border border-white/10 text-left cursor-pointer"
                 >
                   <span className="flex items-center gap-2"><Info className="size-4 text-amber-400" /><span>রিপোর্টার্স ইউনিটি পরিচিতি</span></span>
                   <ChevronRight className="size-4 text-amber-400" />
