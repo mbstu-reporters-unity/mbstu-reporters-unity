@@ -9,7 +9,7 @@ import {
 import { getMe, uploadImage, type Profile } from "@/lib/sb"
 import {
   getMyConversations, getConversationMessages, sendChatMessage,
-  openDirectConversation, syncRealtimeAuth, supabase,
+  openDirectConversation, searchCampusUsers, syncRealtimeAuth, supabase,
   type ConversationItem, type MessageItem
 } from "@/lib/chat"
 import { getMyFriendships, type FriendEntry } from "@/lib/friends"
@@ -79,7 +79,7 @@ export default function MessagesPage() {
     setConversations(convList)
     setMyFriends(friendshipData.friends)
 
-    // যদি URL-এ ?uid=xxx দিয়ে আসা হয় (যেমন বন্ধুর প্রোফাইল থেকে চ্যাট বাটনে ক্লিক)
+    // যদি URL-এ ?uid=xxx থাকে
     if (typeof window !== "undefined") {
       const targetUid = new URLSearchParams(window.location.search).get("uid")
       if (targetUid) {
@@ -98,7 +98,7 @@ export default function MessagesPage() {
     }
   }
 
-  // রিয়েলটাইম চ্যাট লিসেনার (WebSocket - শুধুমাত্র এই চ্যাটরুমের মেসেজ)
+  // রিয়েলটাইম চ্যাট লিসেনার (WebSocket - শুধুমাত্র এই নির্দিষ্ট চ্যাটরুমের মেসেজ)
   useEffect(() => {
     if (!activeConv) return
 
@@ -139,7 +139,7 @@ export default function MessagesPage() {
     setMessages(msgs)
   }
 
-  // সার্চ শুধুমাত্র নিজের ফ্রেন্ডলিস্টের ভেতরেই সীমাবদ্ধ থাকবে
+  // সার্চ নিজের ফ্রেন্ডলিস্টের ভেতরে
   const filteredFriends = myFriends.filter((f) => {
     if (!searchQuery.trim()) return false
     const q = searchQuery.toLowerCase()
@@ -195,7 +195,6 @@ export default function MessagesPage() {
     setUploadingImg(false)
   }
 
-  // অডিও বা ভিডিও কল শুরু করা
   function startCall(type: CallType) {
     if (!activeConv?.other_user || !me) return
     setCallType(type)
@@ -270,11 +269,11 @@ export default function MessagesPage() {
                 <div className="p-2.5 bg-rose-950/70 border-b border-rose-500/40 text-[11px] text-rose-200 flex items-start gap-1.5">
                   <AlertCircle className="size-3.5 shrink-0 mt-0.5 text-rose-400" />
                   <span className="flex-1">{errorNotice}</span>
-                  <button onClick={() => setErrorNotice("")} className="text-white/60 hover:text-white font-bold ml-1">✕</button>
+                  <button onClick={() => setErrorNotice("")} className="text-white/60 hover:text-white font-bold ml-1 cursor-pointer">✕</button>
                 </div>
               )}
 
-              {/* সার্চ রেজাল্ট (শুধুমাত্র নিজের বন্ধুদের তালিকা থেকে) */}
+              {/* সার্চ রেজাল্ট (ফ্রেন্ডলিস্ট থেকে) */}
               {searchQuery && (
                 <div className="p-2 bg-blue-950/60 border-b border-white/10 space-y-1">
                   <p className="text-[10px] font-bold text-cyan-300 px-2">বন্ধু তালিকায় ফলাফল ({filteredFriends.length}):</p>
@@ -392,7 +391,6 @@ export default function MessagesPage() {
                       </div>
                     </div>
 
-                    {/* সক্রিয় লাইভ অডিও ও ভিডিও কল বাটনসমূহ */}
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
