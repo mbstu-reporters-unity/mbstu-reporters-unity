@@ -14,6 +14,8 @@ import {
 } from "@/lib/chat"
 import { TopBar } from "@/components/portal/top-bar"
 import { SiteHeader } from "@/components/portal/site-header"
+import { CallModal, type CallType, type CallState } from "@/components/portal/call-modal"
+import { ringtone } from "@/lib/webrtc"
 
 export default function MessagesPage() {
   const [token, setToken] = useState("")
@@ -26,8 +28,13 @@ export default function MessagesPage() {
   const [inputText, setInputText] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<Profile[]>([])
-  const [busy, setBusy] = useState(false)
   const [uploadingImg, setUploadingImg] = useState(false)
+
+  // কলিং স্টেট
+  const [callState, setCallState] = useState<CallState>("idle")
+  const [callType, setCallType] = useState<CallType>("audio")
+  const [incomingCaller, setIncomingCaller] = useState<Profile | null>(null)
+  const [activeCallConvId, setActiveCallConvId] = useState<string | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -38,16 +45,32 @@ export default function MessagesPage() {
       setToken(t)
       getMe(t).then((profile) => {
         setMe(profile)
-        if (profile) loadConvs(t, profile.id)
+        if (profile) {
+          loadConvs(t, profile.id)
+          listenToPersonalCallSignals(profile)
+        }
       })
     }
   }, [])
+
+  // নিজের অ্যাকাউন্টে ইনকামিং কল আসার লিসেনার
+  function listenToPersonalCallSignals(myProfile: Profile) {
+    const channel = supabase.channel(`user_calls_${myProfile.id}`)
+    channel
+      .on("broadcast", { event: "incoming_call" }, ({ payload }) => {
+        setIncomingCaller(payload.caller)
+        setCallType(payload.callType)
+        setActiveCallConvId(payload.conversationId)
+        setCallState("incoming")
+        ringtone.start()
+      })
+      .subscribe()
+  }
 
   async function loadConvs(t: string, myId: string) {
     const list = await getMyConversations(t, myId)
     setConversations(list)
 
-    // যদি প্রোফাইল থেকে নির্দিষ্ট ইউজারের চ্যাটে আসা হয় (?uid=...)
     if (typeof window !== "undefined") {
       const targetUid = new URLSearchParams(window.location.search).get("uid")
       if (targetUid) {
@@ -62,7 +85,7 @@ export default function MessagesPage() {
     }
   }
 
-  // রিয়েলটাইম লিসেনার (WebSocket)
+  // রিয়েলটাইম চ্যাট লিসেনার (WebSocket)
   useEffect(() => {
     if (!activeConv) return
 
@@ -114,11 +137,10 @@ export default function MessagesPage() {
   }
 
   async function handleStartChatWithUser(u: Profile) {
-    if (!token) return
-    setBusy(true)
+    if (!token || !me) return
     const convId = await openDirectConversation(token, u.id)
     if (convId) {
-      const freshList = await getMyConversations(token, me!.id)
+      const freshList = await getMyConversations(token, me.id)
       setConversations(freshList)
       const target = freshList.find((c) => c.id === convId) || {
         id: convId,
@@ -128,7 +150,6 @@ export default function MessagesPage() {
       }
       selectConversation(target)
     }
-    setBusy(false)
   }
 
   async function handleSendMessage() {
@@ -155,6 +176,26 @@ export default function MessagesPage() {
     setUploadingImg(false)
   }
 
+  // অডিও বা ভিডিও কল শুরু করা
+  function startCall(type: CallType) {
+    if (!activeConv?.other_user || !me) return
+    setCallType(type)
+    setActiveCallConvId(activeConv.id)
+    setCallState("calling")
+
+    // অপর প্রান্তের ইউজারের ব্যক্তিগত চ্যানেলে ইনকামিং নোটিফিকেশন পাঠানো
+    const channel = supabase.channel(`user_calls_${activeConv.other_user.id}`)
+    channel.send({
+      type: "broadcast",
+      event: "incoming_call",
+      payload: {
+        caller: me,
+        callType: type,
+        conversationId: activeConv.id,
+      },
+    })
+  }
+
   return (
     <>
       <TopBar />
@@ -165,7 +206,7 @@ export default function MessagesPage() {
           <div className="glass-card max-w-sm m-auto p-6 text-center space-y-3 rounded-3xl border border-white/20">
             <MessageSquare className="size-10 text-cyan-400 mx-auto" />
             <h2 className="font-bold text-lg text-white">M-RU টেক্সট (মেসেঞ্জার)</h2>
-            <p className="text-xs text-slate-300">চ্যাট করতে আপনার একাউন্টে লগইন করুন।</p>
+            <p className="text-xs text-slate-300">চ্যাট বা কল করতে একাউন্টে লগইন করুন।</p>
             <Link href="/admin" className="block py-2.5 rounded-xl bg-cyan-600 text-white font-bold text-xs">
               লগইন পেইজে যান →
             </Link>
@@ -173,9 +214,8 @@ export default function MessagesPage() {
         ) : (
           <div className="glass-card max-w-5xl w-full mx-auto flex-1 flex rounded-3xl border border-white/20 overflow-hidden shadow-2xl h-[82vh]">
             
-            {/* কলাম ১: চ্যাট তালিকা ও সার্চ (মোবাইলে চ্যাট ওপেন হলে হাইড হবে) */}
+            {/* কলাম ১: চ্যাট তালিকা ও সার্চ */}
             <div className={`w-full md:w-80 border-r border-white/10 flex flex-col bg-slate-900/60 backdrop-blur-xl ${activeConv ? "hidden md:flex" : "flex"}`}>
-              
               <div className="p-3.5 border-b border-white/10 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <h2 className="font-bold text-sm text-cyan-300 flex items-center gap-1.5">
@@ -183,7 +223,7 @@ export default function MessagesPage() {
                     <span>M-RU টেক্সট</span>
                   </h2>
                   <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full text-slate-300">
-                    {conversations.length} টি কথোপকথন
+                    {conversations.length} টি চ্যাট
                   </span>
                 </div>
 
@@ -306,21 +346,21 @@ export default function MessagesPage() {
                       </div>
                     </div>
 
-                    {/* কলিং বাটন (ধাপ ৪ এর জন্য প্রস্তুত) */}
+                    {/* ✅ সক্রিয় লাইভ অডিও ও ভিডিও কল বাটনসমূহ */}
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
-                        onClick={() => alert("ধাপ ৪-এ লাইভ অডিও কল যুক্ত হচ্ছে!")}
-                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-cyan-300 transition"
-                        title="অডিও কল"
+                        onClick={() => startCall("audio")}
+                        className="p-2.5 rounded-full bg-cyan-600/80 hover:bg-cyan-600 text-white transition shadow active:scale-95 cursor-pointer"
+                        title="লাইভ অডিও কল করুন"
                       >
                         <Phone className="size-4" />
                       </button>
                       <button
                         type="button"
-                        onClick={() => alert("ধাপ ৪-এ লাইভ ভিডিও কল যুক্ত হচ্ছে!")}
-                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-cyan-300 transition"
-                        title="ভিডিও কল"
+                        onClick={() => startCall("video")}
+                        className="p-2.5 rounded-full bg-blue-600/80 hover:bg-blue-600 text-white transition shadow active:scale-95 cursor-pointer"
+                        title="লাইভ ভিডিও কল করুন"
                       >
                         <Video className="size-4" />
                       </button>
@@ -406,12 +446,31 @@ export default function MessagesPage() {
                 <div className="text-center p-8 space-y-2 text-white/60">
                   <MessageSquare className="size-12 mx-auto text-cyan-400/50" />
                   <p className="font-bold text-sm text-white">M-RU টেক্সটে স্বাগতম</p>
-                  <p className="text-xs">বামের তালিকা থেকে যেকোনো ইউজারের ওপর ট্যাপ করে চ্যাট শুরু করুন।</p>
+                  <p className="text-xs">বামের তালিকা থেকে যেকোনো ইউজারের ওপর ট্যাপ করে চ্যাট বা কল করুন।</p>
                 </div>
               )}
             </div>
 
           </div>
+        )}
+
+        {/* অডিও ও ভিডিও কল মডাল */}
+        {me && (
+          <CallModal
+            currentUser={me}
+            targetUser={activeConv?.other_user || null}
+            conversationId={activeCallConvId}
+            callType={callType}
+            callState={callState}
+            incomingCaller={incomingCaller}
+            onClose={() => {
+              setCallState("idle")
+              setIncomingCaller(null)
+            }}
+            onAcceptIncoming={() => {
+              setCallState("connected")
+            }}
+          />
         )}
 
       </main>
