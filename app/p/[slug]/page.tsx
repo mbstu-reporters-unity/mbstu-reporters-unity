@@ -4,25 +4,29 @@ import { notFound } from 'next/navigation'
 import {
   CalendarDays,
   CheckCircle2,
+  ExternalLink,
   Globe,
   Mail,
   MapPin,
   Newspaper,
   Phone,
+  Play,
   Share2,
+  User,
 } from 'lucide-react'
-import { getPageBySlug, getPagePosts } from '@/lib/pages'
-import { getApprovedComments, getImagesMetaForMany, getLayoutsForMany } from '@/lib/sb'
+import { getPageBySlug, getPagePosts, getPageFollowStats } from '@/lib/pages'
+import { getImagesMetaForMany, getLayoutsForMany } from '@/lib/sb'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { UniversalMediaEmbed } from '@/components/portal/universal-media-embed'
 import { ReactionBar } from '@/components/portal/reaction-bar'
-import { CommentForm } from '@/components/portal/comment-form'
 import RichGallery from '@/components/portal/rich-gallery'
+import { FormattedText } from '@/components/portal/formatted-text'
 import { PostMetaBadges } from '@/components/portal/post-meta-badges'
 import { BackNavigation } from '@/components/portal/back-navigation'
+import { PageFollowButton } from '@/components/portal/page-follow-button'
 
 export const revalidate = 60
 
@@ -33,7 +37,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
   const page = await getPageBySlug(slug)
-  if (!page) return { title: 'পেজ পাওয়া যায়নি' }
+  if (!page || page.is_active === false) return { title: 'পেজ পাওয়া যায়নি' }
 
   return {
     title: `${page.name} | MBSTU`,
@@ -53,13 +57,15 @@ export default async function PublicCommunityPage({
 }) {
   const { slug } = await params
   const page = await getPageBySlug(slug)
-  if (!page) notFound()
+  if (!page || page.is_active === false) notFound()
 
-  const posts = await getPagePosts(page.id)
+  const [posts, followStats] = await Promise.all([
+    getPagePosts(page.id),
+    getPageFollowStats(page.id),
+  ])
   const postIds = posts.map((p) => p.id)
 
-  const [commentsByPost, imagesMap, layoutsMap] = await Promise.all([
-    Promise.all(posts.map((post) => getApprovedComments(post.id))),
+  const [imagesMap, layoutsMap] = await Promise.all([
     getImagesMetaForMany('post', postIds),
     getLayoutsForMany('post', postIds),
   ])
@@ -75,11 +81,10 @@ export default async function PublicCommunityPage({
 
         <div className="bg-white/[0.06] border-b border-white/15 backdrop-blur-xl shadow-lg">
           <div className="max-w-5xl mx-auto px-4 pt-4 pb-2">
-            {/* ✅ কভারের উপরে ধাপে ধাপে ফেরা ও ব্রেডক্রাম্ব */}
             <BackNavigation
               items={[
                 { label: 'কমিউনিটি পেজসমূহ', href: '/#community-pages' },
-                { label: page.name }
+                { label: page.name },
               ]}
             />
           </div>
@@ -134,22 +139,29 @@ export default async function PublicCommunityPage({
                   {page.name_en && (
                     <p className="text-xs sm:text-sm text-cyan-200/90 font-medium">{page.name_en}</p>
                   )}
-                  {page.category && (
-                    <span className="inline-block mt-1.5 bg-white/15 text-cyan-200 text-[11px] font-bold px-3 py-0.5 rounded-full border border-white/25">
-                      {page.category}
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1.5 text-xs">
+                    {page.category && (
+                      <span className="bg-white/15 text-cyan-200 text-[11px] font-bold px-3 py-0.5 rounded-full border border-white/25">
+                        {page.category}
+                      </span>
+                    )}
+                    <span className="text-slate-300 font-semibold">
+                      {posts.length.toLocaleString('bn-BD')}টি পোস্ট
                     </span>
-                  )}
+                  </div>
                 </div>
 
-                <div className="shrink-0 pt-2 sm:pt-0">
+                <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0">
+                  <PageFollowButton pageId={page.id} initialCount={followStats.count} />
+
                   <a
                     href={`https://wa.me/?text=${encodeURIComponent(`${page.name}: ${pageUrl}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white border border-white/25 px-4 py-2 text-xs font-bold shadow-lg transition active:scale-95"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/25 text-white border border-white/25 px-3.5 py-2 text-xs font-bold shadow-lg transition active:scale-95"
                   >
                     <Share2 className="size-3.5" />
-                    <span>পেজ শেয়ার করুন</span>
+                    <span>শেয়ার</span>
                   </a>
                 </div>
               </div>
@@ -175,6 +187,14 @@ export default async function PublicCommunityPage({
               )}
 
               <div className="space-y-2.5 pt-2 border-t border-white/15 text-xs text-slate-200">
+                {page.creator_id && (
+                  <p className="flex items-center gap-2">
+                    <User className="size-4 text-cyan-400 shrink-0" />
+                    <Link href={`/u/${page.creator_id}`} className="text-cyan-300 font-bold hover:underline">
+                      পেজ পরিচালকের প্রোফাইল দেখুন
+                    </Link>
+                  </p>
+                )}
                 {page.location && (
                   <p className="flex items-start gap-2">
                     <MapPin className="size-4 text-cyan-400 shrink-0 mt-0.5" />
@@ -209,7 +229,15 @@ export default async function PublicCommunityPage({
                   <p className="flex items-center gap-2">
                     <span className="size-4 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0">f</span>
                     <a href={page.fb_url} target="_blank" rel="noopener noreferrer" className="text-cyan-300 font-bold hover:underline truncate">
-                      ফেসবুক প্রোফাইল / গ্রুপ
+                      ফেসবুক প্রোফাইল / পেজ
+                    </a>
+                  </p>
+                )}
+                {page.yt_url && (
+                  <p className="flex items-center gap-2">
+                    <Play className="size-4 text-rose-400 shrink-0" />
+                    <a href={page.yt_url} target="_blank" rel="noopener noreferrer" className="text-rose-300 font-bold hover:underline truncate">
+                      ইউটিউব চ্যানেল
                     </a>
                   </p>
                 )}
@@ -225,13 +253,18 @@ export default async function PublicCommunityPage({
                 </h2>
               </div>
 
-              {posts.map((post, idx) => {
+              {posts.map((post) => {
                 const rows = imagesMap[post.id] || []
                 const galleryItems =
                   rows.length > 0
-                    ? rows.map((i) => ({ url: i.url, caption: i.caption, credit: i.credit }))
+                    ? rows.map((i) => ({
+                        url: i.url,
+                        caption: i.caption,
+                        credit: i.credit,
+                        date: i.created_at || post.created_at,
+                      }))
                     : post.image_url
-                      ? [{ url: post.image_url }]
+                      ? [{ url: post.image_url, date: post.created_at }]
                       : []
                 const galleryLayout = layoutsMap[post.id] || 'grid'
 
@@ -251,10 +284,10 @@ export default async function PublicCommunityPage({
                           </div>
                         )}
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="font-bold text-sm text-white flex items-center gap-1">
-                          <span>{page.name}</span>
-                          {page.is_verified && <CheckCircle2 className="size-3.5 fill-blue-500 text-white" />}
+                          <span className="truncate">{page.name}</span>
+                          {page.is_verified && <CheckCircle2 className="size-3.5 fill-blue-500 text-white shrink-0" />}
                         </p>
                         <p className="text-[11px] text-cyan-200/80 flex flex-wrap items-center gap-1.5">
                           <span className="inline-flex items-center gap-1">
@@ -287,13 +320,25 @@ export default async function PublicCommunityPage({
                       </Link>
                     </h3>
 
-                    {post.body && (
-                      <p className="whitespace-pre-line text-sm text-slate-100 leading-relaxed">
-                        {post.body}
+                    {post.heading && post.heading.trim() !== post.title.trim() && (
+                      <p className="text-xs sm:text-sm font-medium text-cyan-100/90 border-l-2 border-cyan-400/70 pl-2.5">
+                        {post.heading}
                       </p>
                     )}
 
-                    <RichGallery items={galleryItems} layout={galleryLayout} />
+                    {post.body && (
+                      <FormattedText
+                        text={post.body}
+                        className="text-sm text-slate-100 leading-relaxed"
+                      />
+                    )}
+
+                    <RichGallery
+                      items={galleryItems}
+                      layout={galleryLayout}
+                      postTitle={post.title}
+                      postDate={post.created_at}
+                    />
 
                     {post.video_url && (
                       <video
@@ -308,11 +353,19 @@ export default async function PublicCommunityPage({
                       <UniversalMediaEmbed url={post.embed_media_url} title={post.title} />
                     )}
 
-                    <ReactionBar postId={post.id} title={post.title} />
+                    {post.link_url && (
+                      <a
+                        href={post.link_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:underline"
+                      >
+                        <ExternalLink className="size-3.5" />
+                        <span>সংযুক্ত লিংক দেখুন</span>
+                      </a>
+                    )}
 
-                    <div className="pt-2 border-t border-white/15">
-                      <CommentForm postId={post.id} initialComments={commentsByPost[idx] || []} />
-                    </div>
+                    <ReactionBar postId={post.id} title={post.title} inlineComments />
                   </article>
                 )
               })}
@@ -321,7 +374,7 @@ export default async function PublicCommunityPage({
                 <div className="glass-card p-10 text-center space-y-2 text-white">
                   <Newspaper className="size-10 text-white/40 mx-auto" />
                   <p className="font-bold text-sm text-white">এই পেজে এখনো কোনো পোস্ট দেওয়া হয়নি।</p>
-                  <p className="text-xs text-slate-300">অ্যাডমিন প্যানেল থেকে এই পেজে নতুন পোস্ট দিলে তা এখানে লাইভ হয়ে যাবে।</p>
+                  <p className="text-xs text-slate-300">পেজের ড্যাশবোর্ড থেকে নতুন পোস্ট দিলে তা এখানে লাইভ হয়ে যাবে।</p>
                 </div>
               )}
 
