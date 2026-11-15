@@ -40,7 +40,7 @@ import { getMyFriendships } from '@/lib/friends'
 import { Logo } from './logo'
 import { useLang } from '@/lib/i18n'
 import { CallModal, type CallType, type CallState } from './call-modal'
-import { supabase } from '@/lib/chat'
+import { supabase, syncRealtimeAuth } from '@/lib/chat'
 import { ringtone } from '@/lib/webrtc'
 
 export function SiteHeader() {
@@ -72,6 +72,7 @@ export function SiteHeader() {
   useEffect(() => {
     let alive = true
     let callChannel: ReturnType<typeof supabase.channel> | null = null
+    let friendChannel: ReturnType<typeof supabase.channel> | null = null
 
     fetch(
       `${SB_URL}/rest/v1/app_config?select=key,value&key=in.(univ_logo_url,univ_link_url,univ_text)`,
@@ -99,14 +100,24 @@ export function SiteHeader() {
 
     const t = localStorage.getItem('mbstu_admin_token') || ''
     if (t) {
+      syncRealtimeAuth(t)
+
       getMe(t).then((profile) => {
         if (!alive || !profile) return
         setMe(profile)
 
-        getMyFriendships(t, profile.id)
-          .then((f) => { if (alive) setIncomingReqCount(f.incoming.length) })
-          .catch(() => {})
+        // ফ্রেন্ড রিকোয়েস্ট সংখ্যা রিফ্রেশ করার ফাংশন
+        const refreshFriendRequests = () => {
+          getMyFriendships(t, profile.id)
+            .then((f) => {
+              if (alive) setIncomingReqCount(f.incoming.length)
+            })
+            .catch(() => {})
+        }
 
+        refreshFriendRequests()
+
+        // ১. ব্যক্তিগত ইনকামিং কল সিগন্যাল লিসেনার
         callChannel = supabase.channel(`user_calls_${profile.id}`)
         callChannel
           .on('broadcast', { event: 'incoming_call' }, ({ payload }) => {
@@ -117,12 +128,42 @@ export function SiteHeader() {
             ringtone.start()
           })
           .subscribe()
+
+        // ২. ✅ রিয়েলটাইম ফ্রেন্ড রিকোয়েস্ট লিসেনার (যেকোনো সময় ফ্রেন্ড রিকোয়েস্ট আসলে বা একসেপ্ট হলে লাইভ কাউন্ট আপডেট হবে)
+        friendChannel = supabase
+          .channel(`user_friends_realtime_${profile.id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'friendships',
+              filter: `addressee_id=eq.${profile.id}`,
+            },
+            () => {
+              refreshFriendRequests()
+            }
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'friendships',
+              filter: `requester_id=eq.${profile.id}`,
+            },
+            () => {
+              refreshFriendRequests()
+            }
+          )
+          .subscribe()
       })
     }
 
     return () => {
       alive = false
       if (callChannel) supabase.removeChannel(callChannel)
+      if (friendChannel) supabase.removeChannel(friendChannel)
     }
   }, [])
 
@@ -379,6 +420,7 @@ export function SiteHeader() {
           {/* ডানপাশ: বন্ধু (/friends), M-RU টেক্সট (/messages), লগইন/প্রোফাইল বাটন */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             
+            {/* বন্ধু বাটন ও ইনকামিং রিকোয়েস্টের রিয়েলটাইম ব্যাজ */}
             <Link
               href="/friends"
               className="relative inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition active:scale-95 shadow-sm"
@@ -387,7 +429,7 @@ export function SiteHeader() {
               <UserPlus className="size-3.5 sm:size-4 text-cyan-300" />
               <span className="hidden sm:inline">বন্ধু</span>
               {incomingReqCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-bold">
+                <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-bold animate-pulse">
                   {incomingReqCount}
                 </span>
               )}
@@ -479,7 +521,7 @@ export function SiteHeader() {
                     <span>বন্ধু ও ফ্রেন্ড রিকোয়েস্ট</span>
                   </span>
                   {incomingReqCount > 0 ? (
-                    <span className="text-[10px] bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full animate-pulse">
                       {incomingReqCount} নতুন
                     </span>
                   ) : (
