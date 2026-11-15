@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
-import { SB_URL, SB_KEY, isTokenExpired, refreshSession, type Profile } from "./sb"
+import { SB_URL, SB_KEY, type Profile } from "./sb"
 
 export const supabase = createClient(SB_URL, SB_KEY, {
   auth: {
@@ -62,7 +62,6 @@ export async function getMyConversations(token: string, currentUserId: string): 
       const c = r.conversations
       if (!c || !c.id) continue
 
-      // অপর ব্যক্তির তথ্য আনা (গোপনীয় তথ্য ছাড়া)
       const partRes = await fetch(
         `${SB_URL}/rest/v1/conversation_participants?select=user_id,profiles(id,full_name,avatar_url,department,designation,user_type,newspaper_name)&conversation_id=eq.${encodeURIComponent(c.id)}&user_id=neq.${encodeURIComponent(currentUserId)}`,
         { headers: hdr(token), cache: "no-store" }
@@ -70,7 +69,6 @@ export async function getMyConversations(token: string, currentUserId: string): 
       const partRows = partRes.ok ? await partRes.json() : []
       const other = partRows[0]?.profiles || null
 
-      // সর্বশেষ মেসেজ আনা
       const msgRes = await fetch(
         `${SB_URL}/rest/v1/messages?select=*&conversation_id=eq.${encodeURIComponent(c.id)}&order=created_at.desc&limit=1`,
         { headers: hdr(token), cache: "no-store" }
@@ -130,7 +128,6 @@ export async function sendChatMessage(
   if (!res.ok) return null
   const rows = await res.json()
 
-  // চ্যাটের সময় আপডেট করা
   await fetch(`${SB_URL}/rest/v1/conversations?id=eq.${encodeURIComponent(conversationId)}`, {
     method: "PATCH",
     headers: { ...hdr(token, true), Prefer: "return=minimal" },
@@ -140,7 +137,7 @@ export async function sendChatMessage(
   return rows[0] || null
 }
 
-// শুধুমাত্র বন্ধুর সাথেই চ্যাট ওপেন করা
+// ডিরেক্ট চ্যাট ওপেন করা (ফ্রেন্ড আবশ্যক)
 export async function openDirectConversation(token: string, otherUserId: string): Promise<string | null> {
   try {
     const res = await fetch(`${SB_URL}/rest/v1/rpc/get_or_create_direct_conversation`, {
@@ -156,5 +153,20 @@ export async function openDirectConversation(token: string, otherUserId: string)
     return convId
   } catch (e) {
     throw e
+  }
+}
+
+// চ্যাট করার জন্য সদস্য খোঁজা (Vercel বিল্ড সেফটি নিশ্চিত রাখতে এক্সপোর্ট যুক্ত রাখা হলো)
+export async function searchCampusUsers(token: string, query: string): Promise<Profile[]> {
+  if (!query.trim()) return []
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/profiles?select=id,full_name,avatar_url,department,designation,user_type&approved=eq.true&or=(full_name.ilike.*${encodeURIComponent(query)}*,department.ilike.*${encodeURIComponent(query)}*)&limit=15`,
+      { headers: hdr(token), cache: "no-store" }
+    )
+    if (!res.ok) return []
+    return await res.json()
+  } catch {
+    return []
   }
 }
