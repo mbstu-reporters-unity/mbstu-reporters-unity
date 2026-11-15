@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
 import {
   login, signUp, getMe, getAllPosts, setPostHidden, setPostAuthorAvatarVisible, getCategoryNames, getCategories,
   updatePost, deletePost, uploadImage, uploadVideo,
@@ -28,6 +29,7 @@ import SocialSiteManager from "./social-site-manager"
 import AdministrationManager from "./administration-manager"
 import CommunityPageManager from "./community-page-manager"
 import StoryManager from "./story-manager"
+import UsersManager from "./users-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
@@ -35,7 +37,7 @@ import {
   Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
   Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2,
-  Camera, Eye, EyeOff, Film
+  Camera, Eye, EyeOff, Film, Briefcase
 } from "lucide-react"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -47,10 +49,20 @@ const smallInp = "w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-x
 const btn = "w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-50 cursor-pointer shadow-md transition active:scale-98"
 
 type Tab =
-  | "posts" | "stories" | "comments" | "reporters" | "profile" | "leaders" | "notices"
+  | "posts" | "stories" | "comments" | "profile" | "leaders" | "notices"
   | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "directors" | "categories"
   | "clubs" | "faculties" | "associations" | "social_sites" | "administration"
   | "community_pages"
+  | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
+
+type NavItem = {
+  id: Tab
+  label: string
+  icon: typeof Newspaper
+  badge?: number
+  adminOnly?: boolean
+  modOrAdmin?: boolean
+}
 
 export type PostMediaItem = {
   id?: string
@@ -110,7 +122,7 @@ export default function AdminPage() {
   const [officeSection, setOfficeSection] = useState("")
   const [staffId, setStaffId] = useState("")
 
-  const [tab, setTab] = useState<Tab>("posts")
+  const [tab, setTab] = useState<Tab>("community_pages")
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const [posts, setPosts] = useState<Post[]>([])
@@ -164,6 +176,8 @@ export default function AdminPage() {
   const [pFile, setPFile] = useState<File | null>(null)
 
   const isAdmin = me?.role === "admin" && me.approved
+  const isModerator = me?.role === "moderator" && me.approved
+  const canPublishMain = isAdmin || isModerator
 
   const selectableCats = useMemo(() => {
     if (isAdmin) return cats
@@ -184,6 +198,13 @@ export default function AdminPage() {
       setPDesignation(me.designation || "")
       setPOfficeSection(me.office_section || "")
       setPBio(me.bio || "")
+
+      const hasMain = (me.role === "admin" || me.role === "moderator") && me.approved
+      if (hasMain) {
+        setTab((prev) => (prev === "community_pages" ? "posts" : prev))
+      } else {
+        setTab((prev) => (prev === "community_pages" || prev === "profile" ? prev : "community_pages"))
+      }
     }
   }, [me])
 
@@ -241,28 +262,36 @@ export default function AdminPage() {
 
   async function refresh(t: string, profile: Profile | null) {
     try {
-      const [p, names, catRows, clubs, pages] = await Promise.all([
-        getAllPosts(100),
+      const isAdm = profile?.role === "admin" && profile.approved
+      const isMod = profile?.role === "moderator" && profile.approved
+
+      const [names, catRows, clubs, pages] = await Promise.all([
         getCategoryNames(),
         getCategories(t),
         getCampusClubs(t),
         getCommunityPages(),
       ])
-      setPosts(p)
       if (names.length) setCats(names)
       setCategoryRows(catRows)
       setAvailableClubs(clubs)
       setCommunityPages(pages)
 
-      if (profile?.role === "admin" && profile.approved) {
-        const [c, w, a] = await Promise.all([
+      if (isAdm || isMod) {
+        const [p, a] = await Promise.all([
+          getAllPosts(100),
+          getReporters(t, true),
+        ])
+        setPosts(p)
+        setActive(a)
+      }
+
+      if (isAdm) {
+        const [c, w] = await Promise.all([
           getPendingComments(t),
           getReporters(t, false),
-          getReporters(t, true),
         ])
         setPending(c)
         setWaiting(w)
-        setActive(a)
       }
     } catch (e) { await fail(e) }
   }
@@ -364,7 +393,7 @@ export default function AdminPage() {
       setMsg(
         userType === "reporter"
           ? "✅ নিবন্ধন সম্পন্ন। অ্যাডমিন অনুমোদন দিলে লগইন করুন।"
-          : "✅ নিবন্ধন সফল হয়েছে! এখন আপনার ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।"
+          : "✅ নিবন্ধন সফল হয়েছে! আপনার নামে একটি পেজও স্বয়ংক্রিয়ভাবে তৈরি হয়েছে। এখন লগইন করুন।"
       )
     } catch (e) { await fail(e) }
     setBusy(false)
@@ -496,6 +525,7 @@ export default function AdminPage() {
   }
 
   async function submit() {
+    if (!canPublishMain) return
     if (!title.trim() || !body.trim()) {
       setMsg("শিরোনাম ও ক্যাপশন লিখুন")
       return
@@ -650,7 +680,6 @@ export default function AdminPage() {
 
               <input className={inp} placeholder="আপনার পূর্ণ নাম *" value={fullName} onChange={(e) => setFullName(e.target.value)} />
 
-              {/* ১. শিক্ষার্থীর ফিল্ডসমূহ */}
               {userType === "student" && (
                 <>
                   <input className={inp} placeholder="বিভাগ (যেমন: CSE, BGE, ICT) *" value={dept} onChange={(e) => setDept(e.target.value)} />
@@ -661,7 +690,6 @@ export default function AdminPage() {
                 </>
               )}
 
-              {/* ২. শিক্ষকের ফিল্ডসমূহ */}
               {userType === "teacher" && (
                 <>
                   <input className={inp} placeholder="অনুষদ ও বিভাগ (যেমন: সিএসই বিভাগ) *" value={dept} onChange={(e) => setDept(e.target.value)} />
@@ -669,7 +697,6 @@ export default function AdminPage() {
                 </>
               )}
 
-              {/* ৩. কর্মচারীর ফিল্ডসমূহ */}
               {userType === "staff" && (
                 <>
                   <input className={inp} placeholder="দপ্তর বা শাখা (যেমন: রেজিস্ট্রার দপ্তর, পরীক্ষা শাখা) *" value={officeSection} onChange={(e) => setOfficeSection(e.target.value)} />
@@ -680,7 +707,6 @@ export default function AdminPage() {
                 </>
               )}
 
-              {/* ৪. সাংবাদিকের ফিল্ডসমূহ */}
               {userType === "reporter" && (
                 <>
                   <input className={inp} placeholder="পত্রিকা বা মিডিয়ার নাম *" value={paper} onChange={(e) => setPaper(e.target.value)} />
@@ -727,7 +753,7 @@ export default function AdminPage() {
         <div className="w-full max-w-sm rounded-3xl border border-white/20 bg-slate-900/90 shadow-2xl p-6 space-y-3 text-center backdrop-blur">
           <h1 className="text-xl font-bold text-amber-300">অনুমোদনের অপেক্ষায়</h1>
           <p className="text-xs text-slate-300 leading-relaxed">
-            {me.full_name}, আপনার নিবন্ধন সম্পন্ন হয়েছে। অ্যাডমিন যাচাই করে অনুমোদন দিলে আপনি এই প্যানেল থেকে পোস্ট করতে পারবেন।
+            {me.full_name}, আপনার নিবন্ধন সম্পন্ন হয়েছে। অ্যাডমিন যাচাই করে অনুমোদন দিলে আপনি এই প্যানেল ব্যবহার করতে পারবেন।
           </p>
           <button onClick={() => loadMe(token)} className={btn}>স্ট্যাটাস রিলোড করুন</button>
           <button onClick={logout} className="text-xs text-rose-400 underline cursor-pointer">লগআউট</button>
@@ -738,7 +764,7 @@ export default function AdminPage() {
 
   if (!me) return null
 
-  const canManage = (p: Post) => me.role === "admin" || me.role === "moderator" || p.user_id === me.id
+  const canManage = (p: Post) => Boolean(isAdmin || isModerator || p.user_id === me.id)
   const isClubCategory = category.includes("ক্লাব") || category.includes("Club")
 
   const userTypeLabels: Record<string, string> = {
@@ -749,21 +775,28 @@ export default function AdminPage() {
   }
   const userRoleText = isAdmin
     ? "প্রধান অ্যাডমিন"
-    : me.role === "moderator"
+    : isModerator
     ? "মডারেটর"
     : userTypeLabels[me.user_type || "student"] || "সদস্য"
 
-  // ✅ নেভিগেশন গ্রুপ: "আমার পেজ ও কমিউনিটি" এখন সকল লগইন করা শিক্ষার্থী, শিক্ষক ও কর্মচারীর জন্য উন্মুক্ত!
-  const navigationGroups = [
+  const waitingReportersCount = waiting.filter(
+    (r) => (r.user_type || (r.newspaper_name ? "reporter" : "student")) === "reporter"
+  ).length
+
+  // ✅ কঠোর রোল-ভিত্তিক মেনু:
+  // - Admin: সবকিছু + ৪টি আলাদা সদস্য তালিকা
+  // - Moderator: সংবাদ, স্টোরিজ ও রিলস, ডিজিটাল নোটিশ + নিজের পেজ ও প্রোফাইল
+  // - সাধারণ ইউজার (শিক্ষক, শিক্ষার্থী, কর্মচারী, সাংবাদিক): শুধুমাত্র নিজের পেজ ও প্রোফাইল
+  const navigationGroups: { groupTitle: string; items: NavItem[] }[] = [
     {
-      groupTitle: "১. কন্টেন্ট ও সংবাদ",
+      groupTitle: "১. কন্টেন্ট ও সংবাদ (অ্যাডমিন / মডারেটর)",
       items: [
-        { id: "posts", label: "সংবাদ ও পোস্ট", icon: Newspaper },
-        { id: "stories", label: "ফেসবুক স্টোরিজ ও রিলস", icon: Film },
-        { id: "notices", label: "ডিজিটাল নোটিশ", icon: Bell },
+        { id: "posts", label: "সংবাদ ও পোস্ট", icon: Newspaper, modOrAdmin: true },
+        { id: "stories", label: "ফেসবুক স্টোরিজ ও রিলস", icon: Film, modOrAdmin: true },
+        { id: "notices", label: "ডিজিটাল নোটিশ", icon: Bell, modOrAdmin: true },
         { id: "ticker", label: "ব্রেকিং টিকার", icon: Radio, adminOnly: true },
         { id: "comments", label: "কমেন্ট মডারেশন", icon: MessageSquare, badge: pending.length, adminOnly: true },
-      ]
+      ],
     },
     {
       groupTitle: "২. হোমপেজ ও ডিজাইন",
@@ -772,7 +805,7 @@ export default function AdminPage() {
         { id: "hero_banner", label: "হিরো ব্যানার", icon: Sliders, adminOnly: true },
         { id: "limits", label: "হোম সেটিং ও লোগো", icon: Settings, adminOnly: true },
         { id: "categories", label: "ক্যাটাগরি কন্ট্রোল", icon: Layers, adminOnly: true },
-      ]
+      ],
     },
     {
       groupTitle: "৩. প্রশাসন ও বিশ্ববিদ্যালয়",
@@ -781,25 +814,33 @@ export default function AdminPage() {
         { id: "faculties", label: "অনুষদ ও বিভাগসমূহ", icon: GraduationCap, adminOnly: true },
         { id: "leaders", label: "কার্যনির্বাহী পরিষদ", icon: Users, adminOnly: true },
         { id: "directors", label: "ডিরেক্টর প্যানেল", icon: UserCheck, adminOnly: true },
-      ]
+      ],
     },
     {
       groupTitle: "৪. ক্যাম্পাস কমিউনিটি ও পেজ",
       items: [
-        { id: "community_pages", label: "আমার পেজ ও কমিউনিটি", icon: FileText }, // সবার জন্য উন্মুক্ত
+        { id: "community_pages", label: "আমার পেজ ও কমিউনিটি", icon: FileText },
         { id: "clubs", label: "ক্যাম্পাস ক্লাবসমূহ", icon: Star, adminOnly: true },
         { id: "students", label: "স্টুডেন্ট কর্নার", icon: BookOpen, adminOnly: true },
         { id: "social_sites", label: "সোশ্যাল সাইট ও গ্রুপ", icon: Globe2, adminOnly: true },
         { id: "associations", label: "অন্যান্য সমিতি", icon: ShieldCheck, adminOnly: true },
-      ]
+      ],
     },
     {
-      groupTitle: "৫. ব্যবহারকারী ও প্রোফাইল",
+      groupTitle: "৫. সদস্য ও ব্যবহারকারী (শুধু অ্যাডমিন)",
       items: [
-        { id: "reporters", label: "সাংবাদিক অনুমোদন", icon: Users, badge: waiting.length, adminOnly: true },
+        { id: "users_teacher", label: "শিক্ষক তালিকা", icon: GraduationCap, adminOnly: true },
+        { id: "users_student", label: "শিক্ষার্থী তালিকা", icon: User, adminOnly: true },
+        { id: "users_staff", label: "কর্মচারী তালিকা", icon: Briefcase, adminOnly: true },
+        { id: "users_reporter", label: "সাংবাদিক তালিকা", icon: Newspaper, badge: waitingReportersCount, adminOnly: true },
+      ],
+    },
+    {
+      groupTitle: "৬. ব্যক্তিগত প্রোফাইল",
+      items: [
         { id: "profile", label: "আমার প্রোফাইল", icon: User },
-      ]
-    }
+      ],
+    },
   ]
 
   const selectTab = (t: Tab) => {
@@ -868,7 +909,11 @@ export default function AdminPage() {
 
         <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-none text-xs">
           {navigationGroups.map((grp, gi) => {
-            const visibleItems = grp.items.filter((it) => !it.adminOnly || isAdmin)
+            const visibleItems = grp.items.filter((it) => {
+              if (it.adminOnly) return Boolean(isAdmin)
+              if (it.modOrAdmin) return Boolean(canPublishMain)
+              return true
+            })
             if (visibleItems.length === 0) return null
 
             return (
@@ -884,7 +929,7 @@ export default function AdminPage() {
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => selectTab(item.id as Tab)}
+                        onClick={() => selectTab(item.id)}
                         className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all cursor-pointer font-medium ${
                           isActive
                             ? "bg-cyan-600 text-white font-bold shadow-md"
@@ -933,8 +978,8 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* সংবাদ ও পোস্ট ট্যাব */}
-        {tab === "posts" && (
+        {/* সংবাদ ও পোস্ট ট্যাব (শুধুমাত্র অ্যাডমিন ও মডারেটর) */}
+        {tab === "posts" && canPublishMain && (
           <div className="space-y-4">
             <div className="flex bg-white rounded-2xl p-1.5 shadow-xs border border-slate-200 gap-1.5 text-xs font-bold">
               <button
@@ -1087,7 +1132,6 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* কমিউনিটি পেজ ও ক্লাব সংযোগ */}
               <div className="space-y-1 rounded-xl border border-blue-200 bg-blue-50/60 p-3">
                 <label className="text-xs font-bold text-blue-950 block">
                   📄 নির্দিষ্ট কমিউনিটি পেজে পোস্ট করুন (টাইমলাইনে দেখাবে - ঐচ্ছিক):
@@ -1112,7 +1156,6 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* মিডিয়া ফাইল ও লিংক বক্স */}
               <div className="space-y-3 rounded-2xl border-2 border-emerald-200 bg-emerald-50/40 p-3.5">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200 pb-2">
                   <p className="text-xs font-bold text-emerald-950">🎥 মিডিয়া সংযুক্তি (ছবি, ভিডিও বা লিংক):</p>
@@ -1195,7 +1238,6 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* প্রকাশিত পোস্টের তালিকা */}
             <div className="space-y-2.5">
               <h3 className="font-bold text-sm text-slate-800">প্রকাশিত পোস্ট ও সংবাদসমূহ ({posts.length}টি)</h3>
               {posts.map((p) => (
@@ -1262,23 +1304,44 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ✅ আমার পেজ ও কমিউনিটি ট্যাব (সকলের জন্য উন্মুক্ত) */}
+        {/* আমার পেজ ও কমিউনিটি ট্যাব (সকলের জন্য উন্মুক্ত) */}
         {tab === "community_pages" && me && (
-          <CommunityPageManager
-            token={token}
-            shrink={shrink}
-            authorName={me.full_name}
-            authorAvatar={me.avatar_url}
-            currentUserId={me.id}
-            isAdmin={!!isAdmin}
-            onPostCreated={() => refresh(token, me)}
-          />
+          <div className="space-y-3">
+            {!canPublishMain && (
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3.5 text-xs text-blue-950 space-y-1">
+                <p className="font-bold">📢 স্বাগতম, {me.full_name}!</p>
+                <p>
+                  আপনার একাউন্ট খোলার সাথে সাথেই আপনার নামে একটি পেজ তৈরি হয়েছে। আপনি নিজের পেজ পরিচালনা ও পেজে পোস্ট করতে পারবেন এবং আপনার পেজের সব পোস্ট ওয়েবসাইটের হোমপেজে দেখা যাবে।
+                </p>
+              </div>
+            )}
+            <CommunityPageManager
+              token={token}
+              shrink={shrink}
+              authorName={me.full_name}
+              authorAvatar={me.avatar_url}
+              currentUserId={me.id}
+              isAdmin={!!isAdmin}
+              onPostCreated={() => refresh(token, me)}
+            />
+          </div>
         )}
 
         {/* প্রোফাইল ট্যাব */}
         {tab === "profile" && (
           <div className="bg-white rounded-2xl shadow p-5 space-y-4 border">
-            <h2 className="font-bold text-base text-slate-800 border-b pb-2">আমার প্রোফাইল তথ্য ({userRoleText})</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
+              <h2 className="font-bold text-base text-slate-800">আমার প্রোফাইল তথ্য ({userRoleText})</h2>
+              <Link
+                href={`/u/${me.id}`}
+                target="_blank"
+                className="inline-flex items-center gap-1 rounded-xl bg-cyan-50 border border-cyan-200 px-3 py-1.5 text-xs font-bold text-cyan-800 hover:bg-cyan-100"
+              >
+                <span>পাবলিক প্রোফাইল দেখুন</span>
+                <ExternalLink className="size-3.5" />
+              </Link>
+            </div>
+
             {(pFile || me.avatar_url) && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={pFile ? URL.createObjectURL(pFile) : me.avatar_url || ""} alt="" className="size-24 rounded-full object-cover mx-auto ring-2 ring-emerald-500 shadow" />
@@ -1318,8 +1381,8 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* অ্যাডমিন নিয়ন্ত্রিত ম্যানেজারসমূহ */}
-        {tab === "stories" && (
+        {/* মডারেটর + অ্যাডমিন পরিচালিত ম্যানেজারসমূহ */}
+        {tab === "stories" && canPublishMain && (
           <StoryManager
             token={token}
             authorName={me.full_name}
@@ -1327,7 +1390,7 @@ export default function AdminPage() {
             shrink={shrink}
           />
         )}
-        {tab === "notices" && (
+        {tab === "notices" && canPublishMain && (
           <NoticeManager
             token={token}
             isAdmin={!!isAdmin}
@@ -1335,6 +1398,8 @@ export default function AdminPage() {
             authorAvatar={me.avatar_url}
           />
         )}
+
+        {/* শুধুমাত্র অ্যাডমিন পরিচালিত ম্যানেজারসমূহ */}
         {tab === "hero" && isAdmin && <HeroManager token={token} shrink={shrink} />}
         {tab === "hero_banner" && isAdmin && <HeroBannerManager token={token} shrink={shrink} />}
         {tab === "ticker" && isAdmin && <TickerManager token={token} author={me.full_name} />}
@@ -1374,43 +1439,28 @@ export default function AdminPage() {
           </div>
         )}
         {tab === "leaders" && isAdmin && <LeadershipManager token={token} members={active} shrink={shrink} />}
-        {tab === "reporters" && isAdmin && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h3 className="font-bold text-sm text-slate-800">অনুমোদনের অপেক্ষায় ({waiting.length})</h3>
-              {waiting.map((r) => (
-                <div key={r.id} className="bg-white rounded-2xl shadow-xs border p-3.5 text-xs space-y-1">
-                  <p className="font-bold text-sm text-slate-800">{r.full_name}</p>
-                  <p className="text-slate-600">বিভাগ: {r.department} · ব্যাচ: {r.batch} · পত্রিকা: {r.newspaper_name || "নেই"}</p>
-                  <div className="flex gap-3 pt-1 font-bold">
-                    <button onClick={() => act(() => approveReporter(token, r.id))} className="text-emerald-700">অনুমোদন দিন</button>
-                    <button onClick={() => act(() => removeReporter(token, r.id), "বাতিল করবেন?")} className="text-rose-600">বাতিল</button>
-                  </div>
-                </div>
-              ))}
-              {waiting.length === 0 && <p className="text-xs text-slate-400 py-3 text-center bg-white rounded-xl border">কোনো আবেদন নেই।</p>}
-            </div>
 
-            <div className="space-y-2 pt-2">
-              <h3 className="font-bold text-sm text-slate-800">অনুমোদিত সাংবাদিকবৃন্দ ({active.length})</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {active.map((r) => (
-                  <div key={r.id} className="bg-white rounded-xl border p-2.5 text-xs flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-slate-800">{r.full_name}</p>
-                      <p className="text-[11px] text-slate-500">{r.department} · {r.newspaper_name || "রিপোর্টার"}</p>
-                    </div>
-                    {r.id !== me.id && (
-                      <button onClick={() => act(() => removeReporter(token, r.id), "সরিয়ে দেবেন?")} className="text-rose-600 font-bold hover:underline">
-                        সরান
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* ৪টি আলাদা সদস্য সেকশন (শুধুমাত্র অ্যাডমিন) */}
+        {(tab === "users_teacher" ||
+          tab === "users_student" ||
+          tab === "users_staff" ||
+          tab === "users_reporter") &&
+          isAdmin && (
+            <UsersManager
+              token={token}
+              currentAdminId={me.id}
+              initialSection={
+                tab === "users_teacher"
+                  ? "teacher"
+                  : tab === "users_student"
+                    ? "student"
+                    : tab === "users_staff"
+                      ? "staff"
+                      : "reporter"
+              }
+              onChanged={() => refresh(token, me)}
+            />
+          )}
 
       </main>
       <GlobalTextStudio />
