@@ -2,6 +2,8 @@ export const SB_URL = "https://pdualebabnvkoaqaqcut.supabase.co"
 export const SB_KEY = "sb_publishable_7SMqtPPUqsWVCPIXDqgPTw_Jrctzkwm"
 const BUCKET = "post-images"
 
+export type UserType = "student" | "teacher" | "staff" | "reporter"
+
 export type Post = {
   id: string
   title: string
@@ -40,12 +42,17 @@ export type PendingComment = PublicComment & {
 export type Profile = {
   id: string
   full_name: string
-  department: string
-  batch: string
-  student_id: string
-  phone: string
+  department: string | null
+  batch: string | null
+  student_id: string | null
+  phone: string | null
   email: string | null
-  role: string
+  role: string // 'admin' | 'moderator' | 'user'
+  user_type: UserType // শিক্ষার্থী, শিক্ষক, কর্মচারী, সাংবাদিক
+  designation?: string | null // শিক্ষক/কর্মচারীর পদবি
+  office_section?: string | null // কর্মচারীর দপ্তর/শাখা
+  staff_id?: string | null // কর্মচারীর স্টাফ আইডি
+  bio?: string | null // পরিচিতি
   approved: boolean
   newspaper_name?: string | null
   avatar_url?: string | null
@@ -55,9 +62,13 @@ export type Profile = {
 
 export type SignupInfo = {
   full_name: string
-  department: string
-  batch: string
-  student_id: string
+  user_type: UserType
+  department?: string
+  batch?: string
+  student_id?: string
+  designation?: string
+  office_section?: string
+  staff_id?: string
   phone: string
   newspaper_name?: string
 }
@@ -173,14 +184,57 @@ export async function refreshSession(): Promise<string | null> {
 }
 
 export async function signUp(email: string, password: string, info: SignupInfo) {
+  const cleanEmail = email.trim()
+  // শিক্ষার্থী, শিক্ষক ও সাধারণ কর্মচারীদের ক্ষেত্রে অ্যাকাউন্ট সাথে সাথেই সচল (approved=true) থাকবে
+  const autoApproved = info.user_type !== "reporter"
+
   const res = await ok(
     await fetch(`${SB_URL}/auth/v1/signup`, {
       method: "POST",
       headers: hdr(undefined, true),
-      body: JSON.stringify({ email: email.trim(), password, data: info }),
+      body: JSON.stringify({
+        email: cleanEmail,
+        password,
+        data: {
+          ...info,
+          approved: autoApproved,
+          role: "user",
+        },
+      }),
     })
   )
-  return res.json()
+  const userObj = await res.json()
+
+  // Profiles টেবিলে ডাটাবেজ রো নিশ্চিত করা
+  if (userObj?.user?.id) {
+    const profilePayload = {
+      id: userObj.user.id,
+      email: cleanEmail,
+      full_name: info.full_name,
+      user_type: info.user_type,
+      department: info.department || null,
+      batch: info.batch || null,
+      student_id: info.student_id || null,
+      designation: info.designation || null,
+      office_section: info.office_section || null,
+      staff_id: info.staff_id || null,
+      phone: info.phone,
+      newspaper_name: info.newspaper_name || null,
+      approved: autoApproved,
+      role: "user",
+    }
+
+    await fetch(`${SB_URL}/rest/v1/profiles`, {
+      method: "POST",
+      headers: {
+        ...hdr(userObj.access_token || undefined, true),
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify(profilePayload),
+    }).catch(() => {})
+  }
+
+  return userObj
 }
 
 export async function getMe(token: string): Promise<Profile | null> {
@@ -249,7 +303,20 @@ export async function removeReporter(token: string, id: string) {
 export async function updateMyProfile(
   token: string,
   id: string,
-  data: Partial<Pick<Profile, "full_name" | "department" | "batch" | "phone" | "newspaper_name" | "avatar_url">>
+  data: Partial<
+    Pick<
+      Profile,
+      | "full_name"
+      | "department"
+      | "batch"
+      | "phone"
+      | "newspaper_name"
+      | "avatar_url"
+      | "designation"
+      | "office_section"
+      | "bio"
+    >
+  >
 ) {
   await ok(
     await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`, {
@@ -333,7 +400,7 @@ export async function deletePost(token: string, id: string) {
   )
 }
 
-/* ---------- ছবি ও ভিডিও আপলোড (PNG/WebP স্বচ্ছতা সংরক্ষণসহ) ---------- */
+/* ---------- ছবি ও ভিডিও আপলোড ---------- */
 
 export async function uploadImage(token: string, file: Blob): Promise<string> {
   const mime = file.type || "image/jpeg"
@@ -464,7 +531,7 @@ export async function updatePassword(token: string, password: string) {
   )
 }
 
-/* ---------- নেতৃত্ব বোর্ড ---------- */
+/* ---------- নেতৃত্ব পরিষদ (Executive Committee) ---------- */
 
 export const POSITIONS = [
   { key: "president", en: "President", bn: "সভাপতি" },
@@ -689,7 +756,7 @@ export async function saveHomeLimit(token: string, n: number) {
   )
 }
 
-/* ---------- সেকশন, সংখ্যা ও স্টুডেন্ট কর্নার ---------- */
+/* ---------- সেকশন, লিমিট ও ক্যাটাগরি কনস্ট্যান্ট ---------- */
 
 export const CAT_CAMPUS = "ক্যাম্পাস সংবাদ"
 export const CAT_CLUB = "ক্লাব"
@@ -727,6 +794,8 @@ export async function saveLimit(token: string, key: string, n: number) {
     })
   )
 }
+
+/* ---------- স্টুডেন্ট কর্নার (Student Corner) ---------- */
 
 export type StudentItem = {
   id: string
@@ -792,7 +861,7 @@ export async function deleteStudentItem(token: string, id: string) {
   )
 }
 
-/* ---------- একাধিক ছবি (সংবাদ, নোটিশ, স্টুডেন্ট কর্নার) ---------- */
+/* ---------- একাধিক ছবি (Parent Type) ---------- */
 
 export type ParentType = "post" | "notice" | "student"
 
@@ -895,7 +964,7 @@ export async function createPostReturningId(token: string, data: PostInput): Pro
   return rows[0]?.id ?? null
 }
 
-/* ---------- ক্যাপশন, ক্রেডিট ও ছবির সাজানো ---------- */
+/* ---------- ইমেজ মেটা, ক্যাপশন ও লেআউট ---------- */
 
 export type ImageMeta = ImageRow & { caption?: string | null; credit?: string | null }
 export type NewImage = { url: string; caption: string; credit: string }
@@ -978,7 +1047,9 @@ export async function getLayoutsForMany(
     )
     if (!res.ok) return out
     const rows: { parent_id: string; layout: string }[] = await res.json()
-    rows.forEach((r) => { out[r.parent_id] = r.layout })
+    rows.forEach((r) => {
+      out[r.parent_id] = r.layout
+    })
     return out
   } catch {
     return out
@@ -1032,10 +1103,13 @@ export async function saveStudentItemReturningId(
 
 export async function getSectionText(key: string, defaultVal: string): Promise<string> {
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/app_config?select=value&key=eq.${encodeURIComponent(key)}`, {
-      headers: { apikey: SB_KEY },
-      cache: "no-store",
-    })
+    const res = await fetch(
+      `${SB_URL}/rest/v1/app_config?select=value&key=eq.${encodeURIComponent(key)}`,
+      {
+        headers: { apikey: SB_KEY },
+        cache: "no-store",
+      }
+    )
     if (!res.ok) return defaultVal
     const rows = await res.json()
     return rows[0]?.value || defaultVal
@@ -1089,11 +1163,14 @@ export async function addStudentCategory(token: string, name: string) {
 
 export async function updateStudentCategory(token: string, oldName: string, newName: string) {
   await ok(
-    await fetch(`${SB_URL}/rest/v1/student_corner_categories?name=eq.${encodeURIComponent(oldName)}`, {
-      method: "PATCH",
-      headers: { ...hdr(token, true), Prefer: "return=minimal" },
-      body: JSON.stringify({ name: newName }),
-    })
+    await fetch(
+      `${SB_URL}/rest/v1/student_corner_categories?name=eq.${encodeURIComponent(oldName)}`,
+      {
+        method: "PATCH",
+        headers: { ...hdr(token, true), Prefer: "return=minimal" },
+        body: JSON.stringify({ name: newName }),
+      }
+    )
   )
   try {
     await fetch(`${SB_URL}/rest/v1/student_items?kind=eq.${encodeURIComponent(oldName)}`, {
@@ -1106,9 +1183,12 @@ export async function updateStudentCategory(token: string, oldName: string, newN
 
 export async function deleteStudentCategory(token: string, name: string) {
   await ok(
-    await fetch(`${SB_URL}/rest/v1/student_corner_categories?name=eq.${encodeURIComponent(name)}`, {
-      method: "DELETE",
-      headers: hdr(token),
-    })
+    await fetch(
+      `${SB_URL}/rest/v1/student_corner_categories?name=eq.${encodeURIComponent(name)}`,
+      {
+        method: "DELETE",
+        headers: hdr(token),
+      }
+    )
   )
 }
