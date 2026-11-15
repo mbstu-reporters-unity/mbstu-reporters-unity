@@ -73,7 +73,7 @@ export default function CouncilPage() {
     async function load() {
       try {
         const res = await fetch(
-          `${SB_URL}/rest/v1/profiles?select=id,full_name,newspaper_name,avatar_url,role,director_visible&approved=eq.true&or=(director_visible.is.null,director_visible.eq.true)&order=created_at.asc`,
+          `${SB_URL}/rest/v1/profiles?select=id,full_name,newspaper_name,avatar_url,role,director_visible&approved=eq.true&role=in.(admin,moderator)&or=(director_visible.is.null,director_visible.eq.true)&order=created_at.asc`,
           { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }, cache: "no-store" }
         )
         if (res.ok) setList(await res.json())
@@ -85,7 +85,7 @@ export default function CouncilPage() {
   }, [])
 
   const admins = list.filter((m) => m.role === "admin")
-  const others = list.filter((m) => m.role !== "admin")
+  const others = list.filter((m) => m.role === "moderator")
 
   return (
     <>
@@ -94,7 +94,6 @@ export default function CouncilPage() {
       <main className="min-h-screen py-6 sm:py-10 px-4 pb-20">
         <div className="max-w-2xl mx-auto space-y-6">
           
-          {/* ✅ ধাপে ধাপে ফেরা ও ব্রেডক্রাম্ব */}
           <BackNavigation
             items={[
               { label: 'ইউনিটি পরিষদ' },
@@ -102,7 +101,6 @@ export default function CouncilPage() {
             ]}
           />
 
-          {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-8 shadow-2xl border border-white/20 text-center">
             <span className="inline-block px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider mb-2 shadow">
               Management & Moderation Panel
@@ -117,7 +115,6 @@ export default function CouncilPage() {
 
           {loading && <p className="text-center text-sm text-cyan-200/70 py-6">তথ্য লোড হচ্ছে...</p>}
 
-          {/* অ্যাডমিন সেকশন */}
           {admins.length > 0 && (
             <div className="space-y-3">
               <h2 className="font-bold text-base text-cyan-300 flex items-center gap-2 border-b border-white/20 pb-2">
@@ -130,7 +127,6 @@ export default function CouncilPage() {
             </div>
           )}
 
-          {/* মডারেটর সেকশন */}
           {others.length > 0 && (
             <div className="space-y-3 pt-2">
               <h2 className="font-bold text-base text-white flex items-center gap-2 border-b border-white/20 pb-2">
