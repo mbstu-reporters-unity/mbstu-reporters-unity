@@ -18,6 +18,7 @@ import {
   Newspaper,
   Star,
   Users,
+  UserPlus,
   X,
   FileText,
   Globe2,
@@ -35,6 +36,7 @@ import { getUniversityAssociations, type UniversityAssociation } from '@/lib/ass
 import { getSocialSites, type SocialSite } from '@/lib/social-sites'
 import { ADMIN_CATEGORIES } from '@/lib/administration'
 import { SB_URL, SB_KEY, getMe, type Profile } from '@/lib/sb'
+import { getMyFriendships } from '@/lib/friends'
 import { Logo } from './logo'
 import { useLang } from '@/lib/i18n'
 import { CallModal, type CallType, type CallState } from './call-modal'
@@ -58,67 +60,69 @@ export function SiteHeader() {
   const [univLink, setUnivLink] = useState('https://mbstu.ac.bd')
   const [univText, setUnivText] = useState('')
 
-  // ব্যবহারকারীর লগইন ও প্রোফাইল স্টেট
   const [me, setMe] = useState<Profile | null>(null)
-  const [token, setToken] = useState('')
+  const [incomingReqCount, setIncomingReqCount] = useState(0)
 
-  // গ্লোবাল ইনকামিং কল স্টেট (পুরো ওয়েবসাইটের যেকোনো পেজে রিং বাজার জন্য)
+  // গ্লোবাল ইনকামিং কল স্টেট
   const [callState, setCallState] = useState<CallState>('idle')
   const [callType, setCallType] = useState<CallType>('audio')
   const [incomingCaller, setIncomingCaller] = useState<Profile | null>(null)
   const [activeCallConvId, setActiveCallConvId] = useState<string | null>(null)
 
   useEffect(() => {
+    let alive = true
+    let callChannel: ReturnType<typeof supabase.channel> | null = null
+
     fetch(
       `${SB_URL}/rest/v1/app_config?select=key,value&key=in.(univ_logo_url,univ_link_url,univ_text)`,
       { headers: { apikey: SB_KEY }, cache: 'no-store' }
     )
       .then((res) => res.json())
       .then((rows) => {
-        if (Array.isArray(rows)) {
-          rows.forEach((r) => {
-            if (r.key === 'univ_logo_url' && r.value) setUnivLogo(r.value)
-            if (r.key === 'univ_link_url' && r.value) setUnivLink(r.value)
-            if (r.key === 'univ_text') setUnivText(r.value || '')
-          })
-        }
+        if (!alive || !Array.isArray(rows)) return
+        rows.forEach((r) => {
+          if (r.key === 'univ_logo_url' && r.value) setUnivLogo(r.value)
+          if (r.key === 'univ_link_url' && r.value) setUnivLink(r.value)
+          if (r.key === 'univ_text') setUnivText(r.value || '')
+        })
       })
       .catch(() => {})
 
-    getCampusClubs().then((res) => { if (res && res.length > 0) setClubsList(res) })
-    getVisibleCategoryNames().then(setCategoriesList)
-    getFacultiesWithDepartments().then(setFacultiesList)
+    getCampusClubs().then((res) => { if (alive && res && res.length > 0) setClubsList(res) })
+    getVisibleCategoryNames().then((res) => { if (alive) setCategoriesList(res) })
+    getFacultiesWithDepartments().then((res) => { if (alive) setFacultiesList(res) })
     getCommunityPages().then((res) => {
-      if (res && res.length > 0) setCommunityPagesList(res.filter((p) => p.is_active !== false))
+      if (alive && res && res.length > 0) setCommunityPagesList(res.filter((p) => p.is_active !== false))
     })
-    getUniversityAssociations().then(setAssociationsList)
-    getSocialSites().then(setSocialSitesList)
+    getUniversityAssociations().then((res) => { if (alive) setAssociationsList(res) })
+    getSocialSites().then((res) => { if (alive) setSocialSitesList(res) })
 
-    // লগইন থাকলে প্রোফাইল ও গ্লোবাল কলিং লিসেনার সক্রিয় করা
     const t = localStorage.getItem('mbstu_admin_token') || ''
     if (t) {
-      setToken(t)
       getMe(t).then((profile) => {
-        if (profile) {
-          setMe(profile)
+        if (!alive || !profile) return
+        setMe(profile)
 
-          // অপর প্রান্ত থেকে কল আসলে যেকোনো পেজেই রিংটোন বেজে উঠবে
-          const channel = supabase.channel(`user_calls_${profile.id}`)
-          channel
-            .on('broadcast', { event: 'incoming_call' }, ({ payload }) => {
-              setIncomingCaller(payload.caller)
-              setCallType(payload.callType)
-              setActiveCallConvId(payload.conversationId)
-              setCallState('incoming')
-              ringtone.start()
-            })
-            .subscribe()
+        getMyFriendships(t, profile.id)
+          .then((f) => { if (alive) setIncomingReqCount(f.incoming.length) })
+          .catch(() => {})
 
-          return () => {
-            supabase.removeChannel(channel)
-          }
-        }
+        callChannel = supabase.channel(`user_calls_${profile.id}`)
+        callChannel
+          .on('broadcast', { event: 'incoming_call' }, ({ payload }) => {
+            setIncomingCaller(payload.caller)
+            setCallType(payload.callType)
+            setActiveCallConvId(payload.conversationId)
+            setCallState('incoming')
+            ringtone.start()
+          })
+          .subscribe()
       })
+    }
+
+    return () => {
+      alive = false
+      if (callChannel) supabase.removeChannel(callChannel)
     }
   }, [])
 
@@ -372,10 +376,23 @@ export function SiteHeader() {
             </ul>
           </nav>
 
-          {/* ডানপাশ: M-RU টেক্সট বাটন, লগইন/প্রোফাইল বাটন ও মোবাইল মেনু টগল */}
+          {/* ডানপাশ: বন্ধু (/friends), M-RU টেক্সট (/messages), লগইন/প্রোফাইল বাটন */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             
-            {/* ✅ ১. নতুন M-RU টেক্সট (মেসেঞ্জার) বাটন */}
+            <Link
+              href="/friends"
+              className="relative inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition active:scale-95 shadow-sm"
+              title="বন্ধু ও ফ্রেন্ড রিকোয়েস্ট"
+            >
+              <UserPlus className="size-3.5 sm:size-4 text-cyan-300" />
+              <span className="hidden sm:inline">বন্ধু</span>
+              {incomingReqCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-bold">
+                  {incomingReqCount}
+                </span>
+              )}
+            </Link>
+
             <Link
               href="/messages"
               className="inline-flex items-center gap-1.5 rounded-full bg-cyan-600/20 hover:bg-cyan-600/35 text-cyan-300 border border-cyan-400/40 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition active:scale-95 shadow-sm"
@@ -385,7 +402,6 @@ export function SiteHeader() {
               <span className="hidden xs:inline">টেক্সট</span>
             </Link>
 
-            {/* ২. লগইন বা প্রোফাইল লিংক */}
             {me ? (
               <Link
                 href="/admin"
@@ -451,10 +467,26 @@ export function SiteHeader() {
               </div>
             </div>
 
-            {/* লেভেল ০: মূল মেনু তালিকা */}
             {currentLevel === 'root' && (
               <div className="space-y-2 animate-in fade-in">
-                {/* সরাসরি মেসেঞ্জার লিংক */}
+                <Link
+                  href="/friends"
+                  onClick={closeMenuDrawer}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-indigo-600/25 hover:bg-indigo-600/35 text-indigo-100 text-xs font-bold border border-indigo-400/40 active:scale-98 transition shadow-xs"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <UserPlus className="size-4 text-cyan-300" />
+                    <span>বন্ধু ও ফ্রেন্ড রিকোয়েস্ট</span>
+                  </span>
+                  {incomingReqCount > 0 ? (
+                    <span className="text-[10px] bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full">
+                      {incomingReqCount} নতুন
+                    </span>
+                  ) : (
+                    <ChevronRight className="size-4 text-white/40" />
+                  )}
+                </Link>
+
                 <Link
                   href="/messages"
                   onClick={closeMenuDrawer}
@@ -525,7 +557,6 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* লেভেল ১: বিশ্ববিদ্যালয় ও প্রশাসন */}
             {currentLevel === 'univ' && (
               <div className="space-y-2 animate-in fade-in">
                 <button
@@ -557,7 +588,6 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* লেভেল ২: শীর্ষ প্রশাসন */}
             {currentLevel === 'admin_tier' && (
               <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
                 {ADMIN_CATEGORIES.map((cat, idx) => (
@@ -581,7 +611,6 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* লেভেল ২: অনুষদ ও বিভাগসমূহ */}
             {currentLevel === 'faculties_dept' && (
               <div className="space-y-2 animate-in fade-in max-h-72 overflow-y-auto scrollbar-none">
                 {facultiesList.map((f) => (
@@ -605,7 +634,6 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* লেভেল ২: সোশ্যাল সাইট ও গ্রুপসমূহ */}
             {currentLevel === 'social_sites' && (
               <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
                 {socialSitesList.map((s) => (
@@ -629,7 +657,6 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* লেভেল ১: সংবাদ ও মিডিয়া */}
             {currentLevel === 'news' && (
               <div className="space-y-2 animate-in fade-in">
                 <Link
@@ -682,7 +709,6 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* লেভেল ২: সাংবাদিক সমিতি */}
             {currentLevel === 'associations_tier' && (
               <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
                 {associationsList.map((assoc) => (
@@ -706,7 +732,6 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* লেভেল ১: ক্যাম্পাস কমিউনিটি */}
             {currentLevel === 'community' && (
               <div className="space-y-2 animate-in fade-in">
                 <button
@@ -738,7 +763,6 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* লেভেল ২: ১০টি ক্লাবের তালিকা */}
             {currentLevel === 'clubs_tier' && (
               <div className="space-y-1.5 animate-in fade-in max-h-72 overflow-y-auto scrollbar-none">
                 {clubsList.map((club) => (
@@ -762,7 +786,6 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* লেভেল ২: ক্যাম্পাস পেজ তালিকা */}
             {currentLevel === 'pages_tier' && (
               <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
                 {communityPagesList.map((cp) => (
@@ -786,7 +809,6 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* লেভেল ১: পরিষদ ও পরিচিতি */}
             {currentLevel === 'about' && (
               <div className="space-y-2 animate-in fade-in">
                 <button
@@ -822,7 +844,7 @@ export function SiteHeader() {
         )}
       </header>
 
-      {/* ✅ গ্লোবাল কলিং মডাল (ইউজার ওয়েবসাইটের যেকোনো পেজে থাকা অবস্থাতেই ইনকামিং কল রিসিভ করতে পারবেন) */}
+      {/* গ্লোবাল কলিং মডাল */}
       {me && (
         <CallModal
           currentUser={me}
