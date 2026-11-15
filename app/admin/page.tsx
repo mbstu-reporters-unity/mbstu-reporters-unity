@@ -621,7 +621,6 @@ export default function AdminPage() {
 
           {mode === "signup" && (
             <div className="space-y-3">
-              {/* পরিচয়/রোল বাছাই বাটন */}
               <div>
                 <label className="text-xs text-cyan-200 block mb-1.5 font-semibold">
                   আপনার পরিচয় নির্বাচন করুন:
@@ -722,7 +721,6 @@ export default function AdminPage() {
     )
   }
 
-  // অনুমোদনের অপেক্ষায় থাকা স্ক্রিন (বিশেষ করে সাংবাদিক একাউন্টের ক্ষেত্রে)
   if (me && !me.approved) {
     return (
       <main className="min-h-screen bg-[#071030] text-white flex items-center justify-center p-4">
@@ -755,11 +753,12 @@ export default function AdminPage() {
     ? "মডারেটর"
     : userTypeLabels[me.user_type || "student"] || "সদস্য"
 
+  // ✅ নেভিগেশন গ্রুপ: "আমার পেজ ও কমিউনিটি" এখন সকল লগইন করা শিক্ষার্থী, শিক্ষক ও কর্মচারীর জন্য উন্মুক্ত!
   const navigationGroups = [
     {
       groupTitle: "১. কন্টেন্ট ও সংবাদ",
       items: [
-        { id: "posts", label: "সংবাদ ও রিপোর্ট", icon: Newspaper },
+        { id: "posts", label: "সংবাদ ও পোস্ট", icon: Newspaper },
         { id: "stories", label: "ফেসবুক স্টোরিজ ও রিলস", icon: Film },
         { id: "notices", label: "ডিজিটাল নোটিশ", icon: Bell },
         { id: "ticker", label: "ব্রেকিং টিকার", icon: Radio, adminOnly: true },
@@ -785,10 +784,10 @@ export default function AdminPage() {
       ]
     },
     {
-      groupTitle: "৪. ক্যাম্পাস কমিউনিটি",
+      groupTitle: "৪. ক্যাম্পাস কমিউনিটি ও পেজ",
       items: [
+        { id: "community_pages", label: "আমার পেজ ও কমিউনিটি", icon: FileText }, // সবার জন্য উন্মুক্ত
         { id: "clubs", label: "ক্যাম্পাস ক্লাবসমূহ", icon: Star, adminOnly: true },
-        { id: "community_pages", label: "ফেসবুক-স্টাইল পেজ", icon: FileText, adminOnly: true },
         { id: "students", label: "স্টুডেন্ট কর্নার", icon: BookOpen, adminOnly: true },
         { id: "social_sites", label: "সোশ্যাল সাইট ও গ্রুপ", icon: Globe2, adminOnly: true },
         { id: "associations", label: "অন্যান্য সমিতি", icon: ShieldCheck, adminOnly: true },
@@ -934,7 +933,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ==================== সংবাদ ও পোস্ট ট্যাব ==================== */}
+        {/* সংবাদ ও পোস্ট ট্যাব */}
         {tab === "posts" && (
           <div className="space-y-4">
             <div className="flex bg-white rounded-2xl p-1.5 shadow-xs border border-slate-200 gap-1.5 text-xs font-bold">
@@ -1263,7 +1262,20 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ==================== প্রোফাইল ট্যাব (শিক্ষার্থী, শিক্ষক ও কর্মচারীদের তথ্যসহ) ==================== */}
+        {/* ✅ আমার পেজ ও কমিউনিটি ট্যাব (সকলের জন্য উন্মুক্ত) */}
+        {tab === "community_pages" && me && (
+          <CommunityPageManager
+            token={token}
+            shrink={shrink}
+            authorName={me.full_name}
+            authorAvatar={me.avatar_url}
+            currentUserId={me.id}
+            isAdmin={!!isAdmin}
+            onPostCreated={() => refresh(token, me)}
+          />
+        )}
+
+        {/* প্রোফাইল ট্যাব */}
         {tab === "profile" && (
           <div className="bg-white rounded-2xl shadow p-5 space-y-4 border">
             <h2 className="font-bold text-base text-slate-800 border-b pb-2">আমার প্রোফাইল তথ্য ({userRoleText})</h2>
@@ -1278,7 +1290,6 @@ export default function AdminPage() {
               <input className={inp} type="tel" placeholder="মোবাইল নম্বর" value={pPhone} onChange={(e) => setPPhone(e.target.value)} />
             </div>
 
-            {/* শিক্ষার্থী/শিক্ষকের বিভাগ ও ব্যাচ */}
             {(me.user_type === "student" || me.user_type === "teacher" || me.user_type === "reporter") && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <input className={inp} placeholder="বিভাগ (Department)" value={pDept} onChange={(e) => setPDept(e.target.value)} />
@@ -1288,7 +1299,6 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* শিক্ষক ও কর্মচারীর পদবি ও দপ্তর */}
             {(me.user_type === "teacher" || me.user_type === "staff") && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <input className={inp} placeholder="পদবি (Designation)" value={pDesignation} onChange={(e) => setPDesignation(e.target.value)} />
@@ -1308,7 +1318,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* অন্যান্য ম্যানেজারসমূহ */}
+        {/* অ্যাডমিন নিয়ন্ত্রিত ম্যানেজারসমূহ */}
         {tab === "stories" && (
           <StoryManager
             token={token}
@@ -1341,15 +1351,6 @@ export default function AdminPage() {
         {tab === "associations" && isAdmin && <AssociationManager token={token} shrink={shrink} />}
         {tab === "social_sites" && isAdmin && <SocialSiteManager token={token} shrink={shrink} />}
         {tab === "administration" && isAdmin && <AdministrationManager token={token} shrink={shrink} />}
-        {tab === "community_pages" && isAdmin && (
-          <CommunityPageManager
-            token={token}
-            shrink={shrink}
-            authorName={me.full_name}
-            authorAvatar={me.avatar_url}
-            onPostCreated={() => refresh(token, me)}
-          />
-        )}
         {tab === "limits" && isAdmin && <SectionLimits token={token} cats={cats} />}
         {tab === "directors" && isAdmin && <DirectorManager token={token} members={active} onChanged={() => refresh(token, me)} />}
         {tab === "categories" && isAdmin && <CategoryManager token={token} onChanged={() => refresh(token, me)} />}
