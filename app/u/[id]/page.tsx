@@ -7,6 +7,7 @@ import {
   FileText,
   CheckCircle2,
   BookOpen,
+  Users,
 } from 'lucide-react'
 import { SB_URL, SB_KEY, attachProfileAvatars, type Profile, type Post } from '@/lib/sb'
 import { TopBar } from '@/components/portal/top-bar'
@@ -51,6 +52,23 @@ async function getProfileById(id: string): Promise<PublicProfile | null> {
     return rows[0] || null
   } catch {
     return null
+  }
+}
+
+async function getUserFriendCount(userId: string): Promise<number> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/friendships?select=id&status=eq.accepted&or=(requester_id.eq.${encodeURIComponent(userId)},addressee_id.eq.${encodeURIComponent(userId)})`,
+      {
+        headers: { apikey: SB_KEY },
+        cache: 'no-store',
+      }
+    )
+    if (!res.ok) return 0
+    const rows = await res.json()
+    return Array.isArray(rows) ? rows.length : 0
+  } catch {
+    return 0
   }
 }
 
@@ -104,9 +122,10 @@ export default async function UserProfilePage({
   const profile = await getProfileById(id)
   if (!profile) notFound()
 
-  const [posts, pages] = await Promise.all([
+  const [posts, pages, friendCount] = await Promise.all([
     getUserPosts(id),
     getUserPages(id),
+    getUserFriendCount(id),
   ])
 
   const userTypeLabels: Record<string, string> = {
@@ -161,6 +180,10 @@ export default async function UserProfilePage({
                   <span className="bg-white/15 text-cyan-200 border border-white/20 font-bold px-3 py-1 rounded-full">
                     {roleBadge}
                   </span>
+                  <span className="bg-white/10 text-white/90 border border-white/20 font-semibold px-3 py-1 rounded-full inline-flex items-center gap-1">
+                    <Users className="size-3 text-cyan-400" />
+                    <span>{friendCount.toLocaleString('bn-BD')} জন বন্ধু</span>
+                  </span>
                   {profile.designation && (
                     <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full font-semibold">
                       {profile.designation}
@@ -191,7 +214,7 @@ export default async function UserProfilePage({
                   </p>
                 )}
 
-                {/* ফ্রেন্ড রিকোয়েস্ট ও মেসেজ বাটন */}
+                {/* ফ্রেন্ড রিকোয়েস্ট বাটন */}
                 <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2.5 text-xs font-bold">
                   <FriendActionButton targetUserId={profile.id} targetUserName={profile.full_name} />
                   {profile.newspaper_name && (
@@ -205,12 +228,12 @@ export default async function UserProfilePage({
             </div>
           </div>
 
-          {/* ব্যবহারকারীর নিজস্ব তৈরি পেজসমূহ */}
+          {/* ব্যবহারকারীর নিজস্ব পেজসমূহ */}
           {pages.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-white/15 pb-2">
                 <FileText className="size-5 text-cyan-400" />
-                <span>তৈরি করা কমিউনিটি পেজসমূহ ({pages.length})</span>
+                <span>অফিসিয়াল কমিউনিটি পেজসমূহ ({pages.length})</span>
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {pages.map((pg) => (
@@ -228,7 +251,10 @@ export default async function UserProfilePage({
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold text-sm truncate">{pg.name}</p>
+                      <div className="flex items-center gap-1">
+                        <p className="font-bold text-sm truncate">{pg.name}</p>
+                        {pg.is_verified && <CheckCircle2 className="size-3.5 fill-blue-500 text-white shrink-0" />}
+                      </div>
                       <p className="text-xs text-cyan-300 font-mono">/p/{pg.slug}</p>
                     </div>
                   </Link>
