@@ -24,6 +24,8 @@ import {
   ShieldCheck,
   Tag,
   Landmark,
+  MessageSquare,
+  User,
 } from 'lucide-react'
 import { getCampusClubs, type ClubItem } from '@/lib/clubs'
 import { getVisibleCategoryNames } from '@/lib/categories'
@@ -32,14 +34,15 @@ import { getCommunityPages, type CommunityPage } from '@/lib/pages'
 import { getUniversityAssociations, type UniversityAssociation } from '@/lib/associations'
 import { getSocialSites, type SocialSite } from '@/lib/social-sites'
 import { ADMIN_CATEGORIES } from '@/lib/administration'
-import { SB_URL, SB_KEY } from '@/lib/sb'
+import { SB_URL, SB_KEY, getMe, type Profile } from '@/lib/sb'
 import { Logo } from './logo'
 import { useLang } from '@/lib/i18n'
+import { CallModal, type CallType, type CallState } from './call-modal'
+import { supabase } from '@/lib/chat'
+import { ringtone } from '@/lib/webrtc'
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
-  
-  // ড্রয়ারের ধাপে ধাপে নেভিগেশন স্ট্যাক (সম্পূর্ণ ইন্টারনাল স্টেট, কোনো ব্রাউজার রিলোড নেই)
   const [navStack, setNavStack] = useState<string[]>(['root'])
 
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
@@ -54,6 +57,16 @@ export function SiteHeader() {
   const [univLogo, setUnivLogo] = useState('https://mbstu.ac.bd/images/logo.png')
   const [univLink, setUnivLink] = useState('https://mbstu.ac.bd')
   const [univText, setUnivText] = useState('')
+
+  // ব্যবহারকারীর লগইন ও প্রোফাইল স্টেট
+  const [me, setMe] = useState<Profile | null>(null)
+  const [token, setToken] = useState('')
+
+  // গ্লোবাল ইনকামিং কল স্টেট (পুরো ওয়েবসাইটের যেকোনো পেজে রিং বাজার জন্য)
+  const [callState, setCallState] = useState<CallState>('idle')
+  const [callType, setCallType] = useState<CallType>('audio')
+  const [incomingCaller, setIncomingCaller] = useState<Profile | null>(null)
+  const [activeCallConvId, setActiveCallConvId] = useState<string | null>(null)
 
   useEffect(() => {
     fetch(
@@ -80,9 +93,35 @@ export function SiteHeader() {
     })
     getUniversityAssociations().then(setAssociationsList)
     getSocialSites().then(setSocialSitesList)
+
+    // লগইন থাকলে প্রোফাইল ও গ্লোবাল কলিং লিসেনার সক্রিয় করা
+    const t = localStorage.getItem('mbstu_admin_token') || ''
+    if (t) {
+      setToken(t)
+      getMe(t).then((profile) => {
+        if (profile) {
+          setMe(profile)
+
+          // অপর প্রান্ত থেকে কল আসলে যেকোনো পেজেই রিংটোন বেজে উঠবে
+          const channel = supabase.channel(`user_calls_${profile.id}`)
+          channel
+            .on('broadcast', { event: 'incoming_call' }, ({ payload }) => {
+              setIncomingCaller(payload.caller)
+              setCallType(payload.callType)
+              setActiveCallConvId(payload.conversationId)
+              setCallState('incoming')
+              ringtone.start()
+            })
+            .subscribe()
+
+          return () => {
+            supabase.removeChannel(channel)
+          }
+        }
+      })
+    }
   }, [])
 
-  // ড্রয়ার ওপেন ও ক্লোজ
   const openMenuDrawer = () => {
     setNavStack(['root'])
     setMenuOpen(true)
@@ -93,7 +132,6 @@ export function SiteHeader() {
     setMenuOpen(false)
   }
 
-  // এক ধাপ সামনে যাওয়া
   const goToNextLevel = (levelKey: string, e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault()
@@ -102,18 +140,12 @@ export function SiteHeader() {
     setNavStack((prev) => [...prev, levelKey])
   }
 
-  // ✅ এক ধাপ পেছনে ফেরা (কোনো পেজ রিলোড হবে না, খাঁটি রিঅ্যাক্ট স্টেট)
   const goStepBack = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault()
       e.stopPropagation()
     }
-    setNavStack((prev) => {
-      if (prev.length > 1) {
-        return prev.slice(0, -1) // শুধু এক ধাপ পূর্বের মেনুতে যাবে
-      }
-      return ['root']
-    })
+    setNavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : ['root']))
   }
 
   function scrollToSection(sectionId: string) {
@@ -121,18 +153,11 @@ export function SiteHeader() {
     if (typeof window === 'undefined') return
 
     const isHome = window.location.pathname === '/' || window.location.pathname === ''
-
     if (isHome) {
       const el = document.getElementById(sectionId)
       if (el) {
-        const headerOffset = 70
-        const elementPosition = el.getBoundingClientRect().top
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth',
-        })
+        const offsetPosition = el.getBoundingClientRect().top + window.pageYOffset - 70
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' })
       }
     } else {
       window.location.href = `/#${sectionId}`
@@ -158,7 +183,6 @@ export function SiteHeader() {
 
   const currentLevel = navStack[navStack.length - 1]
 
-  // বর্তমান অবস্থান ও আগের ধাপের নাম
   const getBreadcrumbInfo = () => {
     switch (currentLevel) {
       case 'univ': return { parent: 'মূল মেনু', current: 'বিশ্ববিদ্যালয় ও প্রশাসন' }
@@ -348,15 +372,43 @@ export function SiteHeader() {
             </ul>
           </nav>
 
-          {/* ডানপাশ: লগইন ও মোবাইল মেনু বাটন */}
+          {/* ডানপাশ: M-RU টেক্সট বাটন, লগইন/প্রোফাইল বাটন ও মোবাইল মেনু টগল */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            
+            {/* ✅ ১. নতুন M-RU টেক্সট (মেসেঞ্জার) বাটন */}
             <Link
-              href="/admin"
-              className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-[11px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2 shadow-md border border-white/20 transition active:scale-95 shrink-0"
+              href="/messages"
+              className="inline-flex items-center gap-1.5 rounded-full bg-cyan-600/20 hover:bg-cyan-600/35 text-cyan-300 border border-cyan-400/40 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition active:scale-95 shadow-sm"
+              title="M-RU টেক্সট (মেসেঞ্জার)"
             >
-              <Lock className="size-3 sm:size-3.5" />
-              <span>{pick('লগইন', 'Login')}</span>
+              <MessageSquare className="size-3.5 sm:size-4" />
+              <span className="hidden xs:inline">টেক্সট</span>
             </Link>
+
+            {/* ২. লগইন বা প্রোফাইল লিংক */}
+            {me ? (
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 shadow-md border border-white/20 transition active:scale-95 shrink-0"
+                title="আমার প্রোফাইল ও ড্যাশবোর্ড"
+              >
+                {me.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={me.avatar_url} alt="" className="size-4 sm:size-4.5 rounded-full object-cover" />
+                ) : (
+                  <User className="size-3 sm:size-3.5" />
+                )}
+                <span className="max-w-[70px] sm:max-w-[100px] truncate">{me.full_name.split(' ')[0]}</span>
+              </Link>
+            ) : (
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-[11px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2 shadow-md border border-white/20 transition active:scale-95 shrink-0"
+              >
+                <Lock className="size-3 sm:size-3.5" />
+                <span>{pick('লগইন', 'Login')}</span>
+              </Link>
+            )}
 
             <button
               type="button"
@@ -370,11 +422,10 @@ export function SiteHeader() {
 
         </div>
 
-        {/* ==================== মোবাইল ড্রিল-ডাউন মেনু (রিলোডহীন নিখুঁত ফেরা) ==================== */}
+        {/* ==================== মোবাইল ড্রিল-ডাউন মেনু ==================== */}
         {menuOpen && (
           <nav className="border-t border-white/10 bg-[#071030]/98 lg:hidden max-h-[84vh] overflow-y-auto px-3.5 py-3 space-y-3 backdrop-blur-2xl animate-in slide-in-from-top-2 select-none scrollbar-none">
             
-            {/* ১. ন্যাভিগেশন বার (যেখানে অবস্থান ও 'এক ধাপ পেছনে' বাটন ১০০% লোকাল স্টেটে কাজ করবে) */}
             <div className="flex items-center justify-between pb-2.5 border-b border-white/15 gap-2">
               {navStack.length > 1 ? (
                 <button
@@ -392,7 +443,6 @@ export function SiteHeader() {
                 </div>
               )}
 
-              {/* অবস্থান ট্র্যাকিং পাথ */}
               <div className="flex items-center gap-1 text-[11px] font-bold text-amber-300 bg-amber-400/15 border border-amber-400/30 px-2.5 py-1 rounded-full truncate">
                 {breadcrumb.parent && (
                   <span className="text-white/60 font-normal truncate max-w-[85px]">{breadcrumb.parent} ›</span>
@@ -401,9 +451,22 @@ export function SiteHeader() {
               </div>
             </div>
 
-            {/* ================= লেভেল ০: মূল মেনু তালিকা ================= */}
+            {/* লেভেল ০: মূল মেনু তালিকা */}
             {currentLevel === 'root' && (
               <div className="space-y-2 animate-in fade-in">
+                {/* সরাসরি মেসেঞ্জার লিংক */}
+                <Link
+                  href="/messages"
+                  onClick={closeMenuDrawer}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-cyan-600/25 hover:bg-cyan-600/35 text-cyan-200 text-xs font-bold border border-cyan-400/40 active:scale-98 transition shadow-xs"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <MessageSquare className="size-4 text-cyan-400" />
+                    <span>M-RU টেক্সট (মেসেঞ্জার)</span>
+                  </span>
+                  <span className="text-[10px] bg-cyan-500 text-slate-950 font-bold px-2 py-0.5 rounded-full">চ্যাট</span>
+                </Link>
+
                 <Link
                   href="/"
                   onClick={closeMenuDrawer}
@@ -448,10 +511,21 @@ export function SiteHeader() {
                   <span className="flex items-center gap-2.5"><Users className="size-4 text-emerald-400" /><span>কার্যনির্বাহী পরিষদ ও পরিচিতি</span></span>
                   <ChevronRight className="size-4 text-emerald-400" />
                 </button>
+
+                {me && (
+                  <Link
+                    href={`/u/${me.id}`}
+                    onClick={closeMenuDrawer}
+                    className="flex items-center justify-between p-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold border border-white/15 active:scale-98 transition mt-2"
+                  >
+                    <span className="flex items-center gap-2.5"><User className="size-4 text-cyan-300" /><span>আমার পাবলিক প্রোফাইল</span></span>
+                    <ChevronRight className="size-4 text-white/40" />
+                  </Link>
+                )}
               </div>
             )}
 
-            {/* ================= লেভেল ১: বিশ্ববিদ্যালয় ও প্রশাসন ================= */}
+            {/* লেভেল ১: বিশ্ববিদ্যালয় ও প্রশাসন */}
             {currentLevel === 'univ' && (
               <div className="space-y-2 animate-in fade-in">
                 <button
@@ -483,7 +557,7 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* ================= লেভেল ২: শীর্ষ প্রশাসন তালিকা ================= */}
+            {/* লেভেল ২: শীর্ষ প্রশাসন */}
             {currentLevel === 'admin_tier' && (
               <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
                 {ADMIN_CATEGORIES.map((cat, idx) => (
@@ -507,7 +581,7 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* ================= লেভেল ২: অনুষদ ও বিভাগসমূহ তালিকা ================= */}
+            {/* লেভেল ২: অনুষদ ও বিভাগসমূহ */}
             {currentLevel === 'faculties_dept' && (
               <div className="space-y-2 animate-in fade-in max-h-72 overflow-y-auto scrollbar-none">
                 {facultiesList.map((f) => (
@@ -531,7 +605,7 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* ================= লেভেল ২: সোশ্যাল সাইট ও গ্রুপসমূহ ================= */}
+            {/* লেভেল ২: সোশ্যাল সাইট ও গ্রুপসমূহ */}
             {currentLevel === 'social_sites' && (
               <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
                 {socialSitesList.map((s) => (
@@ -555,7 +629,7 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* ================= লেভেল ১: সংবাদ, রিলস ও নোটিশ ================= */}
+            {/* লেভেল ১: সংবাদ ও মিডিয়া */}
             {currentLevel === 'news' && (
               <div className="space-y-2 animate-in fade-in">
                 <Link
@@ -608,7 +682,7 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* ================= লেভেল ২: সাংবাদিক সমিতি তালিকা ================= */}
+            {/* লেভেল ২: সাংবাদিক সমিতি */}
             {currentLevel === 'associations_tier' && (
               <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
                 {associationsList.map((assoc) => (
@@ -632,7 +706,7 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* ================= লেভেল ১: ক্যাম্পাস কমিউনিটি, ক্লাব ও পেজ ================= */}
+            {/* লেভেল ১: ক্যাম্পাস কমিউনিটি */}
             {currentLevel === 'community' && (
               <div className="space-y-2 animate-in fade-in">
                 <button
@@ -664,7 +738,7 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* ================= লেভেল ২: ১০টি ক্লাবের তালিকা (এক ক্লিকে ওপেন) ================= */}
+            {/* লেভেল ২: ১০টি ক্লাবের তালিকা */}
             {currentLevel === 'clubs_tier' && (
               <div className="space-y-1.5 animate-in fade-in max-h-72 overflow-y-auto scrollbar-none">
                 {clubsList.map((club) => (
@@ -688,7 +762,7 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* ================= লেভেল ২: ক্যাম্পাস পেজ তালিকা ================= */}
+            {/* লেভেল ২: ক্যাম্পাস পেজ তালিকা */}
             {currentLevel === 'pages_tier' && (
               <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
                 {communityPagesList.map((cp) => (
@@ -712,7 +786,7 @@ export function SiteHeader() {
               </div>
             )}
 
-            {/* ================= লেভেল ১: কার্যনির্বাহী পরিষদ ও পরিচিতি ================= */}
+            {/* লেভেল ১: পরিষদ ও পরিচিতি */}
             {currentLevel === 'about' && (
               <div className="space-y-2 animate-in fade-in">
                 <button
@@ -736,7 +810,7 @@ export function SiteHeader() {
                 <button
                   type="button"
                   onClick={() => scrollToSection('about')}
-                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-semibold text-xs border border-white/10 text-left cursor-pointer"
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-semibold text-xs border border-white/15 text-left cursor-pointer"
                 >
                   <span className="flex items-center gap-2"><Info className="size-4 text-amber-400" /><span>রিপোর্টার্স ইউনিটি পরিচিতি</span></span>
                   <ChevronRight className="size-4 text-amber-400" />
@@ -747,6 +821,25 @@ export function SiteHeader() {
           </nav>
         )}
       </header>
+
+      {/* ✅ গ্লোবাল কলিং মডাল (ইউজার ওয়েবসাইটের যেকোনো পেজে থাকা অবস্থাতেই ইনকামিং কল রিসিভ করতে পারবেন) */}
+      {me && (
+        <CallModal
+          currentUser={me}
+          targetUser={null}
+          conversationId={activeCallConvId}
+          callType={callType}
+          callState={callState}
+          incomingCaller={incomingCaller}
+          onClose={() => {
+            setCallState('idle')
+            setIncomingCaller(null)
+          }}
+          onAcceptIncoming={() => {
+            setCallState('connected')
+          }}
+        />
+      )}
     </>
   )
 }
