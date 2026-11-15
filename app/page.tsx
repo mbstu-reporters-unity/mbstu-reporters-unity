@@ -6,6 +6,7 @@ import { FbStoriesTray } from '@/components/portal/fb-stories-tray'
 import { FbReelsSection } from '@/components/portal/fb-reels-section'
 import { LeadershipSection } from '@/components/portal/leadership-section'
 import { GeneralNews } from '@/components/portal/general-news'
+import { CommunityFeed } from '@/components/portal/community-feed'
 import { CategorySections } from '@/components/portal/category-sections'
 import { StudentCorner } from '@/components/portal/student-corner'
 import { ClubNews } from '@/components/portal/club-news'
@@ -27,14 +28,16 @@ export default function Page() {
         {/* ব্যানার ও স্লাইডার */}
         <HeroCarousel />
 
-        {/* ১. ⭐ ফেসবুক স্টোরিজ ও হাইলাইটস ট্রে ⭐ */}
+        {/* ১. ফেসবুক স্টোরিজ ও হাইলাইটস ট্রে */}
         <FbStoriesTray />
 
-        {/* ২. ⭐ ফেসবুক রিলস ও ভিডিও হাব ⭐ */}
+        {/* ২. ফেসবুক রিলস ও ভিডিও হাব */}
         <FbReelsSection />
 
-        {/* ৩. সাধারণ সংবাদ ও অন্যান্য ফিড */}
+        {/* ৩. মূল ক্যাম্পাস সংবাদ ও সবার পোস্ট (কমিউনিটি ফিড) */}
         <GeneralNews />
+        <CommunityFeed />
+
         <LeadershipSection />
         <CategorySections />
         <StudentCorner />
