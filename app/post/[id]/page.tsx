@@ -2,7 +2,7 @@ import { cache } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { CalendarDays, User, Tag } from 'lucide-react'
+import { CalendarDays, User, Tag, CheckCircle2 } from 'lucide-react'
 import { ReactionBar } from '@/components/portal/reaction-bar'
 import { getPost, getApprovedComments, getImagesMeta, getLayout } from '@/lib/sb'
 import { CommentForm } from '@/components/portal/comment-form'
@@ -78,10 +78,12 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const layout = rows.length > 0 ? await getLayout('post', id) : 'grid'
   const items =
     rows.length > 0
-      ? rows.map((i) => ({ url: i.url, caption: i.caption, credit: i.credit }))
+      ? rows.map((i) => ({ url: i.url, caption: i.caption, credit: i.credit, date: post.created_at }))
       : post.image_url
-        ? [{ url: post.image_url }]
+        ? [{ url: post.image_url, date: post.created_at }]
         : []
+
+  const pageInfo = post.page || null
 
   return (
     <>
@@ -91,23 +93,57 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         <article className="glass-card mx-auto max-w-3xl space-y-6 p-5 sm:p-9 text-white">
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 pb-4">
-            {/* ✅ ধাপে ধাপে ফেরা ও ক্যাটাগরি লিংক */}
             <BackNavigation
               items={[
-                { label: post.category || 'সংবাদ', href: post.category ? `/category/${encodeURIComponent(post.category)}` : undefined }
+                pageInfo
+                  ? { label: pageInfo.name, href: `/p/${pageInfo.slug}` }
+                  : { label: post.category || 'সংবাদ', href: post.category ? `/category/${encodeURIComponent(post.category)}` : undefined }
               ]}
             />
 
             {post.category && (
               <Link
-                href={`/category/${encodeURIComponent(post.category)}`}
+                href={pageInfo ? `/p/${pageInfo.slug}` : `/category/${encodeURIComponent(post.category)}`}
                 className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-cyan-200 border border-white/25 backdrop-blur hover:bg-white/25 transition-all"
               >
                 <Tag className="size-3 text-cyan-300" />
-                <span>{post.category}</span>
+                <span>{pageInfo ? 'কমিউনিটি পেজ' : post.category}</span>
               </Link>
             )}
           </div>
+
+          {/* পেজের পোস্ট হলে ফেসবুক পেজের ব্যানার হেডার */}
+          {pageInfo && (
+            <div className="flex items-center gap-3 p-3 bg-white/10 rounded-2xl border border-white/15">
+              <Link href={`/p/${pageInfo.slug}`} className="shrink-0">
+                {pageInfo.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={pageInfo.avatar_url}
+                    alt={pageInfo.name}
+                    className="size-11 rounded-full object-cover ring-2 ring-cyan-400/60"
+                  />
+                ) : (
+                  <div className="size-11 rounded-full bg-cyan-600 text-white font-bold flex items-center justify-center text-base">
+                    {pageInfo.name.charAt(0)}
+                  </div>
+                )}
+              </Link>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1">
+                  <Link href={`/p/${pageInfo.slug}`} className="font-bold text-sm text-white hover:text-cyan-300 transition truncate">
+                    {pageInfo.name}
+                  </Link>
+                  {pageInfo.is_verified && (
+                    <CheckCircle2 className="size-3.5 fill-blue-500 text-white shrink-0" />
+                  )}
+                </div>
+                <p className="text-[11px] text-cyan-200/80">
+                  অফিসিয়াল পেজ · <Link href={`/p/${pageInfo.slug}`} className="underline">পেজে যান</Link>
+                </p>
+              </div>
+            </div>
+          )}
 
           <h1 className="font-serif text-2xl sm:text-4xl font-bold text-white leading-tight drop-shadow-md">
             {post.title}
@@ -129,7 +165,13 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
               {post.author && (
                 <span className="inline-flex items-center gap-1.5 font-semibold text-white/90 bg-white/10 border border-white/20 px-3 py-1 rounded-full">
                   <User className="size-3.5 text-cyan-300 shrink-0" />
-                  <span>{post.author}</span>
+                  {post.user_id ? (
+                    <Link href={`/u/${post.user_id}`} className="hover:text-cyan-300 hover:underline">
+                      {post.author}
+                    </Link>
+                  ) : (
+                    <span>{post.author}</span>
+                  )}
                 </span>
               )}
             </div>
@@ -137,7 +179,12 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
             <PostMetaBadges data={post} />
           </div>
 
-          <RichGallery items={items} layout={layout} />
+          <RichGallery
+            items={items}
+            layout={layout}
+            postTitle={post.title}
+            postDate={post.created_at}
+          />
 
           {post.video_url && (
             <video src={post.video_url} controls playsInline className="w-full rounded-2xl bg-black border border-white/20 shadow-lg" />
