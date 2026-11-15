@@ -1,4 +1,4 @@
-import { SB_URL, SB_KEY, attachProfileAvatars, type Post } from "./sb"
+import { SB_URL, SB_KEY, attachProfileAvatars, type Post, type Profile } from "./sb"
 
 export type CommunityPage = {
   id: string
@@ -57,7 +57,7 @@ export async function getCommunityPages(): Promise<CommunityPage[]> {
 export async function getMyPages(token: string, userId: string): Promise<CommunityPage[]> {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/community_pages?select=*&creator_id=eq.${encodeURIComponent(userId)}&order=created_at.desc`,
+      `${SB_URL}/rest/v1/community_pages?select=*&creator_id=eq.${encodeURIComponent(userId)}&order=created_at.asc`,
       { headers: hdr(token), cache: "no-store" }
     )
     if (!res.ok) return []
@@ -65,6 +65,53 @@ export async function getMyPages(token: string, userId: string): Promise<Communi
   } catch {
     return []
   }
+}
+
+/* কোনো ইউজারের পেজ না থাকলে স্বয়ংক্রিয়ভাবে তার নামে একটি পেজ তৈরি করা */
+export async function ensureUserAutoPage(
+  token: string,
+  profile: Pick<
+    Profile,
+    "id" | "full_name" | "user_type" | "department" | "batch" | "designation" | "office_section" | "bio" | "avatar_url"
+  >
+): Promise<CommunityPage[]> {
+  const existing = await getMyPages(token, profile.id)
+  if (existing.length > 0) return existing
+
+  const rawAscii = (profile.full_name || "user")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+  const shortId = profile.id.replace(/-/g, "").slice(0, 6)
+  const slug = `${(rawAscii || "page").slice(0, 40)}-${shortId}`
+
+  const catMap: Record<string, string> = {
+    teacher: "শিক্ষক পেজ",
+    staff: "কর্মকর্তা/কর্মচারী পেজ",
+    reporter: "সাংবাদিক পেজ",
+    student: "শিক্ষার্থী পেজ",
+  }
+  const bioParts = [
+    profile.designation,
+    profile.department ? `${profile.department}${profile.batch ? ` (${profile.batch})` : ""}` : null,
+    profile.office_section,
+  ].filter(Boolean)
+
+  try {
+    await createCommunityPage(token, {
+      creator_id: profile.id,
+      name: profile.full_name,
+      slug,
+      category: catMap[profile.user_type || "student"] || "ব্যক্তিগত পেজ",
+      bio: profile.bio?.trim() || (bioParts.length ? bioParts.join(" · ") : `${profile.full_name}-এর অফিসিয়াল পেজ।`),
+      avatar_url: profile.avatar_url || null,
+      is_verified: false,
+      is_active: true,
+      sort_order: 100,
+    })
+  } catch {}
+
+  return await getMyPages(token, profile.id)
 }
 
 /* নির্দিষ্ট পেজ স্লাগ দিয়ে লোড করা (যেমন: /p/sports-club) */
@@ -83,11 +130,16 @@ export async function getPageBySlug(slug: string): Promise<CommunityPage | null>
 }
 
 /* এই পেজের নিজস্ব সব পোস্ট লোড করা */
-export async function getPagePosts(pageId: string): Promise<Post[]> {
+export async function getPagePosts(
+  pageId: string,
+  includeHidden = false,
+  token?: string
+): Promise<Post[]> {
   try {
+    const filter = includeHidden ? "" : "&or=(hidden.is.null,hidden.eq.false)"
     const res = await fetch(
-      `${SB_URL}/rest/v1/posts?select=*&page_id=eq.${encodeURIComponent(pageId)}&order=created_at.desc&limit=50`,
-      { headers: hdr(), cache: "no-store" }
+      `${SB_URL}/rest/v1/posts?select=*&page_id=eq.${encodeURIComponent(pageId)}${filter}&order=created_at.desc&limit=100`,
+      { headers: hdr(token), cache: "no-store" }
     )
     if (!res.ok) return []
     const rows: Post[] = await res.json()
@@ -127,4 +179,59 @@ export async function deleteCommunityPage(token: string, id: string) {
       headers: hdr(token),
     })
   )
+}
+
+/* ==================== পেজ ফলো / লাইক সিস্টেম ==================== */
+
+export async function getPageFollowStats(
+  pageId: string,
+  followerKey?: string
+): Promise<{ count: number; following: boolean }> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/page_follows?select=follower_key&page_id=eq.${encodeURIComponent(pageId)}`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return { count: 0, following: false }
+    const rows: { follower_key: string }[] = await res.json()
+    return {
+      count: rows.length,
+      following: followerKey ? rows.some((r) => r.follower_key === followerKey) : false,
+    }
+  } catch {
+    return { count: 0, following: false }
+  }
+}
+
+export async function togglePageFollow(
+  pageId: string,
+  followerKey: string,
+  currentlyFollowing: boolean,
+  userId?: string | null
+): Promise<boolean> {
+  if (currentlyFollowing) {
+    await ok(
+      await fetch(
+        `${SB_URL}/rest/v1/page_follows?page_id=eq.${encodeURIComponent(pageId)}&follower_key=eq.${encodeURIComponent(followerKey)}`,
+        {
+          method: "DELETE",
+          headers: hdr(),
+        }
+      )
+    )
+    return false
+  }
+
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/page_follows`, {
+      method: "POST",
+      headers: { ...hdr(undefined, true), Prefer: "resolution=ignore-duplicates,return=minimal" },
+      body: JSON.stringify({
+        page_id: pageId,
+        follower_key: followerKey,
+        user_id: userId || null,
+      }),
+    })
+  )
+  return true
 }
