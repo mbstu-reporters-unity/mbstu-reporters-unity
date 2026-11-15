@@ -4,14 +4,15 @@ import React, { useEffect, useState, useRef } from "react"
 import Link from "next/link"
 import {
   Search, Send, ArrowLeft, Image as ImageIcon,
-  MessageSquare, User, Phone, Video, CheckCircle2
+  MessageSquare, User, Phone, Video, Users, UserPlus, AlertCircle
 } from "lucide-react"
 import { getMe, uploadImage, type Profile } from "@/lib/sb"
 import {
   getMyConversations, getConversationMessages, sendChatMessage,
-  openDirectConversation, searchCampusUsers, supabase,
+  openDirectConversation, syncRealtimeAuth, supabase,
   type ConversationItem, type MessageItem
 } from "@/lib/chat"
+import { getMyFriendships, type FriendEntry } from "@/lib/friends"
 import { TopBar } from "@/components/portal/top-bar"
 import { SiteHeader } from "@/components/portal/site-header"
 import { CallModal, type CallType, type CallState } from "@/components/portal/call-modal"
@@ -25,10 +26,11 @@ export default function MessagesPage() {
   const [activeConv, setActiveConv] = useState<ConversationItem | null>(null)
   const [messages, setMessages] = useState<MessageItem[]>([])
 
+  const [myFriends, setMyFriends] = useState<FriendEntry[]>([])
   const [inputText, setInputText] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<Profile[]>([])
   const [uploadingImg, setUploadingImg] = useState(false)
+  const [errorNotice, setErrorNotice] = useState("")
 
   // কলিং স্টেট
   const [callState, setCallState] = useState<CallState>("idle")
@@ -43,17 +45,19 @@ export default function MessagesPage() {
     const t = localStorage.getItem("mbstu_admin_token") || ""
     if (t) {
       setToken(t)
+      syncRealtimeAuth(t)
+
       getMe(t).then((profile) => {
         setMe(profile)
         if (profile) {
-          loadConvs(t, profile.id)
+          loadConvsAndFriends(t, profile.id)
           listenToPersonalCallSignals(profile)
         }
       })
     }
   }, [])
 
-  // নিজের অ্যাকাউন্টে ইনকামিং কল আসার লিসেনার
+  // ব্যক্তিগত চ্যানেলে ইনকামিং কল আসার লিসেনার
   function listenToPersonalCallSignals(myProfile: Profile) {
     const channel = supabase.channel(`user_calls_${myProfile.id}`)
     channel
@@ -67,25 +71,34 @@ export default function MessagesPage() {
       .subscribe()
   }
 
-  async function loadConvs(t: string, myId: string) {
-    const list = await getMyConversations(t, myId)
-    setConversations(list)
+  async function loadConvsAndFriends(t: string, myId: string) {
+    const [convList, friendshipData] = await Promise.all([
+      getMyConversations(t, myId),
+      getMyFriendships(t, myId),
+    ])
+    setConversations(convList)
+    setMyFriends(friendshipData.friends)
 
+    // যদি URL-এ ?uid=xxx দিয়ে আসা হয় (যেমন বন্ধুর প্রোফাইল থেকে চ্যাট বাটনে ক্লিক)
     if (typeof window !== "undefined") {
       const targetUid = new URLSearchParams(window.location.search).get("uid")
       if (targetUid) {
-        const convId = await openDirectConversation(t, targetUid)
-        if (convId) {
-          const freshList = await getMyConversations(t, myId)
-          setConversations(freshList)
-          const target = freshList.find((c) => c.id === convId)
-          if (target) selectConversation(target, t)
+        try {
+          const convId = await openDirectConversation(t, targetUid)
+          if (convId) {
+            const freshList = await getMyConversations(t, myId)
+            setConversations(freshList)
+            const target = freshList.find((c) => c.id === convId)
+            if (target) selectConversation(target, t)
+          }
+        } catch (err: any) {
+          setErrorNotice(err?.message || "শুধুমাত্র বন্ধুদের সাথেই চ্যাট করা সম্ভব। আগে ফ্রেন্ড রিকোয়েস্ট পাঠান।")
         }
       }
     }
   }
 
-  // রিয়েলটাইম চ্যাট লিসেনার (WebSocket)
+  // রিয়েলটাইম চ্যাট লিসেনার (WebSocket - শুধুমাত্র এই চ্যাটরুমের মেসেজ)
   useEffect(() => {
     if (!activeConv) return
 
@@ -120,35 +133,41 @@ export default function MessagesPage() {
 
   async function selectConversation(conv: ConversationItem, t = token) {
     setActiveConv(conv)
+    setErrorNotice("")
     setSearchQuery("")
-    setSearchResults([])
     const msgs = await getConversationMessages(t, conv.id)
     setMessages(msgs)
   }
 
-  async function handleSearch(q: string) {
-    setSearchQuery(q)
-    if (!q.trim()) {
-      setSearchResults([])
-      return
-    }
-    const res = await searchCampusUsers(token, q)
-    setSearchResults(res.filter((u) => u.id !== me?.id))
-  }
+  // সার্চ শুধুমাত্র নিজের ফ্রেন্ডলিস্টের ভেতরেই সীমাবদ্ধ থাকবে
+  const filteredFriends = myFriends.filter((f) => {
+    if (!searchQuery.trim()) return false
+    const q = searchQuery.toLowerCase()
+    return (
+      f.user.full_name.toLowerCase().includes(q) ||
+      (f.user.department && f.user.department.toLowerCase().includes(q)) ||
+      (f.user.designation && f.user.designation.toLowerCase().includes(q))
+    )
+  })
 
-  async function handleStartChatWithUser(u: Profile) {
+  async function handleStartChatWithFriend(friendUserId: string) {
     if (!token || !me) return
-    const convId = await openDirectConversation(token, u.id)
-    if (convId) {
-      const freshList = await getMyConversations(token, me.id)
-      setConversations(freshList)
-      const target = freshList.find((c) => c.id === convId) || {
-        id: convId,
-        type: "direct",
-        updated_at: new Date().toISOString(),
-        other_user: u,
+    setErrorNotice("")
+    try {
+      const convId = await openDirectConversation(token, friendUserId)
+      if (convId) {
+        const freshList = await getMyConversations(token, me.id)
+        setConversations(freshList)
+        const target = freshList.find((c) => c.id === convId) || {
+          id: convId,
+          type: "direct" as const,
+          updated_at: new Date().toISOString(),
+          other_user: myFriends.find((f) => f.user.id === friendUserId)?.user as any,
+        }
+        selectConversation(target)
       }
-      selectConversation(target)
+    } catch (err: any) {
+      setErrorNotice(err?.message || "চ্যাট শুরু করা যায়নি।")
     }
   }
 
@@ -183,16 +202,20 @@ export default function MessagesPage() {
     setActiveCallConvId(activeConv.id)
     setCallState("calling")
 
-    // অপর প্রান্তের ইউজারের ব্যক্তিগত চ্যানেলে ইনকামিং নোটিফিকেশন পাঠানো
-    const channel = supabase.channel(`user_calls_${activeConv.other_user.id}`)
-    channel.send({
-      type: "broadcast",
-      event: "incoming_call",
-      payload: {
-        caller: me,
-        callType: type,
-        conversationId: activeConv.id,
-      },
+    const partnerId = activeConv.other_user.id
+    const channel = supabase.channel(`user_calls_${partnerId}`)
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        channel.send({
+          type: "broadcast",
+          event: "incoming_call",
+          payload: {
+            caller: me,
+            callType: type,
+            conversationId: activeConv.id,
+          },
+        })
+      }
     })
   }
 
@@ -206,7 +229,7 @@ export default function MessagesPage() {
           <div className="glass-card max-w-sm m-auto p-6 text-center space-y-3 rounded-3xl border border-white/20">
             <MessageSquare className="size-10 text-cyan-400 mx-auto" />
             <h2 className="font-bold text-lg text-white">M-RU টেক্সট (মেসেঞ্জার)</h2>
-            <p className="text-xs text-slate-300">চ্যাট বা কল করতে একাউন্টে লগইন করুন।</p>
+            <p className="text-xs text-slate-300">চ্যাট বা লাইভ কল করতে একাউন্টে লগইন করুন।</p>
             <Link href="/admin" className="block py-2.5 rounded-xl bg-cyan-600 text-white font-bold text-xs">
               লগইন পেইজে যান →
             </Link>
@@ -214,7 +237,7 @@ export default function MessagesPage() {
         ) : (
           <div className="glass-card max-w-5xl w-full mx-auto flex-1 flex rounded-3xl border border-white/20 overflow-hidden shadow-2xl h-[82vh]">
             
-            {/* কলাম ১: চ্যাট তালিকা ও সার্চ */}
+            {/* কলাম ১: চ্যাট তালিকা ও বন্ধু সার্চ */}
             <div className={`w-full md:w-80 border-r border-white/10 flex flex-col bg-slate-900/60 backdrop-blur-xl ${activeConv ? "hidden md:flex" : "flex"}`}>
               <div className="p-3.5 border-b border-white/10 space-y-2.5">
                 <div className="flex items-center justify-between">
@@ -222,46 +245,62 @@ export default function MessagesPage() {
                     <MessageSquare className="size-4" />
                     <span>M-RU টেক্সট</span>
                   </h2>
-                  <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full text-slate-300">
-                    {conversations.length} টি চ্যাট
-                  </span>
+                  <Link
+                    href="/friends"
+                    className="text-[11px] bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-full text-cyan-200 font-semibold flex items-center gap-1 transition"
+                  >
+                    <Users className="size-3" />
+                    <span>বন্ধু তালিকা</span>
+                  </Link>
                 </div>
 
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 size-3.5 text-white/40" />
                   <input
                     className="w-full bg-white/10 border border-white/15 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400"
-                    placeholder="নাম বা বিভাগ দিয়ে খুঁজুন..."
+                    placeholder="বন্ধুদের মধ্যে খুঁজুন..."
                     value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
               </div>
 
-              {/* সার্চ ফলাফল */}
-              {searchResults.length > 0 && (
+              {/* এরর বা সতর্কতা নোটিশ */}
+              {errorNotice && (
+                <div className="p-2.5 bg-rose-950/70 border-b border-rose-500/40 text-[11px] text-rose-200 flex items-start gap-1.5">
+                  <AlertCircle className="size-3.5 shrink-0 mt-0.5 text-rose-400" />
+                  <span className="flex-1">{errorNotice}</span>
+                  <button onClick={() => setErrorNotice("")} className="text-white/60 hover:text-white font-bold ml-1">✕</button>
+                </div>
+              )}
+
+              {/* সার্চ রেজাল্ট (শুধুমাত্র নিজের বন্ধুদের তালিকা থেকে) */}
+              {searchQuery && (
                 <div className="p-2 bg-blue-950/60 border-b border-white/10 space-y-1">
-                  <p className="text-[10px] font-bold text-cyan-300 px-2">সার্চ ফলাফল ({searchResults.length}):</p>
-                  {searchResults.map((u) => (
+                  <p className="text-[10px] font-bold text-cyan-300 px-2">বন্ধু তালিকায় ফলাফল ({filteredFriends.length}):</p>
+                  {filteredFriends.map((f) => (
                     <div
-                      key={u.id}
-                      onClick={() => handleStartChatWithUser(u)}
+                      key={f.user.id}
+                      onClick={() => handleStartChatWithFriend(f.user.id)}
                       className="p-2 rounded-xl hover:bg-white/10 cursor-pointer flex items-center gap-2.5 text-xs transition"
                     >
                       <div className="size-8 rounded-full bg-cyan-600 font-bold flex items-center justify-center shrink-0">
-                        {u.avatar_url ? (
+                        {f.user.avatar_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={u.avatar_url} alt="" className="size-full rounded-full object-cover" />
+                          <img src={f.user.avatar_url} alt="" className="size-full rounded-full object-cover" />
                         ) : (
-                          u.full_name.charAt(0)
+                          f.user.full_name.charAt(0)
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-white truncate">{u.full_name}</p>
-                        <p className="text-[10px] text-slate-400 truncate">{u.department || u.designation}</p>
+                        <p className="font-bold text-white truncate">{f.user.full_name}</p>
+                        <p className="text-[10px] text-slate-400 truncate">{f.user.department || f.user.designation}</p>
                       </div>
                     </div>
                   ))}
+                  {filteredFriends.length === 0 && (
+                    <p className="text-[11px] text-slate-400 px-2 py-1">এই নামের কোনো বন্ধু পাওয়া যায়নি।</p>
+                  )}
                 </div>
               )}
 
@@ -295,7 +334,7 @@ export default function MessagesPage() {
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                          {c.last_message?.media_url ? "📷 ছবি" : c.last_message?.content || "নতুন চ্যাট শুরু করুন"}
+                          {c.last_message?.media_url ? "📷 ছবি" : c.last_message?.content || "চ্যাট শুরু করুন"}
                         </p>
                       </div>
                     </div>
@@ -303,9 +342,16 @@ export default function MessagesPage() {
                 })}
 
                 {conversations.length === 0 && !searchQuery && (
-                  <p className="text-xs text-slate-400 text-center py-10 px-4">
-                    কোনো সক্রিয় চ্যাট নেই। ওপরের সার্চ বক্সে নাম লিখে চ্যাট শুরু করুন।
-                  </p>
+                  <div className="text-center py-10 px-4 space-y-3">
+                    <p className="text-xs text-slate-400">কোনো কথোপকথন নেই।</p>
+                    <Link
+                      href="/friends"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-cyan-600/80 hover:bg-cyan-600 text-white px-4 py-1.5 text-xs font-bold transition shadow"
+                    >
+                      <UserPlus className="size-3.5" />
+                      <span>ক্যাম্পাসের বন্ধু খুঁজুন</span>
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>
@@ -320,7 +366,7 @@ export default function MessagesPage() {
                       <button
                         type="button"
                         onClick={() => setActiveConv(null)}
-                        className="md:hidden p-1.5 rounded-full hover:bg-white/10 text-white"
+                        className="md:hidden p-1.5 rounded-full hover:bg-white/10 text-white cursor-pointer"
                       >
                         <ArrowLeft className="size-5" />
                       </button>
@@ -338,7 +384,7 @@ export default function MessagesPage() {
 
                       <div className="min-w-0">
                         <Link href={`/u/${activeConv.other_user?.id}`} className="font-bold text-xs sm:text-sm text-white hover:underline truncate block">
-                          {activeConv.other_user?.full_name || "ক্যাম্পাস মেম্বার"}
+                          {activeConv.other_user?.full_name || "বন্ধু"}
                         </Link>
                         <p className="text-[10px] text-cyan-300 truncate">
                           {activeConv.other_user?.department || activeConv.other_user?.designation || "MBSTU"}
@@ -346,7 +392,7 @@ export default function MessagesPage() {
                       </div>
                     </div>
 
-                    {/* ✅ সক্রিয় লাইভ অডিও ও ভিডিও কল বাটনসমূহ */}
+                    {/* সক্রিয় লাইভ অডিও ও ভিডিও কল বাটনসমূহ */}
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
@@ -412,7 +458,7 @@ export default function MessagesPage() {
                       type="button"
                       disabled={uploadingImg}
                       onClick={() => fileInputRef.current?.click()}
-                      className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-cyan-300 transition shrink-0"
+                      className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-cyan-300 transition shrink-0 cursor-pointer"
                       title="ছবি পাঠান"
                     >
                       <ImageIcon className="size-4" />
@@ -436,17 +482,19 @@ export default function MessagesPage() {
                       type="button"
                       disabled={!inputText.trim()}
                       onClick={handleSendMessage}
-                      className="size-9 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white flex items-center justify-center transition shrink-0 disabled:opacity-40"
+                      className="size-9 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white flex items-center justify-center transition shrink-0 disabled:opacity-40 cursor-pointer"
                     >
                       <Send className="size-4" />
                     </button>
                   </div>
                 </>
               ) : (
-                <div className="text-center p-8 space-y-2 text-white/60">
+                <div className="text-center p-8 space-y-3 text-white/60">
                   <MessageSquare className="size-12 mx-auto text-cyan-400/50" />
-                  <p className="font-bold text-sm text-white">M-RU টেক্সটে স্বাগতম</p>
-                  <p className="text-xs">বামের তালিকা থেকে যেকোনো ইউজারের ওপর ট্যাপ করে চ্যাট বা কল করুন।</p>
+                  <p className="font-bold text-sm text-white">M-RU ব্যক্তিগত টেক্সট</p>
+                  <p className="text-xs max-w-xs mx-auto">
+                    বামের তালিকা থেকে বন্ধুর ওপর ট্যাপ করুন। শুধুমাত্র আপনি এবং আপনার বন্ধুই এই চ্যাট দেখতে পাবেন।
+                  </p>
                 </div>
               )}
             </div>
