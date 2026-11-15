@@ -4,15 +4,10 @@ import Link from 'next/link'
 import {
   GraduationCap,
   Building2,
-  CalendarDays,
-  Mail,
-  Phone,
   MessageSquare,
   FileText,
-  Share2,
   CheckCircle2,
   BookOpen,
-  ArrowRight
 } from 'lucide-react'
 import { SB_URL, SB_KEY, attachProfileAvatars, type Profile, type Post } from '@/lib/sb'
 import { TopBar } from '@/components/portal/top-bar'
@@ -25,14 +20,34 @@ import type { CommunityPage } from '@/lib/pages'
 
 export const dynamic = 'force-dynamic'
 
-async function getProfileById(id: string): Promise<Profile | null> {
+type PublicProfile = Pick<
+  Profile,
+  | 'id'
+  | 'full_name'
+  | 'department'
+  | 'batch'
+  | 'role'
+  | 'user_type'
+  | 'designation'
+  | 'office_section'
+  | 'bio'
+  | 'newspaper_name'
+  | 'avatar_url'
+  | 'approved'
+  | 'created_at'
+>
+
+async function getProfileById(id: string): Promise<PublicProfile | null> {
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/profiles?select=*&id=eq.${encodeURIComponent(id)}&limit=1`, {
-      headers: { apikey: SB_KEY },
-      cache: 'no-store',
-    })
+    const res = await fetch(
+      `${SB_URL}/rest/v1/profiles?select=id,full_name,department,batch,role,user_type,designation,office_section,bio,newspaper_name,avatar_url,approved,created_at&id=eq.${encodeURIComponent(id)}&limit=1`,
+      {
+        headers: { apikey: SB_KEY },
+        cache: 'no-store',
+      }
+    )
     if (!res.ok) return null
-    const rows: Profile[] = await res.json()
+    const rows: PublicProfile[] = await res.json()
     return rows[0] || null
   } catch {
     return null
@@ -176,7 +191,6 @@ export default async function UserProfilePage({
                   </p>
                 )}
 
-                {/* মেসেজ বাটন (M-RU টেক্সটের সরাসরি সংযোগকারী) */}
                 <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2.5 text-xs font-bold">
                   <Link
                     href={`/messages?uid=${profile.id}`}
