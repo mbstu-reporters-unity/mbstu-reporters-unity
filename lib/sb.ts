@@ -185,7 +185,6 @@ export async function refreshSession(): Promise<string | null> {
 
 export async function signUp(email: string, password: string, info: SignupInfo) {
   const cleanEmail = email.trim()
-  // শিক্ষার্থী, শিক্ষক ও সাধারণ কর্মচারীদের ক্ষেত্রে অ্যাকাউন্ট সাথে সাথেই সচল (approved=true) থাকবে
   const autoApproved = info.user_type !== "reporter"
 
   const res = await ok(
@@ -205,8 +204,7 @@ export async function signUp(email: string, password: string, info: SignupInfo) 
   )
   const userObj = await res.json()
 
-  // Profiles টেবিলে ডাটাবেজ রো নিশ্চিত করা
-  if (userObj?.user?.id) {
+  if (userObj?.user?.id && userObj?.access_token) {
     const profilePayload = {
       id: userObj.user.id,
       email: cleanEmail,
@@ -227,7 +225,7 @@ export async function signUp(email: string, password: string, info: SignupInfo) 
     await fetch(`${SB_URL}/rest/v1/profiles`, {
       method: "POST",
       headers: {
-        ...hdr(userObj.access_token || undefined, true),
+        ...hdr(userObj.access_token, true),
         Prefer: "resolution=merge-duplicates,return=minimal",
       },
       body: JSON.stringify(profilePayload),
@@ -253,7 +251,7 @@ export async function getMe(token: string): Promise<Profile | null> {
     if (res.ok) rows = await res.json()
   } catch {}
 
-  if (!rows || rows.length === 0) {
+  if ((!rows || rows.length === 0) && user.email) {
     try {
       const res = await fetch(
         `${SB_URL}/rest/v1/profiles?select=*&email=eq.${encodeURIComponent(user.email)}`,
@@ -263,7 +261,94 @@ export async function getMe(token: string): Promise<Profile | null> {
     } catch {}
   }
 
+  // ইমেইল কনফার্মেশনের পর প্রথমবার লগইন করলে প্রোফাইল না থাকলে স্বয়ংক্রিয়ভাবে তৈরি করে দেওয়া
+  if ((!rows || rows.length === 0) && user.id) {
+    const m = (user.user_metadata || {}) as Record<string, any>
+    const uType: UserType =
+      m.user_type === "teacher" || m.user_type === "staff" || m.user_type === "reporter"
+        ? m.user_type
+        : "student"
+    const autoApproved = uType !== "reporter"
+    const fallbackProfile = {
+      id: user.id,
+      email: user.email || null,
+      full_name: m.full_name || (user.email ? String(user.email).split("@")[0] : "সদস্য"),
+      user_type: uType,
+      department: m.department || null,
+      batch: m.batch || null,
+      student_id: m.student_id || null,
+      designation: m.designation || null,
+      office_section: m.office_section || null,
+      staff_id: m.staff_id || null,
+      phone: m.phone || null,
+      newspaper_name: m.newspaper_name || null,
+      approved: autoApproved,
+      role: "user",
+    }
+    await fetch(`${SB_URL}/rest/v1/profiles`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(fallbackProfile),
+    }).catch(() => {})
+    const retry = await fetch(
+      `${SB_URL}/rest/v1/profiles?select=*&id=eq.${encodeURIComponent(user.id)}`,
+      { headers: hdr(token), cache: "no-store" }
+    )
+    if (retry.ok) rows = await retry.json()
+  }
+
   return rows && rows.length > 0 ? rows[0] : null
+}
+
+/* ---------- অ্যাডমিনের জন্য সকল ব্যবহারকারী, রোল ও অনুমোদন ব্যবস্থাপনা ---------- */
+
+export async function getAllProfilesAdmin(token: string): Promise<Profile[]> {
+  try {
+    const rpcRes = await fetch(`${SB_URL}/rest/v1/rpc/admin_get_all_profiles`, {
+      method: "POST",
+      headers: hdr(token, true),
+      body: JSON.stringify({}),
+      cache: "no-store",
+    })
+    if (rpcRes.ok) {
+      return await rpcRes.json()
+    }
+    const res = await fetch(
+      `${SB_URL}/rest/v1/profiles?select=*&order=created_at.desc`,
+      { headers: hdr(token), cache: "no-store" }
+    )
+    if (!res.ok) return []
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
+export async function setProfileRole(
+  token: string,
+  id: string,
+  role: "admin" | "moderator" | "user"
+) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify({
+        role,
+        director_visible: role === "admin" || role === "moderator",
+      }),
+    })
+  )
+}
+
+export async function setProfileApproved(token: string, id: string, approved: boolean) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify({ approved }),
+    })
+  )
 }
 
 /* ---------- সাংবাদিক ও মডারেটর ব্যবস্থাপনা ---------- */
