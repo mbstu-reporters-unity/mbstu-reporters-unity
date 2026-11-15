@@ -4,6 +4,14 @@ const BUCKET = "post-images"
 
 export type UserType = "student" | "teacher" | "staff" | "reporter"
 
+export type PostPageInfo = {
+  id: string
+  name: string
+  slug: string
+  avatar_url: string | null
+  is_verified: boolean
+}
+
 export type Post = {
   id: string
   title: string
@@ -12,8 +20,10 @@ export type Post = {
   category: string | null
   club_id?: string | null
   page_id?: string | null
+  page?: PostPageInfo | null
   author: string | null
   author_avatar?: string | null
+  author_user_type?: UserType | null
   show_author_avatar?: boolean | null
   image_url: string | null
   video_url: string | null
@@ -24,7 +34,7 @@ export type Post = {
   link_url?: string | null
 }
 
-export type PostInput = Omit<Post, "id" | "created_at" | "user_id">
+export type PostInput = Omit<Post, "id" | "created_at" | "user_id" | "page" | "author_user_type">
 
 export type PublicComment = {
   id: string
@@ -90,38 +100,91 @@ async function ok(res: Response): Promise<Response> {
   throw new Error(msg)
 }
 
-/* ---------- প্রোফাইলের ছবি অটো-সিঙ্ক হেল্পার ---------- */
+/* ---------- প্রোফাইলের ছবি ও পেজের তথ্য অটো-সিঙ্ক হেল্পার ---------- */
 
 export async function attachProfileAvatars(posts: Post[]): Promise<Post[]> {
   if (!posts || posts.length === 0) return posts
-  const needsAvatar = posts.some((p) => !p.author_avatar && p.show_author_avatar !== false)
-  if (!needsAvatar) return posts
+
+  const needsProfile = posts.some(
+    (p) => (!p.author_avatar && p.show_author_avatar !== false) || !p.author_user_type
+  )
+  const pageIds = Array.from(
+    new Set(posts.map((p) => p.page_id).filter((id): id is string => Boolean(id)))
+  )
+
+  const byId = new Map<string, { avatar_url?: string | null; user_type?: UserType | null }>()
+  const byName = new Map<string, { avatar_url?: string | null; user_type?: UserType | null }>()
+  const pageMap = new Map<string, PostPageInfo>()
 
   try {
-    const res = await fetch(
-      `${SB_URL}/rest/v1/profiles?select=id,full_name,avatar_url&approved=eq.true`,
-      { headers: hdr(), cache: "no-store" }
-    )
-    if (!res.ok) return posts
-    const profiles: Array<{ id: string; full_name: string; avatar_url?: string | null }> =
-      await res.json()
-    if (!Array.isArray(profiles) || profiles.length === 0) return posts
+    const tasks: Promise<void>[] = []
 
-    const byId = new Map<string, string>()
-    const byName = new Map<string, string>()
-    for (const pr of profiles) {
-      if (pr.avatar_url) {
-        if (pr.id) byId.set(pr.id, pr.avatar_url)
-        if (pr.full_name) byName.set(pr.full_name.trim().toLowerCase(), pr.avatar_url)
-      }
+    if (needsProfile) {
+      tasks.push(
+        fetch(
+          `${SB_URL}/rest/v1/profiles?select=id,full_name,avatar_url,user_type&approved=eq.true`,
+          { headers: hdr(), cache: "no-store" }
+        )
+          .then((res) => (res.ok ? res.json() : []))
+          .then(
+            (
+              profiles: Array<{
+                id: string
+                full_name: string
+                avatar_url?: string | null
+                user_type?: UserType | null
+              }>
+            ) => {
+              if (!Array.isArray(profiles)) return
+              for (const pr of profiles) {
+                const info = { avatar_url: pr.avatar_url, user_type: pr.user_type || "student" }
+                if (pr.id) byId.set(pr.id, info)
+                if (pr.full_name) byName.set(pr.full_name.trim().toLowerCase(), info)
+              }
+            }
+          )
+          .catch(() => {})
+      )
     }
 
+    if (pageIds.length > 0) {
+      const listParam = pageIds.map((id) => encodeURIComponent(id)).join(",")
+      tasks.push(
+        fetch(
+          `${SB_URL}/rest/v1/community_pages?select=id,name,slug,avatar_url,is_verified&is_active=eq.true&id=in.(${listParam})`,
+          { headers: hdr(), cache: "no-store" }
+        )
+          .then((res) => (res.ok ? res.json() : []))
+          .then((pages: PostPageInfo[]) => {
+            if (!Array.isArray(pages)) return
+            for (const pg of pages) {
+              if (pg.id) pageMap.set(pg.id, pg)
+            }
+          })
+          .catch(() => {})
+      )
+    }
+
+    await Promise.all(tasks)
+
     return posts.map((p) => {
-      if (p.author_avatar || p.show_author_avatar === false) return p
-      const fromId = p.user_id ? byId.get(p.user_id) : undefined
-      const fromName = p.author ? byName.get(p.author.trim().toLowerCase()) : undefined
-      const fallback = fromId || fromName || null
-      return fallback ? { ...p, author_avatar: fallback } : p
+      const prInfo =
+        (p.user_id ? byId.get(p.user_id) : undefined) ||
+        (p.author ? byName.get(p.author.trim().toLowerCase()) : undefined)
+
+      const resolvedAvatar =
+        p.author_avatar ||
+        (p.show_author_avatar !== false ? prInfo?.avatar_url || null : null)
+
+      const resolvedType = p.author_user_type || prInfo?.user_type || null
+      const resolvedPage = p.page_id ? pageMap.get(p.page_id) || p.page || null : null
+
+      return {
+        ...p,
+        author_avatar: resolvedAvatar,
+        author_user_type: resolvedType,
+        page: resolvedPage,
+      }
     })
   } catch {
     return posts
@@ -261,7 +324,6 @@ export async function getMe(token: string): Promise<Profile | null> {
     } catch {}
   }
 
-  // ইমেইল কনফার্মেশনের পর প্রথমবার লগইন করলে প্রোফাইল না থাকলে স্বয়ংক্রিয়ভাবে তৈরি করে দেওয়া
   if ((!rows || rows.length === 0) && user.id) {
     const m = (user.user_metadata || {}) as Record<string, any>
     const uType: UserType =
