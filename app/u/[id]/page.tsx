@@ -4,7 +4,6 @@ import Link from 'next/link'
 import {
   GraduationCap,
   Building2,
-  MessageSquare,
   FileText,
   CheckCircle2,
   BookOpen,
@@ -15,6 +14,7 @@ import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
+import { FriendActionButton } from '@/components/portal/friend-action-button'
 import { NewsGrid } from '@/components/portal/news-card'
 import type { CommunityPage } from '@/lib/pages'
 
@@ -191,14 +191,9 @@ export default async function UserProfilePage({
                   </p>
                 )}
 
+                {/* ফ্রেন্ড রিকোয়েস্ট ও মেসেজ বাটন */}
                 <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2.5 text-xs font-bold">
-                  <Link
-                    href={`/messages?uid=${profile.id}`}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 py-2.5 shadow-lg transition active:scale-95 cursor-pointer font-bold border border-white/20"
-                  >
-                    <MessageSquare className="size-4" />
-                    <span>M-RU টেক্সট (বার্তা পাঠান)</span>
-                  </Link>
+                  <FriendActionButton targetUserId={profile.id} targetUserName={profile.full_name} />
                   {profile.newspaper_name && (
                     <span className="bg-white/10 border border-white/20 px-3 py-2 rounded-xl text-slate-200 flex items-center gap-1.5">
                       <span>📰 {profile.newspaper_name}</span>
