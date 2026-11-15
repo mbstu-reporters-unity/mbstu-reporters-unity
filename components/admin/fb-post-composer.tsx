@@ -87,6 +87,7 @@ export interface FbPostComposerProps {
   clubs?: ClubItem[]
   communityPages?: CommunityPage[]
   defaultPageId?: string
+  lockToPage?: boolean
   departments?: Department[]
   studentKinds?: string[]
 
@@ -283,6 +284,7 @@ export default function FbPostComposer({
   clubs = [],
   communityPages = [],
   defaultPageId = "",
+  lockToPage = false,
   departments = [],
   studentKinds = ["Opinion", "Creative Writing", "Achievement", "Research Highlight"],
   editItem = null,
@@ -306,7 +308,9 @@ export default function FbPostComposer({
   const [embedMediaUrl, setEmbedMediaUrl] = useState("")
 
   const [category, setCategory] = useState(categories[0] || "ক্যাম্পাস সংবাদ")
-  const [selectedPageId, setSelectedPageId] = useState(defaultPageId)
+  const [selectedPageId, setSelectedPageId] = useState(
+    defaultPageId || (lockToPage ? communityPages[0]?.id || "" : "")
+  )
   const [selectedClubId, setSelectedClubId] = useState("")
   const [customAuthor, setCustomAuthor] = useState(authorName)
   const [postAuthorAvatar, setPostAuthorAvatar] = useState<string | null>(authorAvatar || null)
@@ -359,6 +363,14 @@ export default function FbPostComposer({
   }, [])
 
   useEffect(() => {
+    if (defaultPageId) {
+      setSelectedPageId(defaultPageId)
+    } else if (lockToPage && communityPages.length > 0) {
+      setSelectedPageId((prev) => prev || communityPages[0].id)
+    }
+  }, [defaultPageId, lockToPage, communityPages])
+
+  useEffect(() => {
     if (!editItem) return
     let alive = true
 
@@ -379,7 +391,7 @@ export default function FbPostComposer({
       setHeading(p.heading || "")
       setBody(p.body || "")
       setCategory(p.category || categories[0] || "ক্যাম্পাস সংবাদ")
-      setSelectedPageId(p.page_id || "")
+      setSelectedPageId(p.page_id || defaultPageId || (lockToPage ? communityPages[0]?.id || "" : ""))
       setSelectedClubId(p.club_id || "")
       setCustomAuthor(p.author || authorName)
       setPostAuthorAvatar(p.author_avatar || null)
@@ -558,6 +570,10 @@ export default function FbPostComposer({
       setMsg("❌ অনুগ্রহ করে কিছু লিখুন অথবা অন্তত একটি ছবি/ফাইল যুক্ত করুন")
       return
     }
+    if (mode === "post" && lockToPage && !selectedPageId) {
+      setMsg("❌ অনুগ্রহ করে আপনার একটি পেজ নির্বাচন করুন")
+      return
+    }
     if (linkUrl.trim() && !/^https?:\/\//i.test(linkUrl.trim())) {
       setMsg("❌ ওয়েবসাইটের লিংক http:// বা https:// দিয়ে শুরু হতে হবে")
       return
@@ -612,7 +628,7 @@ export default function FbPostComposer({
           const avatarBlob = await shrinkFn(postAuthorAvatarFile)
           finalAuthorAvatar = await uploadImage(token, avatarBlob)
         }
-        const isClub = category.includes("ক্লাব") || category.includes("Club")
+        const isClub = !lockToPage && (category.includes("ক্লাব") || category.includes("Club"))
         const payload: Record<string, any> = {
           title: finalTitle,
           heading: heading.trim() || null,
@@ -744,7 +760,7 @@ export default function FbPostComposer({
   }
 
   const modeLabel =
-    mode === "notice" ? "ডিজিটাল নোটিশ" : mode === "student" ? "স্টুডেন্ট কর্নার" : "সংবাদ / পেজ"
+    mode === "notice" ? "ডিজিটাল নোটিশ" : mode === "student" ? "স্টুডেন্ট কর্নার" : lockToPage ? "পেজ পোস্ট" : "সংবাদ / পেজ"
   const activePageName = communityPages.find((p) => p.id === selectedPageId)?.name
   const currentPostAvatar = postAuthorAvatarPreview || postAuthorAvatar
   const previewDisplayAvatar =
@@ -1178,7 +1194,7 @@ export default function FbPostComposer({
                   {activeChipPanel === "people" && (
                     <>
                       <div className="flex justify-between items-center font-bold text-slate-700">
-                        <span>👥 প্রতিবেদক, ছবি, পেজ ও ক্লাব:</span>
+                        <span>👥 লেখক, ছবি ও পেজ:</span>
                         <button type="button" onClick={() => setActiveChipPanel(null)} className="text-blue-600">বন্ধ</button>
                       </div>
                       <input
@@ -1190,7 +1206,7 @@ export default function FbPostComposer({
                       {mode === "post" && (
                         <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-2">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="font-bold text-slate-700">📷 প্রতিবেদকের ছবি (যোগ/এডিট/হাইড/বিয়োগ):</span>
+                            <span className="font-bold text-slate-700">📷 লেখকের ছবি (যোগ/এডিট/হাইড/বিয়োগ):</span>
                             {currentPostAvatar && (
                               <button
                                 type="button"
@@ -1207,7 +1223,7 @@ export default function FbPostComposer({
                             )}
                           </div>
 
-                          {reporters.length > 0 && (
+                          {!lockToPage && reporters.length > 0 && (
                             <select
                               className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs"
                               value=""
@@ -1319,7 +1335,7 @@ export default function FbPostComposer({
                           value={selectedPageId}
                           onChange={(e) => setSelectedPageId(e.target.value)}
                         >
-                          <option value="">— কোনো কমিউনিটি পেজ নয় —</option>
+                          {!lockToPage && <option value="">— কোনো কমিউনিটি পেজ নয় —</option>}
                           {communityPages.map((cp) => (
                             <option key={cp.id} value={cp.id}>
                               📄 {cp.name}
@@ -1327,7 +1343,7 @@ export default function FbPostComposer({
                           ))}
                         </select>
                       )}
-                      {mode === "post" && clubs.length > 0 && (
+                      {mode === "post" && !lockToPage && clubs.length > 0 && (
                         <select
                           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
                           value={selectedClubId}
@@ -1827,14 +1843,14 @@ export default function FbPostComposer({
                     {communityPages.length > 0 && (
                       <div>
                         <label className="font-bold text-slate-700 block mb-1">
-                          📄 কমিউনিটি পেজে প্রকাশ করুন (ঐচ্ছিক):
+                          {lockToPage ? "📄 কোন পেজে প্রকাশ করবেন? *" : "📄 কমিউনিটি পেজে প্রকাশ করুন (ঐচ্ছিক):"}
                         </label>
                         <select
                           className="w-full border border-slate-300 rounded-xl px-3 py-2 bg-white"
                           value={selectedPageId}
                           onChange={(e) => setSelectedPageId(e.target.value)}
                         >
-                          <option value="">— শুধু সাধারণ সংবাদ —</option>
+                          {!lockToPage && <option value="">— শুধু সাধারণ সংবাদ —</option>}
                           {communityPages.map((cp) => (
                             <option key={cp.id} value={cp.id}>
                               {cp.name} (/p/{cp.slug})
@@ -1844,7 +1860,7 @@ export default function FbPostComposer({
                       </div>
                     )}
 
-                    {(category.includes("ক্লাব") || category.includes("Club")) && clubs.length > 0 && (
+                    {!lockToPage && (category.includes("ক্লাব") || category.includes("Club")) && clubs.length > 0 && (
                       <div>
                         <label className="font-bold text-slate-700 block mb-1">
                           ⭐ কোন ক্লাবের সংবাদ?:
@@ -2157,7 +2173,7 @@ export default function FbPostComposer({
                       </div>
                       <div>
                         <p className="font-bold text-sm text-slate-900">Only me (খসড়া / লুকানো)</p>
-                        <p className="text-xs text-slate-500">শুধু অ্যাডমিন প্যানেলে থাকবে, পাবলিক সাইটে দেখাবে না</p>
+                        <p className="text-xs text-slate-500">শুধু আপনার ড্যাশবোর্ডে থাকবে, পাবলিক সাইটে দেখাবে না</p>
                       </div>
                     </div>
                     <span
