@@ -11,7 +11,8 @@ import {
   FileText,
   Share2,
   CheckCircle2,
-  BookOpen
+  BookOpen,
+  ArrowRight
 } from 'lucide-react'
 import { SB_URL, SB_KEY, attachProfileAvatars, type Profile, type Post } from '@/lib/sb'
 import { TopBar } from '@/components/portal/top-bar'
@@ -175,18 +176,18 @@ export default async function UserProfilePage({
                   </p>
                 )}
 
-                {/* মেসেজ বাটন (M-RU টেক্সটের সংযোগকারী) */}
+                {/* মেসেজ বাটন (M-RU টেক্সটের সরাসরি সংযোগকারী) */}
                 <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2.5 text-xs font-bold">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 py-2 shadow-lg transition active:scale-95 cursor-pointer"
+                  <Link
+                    href={`/messages?uid=${profile.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 py-2.5 shadow-lg transition active:scale-95 cursor-pointer font-bold border border-white/20"
                   >
                     <MessageSquare className="size-4" />
                     <span>M-RU টেক্সট (বার্তা পাঠান)</span>
-                  </button>
+                  </Link>
                   {profile.newspaper_name && (
-                    <span className="bg-white/10 border border-white/20 px-3 py-2 rounded-xl text-slate-200">
-                      📰 {profile.newspaper_name}
+                    <span className="bg-white/10 border border-white/20 px-3 py-2 rounded-xl text-slate-200 flex items-center gap-1.5">
+                      <span>📰 {profile.newspaper_name}</span>
                     </span>
                   )}
                 </div>
