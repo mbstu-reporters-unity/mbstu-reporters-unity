@@ -6,7 +6,7 @@ export async function GeneralNews() {
   const [all, limits] = await Promise.all([getVisiblePosts(1000), getLimits()])
   const limit = limits['home_news_limit'] || 12
   const posts = all
-    .filter((p) => p.category !== CAT_CLUB && p.category !== CAT_STUDENT)
+    .filter((p) => !p.page_id && p.category !== CAT_CLUB && p.category !== CAT_STUDENT)
     .slice(0, limit)
 
   return (
