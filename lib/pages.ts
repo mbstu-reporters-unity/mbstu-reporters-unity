@@ -2,6 +2,7 @@ import { SB_URL, SB_KEY, attachProfileAvatars, type Post } from "./sb"
 
 export type CommunityPage = {
   id: string
+  creator_id?: string | null
   name: string
   name_en: string | null
   slug: string
@@ -38,12 +39,26 @@ async function ok(res: Response): Promise<Response> {
   throw new Error(msg)
 }
 
-/* সব পেজ লোড করা */
+/* সব সক্রিয় পেজ লোড করা */
 export async function getCommunityPages(): Promise<CommunityPage[]> {
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/community_pages?select=*&order=sort_order.asc,created_at.asc`,
       { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return []
+    return await res.json()
+  } catch {
+    return []
+  }
+}
+
+/* বর্তমান ইউজারের নিজের তৈরি পেজসমূহ লোড করা */
+export async function getMyPages(token: string, userId: string): Promise<CommunityPage[]> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/community_pages?select=*&creator_id=eq.${encodeURIComponent(userId)}&order=created_at.desc`,
+      { headers: hdr(token), cache: "no-store" }
     )
     if (!res.ok) return []
     return await res.json()
