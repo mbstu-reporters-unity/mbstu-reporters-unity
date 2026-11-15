@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin', '/reset'],
+      disallow: ['/admin', '/reset', '/messages', '/friends'],
     },
     sitemap: 'https://mbsturu.vercel.app/sitemap.xml',
   }
