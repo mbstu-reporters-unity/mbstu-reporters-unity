@@ -9,7 +9,7 @@ import {
   updateMyProfile, createPostReturningId, removeAllImages,
   isTokenExpired, refreshSession,
 } from "../../lib/sb"
-import type { Post, PendingComment, Profile, CategoryRow } from "../../lib/sb"
+import type { Post, PendingComment, Profile, CategoryRow, UserType } from "../../lib/sb"
 import { getCampusClubs, type ClubItem } from "../../lib/clubs"
 import { getCommunityPages, type CommunityPage } from "../../lib/pages"
 import LeadershipManager from "./leadership-manager"
@@ -96,14 +96,19 @@ export default function AdminPage() {
   const [me, setMe] = useState<Profile | null>(null)
   const [mode, setMode] = useState<"login" | "signup">("login")
 
+  // সাইনআপ ও অথেন্টিকেশন স্টেট
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
+  const [userType, setUserType] = useState<UserType>("student")
   const [dept, setDept] = useState("")
   const [batch, setBatch] = useState("")
   const [sid, setSid] = useState("")
   const [phone, setPhone] = useState("")
   const [paper, setPaper] = useState("")
+  const [designation, setDesignation] = useState("")
+  const [officeSection, setOfficeSection] = useState("")
+  const [staffId, setStaffId] = useState("")
 
   const [tab, setTab] = useState<Tab>("posts")
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -147,11 +152,15 @@ export default function AdminPage() {
 
   const imgs = useImageSection("post")
 
+  // প্রোফাইল এডিটিং স্টেট
   const [pName, setPName] = useState("")
   const [pPaper, setPPaper] = useState("")
   const [pDept, setPDept] = useState("")
   const [pBatch, setPBatch] = useState("")
   const [pPhone, setPPhone] = useState("")
+  const [pDesignation, setPDesignation] = useState("")
+  const [pOfficeSection, setPOfficeSection] = useState("")
+  const [pBio, setPBio] = useState("")
   const [pFile, setPFile] = useState<File | null>(null)
 
   const isAdmin = me?.role === "admin" && me.approved
@@ -172,6 +181,9 @@ export default function AdminPage() {
       setPDept(me.department || "")
       setPBatch(me.batch || "")
       setPPhone(me.phone || "")
+      setPDesignation(me.designation || "")
+      setPOfficeSection(me.office_section || "")
+      setPBio(me.bio || "")
     }
   }, [me])
 
@@ -306,28 +318,54 @@ export default function AdminPage() {
   }
 
   async function onSignup() {
-    if (!paper.trim() || !fullName.trim() || !dept.trim() || !batch.trim() || !sid.trim() || !phone.trim() || !email.trim()) {
-      setMsg("❌ সব তথ্য পূরণ করুন")
+    if (!fullName.trim() || !phone.trim() || !email.trim()) {
+      setMsg("❌ আপনার নাম, মোবাইল নম্বর ও ইমেইল পূরণ করুন")
       return
     }
     if (password.length < 6) {
       setMsg("❌ পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে")
       return
     }
+
+    if (userType === "student" && (!dept.trim() || !batch.trim() || !sid.trim())) {
+      setMsg("❌ বিভাগ, ব্যাচ ও স্টুডেন্ট আইডি দিন")
+      return
+    }
+    if (userType === "teacher" && (!dept.trim() || !designation.trim())) {
+      setMsg("❌ বিভাগ ও পদবি উল্লেখ করুন")
+      return
+    }
+    if (userType === "staff" && (!officeSection.trim() || !designation.trim())) {
+      setMsg("❌ দপ্তর/শাখা এবং পদবি উল্লেখ করুন")
+      return
+    }
+    if (userType === "reporter" && (!paper.trim() || !dept.trim() || !batch.trim())) {
+      setMsg("❌ পত্রিকার নাম, বিভাগ ও ব্যাচ পূরণ করুন")
+      return
+    }
+
     setBusy(true)
     setMsg("")
     try {
       await signUp(email.trim(), password, {
         full_name: fullName.trim(),
-        department: dept.trim(),
-        batch: batch.trim(),
-        student_id: sid.trim(),
+        user_type: userType,
+        department: (userType === "student" || userType === "teacher" || userType === "reporter") ? dept.trim() : undefined,
+        batch: (userType === "student" || userType === "reporter") ? batch.trim() : undefined,
+        student_id: userType === "student" ? sid.trim() : undefined,
+        designation: (userType === "teacher" || userType === "staff") ? designation.trim() : undefined,
+        office_section: userType === "staff" ? officeSection.trim() : undefined,
+        staff_id: userType === "staff" ? staffId.trim() : undefined,
         phone: phone.trim(),
-        newspaper_name: paper.trim(),
+        newspaper_name: userType === "reporter" ? paper.trim() : undefined,
       })
       setMode("login")
       setPassword("")
-      setMsg("✅ নিবন্ধন সম্পন্ন। অ্যাডমিন অনুমোদন দিলে লগইন করুন।")
+      setMsg(
+        userType === "reporter"
+          ? "✅ নিবন্ধন সম্পন্ন। অ্যাডমিন অনুমোদন দিলে লগইন করুন।"
+          : "✅ নিবন্ধন সফল হয়েছে! এখন আপনার ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।"
+      )
     } catch (e) { await fail(e) }
     setBusy(false)
   }
@@ -341,15 +379,18 @@ export default function AdminPage() {
       if (pFile) avatar = await uploadImage(token, await shrink(pFile))
       await updateMyProfile(token, me.id, {
         full_name: pName.trim(),
-        newspaper_name: pPaper.trim(),
-        department: pDept.trim(),
-        batch: pBatch.trim(),
+        newspaper_name: pPaper.trim() || null,
+        department: pDept.trim() || null,
+        batch: pBatch.trim() || null,
         phone: pPhone.trim(),
+        designation: pDesignation.trim() || null,
+        office_section: pOfficeSection.trim() || null,
+        bio: pBio.trim() || null,
         avatar_url: avatar,
       })
       setPFile(null)
       if (!editId) setAuthorAvatar(avatar)
-      setMsg("✅ প্রোফাইল সেভ হয়েছে")
+      setMsg("✅ প্রোফাইল সফলভাবে আপডেট হয়েছে")
       await loadMe(token)
     } catch (e) { await fail(e) }
     setBusy(false)
@@ -566,42 +607,109 @@ export default function AdminPage() {
 
   if (!ready) return null
 
+  // ==================== লগইন ও সাইনআপ স্ক্রিন ====================
   if (!token) {
     return (
       <main className="min-h-screen bg-[#071030] text-white flex items-center justify-center p-4">
-        <div className="w-full max-w-sm rounded-3xl border border-white/20 bg-slate-900/90 shadow-2xl p-6 sm:p-7 space-y-4 backdrop-blur-xl">
+        <div className="w-full max-w-md rounded-3xl border border-white/20 bg-slate-900/90 shadow-2xl p-6 sm:p-7 space-y-4 backdrop-blur-xl">
           <div className="text-center space-y-1 border-b border-white/10 pb-3">
             <h1 className="text-xl font-serif font-bold text-cyan-300">
-              {mode === "login" ? "সাংবাদিক লগইন" : "সাংবাদিক নিবন্ধন"}
+              {mode === "login" ? "ক্যাম্পাস লগইন" : "নতুন একাউন্ট নিবন্ধন"}
             </h1>
             <p className="text-xs text-white/60">মাভাবিপ্রবি রিপোর্টার্স ইউনিটি পোর্টাল</p>
           </div>
 
           {mode === "signup" && (
-            <div className="space-y-2">
-              <input className={inp} placeholder="পূর্ণ নাম *" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-              <input className={inp} placeholder="পত্রিকার নাম *" value={paper} onChange={(e) => setPaper(e.target.value)} />
-              <input className={inp} placeholder="বিভাগ (যেমন: ইংরেজি) *" value={dept} onChange={(e) => setDept(e.target.value)} />
-              <input className={inp} placeholder="ব্যাচ / সেশন (যেমন: ২০২২-২৩) *" value={batch} onChange={(e) => setBatch(e.target.value)} />
-              <input className={inp} placeholder="স্টুডেন্ট আইডি *" value={sid} onChange={(e) => setSid(e.target.value)} />
+            <div className="space-y-3">
+              {/* পরিচয়/রোল বাছাই বাটন */}
+              <div>
+                <label className="text-xs text-cyan-200 block mb-1.5 font-semibold">
+                  আপনার পরিচয় নির্বাচন করুন:
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-xs">
+                  {[
+                    { key: "student", label: "🎓 শিক্ষার্থী" },
+                    { key: "teacher", label: "👨‍🏫 শিক্ষক" },
+                    { key: "staff", label: "💼 কর্মচারী" },
+                    { key: "reporter", label: "📰 সাংবাদিক" },
+                  ].map((t) => (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => setUserType(t.key as UserType)}
+                      className={`py-2 px-1 rounded-xl border font-bold transition text-center cursor-pointer ${
+                        userType === t.key
+                          ? "bg-cyan-600 border-cyan-400 text-white shadow-sm"
+                          : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <input className={inp} placeholder="আপনার পূর্ণ নাম *" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+
+              {/* ১. শিক্ষার্থীর ফিল্ডসমূহ */}
+              {userType === "student" && (
+                <>
+                  <input className={inp} placeholder="বিভাগ (যেমন: CSE, BGE, ICT) *" value={dept} onChange={(e) => setDept(e.target.value)} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input className={inp} placeholder="ব্যাচ / সেশন *" value={batch} onChange={(e) => setBatch(e.target.value)} />
+                    <input className={inp} placeholder="স্টুডেন্ট আইডি *" value={sid} onChange={(e) => setSid(e.target.value)} />
+                  </div>
+                </>
+              )}
+
+              {/* ২. শিক্ষকের ফিল্ডসমূহ */}
+              {userType === "teacher" && (
+                <>
+                  <input className={inp} placeholder="অনুষদ ও বিভাগ (যেমন: সিএসই বিভাগ) *" value={dept} onChange={(e) => setDept(e.target.value)} />
+                  <input className={inp} placeholder="পদবি (যেমন: অধ্যাপক / সহযোগী অধ্যাপক) *" value={designation} onChange={(e) => setDesignation(e.target.value)} />
+                </>
+              )}
+
+              {/* ৩. কর্মচারীর ফিল্ডসমূহ */}
+              {userType === "staff" && (
+                <>
+                  <input className={inp} placeholder="দপ্তর বা শাখা (যেমন: রেজিস্ট্রার দপ্তর, পরীক্ষা শাখা) *" value={officeSection} onChange={(e) => setOfficeSection(e.target.value)} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input className={inp} placeholder="পদবি (যেমন: সহকারী রেজিস্ট্রার) *" value={designation} onChange={(e) => setDesignation(e.target.value)} />
+                    <input className={inp} placeholder="স্টাফ আইডি (ঐচ্ছিক)" value={staffId} onChange={(e) => setStaffId(e.target.value)} />
+                  </div>
+                </>
+              )}
+
+              {/* ৪. সাংবাদিকের ফিল্ডসমূহ */}
+              {userType === "reporter" && (
+                <>
+                  <input className={inp} placeholder="পত্রিকা বা মিডিয়ার নাম *" value={paper} onChange={(e) => setPaper(e.target.value)} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input className={inp} placeholder="বিভাগ *" value={dept} onChange={(e) => setDept(e.target.value)} />
+                    <input className={inp} placeholder="ব্যাচ *" value={batch} onChange={(e) => setBatch(e.target.value)} />
+                  </div>
+                </>
+              )}
+
               <input className={inp} type="tel" placeholder="মোবাইল নম্বর *" value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
           )}
 
           <div className="space-y-2.5">
-            <input className={inp} type="email" placeholder="জিমেইল *" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input className={inp} type="email" placeholder="জিমেইল / ইমেইল *" value={email} onChange={(e) => setEmail(e.target.value)} />
             <input className={inp} type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর) *" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
 
           <button className={btn} onClick={mode === "login" ? onLogin : onSignup} disabled={busy}>
-            {busy ? "অপেক্ষা করুন..." : mode === "login" ? "লগইন করুন" : "নিবন্ধন করুন"}
+            {busy ? "অপেক্ষা করুন..." : mode === "login" ? "লগইন করুন" : "নিবন্ধন সম্পন্ন করুন"}
           </button>
 
           <button
             className="w-full text-xs underline text-cyan-300 cursor-pointer text-center block"
             onClick={() => { setMode(mode === "login" ? "signup" : "login"); setMsg("") }}
           >
-            {mode === "login" ? "নতুন সাংবাদিক? নিবন্ধন করুন" : "আগে নিবন্ধন করেছেন? লগইন করুন"}
+            {mode === "login" ? "নতুন একাউন্ট খুলতে চান? নিবন্ধন করুন" : "আগে একাউন্ট খুলেছেন? লগইন করুন"}
           </button>
 
           {mode === "login" && (
@@ -614,6 +722,7 @@ export default function AdminPage() {
     )
   }
 
+  // অনুমোদনের অপেক্ষায় থাকা স্ক্রিন (বিশেষ করে সাংবাদিক একাউন্টের ক্ষেত্রে)
   if (me && !me.approved) {
     return (
       <main className="min-h-screen bg-[#071030] text-white flex items-center justify-center p-4">
@@ -633,6 +742,18 @@ export default function AdminPage() {
 
   const canManage = (p: Post) => me.role === "admin" || me.role === "moderator" || p.user_id === me.id
   const isClubCategory = category.includes("ক্লাব") || category.includes("Club")
+
+  const userTypeLabels: Record<string, string> = {
+    student: "🎓 শিক্ষার্থী",
+    teacher: "👨‍🏫 শিক্ষক",
+    staff: "💼 কর্মকর্তা/কর্মচারী",
+    reporter: "📰 সাংবাদিক",
+  }
+  const userRoleText = isAdmin
+    ? "প্রধান অ্যাডমিন"
+    : me.role === "moderator"
+    ? "মডারেটর"
+    : userTypeLabels[me.user_type || "student"] || "সদস্য"
 
   const navigationGroups = [
     {
@@ -674,7 +795,7 @@ export default function AdminPage() {
       ]
     },
     {
-      groupTitle: "৫. সাংবাদিক ও প্রোফাইল",
+      groupTitle: "৫. ব্যবহারকারী ও প্রোফাইল",
       items: [
         { id: "reporters", label: "সাংবাদিক অনুমোদন", icon: Users, badge: waiting.length, adminOnly: true },
         { id: "profile", label: "আমার প্রোফাইল", icon: User },
@@ -693,6 +814,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col lg:flex-row text-slate-800">
 
+      {/* মোবাইল হেডার */}
       <header className="lg:hidden sticky top-0 z-40 bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 shadow-md">
         <div className="flex items-center gap-2.5">
           <button
@@ -704,8 +826,8 @@ export default function AdminPage() {
             {sidebarOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
           <div>
-            <h1 className="font-bold text-sm text-cyan-300">অ্যাডমিন ড্যাশবোর্ড</h1>
-            <p className="text-[10px] text-slate-400 truncate max-w-[150px]">{me.full_name} ({isAdmin ? "অ্যাডমিন" : "মডারেটর"})</p>
+            <h1 className="font-bold text-sm text-cyan-300">ক্যাম্পাস ড্যাশবোর্ড</h1>
+            <p className="text-[10px] text-slate-400 truncate max-w-[150px]">{me.full_name} ({userRoleText})</p>
           </div>
         </div>
 
@@ -719,6 +841,7 @@ export default function AdminPage() {
         </div>
       </header>
 
+      {/* সাইডবার মেনু */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white flex flex-col border-r border-slate-800 shadow-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -736,7 +859,7 @@ export default function AdminPage() {
             )}
             <div className="min-w-0">
               <p className="font-bold text-sm text-white truncate">{me.full_name}</p>
-              <p className="text-[11px] text-cyan-300 font-semibold">{isAdmin ? "প্রধান অ্যাডমিন" : "মডারেটর"}</p>
+              <p className="text-[11px] text-cyan-300 font-semibold">{userRoleText}</p>
             </div>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 text-slate-400 hover:text-white">
@@ -803,6 +926,7 @@ export default function AdminPage() {
         <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden" />
       )}
 
+      {/* মূল কন্টেন্ট বডি */}
       <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-5xl mx-auto w-full space-y-4">
         {msg && (
           <div className="p-3 bg-emerald-50 text-emerald-900 border border-emerald-300 rounded-2xl text-xs sm:text-sm font-bold text-center shadow-xs">
@@ -810,9 +934,9 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ==================== সংবাদ ও পোস্ট ট্যাব ==================== */}
         {tab === "posts" && (
           <div className="space-y-4">
-            {/* পোস্ট করার মোড সুইচার */}
             <div className="flex bg-white rounded-2xl p-1.5 shadow-xs border border-slate-200 gap-1.5 text-xs font-bold">
               <button
                 type="button"
@@ -821,7 +945,7 @@ export default function AdminPage() {
                   !fbPostMode ? "bg-emerald-700 text-white shadow" : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
-                📝 ক্লাসিক ফর্ম (বর্তমান)
+                📝 ক্লাসিক ফর্ম
               </button>
               <button
                 type="button"
@@ -830,7 +954,7 @@ export default function AdminPage() {
                   fbPostMode ? "bg-blue-600 text-white shadow" : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
-                📱 ফেসবুক স্টাইল পোস্ট (নতুন)
+                📱 ফেসবুক স্টাইল পোস্ট
               </button>
             </div>
 
@@ -861,7 +985,7 @@ export default function AdminPage() {
               <div className="border-b pb-2 flex items-center justify-between">
                 <h2 className="font-bold text-base text-slate-800 flex items-center gap-2">
                   <Newspaper className="size-5 text-emerald-700" />
-                  <span>{editId ? "✏️ সংবাদ এডিট করুন" : "➕ নতুন সংবাদ প্রকাশ করুন"}</span>
+                  <span>{editId ? "✏️ সংবাদ এডিট করুন" : "➕ নতুন সংবাদ বা পোস্ট প্রকাশ করুন"}</span>
                 </h2>
                 {editId && (
                   <button onClick={resetForm} className="text-xs text-rose-600 hover:underline">
@@ -882,17 +1006,17 @@ export default function AdminPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-1">প্রতিবেদকের নাম:</label>
-                  <input className={inp} placeholder="প্রতিবেদকের নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">পোস্টদাতার নাম:</label>
+                  <input className={inp} placeholder="নাম" value={author} onChange={(e) => setAuthor(e.target.value)} />
                 </div>
               </div>
 
-              {/* প্রতিবেদকের ছবি: যোগ, এডিট, হাইড, ভিজিবল ও বিয়োগ */}
+              {/* ছবি কন্ট্রোল */}
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 space-y-2.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                     <Camera className="size-4 text-emerald-700" />
-                    <span>প্রতিবেদকের ছবি (যোগ / এডিট / হাইড / বিয়োগ):</span>
+                    <span>প্রোফাইল ছবি প্রদর্শন (যোগ / এডিট / হাইড):</span>
                   </span>
 
                   {(authorAvatarPreview || authorAvatar) && (
@@ -906,40 +1030,17 @@ export default function AdminPage() {
                       }`}
                     >
                       {showAuthorAvatar ? <Eye className="size-3" /> : <EyeOff className="size-3" />}
-                      <span>{showAuthorAvatar ? "ভিজিবল আছে (হাইড করুন)" : "হাইড করা (দেখান)"}</span>
+                      <span>{showAuthorAvatar ? "ভিজিবল আছে" : "হাইড করা"}</span>
                     </button>
                   )}
                 </div>
-
-                {isAdmin && active.length > 0 && (
-                  <select
-                    className={smallInp}
-                    value=""
-                    onChange={(e) => {
-                      const chosen = active.find((r) => r.id === e.target.value)
-                      if (chosen) {
-                        setAuthor(chosen.full_name)
-                        setAuthorAvatar(chosen.avatar_url || null)
-                        pickAuthorAvatarFile(null)
-                        setShowAuthorAvatar(true)
-                      }
-                    }}
-                  >
-                    <option value="">— নিবন্ধিত সাংবাদিক থেকে নাম ও ছবি বাছাই করুন (ঐচ্ছিক) —</option>
-                    {active.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.full_name} {r.avatar_url ? "📷" : ""}
-                      </option>
-                    ))}
-                  </select>
-                )}
 
                 <div className="flex flex-wrap items-center gap-3">
                   {(authorAvatarPreview || authorAvatar) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={authorAvatarPreview || authorAvatar || ""}
-                      alt="Reporter"
+                      alt=""
                       className={`size-14 rounded-full object-cover object-top border-2 border-emerald-600 bg-white shrink-0 ${
                         !showAuthorAvatar ? "opacity-40 grayscale" : ""
                       }`}
@@ -953,7 +1054,7 @@ export default function AdminPage() {
                   <div className="flex flex-wrap gap-2 flex-1 min-w-0">
                     <label className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 text-xs font-bold cursor-pointer shadow-xs">
                       <Upload className="size-3.5" />
-                      <span>{(authorAvatarPreview || authorAvatar) ? "ছবি এডিট / বদলান" : "ছবি যোগ করুন"}</span>
+                      <span>{(authorAvatarPreview || authorAvatar) ? "ছবি বদলান" : "ছবি যোগ করুন"}</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -969,21 +1070,6 @@ export default function AdminPage() {
                       />
                     </label>
 
-                    {me.avatar_url && (authorAvatar !== me.avatar_url || authorAvatarFile) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          pickAuthorAvatarFile(null)
-                          setAuthorAvatar(me.avatar_url || null)
-                          setShowAuthorAvatar(true)
-                        }}
-                        className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 px-2.5 py-1.5 text-xs font-semibold cursor-pointer"
-                      >
-                        <User className="size-3.5" />
-                        <span>আমার প্রোফাইল ছবি</span>
-                      </button>
-                    )}
-
                     {(authorAvatarPreview || authorAvatar) && (
                       <button
                         type="button"
@@ -995,31 +1081,20 @@ export default function AdminPage() {
                         className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 px-2.5 py-1.5 text-xs font-bold cursor-pointer"
                       >
                         <Trash2 className="size-3.5" />
-                        <span>ছবি বিয়োগ / সরান</span>
+                        <span>ছবি সরান</span>
                       </button>
                     )}
                   </div>
                 </div>
-
-                <input
-                  className={smallInp}
-                  placeholder="অথবা প্রতিবেদকের ছবির সরাসরি লিংক দিন (https://... ঐচ্ছিক)"
-                  value={authorAvatarFile ? "" : authorAvatar || ""}
-                  disabled={!!authorAvatarFile}
-                  onChange={(e) => {
-                    const val = e.target.value.trim()
-                    setAuthorAvatar(val || null)
-                    if (val) setShowAuthorAvatar(true)
-                  }}
-                />
               </div>
 
+              {/* কমিউনিটি পেজ ও ক্লাব সংযোগ */}
               <div className="space-y-1 rounded-xl border border-blue-200 bg-blue-50/60 p-3">
                 <label className="text-xs font-bold text-blue-950 block">
-                  📄 নির্দিষ্ট পেজে পোস্ট করুন (ফেসবুক পেজের মতো টাইমলাইনে দেখাবে - ঐচ্ছিক):
+                  📄 নির্দিষ্ট কমিউনিটি পেজে পোস্ট করুন (টাইমলাইনে দেখাবে - ঐচ্ছিক):
                 </label>
                 <select className={inp} value={selectedPageId} onChange={(e) => setSelectedPageId(e.target.value)}>
-                  <option value="">— কোনো নির্দিষ্ট পেজ নয় (সাধারণ সংবাদ) —</option>
+                  <option value="">— কোনো নির্দিষ্ট পেজ নয় (সাধারণ পোস্ট) —</option>
                   {communityPages.map((cp) => (
                     <option key={cp.id} value={cp.id}>{cp.name} (/p/{cp.slug})</option>
                   ))}
@@ -1038,14 +1113,14 @@ export default function AdminPage() {
                 </div>
               )}
 
+              {/* মিডিয়া ফাইল ও লিংক বক্স */}
               <div className="space-y-3 rounded-2xl border-2 border-emerald-200 bg-emerald-50/40 p-3.5">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200 pb-2">
-                  <p className="text-xs font-bold text-emerald-950">🎥 সংবাদে মিডিয়া সংযুক্তি (ছবি, ভিডিও বা লিংক):</p>
-
+                  <p className="text-xs font-bold text-emerald-950">🎥 মিডিয়া সংযুক্তি (ছবি, ভিডিও বা লিংক):</p>
                   <div className="flex items-center gap-2">
                     <label className="text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl px-3 py-1.5 shadow flex items-center gap-1.5 cursor-pointer">
                       <Upload className="size-3.5" />
-                      <span>📁 একাধিক ফাইল যোগ</span>
+                      <span>📁 ফাইল যোগ</span>
                       <input
                         type="file"
                         accept="image/*,video/*"
@@ -1059,7 +1134,6 @@ export default function AdminPage() {
                         }}
                       />
                     </label>
-
                     <button
                       type="button"
                       onClick={addMediaItem}
@@ -1082,32 +1156,6 @@ export default function AdminPage() {
                         <span>মুছুন</span>
                       </button>
                     </div>
-
-                    {m.url && (
-                      <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-200">
-                        {m.url.includes("youtube.com") || m.url.includes("youtu.be") ? (
-                          <div className="size-14 rounded-lg bg-red-600 text-white font-bold flex flex-col items-center justify-center text-[10px] shrink-0">
-                            <span>▶ YouTube</span>
-                          </div>
-                        ) : m.url.includes(".mp4") || m.url.includes("video") ? (
-                          <div className="size-14 rounded-lg bg-slate-900 text-white font-bold flex flex-col items-center justify-center text-[10px] shrink-0">
-                            <span>🎥 Video</span>
-                          </div>
-                        ) : (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={m.url}
-                            alt="Preview"
-                            className="size-14 rounded-lg object-cover border shrink-0 bg-white"
-                            onError={(e) => { (e.target as HTMLElement).style.display = 'none' }}
-                          />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[11px] font-bold text-slate-800 truncate">ফাইল প্রিভিউ</p>
-                          <p className="text-[10px] text-slate-500 font-mono truncate">{m.url}</p>
-                        </div>
-                      </div>
-                    )}
 
                     <input className={smallInp} placeholder="মিডিয়ার শিরোনাম (ঐচ্ছিক)" value={m.title} onChange={(e) => updateMediaItem(idx, "title", e.target.value)} />
                     <textarea className={smallInp} rows={2} placeholder="মিডিয়ার বিবরণ (ঐচ্ছিক)" value={m.description} onChange={(e) => updateMediaItem(idx, "description", e.target.value)} />
@@ -1144,12 +1192,13 @@ export default function AdminPage() {
               </label>
 
               <button className={btn} onClick={submit} disabled={busy}>
-                {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "🚀 সংবাদ প্রকাশ করুন"}
+                {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "🚀 প্রকাশ করুন"}
               </button>
             </div>
 
+            {/* প্রকাশিত পোস্টের তালিকা */}
             <div className="space-y-2.5">
-              <h3 className="font-bold text-sm text-slate-800">প্রকাশিত সংবাদসমূহ ({posts.length}টি)</h3>
+              <h3 className="font-bold text-sm text-slate-800">প্রকাশিত পোস্ট ও সংবাদসমূহ ({posts.length}টি)</h3>
               {posts.map((p) => (
                 <div key={p.id} className="bg-white rounded-2xl shadow-xs border p-3 flex gap-3 text-sm">
                   {p.image_url && (
@@ -1193,7 +1242,7 @@ export default function AdminPage() {
                             onClick={() => act(() => setPostAuthorAvatarVisible(token, p.id, p.show_author_avatar === false))}
                             className="text-cyan-700 hover:underline"
                           >
-                            {p.show_author_avatar === false ? "প্রতিবেদকের ছবি দেখান" : "প্রতিবেদকের ছবি হাইড"}
+                            {p.show_author_avatar === false ? "ছবি দেখান" : "ছবি হাইড"}
                           </button>
                         )}
                         <button
@@ -1214,6 +1263,52 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ==================== প্রোফাইল ট্যাব (শিক্ষার্থী, শিক্ষক ও কর্মচারীদের তথ্যসহ) ==================== */}
+        {tab === "profile" && (
+          <div className="bg-white rounded-2xl shadow p-5 space-y-4 border">
+            <h2 className="font-bold text-base text-slate-800 border-b pb-2">আমার প্রোফাইল তথ্য ({userRoleText})</h2>
+            {(pFile || me.avatar_url) && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={pFile ? URL.createObjectURL(pFile) : me.avatar_url || ""} alt="" className="size-24 rounded-full object-cover mx-auto ring-2 ring-emerald-500 shadow" />
+            )}
+            <input type="file" accept="image/*" onChange={(e) => setPFile(e.target.files?.[0] || null)} className="text-xs block mx-auto" />
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input className={inp} placeholder="পূর্ণ নাম" value={pName} onChange={(e) => setPName(e.target.value)} />
+              <input className={inp} type="tel" placeholder="মোবাইল নম্বর" value={pPhone} onChange={(e) => setPPhone(e.target.value)} />
+            </div>
+
+            {/* শিক্ষার্থী/শিক্ষকের বিভাগ ও ব্যাচ */}
+            {(me.user_type === "student" || me.user_type === "teacher" || me.user_type === "reporter") && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <input className={inp} placeholder="বিভাগ (Department)" value={pDept} onChange={(e) => setPDept(e.target.value)} />
+                {me.user_type !== "teacher" && (
+                  <input className={inp} placeholder="ব্যাচ / সেশন" value={pBatch} onChange={(e) => setPBatch(e.target.value)} />
+                )}
+              </div>
+            )}
+
+            {/* শিক্ষক ও কর্মচারীর পদবি ও দপ্তর */}
+            {(me.user_type === "teacher" || me.user_type === "staff") && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <input className={inp} placeholder="পদবি (Designation)" value={pDesignation} onChange={(e) => setPDesignation(e.target.value)} />
+                {me.user_type === "staff" && (
+                  <input className={inp} placeholder="দপ্তর / শাখা" value={pOfficeSection} onChange={(e) => setPOfficeSection(e.target.value)} />
+                )}
+              </div>
+            )}
+
+            {me.user_type === "reporter" && (
+              <input className={inp} placeholder="পত্রিকার নাম" value={pPaper} onChange={(e) => setPPaper(e.target.value)} />
+            )}
+
+            <textarea className={inp} rows={3} placeholder="সংক্ষিপ্ত পরিচিতি বা বায়ো (Bio)" value={pBio} onChange={(e) => setPBio(e.target.value)} />
+
+            <button className={btn} onClick={saveProfile} disabled={busy}>{busy ? "অপেক্ষা করুন..." : "প্রোফাইল সেভ করুন"}</button>
+          </div>
+        )}
+
+        {/* অন্যান্য ম্যানেজারসমূহ */}
         {tab === "stories" && (
           <StoryManager
             token={token}
@@ -1222,7 +1317,6 @@ export default function AdminPage() {
             shrink={shrink}
           />
         )}
-
         {tab === "notices" && (
           <NoticeManager
             token={token}
@@ -1259,28 +1353,6 @@ export default function AdminPage() {
         {tab === "limits" && isAdmin && <SectionLimits token={token} cats={cats} />}
         {tab === "directors" && isAdmin && <DirectorManager token={token} members={active} onChanged={() => refresh(token, me)} />}
         {tab === "categories" && isAdmin && <CategoryManager token={token} onChanged={() => refresh(token, me)} />}
-
-        {tab === "profile" && (
-          <div className="bg-white rounded-2xl shadow p-5 space-y-3.5 border">
-            <h2 className="font-bold text-base text-slate-800 border-b pb-2">আমার প্রোফাইল তথ্য</h2>
-            {(pFile || me.avatar_url) && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={pFile ? URL.createObjectURL(pFile) : me.avatar_url || ""} alt="" className="size-24 rounded-full object-cover mx-auto ring-2 ring-emerald-500 shadow" />
-            )}
-            <input type="file" accept="image/*" onChange={(e) => setPFile(e.target.files?.[0] || null)} className="text-xs block mx-auto" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input className={inp} placeholder="পূর্ণ নাম" value={pName} onChange={(e) => setPName(e.target.value)} />
-              <input className={inp} placeholder="পত্রিকার নাম" value={pPaper} onChange={(e) => setPPaper(e.target.value)} />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <input className={inp} placeholder="বিভাগ" value={pDept} onChange={(e) => setPDept(e.target.value)} />
-              <input className={inp} placeholder="ব্যাচ" value={pBatch} onChange={(e) => setPBatch(e.target.value)} />
-              <input className={inp} type="tel" placeholder="মোবাইল" value={pPhone} onChange={(e) => setPPhone(e.target.value)} />
-            </div>
-            <button className={btn} onClick={saveProfile} disabled={busy}>{busy ? "অপেক্ষা করুন..." : "প্রোফাইল সেভ করুন"}</button>
-          </div>
-        )}
-
         {tab === "comments" && isAdmin && (
           <div className="space-y-3">
             <h3 className="font-bold text-sm text-slate-800">অনুমোদনের অপেক্ষায় থাকা মন্তব্যসমূহ ({pending.length})</h3>
@@ -1300,9 +1372,7 @@ export default function AdminPage() {
             )}
           </div>
         )}
-
         {tab === "leaders" && isAdmin && <LeadershipManager token={token} members={active} shrink={shrink} />}
-
         {tab === "reporters" && isAdmin && (
           <div className="space-y-4">
             <div className="space-y-2">
