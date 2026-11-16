@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { WifiOff, RefreshCw, Home, Bell, Building2 } from 'lucide-react'
 
 export default function OfflinePage() {
@@ -28,29 +27,29 @@ export default function OfflinePage() {
             <span>আবার চেষ্টা করুন</span>
           </button>
 
-          <Link
+          <a
             href="/"
             className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-white px-4 py-2"
           >
             <Home className="size-3.5" />
             <span>হোমপেজ</span>
-          </Link>
+          </a>
 
-          <Link
+          <a
             href="/notices"
             className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-white px-4 py-2"
           >
             <Bell className="size-3.5" />
             <span>নোটিশ</span>
-          </Link>
+          </a>
 
-          <Link
+          <a
             href="/administration"
             className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-white px-4 py-2"
           >
             <Building2 className="size-3.5" />
             <span>প্রশাসন</span>
-          </Link>
+          </a>
         </div>
       </div>
     </main>
