@@ -1,4 +1,4 @@
-const VERSION = 'mbsturu-v2'
+const VERSION = 'mbsturu-v3'
 const STATIC_CACHE = `${VERSION}-static`
 const PAGE_CACHE = `${VERSION}-pages`
 const DATA_CACHE = `${VERSION}-data`
@@ -34,7 +34,7 @@ const CACHEABLE_REST_PREFIXES = [
   '/rest/v1/social_site_notices',
 ]
 
-const PRECACHE_URLS = [
+const PRECACHE_PAGES = [
   '/',
   '/offline',
   '/notices',
@@ -43,8 +43,9 @@ const PRECACHE_URLS = [
   '/social-sites',
   '/student-corner',
   '/council',
-  '/logo.png',
 ]
+
+const PRECACHE_IMAGES = ['/logo.png', '/icon.png']
 
 async function notifyClients(online) {
   try {
@@ -55,7 +56,6 @@ async function notifyClients(online) {
 
 function normalizeDataKey(requestUrl) {
   const u = new URL(requestUrl)
-  // board_notices-এর পরিবর্তনশীল timestamp বাদ দিয়ে ক্যাশ কী স্থির রাখা
   if (u.pathname === '/rest/v1/board_notices') {
     const params = new URLSearchParams(u.search)
     const orVal = params.get('or')
@@ -67,25 +67,45 @@ function normalizeDataKey(requestUrl) {
   return requestUrl
 }
 
+async function fetchAndCacheImage(rawUrl) {
+  try {
+    const u = new URL(rawUrl, self.location.origin)
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return
+    const imageCache = await caches.open(IMAGE_CACHE)
+    if (await imageCache.match(u.href, { ignoreVary: true })) return
+
+    let res = null
+    try {
+      res = await fetch(u.href)
+    } catch {
+      res = await fetch(u.href, { mode: 'no-cors' })
+    }
+    if (res && (res.ok || res.type === 'opaque')) {
+      await imageCache.put(u.href, res)
+    }
+  } catch {}
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       const pageCache = await caches.open(PAGE_CACHE)
       const staticCache = await caches.open(STATIC_CACHE)
-      await Promise.allSettled(
-        PRECACHE_URLS.map(async (u) => {
+
+      await Promise.allSettled([
+        ...PRECACHE_PAGES.map(async (u) => {
           try {
             const res = await fetch(u, { credentials: 'same-origin' })
             if (res && res.ok) {
-              const target = u === '/logo.png' ? staticCache : pageCache
-              await target.put(new URL(u, self.location.origin).href, res.clone())
-              if (u === '/offline') {
-                await staticCache.put(new URL('/offline', self.location.origin).href, res.clone())
-              }
+              const full = new URL(u, self.location.origin).href
+              await pageCache.put(full, res.clone())
+              if (u === '/offline') await staticCache.put(full, res.clone())
             }
           } catch {}
-        })
-      )
+        }),
+        ...PRECACHE_IMAGES.map((img) => fetchAndCacheImage(img)),
+      ])
+
       await self.skipWaiting()
     })()
   )
@@ -104,23 +124,24 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-// পেজ থেকে অতিরিক্ত অ্যাসেট (JS/CSS) ক্যাশ করার মেসেজ রিসিভ করা
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'CACHE_URLS' && Array.isArray(event.data.urls)) {
     event.waitUntil(
       (async () => {
         const staticCache = await caches.open(STATIC_CACHE)
-        const imageCache = await caches.open(IMAGE_CACHE)
         await Promise.allSettled(
           event.data.urls.map(async (rawUrl) => {
             try {
               const u = new URL(rawUrl, self.location.origin)
               if (u.protocol !== 'http:' && u.protocol !== 'https:') return
-              const isImg = /\.(png|jpg|jpeg|webp|svg|ico|gif)(\?|$)/i.test(u.pathname) || u.pathname.includes('/storage/v1/object/public/')
-              const target = isImg ? imageCache : staticCache
-              if (await target.match(u.href)) return
-              const res = await fetch(u.href)
-              if (res && res.ok) await target.put(u.href, res)
+              const isStatic = u.origin === self.location.origin && u.pathname.startsWith('/_next/static/')
+              if (isStatic) {
+                if (await staticCache.match(u.href)) return
+                const res = await fetch(u.href)
+                if (res && res.ok) await staticCache.put(u.href, res)
+              } else {
+                await fetchAndCacheImage(u.href)
+              }
             } catch {}
           })
         )
@@ -181,7 +202,6 @@ async function handleRscRequest(request) {
   } catch {
     const cached = await cache.match(rscKey, { ignoreVary: true })
     if (cached) return cached
-    // Next.js যেন সরাসরি MPA HTML নেভিগেশনে ফিরে যায় এবং ক্যাশড HTML দেখায়
     return Response.error()
   }
 }
@@ -210,11 +230,14 @@ async function handleDataRequest(request) {
 
 async function cacheFirst(request, cacheName) {
   const cache = await caches.open(cacheName)
-  const cached = await cache.match(request.url, { ignoreVary: true })
+  const cached =
+    (await cache.match(request.url, { ignoreVary: true })) ||
+    (await caches.match(request.url, { ignoreVary: true }))
   if (cached) return cached
+
   try {
     const response = await fetch(request)
-    if (response && response.ok) {
+    if (response && (response.ok || response.type === 'opaque')) {
       await cache.put(request.url, response.clone()).catch(() => {})
     }
     return response
@@ -243,9 +266,15 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  if (url.origin !== self.location.origin) return
+  // ২. বাইরের যেকোনো ছবি (যেমন mbstu.ac.bd লোগো, YouTube থাম্বনেইল)
+  if (url.origin !== self.location.origin) {
+    if (request.destination === 'image') {
+      event.respondWith(cacheFirst(request, IMAGE_CACHE))
+    }
+    return
+  }
 
-  // ২. প্রাইভেট পেজ (/admin, /messages, /friends, /reset): ক্যাশ হবে না, কিন্তু অফলাইনে গেলে সুন্দর অফলাইন পেজ দেখাবে
+  // ৩. প্রাইভেট পেজ অফলাইনে গেলে সুন্দর অফলাইন পেজ দেখাবে
   if (
     url.pathname.startsWith('/admin') ||
     url.pathname.startsWith('/messages') ||
@@ -263,24 +292,24 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // ৩. স্ট্যাটিক JS/CSS ও ছবি
+  // ৪. স্ট্যাটিক JS/CSS ও ছবি
   if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(cacheFirst(request, STATIC_CACHE))
     return
   }
 
-  if (request.destination === 'image' || /\.(png|jpg|jpeg|webp|svg|ico)$/i.test(url.pathname)) {
+  if (request.destination === 'image' || /\.(png|jpg|jpeg|webp|svg|ico|gif)$/i.test(url.pathname)) {
     event.respondWith(cacheFirst(request, IMAGE_CACHE))
     return
   }
 
-  // ৪. Next.js RSC রিকোয়েস্ট
+  // ৫. Next.js RSC রিকোয়েস্ট
   if (request.headers.get('RSC') === '1' || url.searchParams.has('_rsc')) {
     event.respondWith(handleRscRequest(request))
     return
   }
 
-  // ৫. সাধারণ পেজ নেভিগেশন ও "অফলাইন সেভ" প্রিফেচ
+  // ৬. পেজ নেভিগেশন ও প্রিফেচ
   if (
     request.mode === 'navigate' ||
     request.headers.get('X-Offline-Prefetch') === '1' ||
