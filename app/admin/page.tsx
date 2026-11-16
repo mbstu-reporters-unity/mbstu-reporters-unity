@@ -6,7 +6,7 @@ import {
   login, signUp, getMe, getAllPosts, setPostHidden, setPostAuthorAvatarVisible, getCategoryNames, getCategories,
   updatePost, deletePost, uploadImage, uploadVideo,
   getPendingComments, approveComment, deleteComment,
-  getReporters, approveReporter, removeReporter,
+  getReporters, approveReporter,
   updateMyProfile, createPostReturningId, removeAllImages,
   isTokenExpired, refreshSession,
 } from "../../lib/sb"
@@ -47,6 +47,7 @@ const CATS = ["ক্যাম্পাস সংবাদ", "ক্লাব", 
 const inp = "w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-600 transition"
 const smallInp = "w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs bg-white text-slate-900 focus:outline-none focus:border-cyan-600"
 const btn = "w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl py-3 font-bold text-sm disabled:opacity-50 cursor-pointer shadow-md transition active:scale-98"
+const lbl = "text-[11px] font-semibold text-cyan-200/90 block mb-1"
 
 type Tab =
   | "posts" | "stories" | "comments" | "profile" | "leaders" | "notices"
@@ -108,7 +109,6 @@ export default function AdminPage() {
   const [me, setMe] = useState<Profile | null>(null)
   const [mode, setMode] = useState<"login" | "signup">("login")
 
-  // সাইনআপ ও অথেন্টিকেশন স্টেট
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
@@ -158,13 +158,11 @@ export default function AdminPage() {
   const [linkUrl, setLinkUrl] = useState("")
   const [msg, setMsg] = useState("")
 
-  // ফেসবুক-স্টাইল পোস্ট মোড স্টেট
   const [fbPostMode, setFbPostMode] = useState(false)
   const [fbEditPost, setFbEditPost] = useState<Post | null>(null)
 
   const imgs = useImageSection("post")
 
-  // প্রোফাইল এডিটিং স্টেট
   const [pName, setPName] = useState("")
   const [pPaper, setPPaper] = useState("")
   const [pDept, setPDept] = useState("")
@@ -187,6 +185,11 @@ export default function AdminPage() {
       .map((r) => r.name)
     return filtered.length > 0 ? filtered : cats
   }, [isAdmin, cats, categoryRows, editId])
+
+  const selectablePages = useMemo(() => {
+    if (isAdmin) return communityPages
+    return communityPages.filter((cp) => cp.creator_id === me?.id)
+  }, [isAdmin, communityPages, me?.id])
 
   useEffect(() => {
     if (me) {
@@ -333,6 +336,10 @@ export default function AdminPage() {
   }, [token])
 
   async function onLogin() {
+    if (!email.trim() || !password) {
+      setMsg("❌ ইমেইল ও পাসওয়ার্ড লিখুন")
+      return
+    }
     setBusy(true)
     setMsg("")
     try {
@@ -347,8 +354,13 @@ export default function AdminPage() {
   }
 
   async function onSignup() {
-    if (!fullName.trim() || !phone.trim() || !email.trim()) {
-      setMsg("❌ আপনার নাম, মোবাইল নম্বর ও ইমেইল পূরণ করুন")
+    const cleanPhone = phone.replace(/[\s-]/g, "").trim()
+    if (fullName.trim().length < 2 || !cleanPhone || !email.trim()) {
+      setMsg("❌ আপনার পূর্ণ নাম, মোবাইল নম্বর ও ইমেইল পূরণ করুন")
+      return
+    }
+    if (!/^(\+?88)?01[3-9]\d{8}$/.test(cleanPhone)) {
+      setMsg("❌ সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (যেমন: 017XXXXXXXX)")
       return
     }
     if (password.length < 6) {
@@ -385,7 +397,7 @@ export default function AdminPage() {
         designation: (userType === "teacher" || userType === "staff") ? designation.trim() : undefined,
         office_section: userType === "staff" ? officeSection.trim() : undefined,
         staff_id: userType === "staff" ? staffId.trim() : undefined,
-        phone: phone.trim(),
+        phone: cleanPhone,
         newspaper_name: userType === "reporter" ? paper.trim() : undefined,
       })
       setMode("login")
@@ -637,10 +649,9 @@ export default function AdminPage() {
 
   if (!ready) return null
 
-  // ==================== লগইন ও সাইনআপ স্ক্রিন ====================
   if (!token) {
     return (
-      <main className="min-h-screen bg-[#071030] text-white flex items-center justify-center p-4">
+      <main className="min-h-dvh bg-[#071030] text-white flex items-center justify-center p-4">
         <div className="w-full max-w-md rounded-3xl border border-white/20 bg-slate-900/90 shadow-2xl p-6 sm:p-7 space-y-4 backdrop-blur-xl">
           <div className="text-center space-y-1 border-b border-white/10 pb-3">
             <h1 className="text-xl font-serif font-bold text-cyan-300">
@@ -678,52 +689,97 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <input className={inp} placeholder="আপনার পূর্ণ নাম *" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+              <div>
+                <label className={lbl}>পূর্ণ নাম *</label>
+                <input className={inp} placeholder="আপনার পূর্ণ নাম *" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+              </div>
 
               {userType === "student" && (
                 <>
-                  <input className={inp} placeholder="বিভাগ (যেমন: CSE, BGE, ICT) *" value={dept} onChange={(e) => setDept(e.target.value)} />
+                  <div>
+                    <label className={lbl}>বিভাগ *</label>
+                    <input className={inp} placeholder="যেমন: CSE, CPS, ICT *" value={dept} onChange={(e) => setDept(e.target.value)} />
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <input className={inp} placeholder="ব্যাচ / সেশন *" value={batch} onChange={(e) => setBatch(e.target.value)} />
-                    <input className={inp} placeholder="স্টুডেন্ট আইডি *" value={sid} onChange={(e) => setSid(e.target.value)} />
+                    <div>
+                      <label className={lbl}>ব্যাচ / সেশন *</label>
+                      <input className={inp} placeholder="যেমন: 2021-22 *" value={batch} onChange={(e) => setBatch(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className={lbl}>স্টুডেন্ট আইডি *</label>
+                      <input className={inp} placeholder="যেমন: CP22015 *" value={sid} onChange={(e) => setSid(e.target.value)} />
+                    </div>
                   </div>
                 </>
               )}
 
               {userType === "teacher" && (
                 <>
-                  <input className={inp} placeholder="অনুষদ ও বিভাগ (যেমন: সিএসই বিভাগ) *" value={dept} onChange={(e) => setDept(e.target.value)} />
-                  <input className={inp} placeholder="পদবি (যেমন: অধ্যাপক / সহযোগী অধ্যাপক) *" value={designation} onChange={(e) => setDesignation(e.target.value)} />
+                  <div>
+                    <label className={lbl}>অনুষদ ও বিভাগ *</label>
+                    <input className={inp} placeholder="যেমন: সিএসই বিভাগ *" value={dept} onChange={(e) => setDept(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className={lbl}>পদবি *</label>
+                    <input className={inp} placeholder="যেমন: অধ্যাপক / সহকারী অধ্যাপক *" value={designation} onChange={(e) => setDesignation(e.target.value)} />
+                  </div>
                 </>
               )}
 
               {userType === "staff" && (
                 <>
-                  <input className={inp} placeholder="দপ্তর বা শাখা (যেমন: রেজিস্ট্রার দপ্তর, পরীক্ষা শাখা) *" value={officeSection} onChange={(e) => setOfficeSection(e.target.value)} />
+                  <div>
+                    <label className={lbl}>দপ্তর বা শাখা *</label>
+                    <input className={inp} placeholder="যেমন: রেজিস্ট্রার দপ্তর, পরীক্ষা শাখা *" value={officeSection} onChange={(e) => setOfficeSection(e.target.value)} />
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <input className={inp} placeholder="পদবি (যেমন: সহকারী রেজিস্ট্রার) *" value={designation} onChange={(e) => setDesignation(e.target.value)} />
-                    <input className={inp} placeholder="স্টাফ আইডি (ঐচ্ছিক)" value={staffId} onChange={(e) => setStaffId(e.target.value)} />
+                    <div>
+                      <label className={lbl}>পদবি *</label>
+                      <input className={inp} placeholder="যেমন: সহকারী রেজিস্ট্রার *" value={designation} onChange={(e) => setDesignation(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className={lbl}>স্টাফ আইডি (ঐচ্ছিক)</label>
+                      <input className={inp} placeholder="আইডি নম্বর" value={staffId} onChange={(e) => setStaffId(e.target.value)} />
+                    </div>
                   </div>
                 </>
               )}
 
               {userType === "reporter" && (
                 <>
-                  <input className={inp} placeholder="পত্রিকা বা মিডিয়ার নাম *" value={paper} onChange={(e) => setPaper(e.target.value)} />
+                  <div>
+                    <label className={lbl}>পত্রিকা বা মিডিয়ার নাম *</label>
+                    <input className={inp} placeholder="পত্রিকা বা পোর্টালের নাম *" value={paper} onChange={(e) => setPaper(e.target.value)} />
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <input className={inp} placeholder="বিভাগ *" value={dept} onChange={(e) => setDept(e.target.value)} />
-                    <input className={inp} placeholder="ব্যাচ *" value={batch} onChange={(e) => setBatch(e.target.value)} />
+                    <div>
+                      <label className={lbl}>বিভাগ *</label>
+                      <input className={inp} placeholder="বিভাগ *" value={dept} onChange={(e) => setDept(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className={lbl}>ব্যাচ *</label>
+                      <input className={inp} placeholder="ব্যাচ *" value={batch} onChange={(e) => setBatch(e.target.value)} />
+                    </div>
                   </div>
                 </>
               )}
 
-              <input className={inp} type="tel" placeholder="মোবাইল নম্বর *" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <div>
+                <label className={lbl}>মোবাইল নম্বর (১১ ডিজিট) *</label>
+                <input className={inp} type="tel" placeholder="017XXXXXXXX *" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              </div>
             </div>
           )}
 
           <div className="space-y-2.5">
-            <input className={inp} type="email" placeholder="জিমেইল / ইমেইল *" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <input className={inp} type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর) *" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <div>
+              {mode === "signup" && <label className={lbl}>জিমেইল / ইমেইল *</label>}
+              <input className={inp} type="email" placeholder="জিমেইল / ইমেইল *" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div>
+              {mode === "signup" && <label className={lbl}>পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর) *</label>}
+              <input className={inp} type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর) *" value={password} onChange={(e) => setPassword(e.target.value)} />
+            </div>
           </div>
 
           <button className={btn} onClick={mode === "login" ? onLogin : onSignup} disabled={busy}>
@@ -749,7 +805,7 @@ export default function AdminPage() {
 
   if (me && !me.approved) {
     return (
-      <main className="min-h-screen bg-[#071030] text-white flex items-center justify-center p-4">
+      <main className="min-h-dvh bg-[#071030] text-white flex items-center justify-center p-4">
         <div className="w-full max-w-sm rounded-3xl border border-white/20 bg-slate-900/90 shadow-2xl p-6 space-y-3 text-center backdrop-blur">
           <h1 className="text-xl font-bold text-amber-300">অনুমোদনের অপেক্ষায়</h1>
           <p className="text-xs text-slate-300 leading-relaxed">
@@ -764,7 +820,7 @@ export default function AdminPage() {
 
   if (!me) return null
 
-  const canManage = (p: Post) => Boolean(isAdmin || isModerator || p.user_id === me.id)
+  const canManage = (p: Post) => Boolean(isAdmin || p.user_id === me.id)
   const isClubCategory = category.includes("ক্লাব") || category.includes("Club")
 
   const userTypeLabels: Record<string, string> = {
@@ -783,10 +839,6 @@ export default function AdminPage() {
     (r) => (r.user_type || (r.newspaper_name ? "reporter" : "student")) === "reporter"
   ).length
 
-  // ✅ কঠোর রোল-ভিত্তিক মেনু:
-  // - Admin: সবকিছু + ৪টি আলাদা সদস্য তালিকা
-  // - Moderator: সংবাদ, স্টোরিজ ও রিলস, ডিজিটাল নোটিশ + নিজের পেজ ও প্রোফাইল
-  // - সাধারণ ইউজার (শিক্ষক, শিক্ষার্থী, কর্মচারী, সাংবাদিক): শুধুমাত্র নিজের পেজ ও প্রোফাইল
   const navigationGroups: { groupTitle: string; items: NavItem[] }[] = [
     {
       groupTitle: "১. কন্টেন্ট ও সংবাদ (অ্যাডমিন / মডারেটর)",
@@ -852,9 +904,7 @@ export default function AdminPage() {
   const dropdownCats = selectableCats.includes(category) ? selectableCats : [...selectableCats, category]
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col lg:flex-row text-slate-800">
-
-      {/* মোবাইল হেডার */}
+    <div className="min-h-dvh bg-slate-100 flex flex-col lg:flex-row text-slate-800">
       <header className="lg:hidden sticky top-0 z-40 bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 shadow-md">
         <div className="flex items-center gap-2.5">
           <button
@@ -881,7 +931,6 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* সাইডবার মেনু */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white flex flex-col border-r border-slate-800 shadow-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -970,7 +1019,6 @@ export default function AdminPage() {
         <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden" />
       )}
 
-      {/* মূল কন্টেন্ট বডি */}
       <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-5xl mx-auto w-full space-y-4">
         {msg && (
           <div className="p-3 bg-emerald-50 text-emerald-900 border border-emerald-300 rounded-2xl text-xs sm:text-sm font-bold text-center shadow-xs">
@@ -978,7 +1026,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* সংবাদ ও পোস্ট ট্যাব (শুধুমাত্র অ্যাডমিন ও মডারেটর) */}
         {tab === "posts" && canPublishMain && (
           <div className="space-y-4">
             <div className="flex bg-white rounded-2xl p-1.5 shadow-xs border border-slate-200 gap-1.5 text-xs font-bold">
@@ -1013,7 +1060,7 @@ export default function AdminPage() {
                 shrink={shrink}
                 categories={dropdownCats}
                 clubs={availableClubs}
-                communityPages={communityPages}
+                communityPages={selectablePages}
                 editItem={fbEditPost}
                 onCancel={() => { setFbPostMode(false); setFbEditPost(null) }}
                 onSuccess={async (m) => {
@@ -1055,7 +1102,6 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* ছবি কন্ট্রোল */}
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 space-y-2.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
@@ -1132,17 +1178,19 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="space-y-1 rounded-xl border border-blue-200 bg-blue-50/60 p-3">
-                <label className="text-xs font-bold text-blue-950 block">
-                  📄 নির্দিষ্ট কমিউনিটি পেজে পোস্ট করুন (টাইমলাইনে দেখাবে - ঐচ্ছিক):
-                </label>
-                <select className={inp} value={selectedPageId} onChange={(e) => setSelectedPageId(e.target.value)}>
-                  <option value="">— কোনো নির্দিষ্ট পেজ নয় (সাধারণ পোস্ট) —</option>
-                  {communityPages.map((cp) => (
-                    <option key={cp.id} value={cp.id}>{cp.name} (/p/{cp.slug})</option>
-                  ))}
-                </select>
-              </div>
+              {selectablePages.length > 0 && (
+                <div className="space-y-1 rounded-xl border border-blue-200 bg-blue-50/60 p-3">
+                  <label className="text-xs font-bold text-blue-950 block">
+                    📄 নির্দিষ্ট কমিউনিটি পেজে পোস্ট করুন (টাইমলাইনে দেখাবে - ঐচ্ছিক):
+                  </label>
+                  <select className={inp} value={selectedPageId} onChange={(e) => setSelectedPageId(e.target.value)}>
+                    <option value="">— কোনো নির্দিষ্ট পেজ নয় (সাধারণ পোস্ট) —</option>
+                    {selectablePages.map((cp) => (
+                      <option key={cp.id} value={cp.id}>{cp.name} (/p/{cp.slug})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {isClubCategory && (
                 <div className="space-y-1 rounded-xl border border-emerald-300 bg-emerald-50/60 p-3">
@@ -1304,7 +1352,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* আমার পেজ ও কমিউনিটি ট্যাব (সকলের জন্য উন্মুক্ত) */}
         {tab === "community_pages" && me && (
           <div className="space-y-3">
             {!canPublishMain && (
@@ -1327,7 +1374,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* প্রোফাইল ট্যাব */}
         {tab === "profile" && (
           <div className="bg-white rounded-2xl shadow p-5 space-y-4 border">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
@@ -1347,7 +1393,7 @@ export default function AdminPage() {
               <img src={pFile ? URL.createObjectURL(pFile) : me.avatar_url || ""} alt="" className="size-24 rounded-full object-cover mx-auto ring-2 ring-emerald-500 shadow" />
             )}
             <input type="file" accept="image/*" onChange={(e) => setPFile(e.target.files?.[0] || null)} className="text-xs block mx-auto" />
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <input className={inp} placeholder="পূর্ণ নাম" value={pName} onChange={(e) => setPName(e.target.value)} />
               <input className={inp} type="tel" placeholder="মোবাইল নম্বর" value={pPhone} onChange={(e) => setPPhone(e.target.value)} />
@@ -1381,7 +1427,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* মডারেটর + অ্যাডমিন পরিচালিত ম্যানেজারসমূহ */}
         {tab === "stories" && canPublishMain && (
           <StoryManager
             token={token}
@@ -1399,7 +1444,6 @@ export default function AdminPage() {
           />
         )}
 
-        {/* শুধুমাত্র অ্যাডমিন পরিচালিত ম্যানেজারসমূহ */}
         {tab === "hero" && isAdmin && <HeroManager token={token} shrink={shrink} />}
         {tab === "hero_banner" && isAdmin && <HeroBannerManager token={token} shrink={shrink} />}
         {tab === "ticker" && isAdmin && <TickerManager token={token} author={me.full_name} />}
@@ -1440,7 +1484,6 @@ export default function AdminPage() {
         )}
         {tab === "leaders" && isAdmin && <LeadershipManager token={token} members={active} shrink={shrink} />}
 
-        {/* ৪টি আলাদা সদস্য সেকশন (শুধুমাত্র অ্যাডমিন) */}
         {(tab === "users_teacher" ||
           tab === "users_student" ||
           tab === "users_staff" ||
@@ -1461,7 +1504,6 @@ export default function AdminPage() {
               onChanged={() => refresh(token, me)}
             />
           )}
-
       </main>
       <GlobalTextStudio />
     </div>
