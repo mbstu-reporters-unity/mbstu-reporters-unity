@@ -45,6 +45,24 @@ function collectStaticAssetsFromHtml(html: string): string[] {
   return Array.from(urls)
 }
 
+function collectLoadedResources(): string[] {
+  const fromPerf = performance
+    .getEntriesByType('resource')
+    .map((e) => e.name)
+    .filter(
+      (n) =>
+        n.includes('/_next/static/') ||
+        n.includes('/logo.png') ||
+        n.includes('/icon.png') ||
+        n.includes('/storage/v1/object/public/') ||
+        n.includes('mbstu.ac.bd')
+    )
+  const fromImgs = Array.from(document.querySelectorAll('img'))
+    .map((img) => img.currentSrc || img.src)
+    .filter((s) => s && s.startsWith('http'))
+  return Array.from(new Set([...fromPerf, ...fromImgs, '/logo.png', '/icon.png']))
+}
+
 export function OfflinePwaManager() {
   const [isOnline, setIsOnline] = useState(true)
   const [installPrompt, setInstallPrompt] = useState<any>(null)
@@ -58,13 +76,8 @@ export function OfflinePwaManager() {
       navigator.serviceWorker
         .register('/sw.js')
         .then(async (reg) => {
-          // বর্তমান পেজের লোড হওয়া JS/CSS/ছবিগুলো সাথে সাথেই ক্যাশে পাঠানো
           const ready = await navigator.serviceWorker.ready
-          const loadedUrls = performance
-            .getEntriesByType('resource')
-            .map((e) => e.name)
-            .filter((n) => n.includes('/_next/static/') || n.includes('/logo.png'))
-          ready.active?.postMessage({ type: 'CACHE_URLS', urls: loadedUrls })
+          ready.active?.postMessage({ type: 'CACHE_URLS', urls: collectLoadedResources() })
           reg.update().catch(() => {})
         })
         .catch(() => {})
@@ -101,18 +114,11 @@ export function OfflinePwaManager() {
     if (syncing) return
     setSyncing(true)
     try {
-      // ১. সত্যিই ইন্টারনেট আছে কি না তা পরীক্ষা
       const ping = await fetch('/manifest.webmanifest', { cache: 'no-store' })
       if (!ping.ok) throw new Error('offline')
 
-      const assetUrls = new Set<string>(
-        performance
-          .getEntriesByType('resource')
-          .map((e) => e.name)
-          .filter((n) => n.includes('/_next/static/') || n.includes('/logo.png'))
-      )
+      const assetUrls = new Set<string>(collectLoadedResources())
 
-      // ২. মূল পেজগুলোর HTML ও তাদের ভেতরের JS/CSS ক্যাশ করা
       await Promise.allSettled(
         OFFLINE_SYNC_ROUTES.map(async (route) => {
           const res = await fetch(route, {
@@ -126,21 +132,33 @@ export function OfflinePwaManager() {
         })
       )
 
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'CACHE_URLS',
-          urls: Array.from(assetUrls),
-        })
-      }
-
-      // ৩. Supabase-এর পাবলিক ডাটাগুলো ক্যাশ করা
+      const imageUrlsToCache = new Set<string>()
       await Promise.allSettled(
-        OFFLINE_API_ENDPOINTS.map((ep) =>
-          fetch(`${SB_URL}${ep}`, {
+        OFFLINE_API_ENDPOINTS.map(async (ep) => {
+          const res = await fetch(`${SB_URL}${ep}`, {
             headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
           })
-        )
+          if (!res.ok) return
+          const rows = await res.json().catch(() => [])
+          if (Array.isArray(rows)) {
+            rows.slice(0, 25).forEach((r: Record<string, any>) => {
+              ;['image_url', 'author_avatar', 'avatar_url', 'logo_url', 'photo_url', 'thumbnail_url'].forEach(
+                (k) => {
+                  if (typeof r?.[k] === 'string' && r[k].startsWith('http')) {
+                    imageUrlsToCache.add(r[k])
+                  }
+                }
+              )
+            })
+          }
+        })
       )
+
+      const allToCache = Array.from(new Set([...assetUrls, ...imageUrlsToCache])).slice(0, 120)
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.ready
+        reg.active?.postMessage({ type: 'CACHE_URLS', urls: allToCache })
+      }
 
       setIsOnline(true)
       setSynced(true)
@@ -185,13 +203,13 @@ export function OfflinePwaManager() {
           type="button"
           onClick={handleSaveForOffline}
           disabled={syncing}
-          title="ইন্টারনেট ছাড়াই পরবর্তীতে পড়ার জন্য মূল পেজগুলো সেভ করুন"
+          title="ইন্টারনেট ছাড়াই পরবর্তীতে পড়ার জন্য মূল পেজ ও ছবি সেভ করুন"
           className="fixed bottom-16 right-3.5 sm:bottom-20 sm:right-6 z-40 inline-flex items-center gap-1.5 rounded-full bg-slate-900/85 hover:bg-slate-800 text-cyan-300 border border-white/25 px-3 py-2 text-[11px] font-bold shadow-lg backdrop-blur cursor-pointer transition active:scale-95"
         >
           {synced ? (
             <>
               <Check className="size-3.5 text-emerald-400" />
-              <span>সব তথ্য অফলাইনে সেভ হয়েছে</span>
+              <span>সব তথ্য ও ছবি সেভ হয়েছে</span>
             </>
           ) : (
             <>
