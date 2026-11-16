@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Download, WifiOff } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import { Download, WifiOff, X } from 'lucide-react'
 import { SB_URL, SB_KEY } from '@/lib/sb'
 
 const OFFLINE_SYNC_ROUTES = [
@@ -64,8 +65,16 @@ function collectLoadedResources(): string[] {
 }
 
 export function OfflinePwaManager() {
+  const pathname = usePathname() || ''
   const [isOnline, setIsOnline] = useState(true)
   const [installPrompt, setInstallPrompt] = useState<any>(null)
+  const [dismissed, setDismissed] = useState(false)
+
+  const hideInstallPill =
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/messages') ||
+    pathname.startsWith('/friends') ||
+    pathname.startsWith('/reset')
 
   async function autoSyncOfflineData() {
     if (!navigator.onLine || !('serviceWorker' in navigator)) return
@@ -74,10 +83,8 @@ export function OfflinePwaManager() {
 
     try {
       const reg = await navigator.serviceWorker.ready
-      // বর্তমান পেজের ছবি ও ফাইল সবসময় সাথে সাথেই ক্যাশে পাঠানো
       reg.active?.postMessage({ type: 'CACHE_URLS', urls: collectLoadedResources() })
 
-      // ৩ মিনিটের মধ্যে একবার সিঙ্ক হয়ে থাকলে বারবার সব পেজ না টানা
       const last = Number(sessionStorage.getItem('mbsturu_auto_sync') || '0')
       if (Date.now() - last < 3 * 60 * 1000) return
       sessionStorage.setItem('mbsturu_auto_sync', String(Date.now()))
@@ -132,6 +139,11 @@ export function OfflinePwaManager() {
 
   useEffect(() => {
     setIsOnline(navigator.onLine)
+    try {
+      if (sessionStorage.getItem('mbsturu_install_dismissed') === '1') {
+        setDismissed(true)
+      }
+    } catch {}
 
     let timer: ReturnType<typeof setTimeout> | null = null
 
@@ -140,7 +152,6 @@ export function OfflinePwaManager() {
         .register('/sw.js')
         .then((reg) => {
           reg.update().catch(() => {})
-          // পেজ লোড হওয়ার ২ সেকেন্ড পর অটোমেটিক ব্যাকগ্রাউন্ডে অফলাইন সিঙ্ক শুরু হবে
           timer = setTimeout(() => {
             autoSyncOfflineData()
           }, 2000)
@@ -190,6 +201,13 @@ export function OfflinePwaManager() {
     setInstallPrompt(null)
   }
 
+  function handleDismiss() {
+    setDismissed(true)
+    try {
+      sessionStorage.setItem('mbsturu_install_dismissed', '1')
+    } catch {}
+  }
+
   return (
     <>
       {!isOnline && (
@@ -199,15 +217,23 @@ export function OfflinePwaManager() {
         </div>
       )}
 
-      {isOnline && installPrompt && (
-        <div className="fixed bottom-5 left-3.5 z-40">
+      {isOnline && installPrompt && !hideInstallPill && !dismissed && (
+        <div className="fixed bottom-4 left-3 z-30 flex items-center rounded-full bg-slate-900/95 text-cyan-300 border border-cyan-400/40 shadow-xl backdrop-blur">
           <button
             type="button"
             onClick={handleInstallApp}
-            className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-cyan-300 border border-cyan-400/40 px-3 py-2 text-xs font-bold shadow-xl backdrop-blur cursor-pointer"
+            className="inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 text-[11px] font-bold hover:text-white cursor-pointer"
           >
             <Download className="size-3.5" />
             <span>অ্যাপ ইনস্টল</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleDismiss}
+            aria-label="বন্ধ করুন"
+            className="pr-2.5 pl-1 py-1.5 text-white/60 hover:text-white border-l border-white/15 cursor-pointer"
+          >
+            <X className="size-3" />
           </button>
         </div>
       )}
