@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { Download, Check, WifiOff, CloudDownload } from 'lucide-react'
+import { SB_URL, SB_KEY } from '@/lib/sb'
 
 const OFFLINE_SYNC_ROUTES = [
   '/',
+  '/offline',
   '/notices',
   '/administration',
   '/associations',
@@ -12,6 +14,36 @@ const OFFLINE_SYNC_ROUTES = [
   '/student-corner',
   '/council',
 ]
+
+const OFFLINE_API_ENDPOINTS = [
+  '/rest/v1/posts?select=*&or=(hidden.is.null,hidden.eq.false)&order=created_at.desc&limit=300',
+  '/rest/v1/board_notices?select=*&order=is_pinned.desc,created_at.desc&or=(expires_at.is.null,expires_at.gt.NOW)&limit=300',
+  '/rest/v1/campus_clubs?select=*&order=sort_order.asc,created_at.asc',
+  '/rest/v1/faculties?select=*&order=sort_order.asc,created_at.asc',
+  '/rest/v1/departments?select=*&order=sort_order.asc,created_at.asc',
+  '/rest/v1/mbstu_administration?select=*&order=sort_order.asc,created_at.asc',
+  '/rest/v1/community_pages?select=*&order=sort_order.asc,created_at.asc',
+  '/rest/v1/student_items?select=*&or=(hidden.is.null,hidden.eq.false)&order=featured.desc,sort_order.asc,created_at.desc',
+  '/rest/v1/ticker_items?select=*&is_active=eq.true&order=sort_order.asc,created_at.desc&limit=50',
+  '/rest/v1/leaders?select=*&order=sort_order.asc',
+  '/rest/v1/hero_slides?select=*&order=sort_order.desc,created_at.desc&limit=100',
+  '/rest/v1/hero_settings?select=*&id=eq.1',
+  '/rest/v1/stories?select=*&is_active=eq.true&or=(is_highlight.eq.true,expires_at.gt.now())&order=created_at.desc',
+  '/rest/v1/reels?select=*&is_active=eq.true&order=sort_order.asc,created_at.desc&limit=50',
+  '/rest/v1/categories?select=name&or=(is_hidden.is.null,is_hidden.eq.false)&order=sort_order.asc,created_at.asc',
+  '/rest/v1/university_associations?select=*&order=sort_order.asc,created_at.asc',
+  '/rest/v1/mbstu_social_sites?select=*&order=sort_order.asc,created_at.asc',
+]
+
+function collectStaticAssetsFromHtml(html: string): string[] {
+  const urls = new Set<string>()
+  const regex = /(?:src|href)=["'](\/_next\/static\/[^"']+)["']/g
+  let m: RegExpExecArray | null
+  while ((m = regex.exec(html)) !== null) {
+    urls.add(m[1])
+  }
+  return Array.from(urls)
+}
 
 export function OfflinePwaManager() {
   const [isOnline, setIsOnline] = useState(true)
@@ -23,9 +55,30 @@ export function OfflinePwaManager() {
     setIsOnline(navigator.onLine)
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {})
-    }
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then(async (reg) => {
+          // বর্তমান পেজের লোড হওয়া JS/CSS/ছবিগুলো সাথে সাথেই ক্যাশে পাঠানো
+          const ready = await navigator.serviceWorker.ready
+          const loadedUrls = performance
+            .getEntriesByType('resource')
+            .map((e) => e.name)
+            .filter((n) => n.includes('/_next/static/') || n.includes('/logo.png'))
+          ready.active?.postMessage({ type: 'CACHE_URLS', urls: loadedUrls })
+          reg.update().catch(() => {})
+        })
+        .catch(() => {})
 
+      const onSwMsg = (event: MessageEvent) => {
+        if (event.data?.type === 'OFFLINE_DETECTED') setIsOnline(false)
+        if (event.data?.type === 'ONLINE_DETECTED') setIsOnline(true)
+      }
+      navigator.serviceWorker.addEventListener('message', onSwMsg)
+      return () => navigator.serviceWorker.removeEventListener('message', onSwMsg)
+    }
+  }, [])
+
+  useEffect(() => {
     const onOnline = () => setIsOnline(true)
     const onOffline = () => setIsOnline(false)
     const onBeforeInstall = (e: Event) => {
@@ -45,15 +98,56 @@ export function OfflinePwaManager() {
   }, [])
 
   async function handleSaveForOffline() {
-    if (!navigator.onLine || syncing) return
+    if (syncing) return
     setSyncing(true)
     try {
-      await Promise.allSettled(
-        OFFLINE_SYNC_ROUTES.map((r) => fetch(r, { credentials: 'same-origin' }))
+      // ১. সত্যিই ইন্টারনেট আছে কি না তা পরীক্ষা
+      const ping = await fetch('/manifest.webmanifest', { cache: 'no-store' })
+      if (!ping.ok) throw new Error('offline')
+
+      const assetUrls = new Set<string>(
+        performance
+          .getEntriesByType('resource')
+          .map((e) => e.name)
+          .filter((n) => n.includes('/_next/static/') || n.includes('/logo.png'))
       )
+
+      // ২. মূল পেজগুলোর HTML ও তাদের ভেতরের JS/CSS ক্যাশ করা
+      await Promise.allSettled(
+        OFFLINE_SYNC_ROUTES.map(async (route) => {
+          const res = await fetch(route, {
+            credentials: 'same-origin',
+            headers: { 'X-Offline-Prefetch': '1' },
+          })
+          if (res.ok) {
+            const html = await res.text()
+            collectStaticAssetsFromHtml(html).forEach((u) => assetUrls.add(u))
+          }
+        })
+      )
+
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'CACHE_URLS',
+          urls: Array.from(assetUrls),
+        })
+      }
+
+      // ৩. Supabase-এর পাবলিক ডাটাগুলো ক্যাশ করা
+      await Promise.allSettled(
+        OFFLINE_API_ENDPOINTS.map((ep) =>
+          fetch(`${SB_URL}${ep}`, {
+            headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+          })
+        )
+      )
+
+      setIsOnline(true)
       setSynced(true)
-      setTimeout(() => setSynced(false), 3500)
-    } catch {}
+      setTimeout(() => setSynced(false), 4000)
+    } catch {
+      setIsOnline(false)
+    }
     setSyncing(false)
   }
 
@@ -66,7 +160,6 @@ export function OfflinePwaManager() {
 
   return (
     <>
-      {/* অফলাইন সতর্কবার্তা */}
       {!isOnline && (
         <div className="fixed bottom-4 left-3 z-50 flex items-center gap-2 rounded-full bg-amber-600/95 text-white px-3.5 py-2 text-xs font-bold shadow-2xl border border-amber-300/50 backdrop-blur-md">
           <WifiOff className="size-3.5 shrink-0" />
@@ -74,19 +167,16 @@ export function OfflinePwaManager() {
         </div>
       )}
 
-      {/* অনলাইনে থাকলে অ্যাপ ইনস্টল ও অফলাইন সেভ বাটন */}
-      {isOnline && (installPrompt || syncing || synced) && (
-        <div className="fixed bottom-5 left-3.5 z-40 flex items-center gap-2">
-          {installPrompt && (
-            <button
-              type="button"
-              onClick={handleInstallApp}
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-cyan-300 border border-cyan-400/40 px-3 py-2 text-xs font-bold shadow-xl backdrop-blur cursor-pointer"
-            >
-              <Download className="size-3.5" />
-              <span>অ্যাপ ইনস্টল</span>
-            </button>
-          )}
+      {isOnline && installPrompt && (
+        <div className="fixed bottom-5 left-3.5 z-40">
+          <button
+            type="button"
+            onClick={handleInstallApp}
+            className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-cyan-300 border border-cyan-400/40 px-3 py-2 text-xs font-bold shadow-xl backdrop-blur cursor-pointer"
+          >
+            <Download className="size-3.5" />
+            <span>অ্যাপ ইনস্টল</span>
+          </button>
         </div>
       )}
 
@@ -101,7 +191,7 @@ export function OfflinePwaManager() {
           {synced ? (
             <>
               <Check className="size-3.5 text-emerald-400" />
-              <span>অফলাইনের জন্য সেভ হয়েছে</span>
+              <span>সব তথ্য অফলাইনে সেভ হয়েছে</span>
             </>
           ) : (
             <>
