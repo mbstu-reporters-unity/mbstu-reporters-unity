@@ -13,21 +13,28 @@ import {
   Layers,
 } from 'lucide-react'
 
-// বাংলা সংখ্যা রূপান্তর
 const bn = (n: number) => n.toLocaleString('bn-BD')
 
 export function HeroCarousel() {
   const [slides, setSlides] = useState<HeroSlide[]>([])
   const [settings, setSettings] = useState<HeroSettings | null>(null)
   const [loaded, setLoaded] = useState(false)
-  
+  const [isDesktop, setIsDesktop] = useState(false)
+
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const [touchStart, setTouchStart] = useState<number | null>(null)
-  
+
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     Promise.all([getHeroSlides(), getHeroSettings()])
@@ -43,8 +50,8 @@ export function HeroCarousel() {
   }, [])
 
   const total = slides.length
-  const configuredSplits = settings?.desktop_splits || 1
-  
+  const configuredSplits = isDesktop ? settings?.desktop_splits || 1 : 1
+
   const activeSplits = useMemo(() => {
     if (total <= 1) return 1
     return Math.min(configuredSplits, total)
@@ -116,10 +123,8 @@ export function HeroCarousel() {
 
   return (
     <div id="home" className="w-full flex flex-col bg-slate-950 text-white relative">
-      {/* হিরো ব্যানার */}
       <HeroBreakingBanner settings={settings} />
 
-      {/* হিরো স্লাইডার */}
       {total > 0 && (
         <section
           aria-label="Hero Slider"
@@ -129,9 +134,8 @@ export function HeroCarousel() {
           onTouchEnd={handleTouchEnd}
           className="relative w-full overflow-hidden select-none bg-black border-b border-white/10"
         >
-          {/* ================= ১টি SPLIT ================= */}
           {activeSplits === 1 && visibleSlides[0] && (
-            <div className="relative h-[440px] sm:h-[500px] lg:h-[560px] w-full overflow-hidden bg-slate-900">
+            <div className="relative h-[280px] sm:h-[420px] lg:h-[520px] w-full overflow-hidden bg-slate-900">
               <div key={`${visibleSlides[0].id}_${currentIndex}`} className={`w-full h-full tr_${effect0}`}>
                 <HeroMediaRenderer
                   slide={visibleSlides[0]}
@@ -144,7 +148,6 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ================= ২টি SPLIT ================= */}
           {activeSplits === 2 && visibleSlides.length >= 2 && (
             <div className="flex flex-col divide-y divide-white/10 w-full">
               <div className="relative h-[240px] sm:h-[290px] w-full overflow-hidden bg-slate-900">
@@ -173,7 +176,6 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ================= ৩টি SPLIT ================= */}
           {activeSplits === 3 && visibleSlides.length >= 3 && (
             <div className="flex flex-col divide-y divide-white/10 w-full">
               <div className="relative h-[260px] sm:h-[310px] w-full overflow-hidden bg-slate-900">
@@ -216,17 +218,15 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ব্যাজ */}
-          <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 shadow">
+          <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20 shadow">
             <Layers className="size-3 text-yellow-400" />
             <span className="text-[11px] text-white font-medium">
               পোস্ট {bn(currentIndex + 1)}/{bn(total)}
             </span>
           </div>
 
-          {/* কন্ট্রোল বার */}
           {total > 1 && (
-            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950/90 border-t border-white/10">
+            <div className="flex items-center justify-between px-4 py-2 bg-slate-950/90 border-t border-white/10">
               <div className="flex items-center gap-1.5">
                 {slides.map((_, idx) => (
                   <button
@@ -270,7 +270,6 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* প্রোগ্রেস বার */}
           {!isPaused && !isHovered && !isVideoPlaying && total > 1 && duration > 0 && (
             <div className="w-full h-1 bg-white/10 overflow-hidden">
               <div
