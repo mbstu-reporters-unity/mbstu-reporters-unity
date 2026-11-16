@@ -26,9 +26,17 @@ export const metadata: Metadata = {
   verification: {
     google: 'bgEmoniEQzftOcdJ0oOMdhpsUKg6Fv5NDbWBYs1YYAU',
   },
-  title: "MBSTU Reporters' Unity | মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয় রিপোর্টার্স ইউনিটি",
+  title: "MBSTU Reporters' Unity | মাভাবিপ্রবি রিপোর্টার্স ইউনিটি",
   description:
-    "মাভাবিপ্রবি রিপোর্টার্স ইউনিটির অফিসিয়াল ওয়েবসাইট: ক্যাম্পাস সংবাদ, ক্লাব আপডেট ও অফিসিয়াল বিজ্ঞপ্তি। Official website of Mawlana Bhashani Science and Technology University Reporters' Unity (MBSTURU), Santosh, Tangail.",
+    "মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয় রিপোর্টার্স ইউনিটি (MBSTURU)-এর অফিসিয়াল পোর্টাল: ক্যাম্পাস সংবাদ, ডিজিটাল নোটিশ বোর্ড, ক্লাব আপডেট ও শিক্ষার্থীদের লেখা। Official portal of MBSTU Reporters' Unity, Santosh, Tangail.",
+  keywords: [
+    "MBSTU Reporters' Unity",
+    'MBSTURU',
+    'মাভাবিপ্রবি রিপোর্টার্স ইউনিটি',
+    'MBSTU News',
+    'মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়',
+    'Mawlana Bhashani Science and Technology University',
+  ],
   applicationName: 'MBSTURU',
   manifest: '/manifest.webmanifest',
   icons: {
@@ -44,13 +52,14 @@ export const metadata: Metadata = {
     canonical: siteUrl,
   },
   openGraph: {
-    siteName: 'MBSTURU',
+    siteName: "MBSTU Reporters' Unity (MBSTURU)",
     title: "MBSTU Reporters' Unity | মাভাবিপ্রবি রিপোর্টার্স ইউনিটি",
     description:
-      "Official website of Mawlana Bhashani Science and Technology University Reporters' Unity (MBSTURU).",
+      "মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয় রিপোর্টার্স ইউনিটি (MBSTURU)-এর অফিসিয়াল ক্যাম্পাস সংবাদ, নোটিশ ও কমিউনিটি পোর্টাল।",
     url: siteUrl,
     type: 'website',
     locale: 'bn_BD',
+    images: [{ url: `${siteUrl}/logo.png`, alt: "MBSTU Reporters' Unity" }],
   },
 }
 
@@ -63,8 +72,9 @@ export const viewport: Viewport = {
 const websiteJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  name: 'MBSTURU',
+  name: "MBSTU Reporters' Unity (MBSTURU)",
   alternateName: [
+    'MBSTURU',
     "MBSTU Reporters' Unity",
     "Mawlana Bhashani Science and Technology University Reporters' Unity",
     'মাভাবিপ্রবি রিপোর্টার্স ইউনিটি',
@@ -84,9 +94,15 @@ const organizationJsonLd = {
     'মাভাবিপ্রবি রিপোর্টার্স ইউনিটি',
     'মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয় রিপোর্টার্স ইউনিটি',
   ],
+  description:
+    "Official organization of campus journalists at Mawlana Bhashani Science and Technology University (MBSTU), Santosh, Tangail.",
   url: `${siteUrl}/`,
-  logo: `${siteUrl}/icon.png`,
+  logo: `${siteUrl}/logo.png`,
   foundingDate: '2026',
+  sameAs: [
+    'https://www.facebook.com/share/19jdL8Wtk5/',
+    'https://youtube.com/@mbstureportersunity?si=Dwz5c6v-J500O_TU',
+  ],
   address: {
     '@type': 'PostalAddress',
     addressLocality: 'Santosh',
