@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Download, Check, WifiOff, CloudDownload } from 'lucide-react'
+import { Download, WifiOff } from 'lucide-react'
 import { SB_URL, SB_KEY } from '@/lib/sb'
 
 const OFFLINE_SYNC_ROUTES = [
@@ -66,54 +66,22 @@ function collectLoadedResources(): string[] {
 export function OfflinePwaManager() {
   const [isOnline, setIsOnline] = useState(true)
   const [installPrompt, setInstallPrompt] = useState<any>(null)
-  const [syncing, setSyncing] = useState(false)
-  const [synced, setSynced] = useState(false)
 
-  useEffect(() => {
-    setIsOnline(navigator.onLine)
+  async function autoSyncOfflineData() {
+    if (!navigator.onLine || !('serviceWorker' in navigator)) return
+    const path = window.location.pathname
+    if (path.startsWith('/admin') || path.startsWith('/messages')) return
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then(async (reg) => {
-          const ready = await navigator.serviceWorker.ready
-          ready.active?.postMessage({ type: 'CACHE_URLS', urls: collectLoadedResources() })
-          reg.update().catch(() => {})
-        })
-        .catch(() => {})
-
-      const onSwMsg = (event: MessageEvent) => {
-        if (event.data?.type === 'OFFLINE_DETECTED') setIsOnline(false)
-        if (event.data?.type === 'ONLINE_DETECTED') setIsOnline(true)
-      }
-      navigator.serviceWorker.addEventListener('message', onSwMsg)
-      return () => navigator.serviceWorker.removeEventListener('message', onSwMsg)
-    }
-  }, [])
-
-  useEffect(() => {
-    const onOnline = () => setIsOnline(true)
-    const onOffline = () => setIsOnline(false)
-    const onBeforeInstall = (e: Event) => {
-      e.preventDefault()
-      setInstallPrompt(e)
-    }
-
-    window.addEventListener('online', onOnline)
-    window.addEventListener('offline', onOffline)
-    window.addEventListener('beforeinstallprompt', onBeforeInstall)
-
-    return () => {
-      window.removeEventListener('online', onOnline)
-      window.removeEventListener('offline', onOffline)
-      window.removeEventListener('beforeinstallprompt', onBeforeInstall)
-    }
-  }, [])
-
-  async function handleSaveForOffline() {
-    if (syncing) return
-    setSyncing(true)
     try {
+      const reg = await navigator.serviceWorker.ready
+      // বর্তমান পেজের ছবি ও ফাইল সবসময় সাথে সাথেই ক্যাশে পাঠানো
+      reg.active?.postMessage({ type: 'CACHE_URLS', urls: collectLoadedResources() })
+
+      // ৩ মিনিটের মধ্যে একবার সিঙ্ক হয়ে থাকলে বারবার সব পেজ না টানা
+      const last = Number(sessionStorage.getItem('mbsturu_auto_sync') || '0')
+      if (Date.now() - last < 3 * 60 * 1000) return
+      sessionStorage.setItem('mbsturu_auto_sync', String(Date.now()))
+
       const ping = await fetch('/manifest.webmanifest', { cache: 'no-store' })
       if (!ping.ok) throw new Error('offline')
 
@@ -154,20 +122,66 @@ export function OfflinePwaManager() {
         })
       )
 
-      const allToCache = Array.from(new Set([...assetUrls, ...imageUrlsToCache])).slice(0, 120)
-      if ('serviceWorker' in navigator) {
-        const reg = await navigator.serviceWorker.ready
-        reg.active?.postMessage({ type: 'CACHE_URLS', urls: allToCache })
-      }
-
+      const allToCache = Array.from(new Set([...assetUrls, ...imageUrlsToCache])).slice(0, 140)
+      reg.active?.postMessage({ type: 'CACHE_URLS', urls: allToCache })
       setIsOnline(true)
-      setSynced(true)
-      setTimeout(() => setSynced(false), 4000)
     } catch {
       setIsOnline(false)
     }
-    setSyncing(false)
   }
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine)
+
+    let timer: ReturnType<typeof setTimeout> | null = null
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((reg) => {
+          reg.update().catch(() => {})
+          // পেজ লোড হওয়ার ২ সেকেন্ড পর অটোমেটিক ব্যাকগ্রাউন্ডে অফলাইন সিঙ্ক শুরু হবে
+          timer = setTimeout(() => {
+            autoSyncOfflineData()
+          }, 2000)
+        })
+        .catch(() => {})
+
+      const onSwMsg = (event: MessageEvent) => {
+        if (event.data?.type === 'OFFLINE_DETECTED') setIsOnline(false)
+        if (event.data?.type === 'ONLINE_DETECTED') setIsOnline(true)
+      }
+      navigator.serviceWorker.addEventListener('message', onSwMsg)
+
+      return () => {
+        if (timer) clearTimeout(timer)
+        navigator.serviceWorker.removeEventListener('message', onSwMsg)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const onOnline = () => {
+      setIsOnline(true)
+      sessionStorage.removeItem('mbsturu_auto_sync')
+      autoSyncOfflineData()
+    }
+    const onOffline = () => setIsOnline(false)
+    const onBeforeInstall = (e: Event) => {
+      e.preventDefault()
+      setInstallPrompt(e)
+    }
+
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+    window.addEventListener('beforeinstallprompt', onBeforeInstall)
+
+    return () => {
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall)
+    }
+  }, [])
 
   async function handleInstallApp() {
     if (!installPrompt) return
@@ -196,28 +210,6 @@ export function OfflinePwaManager() {
             <span>অ্যাপ ইনস্টল</span>
           </button>
         </div>
-      )}
-
-      {isOnline && (
-        <button
-          type="button"
-          onClick={handleSaveForOffline}
-          disabled={syncing}
-          title="ইন্টারনেট ছাড়াই পরবর্তীতে পড়ার জন্য মূল পেজ ও ছবি সেভ করুন"
-          className="fixed bottom-16 right-3.5 sm:bottom-20 sm:right-6 z-40 inline-flex items-center gap-1.5 rounded-full bg-slate-900/85 hover:bg-slate-800 text-cyan-300 border border-white/25 px-3 py-2 text-[11px] font-bold shadow-lg backdrop-blur cursor-pointer transition active:scale-95"
-        >
-          {synced ? (
-            <>
-              <Check className="size-3.5 text-emerald-400" />
-              <span>সব তথ্য ও ছবি সেভ হয়েছে</span>
-            </>
-          ) : (
-            <>
-              <CloudDownload className={`size-3.5 ${syncing ? 'animate-bounce' : ''}`} />
-              <span>{syncing ? 'সেভ হচ্ছে...' : 'অফলাইন সেভ'}</span>
-            </>
-          )}
-        </button>
       )}
     </>
   )
