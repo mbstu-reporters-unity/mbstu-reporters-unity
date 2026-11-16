@@ -1,14 +1,17 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback } from "react"
-import { X, Play, Pause, Sparkles, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react"
+import Link from "next/link"
+import { X, Play, Pause, Sparkles, ChevronLeft, ChevronRight, ExternalLink, Plus } from "lucide-react"
 import { getActiveStories, type StoryItem } from "@/lib/stories"
+import { getMe, type Profile } from "@/lib/sb"
 
 export function FbStoriesTray() {
   const [stories, setStories] = useState<StoryItem[]>([])
   const [activeStoryIdx, setActiveStoryIdx] = useState<number | null>(null)
   const [progress, setProgress] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [me, setMe] = useState<Profile | null>(null)
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null)
@@ -17,9 +20,13 @@ export function FbStoriesTray() {
 
   useEffect(() => {
     getActiveStories().then(setStories)
+
+    const t = typeof window !== "undefined" ? localStorage.getItem("mbstu_admin_token") : null
+    if (t) {
+      getMe(t).then(setMe).catch(() => {})
+    }
   }, [])
 
-  // মোবাইলের ব্যাক বাটন চাপলে সোজা স্টোরি বন্ধ হওয়া
   useEffect(() => {
     const handlePopState = () => {
       setActiveStoryIdx(null)
@@ -28,7 +35,6 @@ export function FbStoriesTray() {
     return () => window.removeEventListener("popstate", handlePopState)
   }, [])
 
-  // স্টোরি পরিবর্তন হলে প্রোগ্রেস বার রিসেট
   useEffect(() => {
     setProgress(0)
   }, [activeStoryIdx])
@@ -41,7 +47,6 @@ export function FbStoriesTray() {
     }
   }, [])
 
-  // পরবর্তী স্টোরিতে যাওয়া
   const nextStory = useCallback(() => {
     if (activeStoryIdx !== null && activeStoryIdx < stories.length - 1) {
       setActiveStoryIdx((prev) => (prev !== null ? prev + 1 : null))
@@ -50,16 +55,14 @@ export function FbStoriesTray() {
     }
   }, [activeStoryIdx, stories.length, closeStory])
 
-  // আগের স্টোরিতে যাওয়া
   const prevStory = useCallback(() => {
     if (activeStoryIdx !== null && activeStoryIdx > 0) {
       setActiveStoryIdx((prev) => (prev !== null ? prev - 1 : null))
     } else {
-      setProgress(0) // ১ম স্টোরিতে থাকলে রিস্টার্ট হবে
+      setProgress(0)
     }
   }, [activeStoryIdx])
 
-  // স্বয়ংক্রিয় ৫ সেকেন্ড টাইমার লজিক
   useEffect(() => {
     if (activeStoryIdx === null || isPaused) return
 
@@ -88,7 +91,6 @@ export function FbStoriesTray() {
     window.history.pushState({ storyOpen: true }, "")
   }
 
-  // ================= টাচ ও সোয়াইপ হ্যান্ডলার =================
   const handleTouchStart = (e: React.TouchEvent) => {
     if ((e.target as HTMLElement).closest("button, a")) return
 
@@ -99,7 +101,6 @@ export function FbStoriesTray() {
       time: Date.now(),
     }
 
-    // আঙুল দিয়ে চেপে ধরে রাখলে ফেসবুকের মতো স্টোরি ও টাইমার পজ হবে
     holdTimerRef.current = setTimeout(() => {
       isHoldingRef.current = true
       setIsPaused(true)
@@ -120,25 +121,21 @@ export function FbStoriesTray() {
     const elapsed = Date.now() - touchStartRef.current.time
     touchStartRef.current = null
 
-    // ১. নিচে সোয়াইপ করলে স্টোরি বন্ধ হবে
     if (diffY > 80 && Math.abs(diffY) > Math.abs(diffX) * 1.5) {
       closeStory()
       return
     }
 
-    // ২. আঙুল দিয়ে বামে টানলে (Swipe Left) -> পরের স্টোরি
     if (diffX < -40 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
       nextStory()
       return
     }
 
-    // ৩. আঙুল দিয়ে ডানে টানলে (Swipe Right) -> আগের স্টোরি
     if (diffX > 40 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
       prevStory()
       return
     }
 
-    // ৪. দ্রুত ট্যাপ (Quick Tap): স্ক্রিনের বাম পাশে ট্যাপ করলে আগেরটা, ডান পাশে ট্যাপ করলে পরেরটা
     if (Math.abs(diffX) < 15 && Math.abs(diffY) < 15 && elapsed < 250) {
       const screenWidth = window.innerWidth
       if (touch.clientX < screenWidth * 0.35) {
@@ -149,20 +146,47 @@ export function FbStoriesTray() {
     }
   }
 
-  if (stories.length === 0) return null
+  // যদি কোনো স্টোরিও না থাকে এবং ইউজার লগইন করা না থাকে তাহলেই শুধু ফাঁকা থাকবে
+  if (stories.length === 0 && !me) return null
 
   const currentActiveStory = activeStoryIdx !== null ? stories[activeStoryIdx] : null
 
   return (
-    <div className="w-full my-3">
-      {/* হোমপেজের অনুভূমিক স্টোরি ট্রে */}
+    <div className="w-full my-4">
+      {/* ফেসবুক স্টাইল অনুভূমিক স্টোরি ট্রে */}
       <div className="w-full overflow-x-auto py-1 px-3 sm:px-4 scrollbar-none select-none">
-        <div className="flex gap-2 sm:gap-2.5 min-w-max">
+        <div className="flex gap-2 sm:gap-2.5 min-w-max items-center">
+          
+          {/* ১. Create Story কার্ড (ফেসবুক স্টাইল) */}
+          <Link
+            href="/admin"
+            className="relative w-[105px] sm:w-[125px] h-[175px] sm:h-[205px] rounded-2xl overflow-hidden border border-white/20 bg-slate-900/90 shadow-lg flex flex-col justify-between group active:scale-95 transition-all shrink-0 cursor-pointer text-center"
+          >
+            <div className="h-[65%] w-full bg-slate-800 flex items-center justify-center overflow-hidden">
+              {me?.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={me.avatar_url} alt="" className="size-full object-cover group-hover:scale-105 transition" />
+              ) : (
+                <div className="size-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center font-bold text-2xl text-white">
+                  {me ? me.full_name.charAt(0) : "M"}
+                </div>
+              )}
+            </div>
+
+            <div className="relative h-[35%] bg-slate-950 flex flex-col items-center justify-end pb-2 px-1">
+              <span className="absolute -top-4 size-8 rounded-full bg-blue-600 text-white ring-4 ring-slate-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition">
+                <Plus className="size-5" />
+              </span>
+              <span className="text-[10px] font-bold text-white leading-tight">স্টোরি দিন</span>
+            </div>
+          </Link>
+
+          {/* ২. স্টোরিগুলোর থাম্বনেইল তালিকা */}
           {stories.map((st, idx) => (
             <div
               key={st.id}
               onClick={() => openStory(idx)}
-              className="relative w-[110px] sm:w-[130px] h-[180px] sm:h-[210px] rounded-2xl overflow-hidden border border-white/20 shadow-lg cursor-pointer group active:scale-95 transition-all"
+              className="relative w-[105px] sm:w-[125px] h-[175px] sm:h-[205px] rounded-2xl overflow-hidden border border-white/20 shadow-lg cursor-pointer group active:scale-95 transition-all shrink-0"
             >
               {st.media_type === "video" ? (
                 <video src={st.media_url} className="size-full object-cover" muted playsInline />
@@ -207,7 +231,7 @@ export function FbStoriesTray() {
         </div>
       </div>
 
-      {/* ফুলস্ক্রিন সোয়াইপ-সক্ষম স্টোরি ভিউয়ার */}
+      {/* ফুলস্ক্রিন সোয়াইপ স্টোরি ভিউয়ার */}
       {currentActiveStory && (
         <div
           className="fixed inset-0 z-[999999] bg-black/95 flex flex-col items-center justify-center p-0 sm:p-4 backdrop-blur-xl animate-in fade-in select-none"
@@ -216,7 +240,6 @@ export function FbStoriesTray() {
         >
           <div className="relative w-full h-[100dvh] sm:h-[90vh] sm:max-w-md bg-slate-950 sm:rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl border border-white/10">
             
-            {/* ড্যাশবোর্ড প্রোগ্রেস বার */}
             <div className="absolute top-3 inset-x-3 z-30 flex gap-1 pointer-events-none">
               {stories.map((_, i) => (
                 <div key={i} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
@@ -230,7 +253,6 @@ export function FbStoriesTray() {
               ))}
             </div>
 
-            {/* হেডার: নাম, প্লে/পজ ও ক্লোজ বাটন */}
             <div className="absolute top-6 inset-x-4 z-30 flex items-center justify-between text-white">
               <div className="flex items-center gap-2">
                 <div className="size-7 rounded-full overflow-hidden bg-blue-600 ring-1 ring-white">
@@ -277,7 +299,6 @@ export function FbStoriesTray() {
               </div>
             </div>
 
-            {/* কম্পিউটার/ট্যাবলেটের জন্য দুই পাশের তীর বাটন */}
             <button
               type="button"
               onClick={(e) => {
@@ -302,7 +323,6 @@ export function FbStoriesTray() {
               <ChevronRight className="size-6" />
             </button>
 
-            {/* মূল মিডিয়া (ছবি বা ভিডিও) */}
             <div className="relative size-full flex items-center justify-center bg-black">
               {currentActiveStory.media_type === "video" ? (
                 <video
@@ -322,7 +342,6 @@ export function FbStoriesTray() {
               )}
             </div>
 
-            {/* ক্যাপশন ও ঐচ্ছিক লিংক */}
             {(currentActiveStory.caption || currentActiveStory.link_url) && (
               <div className="absolute bottom-5 inset-x-4 z-30 p-3 rounded-2xl bg-black/75 backdrop-blur-md text-white text-xs text-center border border-white/10 space-y-1.5">
                 {currentActiveStory.caption && <p>{currentActiveStory.caption}</p>}
