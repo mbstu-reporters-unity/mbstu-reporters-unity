@@ -24,15 +24,28 @@ function hdr(token?: string, json = false): Record<string, string> {
   return h
 }
 
-// হোমপেজের সক্রিয় স্টোরি ও হাইলাইটস
+// হোমপেজের সক্রিয় স্টোরি ও হাইলাইটস (২৪ ঘণ্টার বৈধ স্টোরি বা আজীবন হাইলাইট)
 export async function getActiveStories(): Promise<StoryItem[]> {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/stories?select=*&is_active=eq.true&or=(is_highlight.eq.true,expires_at.gt.now())&order=created_at.desc`,
+      `${SB_URL}/rest/v1/stories?select=*&is_active=eq.true&order=created_at.desc&limit=60`,
       { headers: hdr(), cache: "no-store" }
     )
     if (!res.ok) return []
-    return await res.json()
+    const rows: StoryItem[] = await res.json()
+    if (!Array.isArray(rows)) return []
+
+    const now = Date.now()
+    // ফিল্টার: হয় এটি হাইলাইট, অথবা এটি তৈরি হওয়ার ২৪ ঘণ্টার মধ্যে আছে
+    return rows.filter((s) => {
+      if (s.is_highlight) return true
+      if (s.expires_at) {
+        return new Date(s.expires_at).getTime() > now
+      }
+      // যদি expires_at ফাঁকা থাকে, তবে তৈরি হওয়ার ২৪ ঘণ্টার মধ্যে থাকলে দেখাবে
+      const createdTime = new Date(s.created_at).getTime()
+      return now - createdTime < 24 * 60 * 60 * 1000
+    })
   } catch {
     return []
   }
@@ -52,12 +65,20 @@ export async function getAllStoriesAdmin(token: string): Promise<StoryItem[]> {
   }
 }
 
-// স্টোরি তৈরি
+// স্টোরি তৈরি (স্বয়ংক্রিয় ২৪ ঘণ্টার মেয়াদ নিশ্চিতকরণ)
 export async function createStory(token: string, data: Partial<StoryItem>) {
+  const payload = {
+    ...data,
+    is_active: true,
+    expires_at: data.is_highlight
+      ? null
+      : data.expires_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  }
+
   const res = await fetch(`${SB_URL}/rest/v1/stories`, {
     method: "POST",
     headers: { ...hdr(token, true), Prefer: "return=representation" },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
