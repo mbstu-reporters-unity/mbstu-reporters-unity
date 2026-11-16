@@ -63,6 +63,7 @@ export function SiteHeader() {
   const [me, setMe] = useState<Profile | null>(null)
   const [incomingReqCount, setIncomingReqCount] = useState(0)
 
+  // গ্লোবাল ইনকামিং কল স্টেট
   const [callState, setCallState] = useState<CallState>('idle')
   const [callType, setCallType] = useState<CallType>('audio')
   const [incomingCaller, setIncomingCaller] = useState<Profile | null>(null)
@@ -244,18 +245,18 @@ export function SiteHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#071030]/95 shadow-lg backdrop-blur-2xl w-full">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-2.5 sm:px-4 py-2">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#071030]/95 shadow-lg backdrop-blur-2xl w-full">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5">
           
           {/* লোগো ও বিশ্ববিদ্যালয়ের তথ্য */}
-          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 overflow-hidden">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 mr-2 overflow-hidden">
             <Logo inverted />
-            <span className="h-5 w-px bg-white/20 shrink-0 hidden sm:block" aria-hidden="true" />
+            <span className="h-5 w-px bg-white/20 shrink-0 hidden xs:block" aria-hidden="true" />
             <a
               href={univLink || 'https://mbstu.ac.bd'}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-1.5 shrink-0"
+              className="flex items-center gap-1.5 shrink-0"
               title="মাভাবিপ্রবি"
             >
               {univLogo && (
@@ -263,7 +264,7 @@ export function SiteHeader() {
                 <img
                   src={univLogo}
                   alt="MBSTU"
-                  className="size-8 sm:size-9 rounded-full object-cover shrink-0 select-none ring-2 ring-white/20 shadow-xs"
+                  className="size-7 sm:size-9 rounded-full object-cover shrink-0 select-none ring-1 sm:ring-2 ring-white/20 shadow-xs"
                 />
               )}
               <span className="hidden md:inline text-[11px] font-bold text-white/90 truncate max-w-[120px]">
@@ -413,11 +414,11 @@ export function SiteHeader() {
             </ul>
           </nav>
 
-          {/* ডানপাশ: বন্ধু (/friends), M-RU টেক্সট (/messages), লগইন/প্রোফাইল বাটন */}
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* ডানপাশ: বন্ধু, টেক্সট, লগইন/প্রোফাইল বাটন ও হ্যামবার্গার */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Link
               href="/friends"
-              className="relative inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 p-2 sm:px-3 sm:py-2 text-[11px] sm:text-xs font-bold transition active:scale-95 shadow-sm"
+              className="relative inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition active:scale-95 shadow-sm"
               title="বন্ধু ও ফ্রেন্ড রিকোয়েস্ট"
             >
               <UserPlus className="size-3.5 sm:size-4 text-cyan-300" />
@@ -431,26 +432,26 @@ export function SiteHeader() {
 
             <Link
               href="/messages"
-              className="inline-flex items-center gap-1 rounded-full bg-cyan-600/20 hover:bg-cyan-600/35 text-cyan-300 border border-cyan-400/40 p-2 sm:px-3.5 sm:py-2 text-[11px] sm:text-xs font-bold transition active:scale-95 shadow-sm"
+              className="inline-flex items-center gap-1.5 rounded-full bg-cyan-600/20 hover:bg-cyan-600/35 text-cyan-300 border border-cyan-400/40 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition active:scale-95 shadow-sm"
               title="M-RU টেক্সট (মেসেঞ্জার)"
             >
               <MessageSquare className="size-3.5 sm:size-4" />
-              <span className="hidden sm:inline">টেক্সট</span>
+              <span className="hidden xs:inline">টেক্সট</span>
             </Link>
 
             {me ? (
               <Link
                 href="/admin"
-                className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 shadow-md border border-white/20 transition active:scale-95 shrink-0"
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 shadow-md border border-white/20 transition active:scale-95 shrink-0"
                 title="আমার প্রোফাইল ও ড্যাশবোর্ড"
               >
                 {me.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={me.avatar_url} alt="" className="size-4 sm:size-4.5 rounded-full object-cover" />
                 ) : (
-                  <User className="size-3.5" />
+                  <User className="size-3 sm:size-3.5" />
                 )}
-                <span className="max-w-[55px] sm:max-w-[100px] truncate">{me.full_name.split(' ')[0]}</span>
+                <span className="max-w-[70px] sm:max-w-[100px] truncate">{me.full_name.split(' ')[0]}</span>
               </Link>
             ) : (
               <Link
@@ -474,9 +475,9 @@ export function SiteHeader() {
 
         </div>
 
-        {/* ==================== মোবাইল ড্রিল-ডাউন মেনু ==================== */}
+        {/* ==================== মোবাইল ড্রিল-ডাউন মেনু (z-50 ও পরিষ্কার লেআউট) ==================== */}
         {menuOpen && (
-          <nav className="fixed inset-x-0 bottom-0 top-[118px] z-50 border-t border-white/10 bg-[#071030]/98 lg:hidden overflow-y-auto px-3.5 py-3.5 space-y-3 backdrop-blur-2xl animate-in fade-in select-none scrollbar-none">
+          <nav className="relative z-50 border-t border-white/15 bg-[#071030] lg:hidden max-h-[82vh] overflow-y-auto px-3.5 py-3 space-y-3 backdrop-blur-2xl shadow-2xl select-none scrollbar-none">
             
             <div className="flex items-center justify-between pb-2.5 border-b border-white/15 gap-2">
               {navStack.length > 1 ? (
@@ -504,23 +505,7 @@ export function SiteHeader() {
             </div>
 
             {currentLevel === 'root' && (
-              <div className="space-y-2 animate-in fade-in pb-10">
-                <a
-                  href={univLink || 'https://mbstu.ac.bd'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-2.5 rounded-2xl bg-white/5 text-white text-xs font-bold border border-white/10"
-                >
-                  <span className="flex items-center gap-2.5">
-                    {univLogo && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={univLogo} alt="MBSTU" className="size-6 rounded-full object-cover bg-white" />
-                    )}
-                    <span>মাভাবিপ্রবি অফিশিয়াল ওয়েবসাইট</span>
-                  </span>
-                  <ChevronRight className="size-4 text-white/40" />
-                </a>
-
+              <div className="space-y-2 animate-in fade-in">
                 <Link
                   href="/friends"
                   onClick={closeMenuDrawer}
@@ -641,7 +626,7 @@ export function SiteHeader() {
             )}
 
             {currentLevel === 'admin_tier' && (
-              <div className="space-y-1.5 animate-in fade-in">
+              <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
                 {ADMIN_CATEGORIES.map((cat, idx) => (
                   <Link
                     key={idx}
@@ -664,7 +649,7 @@ export function SiteHeader() {
             )}
 
             {currentLevel === 'faculties_dept' && (
-              <div className="space-y-2 animate-in fade-in">
+              <div className="space-y-2 animate-in fade-in max-h-72 overflow-y-auto scrollbar-none">
                 {facultiesList.map((f) => (
                   <div key={f.id} className="bg-white/5 rounded-xl p-2.5 border border-white/10 space-y-1">
                     <p className="font-bold text-cyan-300 text-xs truncate">🏛️ {f.name}</p>
@@ -687,7 +672,7 @@ export function SiteHeader() {
             )}
 
             {currentLevel === 'social_sites' && (
-              <div className="space-y-1.5 animate-in fade-in">
+              <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
                 {socialSitesList.map((s) => (
                   <Link
                     key={s.id}
@@ -762,7 +747,7 @@ export function SiteHeader() {
             )}
 
             {currentLevel === 'associations_tier' && (
-              <div className="space-y-1.5 animate-in fade-in">
+              <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
                 {associationsList.map((assoc) => (
                   <Link
                     key={assoc.id}
@@ -816,7 +801,7 @@ export function SiteHeader() {
             )}
 
             {currentLevel === 'clubs_tier' && (
-              <div className="space-y-1.5 animate-in fade-in">
+              <div className="space-y-1.5 animate-in fade-in max-h-72 overflow-y-auto scrollbar-none">
                 {clubsList.map((club) => (
                   <button
                     key={club.id}
@@ -839,7 +824,7 @@ export function SiteHeader() {
             )}
 
             {currentLevel === 'pages_tier' && (
-              <div className="space-y-1.5 animate-in fade-in">
+              <div className="space-y-1.5 animate-in fade-in max-h-64 overflow-y-auto scrollbar-none">
                 {communityPagesList.map((cp) => (
                   <Link
                     key={cp.id}
@@ -896,6 +881,7 @@ export function SiteHeader() {
         )}
       </header>
 
+      {/* গ্লোবাল কলিং মডাল */}
       {me && (
         <CallModal
           currentUser={me}
