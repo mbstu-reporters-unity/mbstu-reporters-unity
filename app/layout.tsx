@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Noto_Sans_Bengali, Noto_Serif_Bengali } from 'next/font/google'
 import './globals.css'
 import { LangProvider } from '@/lib/i18n'
+import { OfflinePwaManager } from '@/components/portal/offline-pwa-manager'
 
 const notoSans = Noto_Sans_Bengali({
   subsets: ['bengali', 'latin'],
@@ -29,6 +30,16 @@ export const metadata: Metadata = {
   description:
     "মাভাবিপ্রবি রিপোর্টার্স ইউনিটির অফিসিয়াল ওয়েবসাইট: ক্যাম্পাস সংবাদ, ক্লাব আপডেট ও অফিসিয়াল বিজ্ঞপ্তি। Official website of Mawlana Bhashani Science and Technology University Reporters' Unity (MBSTURU), Santosh, Tangail.",
   applicationName: 'MBSTURU',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
+  appleWebApp: {
+    capable: true,
+    title: 'MBSTURU',
+    statusBarStyle: 'black-translucent',
+  },
   alternates: {
     canonical: siteUrl,
   },
@@ -110,6 +121,7 @@ export default function RootLayout({
         />
         <LangProvider>
           {children}
+          <OfflinePwaManager />
         </LangProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
