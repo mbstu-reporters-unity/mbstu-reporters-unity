@@ -31,7 +31,7 @@ interface HeroBreakingBannerProps {
   settings?: HeroSettings | null
 }
 
-export function renderBadgeIcon(key?: string, className = "size-3.5 mr-1.5 inline-block") {
+export function renderBadgeIcon(key?: string, className = "size-3.5 shrink-0") {
   switch (key) {
     case "siren": return <Siren className={className} />
     case "flame": return <Flame className={className} />
@@ -160,9 +160,10 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
   const hasButton = Boolean(currentSlide.button_text && currentSlide.button_text.trim())
   const isExternalButton = currentSlide.link_url?.startsWith('http')
 
-  // স্তরের উপাদানগুলো চিহ্নিত করা (মোবাইলে সুবিন্যস্ত দেখানোর জন্য)
   const badgeLayer = layers.find((l: any) => l.enabled !== false && (l.id === 'txt_badge' || l.bg_color))
-  const titleLayer = layers.find((l: any) => l.enabled !== false && (l.id === 'txt_title' || l.label?.includes('শিরোনাম'))) || layers.find((l: any) => l.enabled !== false && l !== badgeLayer)
+  const titleLayer =
+    layers.find((l: any) => l.enabled !== false && (l.id === 'txt_title' || l.label?.includes('শিরোনাম'))) ||
+    layers.find((l: any) => l.enabled !== false && l !== badgeLayer)
   const descLayer = layers.find((l: any) => l.enabled !== false && l !== badgeLayer && l !== titleLayer)
 
   return (
@@ -174,11 +175,15 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
       onTouchEnd={handleTouchEnd}
       className="relative w-full overflow-hidden select-none border-b border-indigo-950/60 shadow-xl transition-all duration-300"
       style={{
-        minHeight: `${bannerHeight}px`,
         background: slideType === 'color' ? getBannerBg(currentSlide) : '#000000',
       }}
     >
-      {/* ১. ছবি ব্যাকগ্রাউন্ড */}
+      <style>{`
+        @media (min-width: 640px) {
+          .hero-banner-inner { min-height: ${bannerHeight}px; }
+        }
+      `}</style>
+
       {slideType === 'image' && (
         <div className="absolute inset-0 size-full pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -192,7 +197,6 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         </div>
       )}
 
-      {/* ২. ভিডিও ব্যাকগ্রাউন্ড */}
       {slideType === 'video' && (
         <div className="absolute inset-0 size-full flex items-center justify-center bg-black z-0 pointer-events-auto">
           {parsedVideo.isEmbed ? (
@@ -214,39 +218,37 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         </div>
       )}
 
-      {/* ৩. সেফটি স্ক্রিম ওভারলে (লেখা স্পষ্ট রাখার জন্য) */}
       {(slideType === 'image' || slideType === 'video') && (
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/30 pointer-events-none z-[1]" />
       )}
 
-      {/* ৪. কনটেন্ট কন্টেইনার */}
-      <div
-        className="max-w-7xl mx-auto px-4 sm:px-8 py-5 relative z-10 flex flex-col justify-center"
-        style={{ minHeight: `${bannerHeight}px` }}
-      >
+      <div className="hero-banner-inner max-w-7xl mx-auto px-4 sm:px-8 py-4 sm:py-5 relative z-10 flex flex-col justify-center">
         
-        {/* ================= মোবাইল স্ক্রিন (< sm): কোনো ওভারল্যাপ ছাড়া নিরাপদ ফ্লেক্স লেআউট ================= */}
-        <div className="flex flex-col items-start gap-2 sm:hidden w-full max-w-xl pb-6">
+        {/* মোবাইল ভিউ: সুশৃঙ্খল ফ্লেক্স লেআউট (ব্যানার ব্যাজ ফিক্সড) */}
+        <div className={`flex flex-col items-start gap-2 sm:hidden w-full max-w-xl ${total > 1 ? 'pb-7' : 'pb-1'}`}>
           {badgeLayer && (badgeLayer.text || badgeLayer.title) && (
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold shadow-md anim_${badgeLayer.animation || 'fade-up'}`}
-              style={{
-                backgroundColor: badgeLayer.bg_color || '#dc2626',
-                color: badgeLayer.color || '#ffffff',
-              }}
-            >
-              <span className="relative flex size-2 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-85" />
-                <span className="relative inline-flex rounded-full size-2 bg-white" />
+            <div className={`anim_${badgeLayer.animation || 'fade-up'}`}>
+              <span
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold shadow-md whitespace-nowrap"
+                style={{
+                  display: 'inline-flex',
+                  backgroundColor: badgeLayer.bg_color || '#dc2626',
+                  color: badgeLayer.color || '#ffffff',
+                }}
+              >
+                <span className="relative flex size-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-85" />
+                  <span className="relative inline-flex rounded-full size-2 bg-white" />
+                </span>
+                {badgeLayer.icon && renderBadgeIcon(badgeLayer.icon, "size-3 shrink-0")}
+                <span>{badgeLayer.text || badgeLayer.title}</span>
               </span>
-              {badgeLayer.icon && renderBadgeIcon(badgeLayer.icon, "size-3 shrink-0")}
-              <span>{badgeLayer.text || badgeLayer.title}</span>
-            </span>
+            </div>
           )}
 
           {titleLayer && (titleLayer.text || titleLayer.title) && (
             <h2
-              className={`font-serif text-lg font-bold text-white leading-snug drop-shadow-md anim_${titleLayer.animation || 'fade-up'}`}
+              className={`font-serif text-base sm:text-lg font-bold text-white leading-snug drop-shadow-md anim_${titleLayer.animation || 'fade-up'}`}
               style={{ color: titleLayer.color || '#ffffff' }}
             >
               {titleLayer.text || titleLayer.title}
@@ -263,7 +265,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
           )}
 
           {hasButton && (
-            <div className="pt-1 pointer-events-auto">
+            <div className="pt-0.5 pointer-events-auto">
               {isExternalButton ? (
                 <a
                   href={currentSlide.link_url || '#'}
@@ -287,7 +289,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
           )}
         </div>
 
-        {/* ================= ডেস্কটপ স্ক্রিন (>= sm): অ্যাডমিনের নির্ধারিত পজিশন ভিউ ================= */}
+        {/* ডেস্কটপ ভিউ */}
         <div className="hidden sm:flex flex-row items-center justify-between gap-4 pointer-events-none size-full">
           <div className="relative w-full flex-1 pointer-events-none" style={{ minHeight: `${Math.max(120, bannerHeight - 40)}px` }}>
             {layers.map((layer: any, idx: number) => {
@@ -317,15 +319,15 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
                     <div
                       className={`anim_${anim}`}
                       style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
                         fontFamily: layer.font || undefined,
                         color: layer.color || '#FFFFFF',
                         backgroundColor: layer.bg_color || undefined,
                         padding: layer.bg_color ? '4px 14px' : undefined,
                         borderRadius: layer.bg_color ? '9999px' : undefined,
                         textAlign: align,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
                       }}
                     >
                       {isBadge && (
@@ -382,9 +384,8 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
 
       </div>
 
-      {/* ৫. স্লাইডার নেভিগেশন কন্ট্রোল ডটস */}
       {total > 1 && (
-        <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-black/50 backdrop-blur px-3 py-1 rounded-full border border-white/10 pointer-events-auto">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-black/50 backdrop-blur px-3 py-1 rounded-full border border-white/10 pointer-events-auto">
           <button
             type="button"
             onClick={prevSlide}
