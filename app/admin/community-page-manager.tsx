@@ -68,11 +68,9 @@ export default function CommunityPageManager({
   const [cats, setCats] = useState<string[]>(["ক্যাম্পাস সংগঠন"])
   const [clubs, setClubs] = useState<ClubItem[]>([])
 
-  // পেজ তৈরি বা এডিট ফর্ম মোড
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
 
-  // ফেসবুক পোস্ট কম্পোজার স্টেট
   const [fbPostPageId, setFbPostPageId] = useState<string | null>(null)
   const [fbEditPost, setFbEditPost] = useState<Post | null>(null)
 
@@ -128,7 +126,6 @@ export default function CommunityPageManager({
     ])
 
     let pages = rawPages
-    // সাধারণ ইউজারের কোনো পেজ না থাকলে স্বয়ংক্রিয়ভাবে তার নামে পেজ নিশ্চিত করা
     if (!isAdmin && currentUserId && pages.length === 0) {
       const meProfile = await getMe(token).catch(() => null)
       if (meProfile) {
@@ -350,7 +347,6 @@ export default function CommunityPageManager({
 
   return (
     <div className="space-y-4">
-      {/* ফেসবুক পোস্ট / এডিট মোডাল */}
       {fbPostPageId !== null && (
         <FbPostComposer
           mode="post"
@@ -386,11 +382,9 @@ export default function CommunityPageManager({
         </p>
       )}
 
-      {/* ==================== ১. নির্বাচিত ফেসবুক পেজ স্টুডিও ও ড্যাশবোর্ড ==================== */}
       {selectedPage && !showForm && (
         <div className="bg-white rounded-3xl shadow border border-slate-200 overflow-hidden">
-          {/* মিনি কভার + লোগো + তথ্য */}
-          <div className="relative h-28 sm:h-40 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900">
+          <div className="relative z-0 h-28 sm:h-40 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900">
             {selectedPage.cover_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={selectedPage.cover_url} alt="" className="size-full object-cover" />
@@ -406,10 +400,10 @@ export default function CommunityPageManager({
             </span>
           </div>
 
-          <div className="px-4 sm:px-6 pb-5 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 -mt-10 sm:-mt-12">
-              <div className="flex items-end gap-3 min-w-0">
-                <div className="size-20 sm:size-24 rounded-full bg-white ring-4 ring-white shadow-lg overflow-hidden shrink-0 flex items-center justify-center border">
+          <div className="relative z-10 px-4 sm:px-6 pb-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3 min-w-0">
+                <div className="-mt-10 sm:-mt-12 relative z-10 size-20 sm:size-24 rounded-full bg-white ring-4 ring-white shadow-lg overflow-hidden shrink-0 flex items-center justify-center border">
                   {selectedPage.avatar_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={selectedPage.avatar_url} alt="" className="size-full object-cover" />
@@ -420,7 +414,7 @@ export default function CommunityPageManager({
                   )}
                 </div>
 
-                <div className="min-w-0 pb-1">
+                <div className="min-w-0 pt-0.5 sm:pt-2 pb-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <h2 className="font-bold text-lg sm:text-xl text-slate-900 truncate">
                       {selectedPage.name}
@@ -429,7 +423,7 @@ export default function CommunityPageManager({
                       <CheckCircle2 className="size-4 fill-blue-600 text-white shrink-0" />
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-0.5">
                     <span className="font-semibold text-blue-700">{selectedPage.category || "পেজ"}</span>
                     <span>·</span>
                     <span className="inline-flex items-center gap-1 font-semibold text-slate-700">
@@ -444,10 +438,9 @@ export default function CommunityPageManager({
                 </div>
               </div>
 
-              {/* পেজ সুইচার (যদি একাধিক পেজ থাকে) */}
               {list.length > 1 && (
                 <select
-                  className="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold bg-slate-50 text-slate-800"
+                  className="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold bg-slate-50 text-slate-800 shrink-0"
                   value={selectedPage.id}
                   onChange={(e) => setActivePageId(e.target.value)}
                 >
@@ -460,7 +453,6 @@ export default function CommunityPageManager({
               )}
             </div>
 
-            {/* কুইক কন্ট্রোল বাটনসমূহ */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold">
               <button
                 type="button"
@@ -515,7 +507,6 @@ export default function CommunityPageManager({
         </div>
       )}
 
-      {/* ==================== ২. পেজের পোস্টগুলো নিয়ন্ত্রণ (এডিট, হাইড, ডিলিট) ==================== */}
       {selectedPage && !showForm && (
         <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 space-y-3">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -620,7 +611,6 @@ export default function CommunityPageManager({
         </div>
       )}
 
-      {/* ==================== ৩. পেজ তৈরি বা এডিট ফর্ম ==================== */}
       {(showForm || list.length === 0) && (
         <div className="bg-white rounded-2xl shadow p-4 sm:p-5 space-y-3 border border-slate-200">
           <div className="flex items-center justify-between border-b pb-2">
@@ -690,7 +680,6 @@ export default function CommunityPageManager({
             </label>
           </div>
 
-          {/* ছবি ও কভার লাইভ প্রিভিউ */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700 block">১. গোল প্রোফাইল লোগো:</label>
@@ -755,7 +744,6 @@ export default function CommunityPageManager({
         </div>
       )}
 
-      {/* ==================== ৪. আমার সব পেজের তালিকা ==================== */}
       {list.length > 0 && (
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
