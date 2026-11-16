@@ -57,12 +57,12 @@ export type Profile = {
   student_id: string | null
   phone: string | null
   email: string | null
-  role: string // 'admin' | 'moderator' | 'user'
-  user_type: UserType // শিক্ষার্থী, শিক্ষক, কর্মচারী, সাংবাদিক
-  designation?: string | null // শিক্ষক/কর্মচারীর পদবি
-  office_section?: string | null // কর্মচারীর দপ্তর/শাখা
-  staff_id?: string | null // কর্মচারীর স্টাফ আইডি
-  bio?: string | null // পরিচিতি
+  role: string
+  user_type: UserType
+  designation?: string | null
+  office_section?: string | null
+  staff_id?: string | null
+  bio?: string | null
   approved: boolean
   newspaper_name?: string | null
   avatar_url?: string | null
@@ -100,13 +100,24 @@ async function ok(res: Response): Promise<Response> {
   throw new Error(msg)
 }
 
-/* ---------- প্রোফাইলের ছবি ও পেজের তথ্য অটো-সিঙ্ক হেল্পার ---------- */
+/* ---------- প্রোফাইলের ছবি ও পেজের তথ্য অটো-সিঙ্ক (অপ্টিমাইজড) ---------- */
 
 export async function attachProfileAvatars(posts: Post[]): Promise<Post[]> {
   if (!posts || posts.length === 0) return posts
 
-  const needsProfile = posts.some(
+  const needsProfilePosts = posts.filter(
     (p) => (!p.author_avatar && p.show_author_avatar !== false) || !p.author_user_type
+  )
+  const userIds = Array.from(
+    new Set(needsProfilePosts.map((p) => p.user_id).filter((id): id is string => Boolean(id)))
+  )
+  const fallbackNames = Array.from(
+    new Set(
+      needsProfilePosts
+        .filter((p) => !p.user_id && p.author)
+        .map((p) => p.author!.trim())
+        .filter(Boolean)
+    )
   )
   const pageIds = Array.from(
     new Set(posts.map((p) => p.page_id).filter((id): id is string => Boolean(id)))
@@ -119,10 +130,40 @@ export async function attachProfileAvatars(posts: Post[]): Promise<Post[]> {
   try {
     const tasks: Promise<void>[] = []
 
-    if (needsProfile) {
+    if (userIds.length > 0) {
+      const idList = userIds.map((id) => encodeURIComponent(id)).join(",")
       tasks.push(
         fetch(
-          `${SB_URL}/rest/v1/profiles?select=id,full_name,avatar_url,user_type&approved=eq.true`,
+          `${SB_URL}/rest/v1/profiles?select=id,full_name,avatar_url,user_type&id=in.(${idList})`,
+          { headers: hdr(), cache: "no-store" }
+        )
+          .then((res) => (res.ok ? res.json() : []))
+          .then(
+            (
+              profiles: Array<{
+                id: string
+                full_name: string
+                avatar_url?: string | null
+                user_type?: UserType | null
+              }>
+            ) => {
+              if (!Array.isArray(profiles)) return
+              for (const pr of profiles) {
+                const info = { avatar_url: pr.avatar_url, user_type: pr.user_type || "student" }
+                if (pr.id) byId.set(pr.id, info)
+                if (pr.full_name) byName.set(pr.full_name.trim().toLowerCase(), info)
+              }
+            }
+          )
+          .catch(() => {})
+      )
+    }
+
+    if (fallbackNames.length > 0) {
+      const nameList = fallbackNames.map((n) => `"${n.replace(/"/g, '\\"')}"`).join(",")
+      tasks.push(
+        fetch(
+          `${SB_URL}/rest/v1/profiles?select=id,full_name,avatar_url,user_type&approved=eq.true&full_name=in.(${encodeURIComponent(nameList)})`,
           { headers: hdr(), cache: "no-store" }
         )
           .then((res) => (res.ok ? res.json() : []))
@@ -165,7 +206,9 @@ export async function attachProfileAvatars(posts: Post[]): Promise<Post[]> {
       )
     }
 
-    await Promise.all(tasks)
+    if (tasks.length > 0) {
+      await Promise.all(tasks)
+    }
 
     return posts.map((p) => {
       const prInfo =
