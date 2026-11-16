@@ -63,7 +63,7 @@ export function SiteFooter() {
           </address>
         </div>
       </div>
-      <div className="border-t border-white/10 bg-[#040918]">
+      <div className="border-t border-white/10 bg-[#040918] pb-14 sm:pb-0">
         <p className="mx-auto max-w-7xl px-4 py-4 text-center text-xs text-white/50">
           <Tx
             bn="© ২০২৬ মাভাবিপ্রবি রিপোর্টার্স ইউনিটি (MBSTURU)। সর্বস্বত্ব সংরক্ষিত।"
