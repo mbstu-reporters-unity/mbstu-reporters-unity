@@ -16,7 +16,7 @@ const FILTERS: Array<{
   { key: 'all', label: 'সবার পোস্ট', icon: Users },
   { key: 'teacher', label: 'শিক্ষক', icon: GraduationCap },
   { key: 'student', label: 'শিক্ষার্থী', icon: User },
-  { key: 'staff', label: 'কর্মচারী', icon: Briefcase },
+  { key: 'staff', label: 'কর্মকর্তা', icon: Briefcase },
   { key: 'reporter', label: 'সাংবাদিক', icon: Newspaper },
 ]
 
@@ -88,7 +88,7 @@ export function CommunityFeed() {
             inverted
             eyebrow="Campus Community Feed"
             title="সবার পোস্ট ও পেজ টাইমলাইন"
-            subtitle="শিক্ষক, শিক্ষার্থী, কর্মকর্তা-কর্মচারী ও সাংবাদিকদের নিজস্ব পেজে প্রকাশিত সর্বশেষ লেখা, ছবি ও পোস্টসমূহ।"
+            subtitle="শিক্ষক, শিক্ষার্থী, কর্মকর্তা ও সাংবাদিকদের নিজস্ব পেজে প্রকাশিত সর্বশেষ লেখা, ছবি ও পোস্টসমূহ।"
           />
 
           <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
