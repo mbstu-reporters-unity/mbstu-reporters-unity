@@ -17,24 +17,27 @@ const OFFLINE_SYNC_ROUTES = [
 ]
 
 const OFFLINE_API_ENDPOINTS = [
-  '/rest/v1/posts?select=*&or=(hidden.is.null,hidden.eq.false)&order=created_at.desc&limit=300',
-  '/rest/v1/board_notices?select=*&order=is_pinned.desc,created_at.desc&or=(expires_at.is.null,expires_at.gt.NOW)&limit=300',
+  '/rest/v1/posts?select=id,title,heading,category,author,author_avatar,show_author_avatar,image_url,video_url,page_id,created_at&or=(hidden.is.null,hidden.eq.false)&order=created_at.desc&limit=60',
+  '/rest/v1/board_notices?select=*&order=is_pinned.desc,created_at.desc&or=(expires_at.is.null,expires_at.gt.NOW)&limit=60',
   '/rest/v1/campus_clubs?select=*&order=sort_order.asc,created_at.asc',
   '/rest/v1/faculties?select=*&order=sort_order.asc,created_at.asc',
   '/rest/v1/departments?select=*&order=sort_order.asc,created_at.asc',
   '/rest/v1/mbstu_administration?select=*&order=sort_order.asc,created_at.asc',
   '/rest/v1/community_pages?select=*&order=sort_order.asc,created_at.asc',
-  '/rest/v1/student_items?select=*&or=(hidden.is.null,hidden.eq.false)&order=featured.desc,sort_order.asc,created_at.desc',
-  '/rest/v1/ticker_items?select=*&is_active=eq.true&order=sort_order.asc,created_at.desc&limit=50',
+  '/rest/v1/student_items?select=*&or=(hidden.is.null,hidden.eq.false)&order=featured.desc,sort_order.asc,created_at.desc&limit=40',
+  '/rest/v1/ticker_items?select=*&is_active=eq.true&order=sort_order.asc,created_at.desc&limit=30',
   '/rest/v1/leaders?select=*&order=sort_order.asc',
-  '/rest/v1/hero_slides?select=*&order=sort_order.desc,created_at.desc&limit=100',
+  '/rest/v1/hero_slides?select=*&order=sort_order.desc,created_at.desc&limit=30',
   '/rest/v1/hero_settings?select=*&id=eq.1',
-  '/rest/v1/stories?select=*&is_active=eq.true&or=(is_highlight.eq.true,expires_at.gt.now())&order=created_at.desc',
-  '/rest/v1/reels?select=*&is_active=eq.true&order=sort_order.asc,created_at.desc&limit=50',
+  '/rest/v1/stories?select=*&is_active=eq.true&or=(is_highlight.eq.true,expires_at.gt.now())&order=created_at.desc&limit=30',
+  '/rest/v1/reels?select=*&is_active=eq.true&order=sort_order.asc,created_at.desc&limit=20',
   '/rest/v1/categories?select=name&or=(is_hidden.is.null,is_hidden.eq.false)&order=sort_order.asc,created_at.asc',
   '/rest/v1/university_associations?select=*&order=sort_order.asc,created_at.asc',
   '/rest/v1/mbstu_social_sites?select=*&order=sort_order.asc,created_at.asc',
 ]
+
+const SYNC_COOLDOWN_MS = 6 * 60 * 60 * 1000 // ৬ ঘণ্টা
+const SYNC_KEY = 'mbsturu_auto_sync_v2'
 
 function collectStaticAssetsFromHtml(html: string): string[] {
   const urls = new Set<string>()
@@ -83,9 +86,12 @@ export function OfflinePwaManager() {
       const reg = await navigator.serviceWorker.ready
       reg.active?.postMessage({ type: 'CACHE_URLS', urls: collectLoadedResources() })
 
-      const last = Number(sessionStorage.getItem('mbsturu_auto_sync') || '0')
-      if (Date.now() - last < 3 * 60 * 1000) return
-      sessionStorage.setItem('mbsturu_auto_sync', String(Date.now()))
+      const saveData = (navigator as unknown as { connection?: { saveData?: boolean } }).connection?.saveData
+      if (saveData) return
+
+      const last = Number(localStorage.getItem(SYNC_KEY) || '0')
+      if (Date.now() - last < SYNC_COOLDOWN_MS) return
+      localStorage.setItem(SYNC_KEY, String(Date.now()))
 
       const ping = await fetch('/manifest.webmanifest', { cache: 'no-store' })
       if (!ping.ok) throw new Error('offline')
@@ -114,7 +120,7 @@ export function OfflinePwaManager() {
           if (!res.ok) return
           const rows = await res.json().catch(() => [])
           if (Array.isArray(rows)) {
-            rows.slice(0, 25).forEach((r: Record<string, any>) => {
+            rows.slice(0, 12).forEach((r: Record<string, any>) => {
               ;['image_url', 'author_avatar', 'avatar_url', 'logo_url', 'photo_url', 'thumbnail_url'].forEach(
                 (k) => {
                   if (typeof r?.[k] === 'string' && r[k].startsWith('http')) {
@@ -127,7 +133,7 @@ export function OfflinePwaManager() {
         })
       )
 
-      const allToCache = Array.from(new Set([...assetUrls, ...imageUrlsToCache])).slice(0, 140)
+      const allToCache = Array.from(new Set([...assetUrls, ...imageUrlsToCache])).slice(0, 45)
       reg.active?.postMessage({ type: 'CACHE_URLS', urls: allToCache })
       setIsOnline(true)
     } catch {
@@ -152,7 +158,7 @@ export function OfflinePwaManager() {
           reg.update().catch(() => {})
           timer = setTimeout(() => {
             autoSyncOfflineData()
-          }, 2000)
+          }, 5000)
         })
         .catch(() => {})
 
@@ -172,7 +178,6 @@ export function OfflinePwaManager() {
   useEffect(() => {
     const onOnline = () => {
       setIsOnline(true)
-      sessionStorage.removeItem('mbsturu_auto_sync')
       autoSyncOfflineData()
     }
     const onOffline = () => setIsOnline(false)
