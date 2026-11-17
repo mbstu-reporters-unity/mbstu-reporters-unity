@@ -72,14 +72,12 @@ export function OfflinePwaManager() {
 
   const hideInstallPill =
     pathname.startsWith('/admin') ||
-    pathname.startsWith('/messages') ||
-    pathname.startsWith('/friends') ||
     pathname.startsWith('/reset')
 
   async function autoSyncOfflineData() {
     if (!navigator.onLine || !('serviceWorker' in navigator)) return
     const path = window.location.pathname
-    if (path.startsWith('/admin') || path.startsWith('/messages')) return
+    if (path.startsWith('/admin')) return
 
     try {
       const reg = await navigator.serviceWorker.ready
