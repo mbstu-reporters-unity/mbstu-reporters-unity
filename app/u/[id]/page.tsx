@@ -7,7 +7,6 @@ import {
   FileText,
   CheckCircle2,
   BookOpen,
-  Users,
 } from 'lucide-react'
 import { SB_URL, SB_KEY, attachProfileAvatars, type Profile, type Post } from '@/lib/sb'
 import { TopBar } from '@/components/portal/top-bar'
@@ -15,7 +14,6 @@ import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
-import { FriendActionButton } from '@/components/portal/friend-action-button'
 import { NewsGrid } from '@/components/portal/news-card'
 import type { CommunityPage } from '@/lib/pages'
 
@@ -52,23 +50,6 @@ async function getProfileById(id: string): Promise<PublicProfile | null> {
     return rows[0] || null
   } catch {
     return null
-  }
-}
-
-async function getUserFriendCount(userId: string): Promise<number> {
-  try {
-    const res = await fetch(
-      `${SB_URL}/rest/v1/friendships?select=id&status=eq.accepted&or=(requester_id.eq.${encodeURIComponent(userId)},addressee_id.eq.${encodeURIComponent(userId)})`,
-      {
-        headers: { apikey: SB_KEY },
-        cache: 'no-store',
-      }
-    )
-    if (!res.ok) return 0
-    const rows = await res.json()
-    return Array.isArray(rows) ? rows.length : 0
-  } catch {
-    return 0
   }
 }
 
@@ -122,10 +103,9 @@ export default async function UserProfilePage({
   const profile = await getProfileById(id)
   if (!profile) notFound()
 
-  const [posts, pages, friendCount] = await Promise.all([
+  const [posts, pages] = await Promise.all([
     getUserPosts(id),
     getUserPages(id),
-    getUserFriendCount(id),
   ])
 
   const userTypeLabels: Record<string, string> = {
@@ -180,10 +160,6 @@ export default async function UserProfilePage({
                   <span className="bg-white/15 text-cyan-200 border border-white/20 font-bold px-3 py-1 rounded-full">
                     {roleBadge}
                   </span>
-                  <span className="bg-white/10 text-white/90 border border-white/20 font-semibold px-3 py-1 rounded-full inline-flex items-center gap-1">
-                    <Users className="size-3 text-cyan-400" />
-                    <span>{friendCount.toLocaleString('bn-BD')} জন বন্ধু</span>
-                  </span>
                   {profile.designation && (
                     <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full font-semibold">
                       {profile.designation}
@@ -214,15 +190,13 @@ export default async function UserProfilePage({
                   </p>
                 )}
 
-                {/* ফ্রেন্ড রিকোয়েস্ট বাটন */}
-                <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2.5 text-xs font-bold">
-                  <FriendActionButton targetUserId={profile.id} targetUserName={profile.full_name} />
-                  {profile.newspaper_name && (
+                {profile.newspaper_name && (
+                  <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2.5 text-xs font-bold">
                     <span className="bg-white/10 border border-white/20 px-3 py-2 rounded-xl text-slate-200 flex items-center gap-1.5">
                       <span>📰 {profile.newspaper_name}</span>
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
             </div>
