@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Briefcase, GraduationCap, Newspaper, Sparkles, User, Users } from 'lucide-react'
-import { getVisiblePosts, type Post, type UserType } from '@/lib/sb'
+import { SB_URL, SB_KEY, attachProfileAvatars, type Post, type UserType } from '@/lib/sb'
 import { SectionHeading } from './section-heading'
 import { NewsGrid } from './news-card'
 
@@ -22,6 +22,24 @@ const FILTERS: Array<{
 
 const PAGE_SIZE = 9
 
+async function getCommunityPageFeedPosts(limit = 100): Promise<Post[]> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/posts?select=*&page_id=not.is.null&or=(hidden.is.null,hidden.eq.false)&order=created_at.desc&limit=${limit}`,
+      {
+        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+        cache: 'no-store',
+      }
+    )
+    if (!res.ok) return []
+    const rows: Post[] = await res.json()
+    const enriched = await attachProfileAvatars(rows)
+    return enriched.filter((p) => Boolean(p.page_id && p.page))
+  } catch {
+    return []
+  }
+}
+
 export function CommunityFeed() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -29,9 +47,8 @@ export function CommunityFeed() {
   const [shownCount, setShownCount] = useState(PAGE_SIZE)
 
   useEffect(() => {
-    getVisiblePosts(300)
-      .then((all) => {
-        const pagePosts = all.filter((p) => Boolean(p.page_id && p.page))
+    getCommunityPageFeedPosts(100)
+      .then((pagePosts) => {
         setPosts(pagePosts)
         setLoaded(true)
       })
@@ -74,7 +91,6 @@ export function CommunityFeed() {
             subtitle="শিক্ষক, শিক্ষার্থী, কর্মকর্তা-কর্মচারী ও সাংবাদিকদের নিজস্ব পেজে প্রকাশিত সর্বশেষ লেখা, ছবি ও পোস্টসমূহ।"
           />
 
-          {/* ফিল্টার বাটন */}
           <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
             {FILTERS.map((f) => {
               const Icon = f.icon
