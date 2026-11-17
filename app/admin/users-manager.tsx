@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import {
+  Bell,
   Building2,
   CheckCircle2,
   Clock,
@@ -26,6 +27,7 @@ import {
   removeReporter,
   setProfileApproved,
   setProfileRole,
+  setStaffNoticePermission,
   type Profile,
   type UserType,
 } from "../../lib/sb"
@@ -53,8 +55,8 @@ const SECTION_META: Array<{
   },
   {
     key: "staff",
-    label: "কর্মচারী তালিকা",
-    short: "কর্মচারী",
+    label: "কর্মকর্তা তালিকা",
+    short: "কর্মকর্তা",
     icon: Briefcase,
     badgeCls: "bg-amber-100 text-amber-800 border-amber-200",
   },
@@ -204,6 +206,27 @@ export default function UsersManager({
     setBusyId(null)
   }
 
+  async function handleToggleStaffNotice(u: Profile) {
+    const next = !u.can_publish_notice
+    setBusyId(u.id)
+    setMsg("")
+    try {
+      await setStaffNoticePermission(token, u.id, next)
+      setAllUsers((prev) =>
+        prev.map((x) => (x.id === u.id ? { ...x, can_publish_notice: next } : x))
+      )
+      setMsg(
+        next
+          ? `✅ ${u.full_name} এখন সরাসরি নোটিশ প্রকাশ করতে পারবেন`
+          : `✅ ${u.full_name}-এর নোটিশ প্রকাশের অনুমতি বন্ধ করা হয়েছে`
+      )
+      await onChanged?.()
+    } catch (e) {
+      setMsg("❌ " + (e instanceof Error ? e.message : "অনুমতি পরিবর্তন করা যায়নি"))
+    }
+    setBusyId(null)
+  }
+
   async function handleDeleteUser(u: Profile) {
     if (u.id === currentAdminId || u.role === "admin") return
     if (!confirm(`"${u.full_name}"-এর প্রোফাইল স্থায়ীভাবে মুছে ফেলতে চান?`)) return
@@ -233,7 +256,7 @@ export default function UsersManager({
               <span>সদস্য ও ব্যবহারকারী তালিকা (শুধুমাত্র অ্যাডমিন)</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              সাইনআপ করার সাথে সাথেই শিক্ষক, শিক্ষার্থী, কর্মচারী ও সাংবাদিক আলাদা তালিকায় যুক্ত হন। সবার সব ব্যক্তিগত তথ্য কেবল আপনি দেখতে পাবেন।
+              সাইনআপ করার সাথে সাথেই শিক্ষক, শিক্ষার্থী, কর্মকর্তা ও সাংবাদিক আলাদা তালিকায় যুক্ত হন। সবার সব ব্যক্তিগত তথ্য কেবল আপনি দেখতে পাবেন।
             </p>
           </div>
           <button
@@ -351,6 +374,7 @@ export default function UsersManager({
           filtered.map((u, idx) => {
             const isSelfOrAdmin = u.id === currentAdminId || u.role === "admin"
             const isMod = u.role === "moderator"
+            const uType = resolveUserType(u)
 
             return (
               <div
@@ -400,6 +424,11 @@ export default function UsersManager({
                         ) : (
                           <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-bold">
                             <Clock className="size-3" /> অনুমোদনের অপেক্ষায়
+                          </span>
+                        )}
+                        {uType === "staff" && u.approved && u.can_publish_notice && (
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 border border-teal-200 text-[10px] font-bold">
+                            <Bell className="size-3" /> নোটিশ অনুমতিপ্রাপ্ত
                           </span>
                         )}
                       </div>
@@ -468,7 +497,7 @@ export default function UsersManager({
                   {u.staff_id && (
                     <p className="flex items-center gap-1.5">
                       <Hash className="size-3.5 text-slate-500 shrink-0" />
-                      <span>স্টাফ আইডি: <b className="text-slate-900 font-mono">{u.staff_id}</b></span>
+                      <span>কর্মকর্তা আইডি: <b className="text-slate-900 font-mono">{u.staff_id}</b></span>
                     </p>
                   )}
                   {u.newspaper_name && (
@@ -523,6 +552,22 @@ export default function UsersManager({
                       <Shield className="size-3.5" />
                       <span>{isMod ? "মডারেটর সরান" : "মডারেটর বানান"}</span>
                     </button>
+
+                    {uType === "staff" && u.approved && (
+                      <button
+                        type="button"
+                        disabled={busyId === u.id}
+                        onClick={() => handleToggleStaffNotice(u)}
+                        className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 cursor-pointer transition disabled:opacity-50 ${
+                          u.can_publish_notice
+                            ? "bg-teal-600 text-white hover:bg-teal-700"
+                            : "bg-slate-200 text-slate-800 hover:bg-slate-300"
+                        }`}
+                      >
+                        <Bell className="size-3.5" />
+                        <span>{u.can_publish_notice ? "নোটিশ অনুমতি: চালু" : "নোটিশ অনুমতি: বন্ধ"}</span>
+                      </button>
+                    )}
 
                     <button
                       type="button"
