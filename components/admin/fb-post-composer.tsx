@@ -88,6 +88,7 @@ export interface FbPostComposerProps {
   communityPages?: CommunityPage[]
   defaultPageId?: string
   lockToPage?: boolean
+  disableVideo?: boolean
   departments?: Department[]
   studentKinds?: string[]
 
@@ -285,6 +286,7 @@ export default function FbPostComposer({
   communityPages = [],
   defaultPageId = "",
   lockToPage = false,
+  disableVideo = false,
   departments = [],
   studentKinds = ["Opinion", "Creative Writing", "Achievement", "Research Highlight"],
   editItem = null,
@@ -307,7 +309,9 @@ export default function FbPostComposer({
   const [linkUrl, setLinkUrl] = useState("")
   const [embedMediaUrl, setEmbedMediaUrl] = useState("")
 
-  const [category, setCategory] = useState(categories[0] || "ক্যাম্পাস সংবাদ")
+  const [category, setCategory] = useState(
+    disableVideo ? "সম্পাদকীয় ও মতামত" : categories[0] || "ক্যাম্পাস সংবাদ"
+  )
   const [selectedPageId, setSelectedPageId] = useState(
     defaultPageId || (lockToPage ? communityPages[0]?.id || "" : "")
   )
@@ -390,7 +394,7 @@ export default function FbPostComposer({
       const p = editItem as Post
       setHeading(p.heading || "")
       setBody(p.body || "")
-      setCategory(p.category || categories[0] || "ক্যাম্পাস সংবাদ")
+      setCategory(p.category || (disableVideo ? "সম্পাদকীয় ও মতামত" : categories[0] || "ক্যাম্পাস সংবাদ"))
       setSelectedPageId(p.page_id || defaultPageId || (lockToPage ? communityPages[0]?.id || "" : ""))
       setSelectedClubId(p.club_id || "")
       setCustomAuthor(p.author || authorName)
@@ -398,7 +402,7 @@ export default function FbPostComposer({
       setShowAuthorAvatar(p.show_author_avatar !== false)
       setPostAuthorAvatarFile(null)
       setPostAuthorAvatarPreview(null)
-      setOldVideoUrl(p.video_url || null)
+      setOldVideoUrl(disableVideo ? null : p.video_url || null)
       setAudience(p.hidden ? "only_me" : "public")
     } else if (mode === "notice") {
       const n = editItem as Notice
@@ -467,7 +471,7 @@ export default function FbPostComposer({
       alive = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editItem?.id, mode])
+  }, [editItem?.id, mode, disableVideo])
 
   async function handlePickedFiles(files: File[]) {
     if (!files.length) return
@@ -475,6 +479,10 @@ export default function FbPostComposer({
 
     for (const f of files) {
       if (f.type.startsWith("video/")) {
+        if (disableVideo) {
+          setMsg("❌ শিক্ষক পেজে ভিডিও আপলোড গ্রহণযোগ্য নয়; শুধুমাত্র লেখা ও ছবি যুক্ত করতে পারবেন।")
+          continue
+        }
         if (mode === "notice") {
           if (f.size > MAX_NOTICE_FILE_MB * 1024 * 1024) {
             setMsg(`❌ ফাইল ${MAX_NOTICE_FILE_MB} MB-এর বেশি হতে পারবে না`)
@@ -556,7 +564,7 @@ export default function FbPostComposer({
     if (photos.length > 0) {
       if (mode === "notice") return "জরুরি বিজ্ঞপ্তি"
       if (mode === "student") return "শিক্ষার্থীর লেখা ও ছবি"
-      return "ক্যাম্পাসের ছবির প্রতিবেদন"
+      return disableVideo ? "সম্পাদকীয় ও মতামত কলাম" : "ক্যাম্পাসের ছবির প্রতিবেদন"
     }
     if (mode === "notice" && (noticeFile || oldNoticeFile)) {
       return noticeFile?.name || oldNoticeFile?.name || "জরুরি বিজ্ঞপ্তি"
@@ -567,11 +575,11 @@ export default function FbPostComposer({
   async function handlePublish() {
     const finalTitle = deriveTitle()
     if (!finalTitle) {
-      setMsg("❌ অনুগ্রহ করে কিছু লিখুন অথবা অন্তত একটি ছবি/ফাইল যুক্ত করুন")
+      setMsg("❌ অনুগ্রহ করে কিছু লিখুন অথবা অন্তত একটি ছবি যুক্ত করুন")
       return
     }
     if (mode === "post" && lockToPage && !selectedPageId) {
-      setMsg("❌ অনুগ্রহ করে আপনার একটি পেজ নির্বাচন করুন")
+      setMsg("❌ অনুগ্রহ করে আপনার পেজ নির্বাচন করুন")
       return
     }
     if (linkUrl.trim() && !/^https?:\/\//i.test(linkUrl.trim())) {
@@ -605,8 +613,8 @@ export default function FbPostComposer({
       })
       const coverUrl = finalPhotoUrls[0] || null
 
-      let finalVideoUrl = oldVideoUrl
-      if (videoFile) {
+      let finalVideoUrl = disableVideo ? null : oldVideoUrl
+      if (!disableVideo && videoFile) {
         setMsg("ভিডিও আপলোড হচ্ছে...")
         finalVideoUrl = await uploadVideo(token, videoFile)
       }
@@ -615,7 +623,7 @@ export default function FbPostComposer({
         fb_style: true,
         location: locationText.trim() || null,
         feeling: feelingText.trim() || null,
-        music: musicText.trim() || null,
+        music: disableVideo ? null : musicText.trim() || null,
         ai_label: aiLabel,
       }
 
@@ -624,7 +632,7 @@ export default function FbPostComposer({
       if (mode === "post") {
         let finalAuthorAvatar = postAuthorAvatar
         if (postAuthorAvatarFile) {
-          setMsg("প্রতিবেদকের ছবি আপলোড হচ্ছে...")
+          setMsg("লেখকের ছবি আপলোড হচ্ছে...")
           const avatarBlob = await shrinkFn(postAuthorAvatarFile)
           finalAuthorAvatar = await uploadImage(token, avatarBlob)
         }
@@ -633,7 +641,7 @@ export default function FbPostComposer({
           title: finalTitle,
           heading: heading.trim() || null,
           body: body.trim() || (finalPhotoUrls.length > 0 ? finalTitle : ""),
-          category,
+          category: disableVideo ? "সম্পাদকীয় ও মতামত" : category,
           club_id: isClub && selectedClubId ? selectedClubId : null,
           page_id: selectedPageId || null,
           author: customAuthor.trim() || authorName || null,
@@ -642,11 +650,11 @@ export default function FbPostComposer({
           image_url: coverUrl,
           video_url: finalVideoUrl,
           link_url: linkUrl.trim() || null,
-          embed_media_url: embedMediaUrl.trim() || null,
+          embed_media_url: disableVideo ? null : embedMediaUrl.trim() || null,
           hidden: audience === "only_me",
           meta: metaObj,
         }
-        setMsg("সংবাদ প্রকাশ হচ্ছে...")
+        setMsg("কলাম প্রকাশ হচ্ছে...")
         savedId = await saveRowWithMetaFallback(token, "posts", editItem?.id || null, payload)
       } else if (mode === "notice") {
         let attach = oldNoticeFile
@@ -751,7 +759,7 @@ export default function FbPostComposer({
       }
 
       await onSuccess(
-        editItem ? "✅ ফেসবুক স্টাইলে পোস্ট আপডেট হয়েছে!" : "✅ ফেসবুক স্টাইলে পোস্ট প্রকাশিত হয়েছে!"
+        editItem ? "✅ পোস্ট সফলভাবে আপডেট হয়েছে!" : "✅ পোস্ট সফলভাবে প্রকাশিত হয়েছে!"
       )
     } catch (e: any) {
       setMsg("❌ " + (e?.message || "প্রকাশ করতে সমস্যা হয়েছে"))
@@ -760,7 +768,15 @@ export default function FbPostComposer({
   }
 
   const modeLabel =
-    mode === "notice" ? "ডিজিটাল নোটিশ" : mode === "student" ? "স্টুডেন্ট কর্নার" : lockToPage ? "পেজ পোস্ট" : "সংবাদ / পেজ"
+    mode === "notice"
+      ? "ডিজিটাল নোটিশ"
+      : mode === "student"
+        ? "স্টুডেন্ট কর্নার"
+        : disableVideo
+          ? "সম্পাদকীয় ও মতামত"
+          : lockToPage
+            ? "পেজ পোস্ট"
+            : "সংবাদ / পেজ"
   const activePageName = communityPages.find((p) => p.id === selectedPageId)?.name
   const currentPostAvatar = postAuthorAvatarPreview || postAuthorAvatar
   const previewDisplayAvatar =
@@ -770,8 +786,7 @@ export default function FbPostComposer({
     Boolean(body.trim()) ||
     Boolean(title.trim()) ||
     photos.length > 0 ||
-    Boolean(videoFile) ||
-    Boolean(oldVideoUrl) ||
+    (!disableVideo && (Boolean(videoFile) || Boolean(oldVideoUrl))) ||
     Boolean(noticeFile) ||
     Boolean(oldNoticeFile)
 
@@ -953,11 +968,16 @@ export default function FbPostComposer({
   return (
     <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-sm flex items-center justify-center sm:p-4">
       <div className="relative w-full h-[100dvh] sm:h-[92vh] sm:max-w-xl bg-white text-slate-900 sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
-
         <input
           ref={fileInputRef}
           type="file"
-          accept={mode === "notice" ? "image/*,application/pdf,.pdf,.doc,.docx" : "image/*,video/*"}
+          accept={
+            mode === "notice"
+              ? "image/*,application/pdf,.pdf,.doc,.docx"
+              : disableVideo
+                ? "image/*"
+                : "image/*,video/*"
+          }
           multiple
           className="hidden"
           onChange={(e) => {
@@ -968,7 +988,7 @@ export default function FbPostComposer({
           }}
         />
 
-        {/* ==================== ধাপ ১: New Post ==================== */}
+        {/* ==================== ধাপ ১: Compose ==================== */}
         {step === "compose" && (
           <>
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white shrink-0">
@@ -981,7 +1001,7 @@ export default function FbPostComposer({
                 <X className="size-6" />
               </button>
               <h2 className="font-bold text-base text-slate-900">
-                {editItem ? "Edit post" : "New post"}
+                {editItem ? "Edit post" : disableVideo ? "সম্পাদকীয় ও মতামত কলাম" : "New post"}
               </h2>
               <button
                 type="button"
@@ -1002,7 +1022,7 @@ export default function FbPostComposer({
                   type="button"
                   onClick={() => setActiveChipPanel(activeChipPanel === "people" ? null : "people")}
                   className="relative shrink-0 cursor-pointer group"
-                  title="প্রতিবেদকের ছবি যোগ, এডিট বা হাইড করতে ট্যাপ করুন"
+                  title="লেখকের ছবি পরিবর্তন বা নিয়ন্ত্রণ করুন"
                 >
                   {previewDisplayAvatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -1043,15 +1063,6 @@ export default function FbPostComposer({
                     >
                       {audienceBadgeText}
                     </button>
-                    {mode === "post" && currentPostAvatar && !showAuthorAvatar && (
-                      <button
-                        type="button"
-                        onClick={() => setActiveChipPanel("people")}
-                        className="bg-amber-50 text-amber-700 font-semibold px-2 py-0.5 rounded-md cursor-pointer"
-                      >
-                        🙈 ছবি লুকানো
-                      </button>
-                    )}
                     {activePageName && (
                       <span className="bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-md truncate max-w-[160px]">
                         📄 {activePageName}
@@ -1062,18 +1073,20 @@ export default function FbPostComposer({
               </div>
 
               <div className="flex items-center gap-2 overflow-x-auto px-4 py-2 scrollbar-none">
-                <button
-                  type="button"
-                  onClick={() => setActiveChipPanel(activeChipPanel === "music" ? null : "music")}
-                  className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold cursor-pointer transition ${
-                    musicText || embedMediaUrl
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
-                  }`}
-                >
-                  <Music className="size-3.5" />
-                  <span>Music / Link</span>
-                </button>
+                {!disableVideo && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveChipPanel(activeChipPanel === "music" ? null : "music")}
+                    className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold cursor-pointer transition ${
+                      musicText || embedMediaUrl
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Music className="size-3.5" />
+                    <span>Music / Link</span>
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -1085,7 +1098,7 @@ export default function FbPostComposer({
                   }`}
                 >
                   <Users className="size-3.5" />
-                  <span>People / Photo</span>
+                  <span>Author / Photo</span>
                 </button>
 
                 <button
@@ -1115,17 +1128,19 @@ export default function FbPostComposer({
                   }`}
                 >
                   <Smile className="size-3.5" />
-                  <span>Feeling/activity</span>
+                  <span>Feeling/Topic</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveChipPanel(activeChipPanel === "album" ? null : "album")}
-                  className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold cursor-pointer transition"
-                >
-                  <FolderPlus className="size-3.5" />
-                  <span>Category</span>
-                </button>
+                {!disableVideo && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveChipPanel(activeChipPanel === "album" ? null : "album")}
+                    className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold cursor-pointer transition"
+                  >
+                    <FolderPlus className="size-3.5" />
+                    <span>Category</span>
+                  </button>
+                )}
               </div>
 
               {activeChipPanel && (
@@ -1138,7 +1153,7 @@ export default function FbPostComposer({
                       </div>
                       <input
                         className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
-                        placeholder="যেমন: মুক্তমঞ্চ, ১২ তলা একাডেমিক ভবন, কেন্দ্রীয় গ্রন্থাগার"
+                        placeholder="যেমন: অনুষদ ভবন, মুক্তমঞ্চ, কেন্দ্রীয় লাইব্রেরি"
                         value={locationText}
                         onChange={(e) => setLocationText(e.target.value)}
                       />
@@ -1148,7 +1163,7 @@ export default function FbPostComposer({
                   {activeChipPanel === "feeling" && (
                     <>
                       <div className="flex justify-between items-center font-bold text-slate-700">
-                        <span>😊 হাইলাইট / অনুভূতি বেছে নিন:</span>
+                        <span>😊 বিষয় / টপিক নির্বাচন:</span>
                         <button type="button" onClick={() => setActiveChipPanel(null)} className="text-blue-600">বন্ধ</button>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
@@ -1170,10 +1185,10 @@ export default function FbPostComposer({
                     </>
                   )}
 
-                  {activeChipPanel === "music" && (
+                  {activeChipPanel === "music" && !disableVideo && (
                     <>
                       <div className="flex justify-between items-center font-bold text-slate-700">
-                        <span>🎵 মিউজিক / ভিডিও বা ওয়েব লিংক:</span>
+                        <span>🎵 মিউজিক / ভিডিও লিংক:</span>
                         <button type="button" onClick={() => setActiveChipPanel(null)} className="text-blue-600">বন্ধ</button>
                       </div>
                       <input
@@ -1182,153 +1197,22 @@ export default function FbPostComposer({
                         value={embedMediaUrl}
                         onChange={(e) => setEmbedMediaUrl(e.target.value)}
                       />
-                      <input
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
-                        placeholder="অথবা মিউজিক/অডিও নোট লিখুন (ঐচ্ছিক)"
-                        value={musicText}
-                        onChange={(e) => setMusicText(e.target.value)}
-                      />
                     </>
                   )}
 
                   {activeChipPanel === "people" && (
                     <>
                       <div className="flex justify-between items-center font-bold text-slate-700">
-                        <span>👥 লেখক, ছবি ও পেজ:</span>
+                        <span>👥 লেখক ও পেজ তথ্য:</span>
                         <button type="button" onClick={() => setActiveChipPanel(null)} className="text-blue-600">বন্ধ</button>
                       </div>
                       <input
                         className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
-                        placeholder="প্রতিবেদক / লেখকের নাম"
+                        placeholder="লেখকের পূর্ণ নাম"
                         value={customAuthor}
                         onChange={(e) => setCustomAuthor(e.target.value)}
                       />
-                      {mode === "post" && (
-                        <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-bold text-slate-700">📷 লেখকের ছবি (যোগ/এডিট/হাইড/বিয়োগ):</span>
-                            {currentPostAvatar && (
-                              <button
-                                type="button"
-                                onClick={() => setShowAuthorAvatar((v) => !v)}
-                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold cursor-pointer border ${
-                                  showAuthorAvatar
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                    : "bg-amber-50 text-amber-700 border-amber-200"
-                                }`}
-                              >
-                                {showAuthorAvatar ? <Eye className="size-3" /> : <EyeOff className="size-3" />}
-                                <span>{showAuthorAvatar ? "ভিজিবল" : "হাইড করা"}</span>
-                              </button>
-                            )}
-                          </div>
 
-                          {!lockToPage && reporters.length > 0 && (
-                            <select
-                              className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs"
-                              value=""
-                              onChange={(e) => {
-                                const r = reporters.find((x) => x.id === e.target.value)
-                                if (r) {
-                                  setCustomAuthor(r.full_name)
-                                  setPostAuthorAvatar(r.avatar_url || null)
-                                  setPostAuthorAvatarFile(null)
-                                  setPostAuthorAvatarPreview(null)
-                                  setShowAuthorAvatar(true)
-                                }
-                              }}
-                            >
-                              <option value="">— নিবন্ধিত সাংবাদিক বাছাই করুন —</option>
-                              {reporters.map((r) => (
-                                <option key={r.id} value={r.id}>
-                                  {r.full_name} {r.avatar_url ? "📷" : ""}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-
-                          <div className="flex flex-wrap items-center gap-2">
-                            {currentPostAvatar ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={currentPostAvatar}
-                                alt=""
-                                className={`size-10 rounded-full object-cover object-top border ${
-                                  !showAuthorAvatar ? "opacity-40 grayscale" : ""
-                                }`}
-                              />
-                            ) : (
-                              <div className="size-10 rounded-full bg-slate-200 text-slate-600 font-bold flex items-center justify-center">
-                                {(customAuthor || authorName).charAt(0)}
-                              </div>
-                            )}
-
-                            <label className="inline-flex items-center gap-1 rounded-lg bg-blue-600 text-white px-2.5 py-1.5 text-[11px] font-bold cursor-pointer">
-                              <Upload className="size-3" />
-                              <span>{currentPostAvatar ? "বদলান/এডিট" : "যোগ করুন"}</span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const f = e.target.files?.[0]
-                                  if (f) {
-                                    const u = URL.createObjectURL(f)
-                                    createdUrlsRef.current.push(u)
-                                    setPostAuthorAvatarFile(f)
-                                    setPostAuthorAvatarPreview(u)
-                                    setShowAuthorAvatar(true)
-                                  }
-                                  e.target.value = ""
-                                }}
-                              />
-                            </label>
-
-                            {authorAvatar && (postAuthorAvatar !== authorAvatar || postAuthorAvatarFile) && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setPostAuthorAvatarFile(null)
-                                  setPostAuthorAvatarPreview(null)
-                                  setPostAuthorAvatar(authorAvatar)
-                                  setShowAuthorAvatar(true)
-                                }}
-                                className="rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-[11px] font-semibold cursor-pointer"
-                              >
-                                প্রোফাইল ছবি
-                              </button>
-                            )}
-
-                            {currentPostAvatar && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setPostAuthorAvatarFile(null)
-                                  setPostAuthorAvatarPreview(null)
-                                  setPostAuthorAvatar(null)
-                                  setShowAuthorAvatar(false)
-                                }}
-                                className="inline-flex items-center gap-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 px-2 py-1 text-[11px] font-bold cursor-pointer"
-                              >
-                                <Trash2 className="size-3" />
-                                <span>বিয়োগ</span>
-                              </button>
-                            )}
-                          </div>
-
-                          <input
-                            className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-[11px]"
-                            placeholder="অথবা ছবির সরাসরি লিংক (https://... ঐচ্ছিক)"
-                            value={postAuthorAvatarFile ? "" : postAuthorAvatar || ""}
-                            disabled={!!postAuthorAvatarFile}
-                            onChange={(e) => {
-                              const val = e.target.value.trim()
-                              setPostAuthorAvatar(val || null)
-                              if (val) setShowAuthorAvatar(true)
-                            }}
-                          />
-                        </div>
-                      )}
                       {mode === "post" && communityPages.length > 0 && (
                         <select
                           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
@@ -1343,62 +1227,6 @@ export default function FbPostComposer({
                           ))}
                         </select>
                       )}
-                      {mode === "post" && !lockToPage && clubs.length > 0 && (
-                        <select
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
-                          value={selectedClubId}
-                          onChange={(e) => setSelectedClubId(e.target.value)}
-                        >
-                          <option value="">— কোনো ক্লাব ট্যাগ নয় —</option>
-                          {clubs.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              ⭐ {c.name_bn || c.name}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </>
-                  )}
-
-                  {activeChipPanel === "album" && (
-                    <>
-                      <div className="flex justify-between items-center font-bold text-slate-700">
-                        <span>🗂️ ক্যাটাগরি / শাখা নির্বাচন:</span>
-                        <button type="button" onClick={() => setActiveChipPanel(null)} className="text-blue-600">বন্ধ</button>
-                      </div>
-                      {mode === "post" && (
-                        <select
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
-                          value={category}
-                          onChange={(e) => setCategory(e.target.value)}
-                        >
-                          {categories.map((c) => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
-                      )}
-                      {mode === "notice" && (
-                        <select
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
-                          value={noticeBranch}
-                          onChange={(e) => setNoticeBranch(e.target.value)}
-                        >
-                          {BRANCHES.map((b) => (
-                            <option key={b.key} value={b.key}>{b.bn}</option>
-                          ))}
-                        </select>
-                      )}
-                      {mode === "student" && (
-                        <select
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
-                          value={studentKind}
-                          onChange={(e) => setStudentKind(e.target.value)}
-                        >
-                          {studentKinds.map((k) => (
-                            <option key={k} value={k}>{k}</option>
-                          ))}
-                        </select>
-                      )}
                     </>
                   )}
                 </div>
@@ -1407,14 +1235,18 @@ export default function FbPostComposer({
               <div className="px-4 pt-2 pb-3 space-y-1.5">
                 <input
                   className="w-full text-sm font-bold text-slate-900 placeholder-slate-400 border-b border-slate-100 pb-1.5 focus:outline-none focus:border-blue-400"
-                  placeholder="শিরোনাম / টাইটেল (ফাঁকা রাখলে লেখার ১ম লাইন শিরোনাম হবে)"
+                  placeholder={
+                    disableVideo
+                      ? "সম্পাদকীয় / মতামত কলামের মূল শিরোনাম *"
+                      : "শিরোনাম / টাইটেল (ফাঁকা রাখলে লেখার ১ম লাইন শিরোনাম হবে)"
+                  }
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
                 {mode !== "student" && (
                   <input
                     className="w-full text-xs text-slate-700 placeholder-slate-400 border-b border-slate-100 pb-1.5 focus:outline-none focus:border-blue-400"
-                    placeholder="উপশিরোনাম / হেডিং (ঐচ্ছিক)"
+                    placeholder="উপশিরোনাম / সাব-হেডিং (ঐচ্ছিক)"
                     value={heading}
                     onChange={(e) => setHeading(e.target.value)}
                   />
@@ -1422,7 +1254,11 @@ export default function FbPostComposer({
                 <textarea
                   rows={photos.length > 0 ? 3 : 6}
                   className="w-full text-base sm:text-lg text-slate-900 placeholder-slate-400 resize-none focus:outline-none leading-relaxed pt-1"
-                  placeholder="কি খবর সবার? এখানে বিস্তারিত লিখুন..."
+                  placeholder={
+                    disableVideo
+                      ? "আপনার মূল্যবান মতামত ও সম্পাদকীয় কলামের বিস্তারিত এখানে লিখুন..."
+                      : "কি খবর সবার? এখানে বিস্তারিত লিখুন..."
+                  }
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                 />
@@ -1503,37 +1339,10 @@ export default function FbPostComposer({
                       </button>
                     </div>
                   )}
-
-                  {fbLayout === "fb-frame" && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-white border-t border-slate-200 overflow-x-auto scrollbar-none">
-                      <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1 shrink-0">
-                        <Palette className="size-3.5" /> ফ্রেমের রঙ:
-                      </span>
-                      {FRAME_SWATCHES.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => setFrameColor(c)}
-                          style={{ backgroundColor: c }}
-                          className={`size-6 rounded-full shrink-0 border-2 cursor-pointer transition ${
-                            frameColor === c ? "border-slate-900 scale-110" : "border-white shadow"
-                          }`}
-                          aria-label={c}
-                        />
-                      ))}
-                      <input
-                        type="color"
-                        value={frameColor}
-                        onChange={(e) => setFrameColor(e.target.value)}
-                        className="size-6 rounded cursor-pointer border-0 bg-transparent shrink-0"
-                        title="কাস্টম রঙ"
-                      />
-                    </div>
-                  )}
                 </div>
               )}
 
-              {(videoPreview || oldVideoUrl) && (
+              {!disableVideo && (videoPreview || oldVideoUrl) && (
                 <div className="mx-4 mt-3 relative rounded-2xl overflow-hidden bg-black border border-slate-200">
                   <video
                     src={videoPreview || oldVideoUrl || ""}
@@ -1582,7 +1391,7 @@ export default function FbPostComposer({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="size-14 rounded-full bg-white text-slate-900 border border-slate-200 shadow-[0_6px_24px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 transition flex items-center justify-center cursor-pointer"
-                title={mode === "notice" ? "ছবি বা PDF/DOC ফাইল যুক্ত করুন" : "ছবি বা ভিডিও যুক্ত করুন"}
+                title="একাধিক ছবি যুক্ত করুন"
               >
                 <ImagePlus className="size-6" />
               </button>
@@ -1704,7 +1513,7 @@ export default function FbPostComposer({
                   className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 py-3 text-sm font-bold text-blue-600 cursor-pointer transition"
                 >
                   <Plus className="size-5" />
-                  <span>Add Photos/Videos</span>
+                  <span>আরও ছবি যোগ করুন</span>
                 </button>
               </div>
             </div>
@@ -1723,7 +1532,7 @@ export default function FbPostComposer({
                 <ChevronLeft className="size-6" />
               </button>
               <h2 className="font-bold text-base text-slate-900">
-                {editItem ? "Update post" : "New post"}
+                {editItem ? "Update post" : disableVideo ? "সম্পাদকীয় প্রকাশ" : "New post"}
               </h2>
               <span className="w-8" />
             </div>
@@ -1791,29 +1600,6 @@ export default function FbPostComposer({
                 <ChevronRight className="size-5 text-slate-400" />
               </button>
 
-              <div className="px-4 py-3.5 space-y-2.5">
-                <div className="flex items-center gap-3.5">
-                  <Music className="size-6 text-slate-700" />
-                  <span className="font-bold text-sm text-slate-900">Add music / highlight</span>
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                  {MUSIC_PRESETS.map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setMusicText(musicText === m ? "" : m)}
-                      className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium cursor-pointer ${
-                        musicText === m
-                          ? "border-blue-600 bg-blue-50 text-blue-700 font-bold"
-                          : "border-slate-300 bg-white text-slate-700"
-                      }`}
-                    >
-                      🎵 {m}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {photos.length > 0 && (
                 <div className="px-4 py-3.5">
                   {renderViewerModePicker()}
@@ -1822,23 +1608,25 @@ export default function FbPostComposer({
 
               <div className="px-4 py-3.5 space-y-3">
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Also share to & Details...
+                  Details & Options...
                 </p>
 
                 {mode === "post" && (
                   <div className="space-y-2.5 text-xs">
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">ক্যাটাগরি:</label>
-                      <select
-                        className="w-full border border-slate-300 rounded-xl px-3 py-2 bg-white"
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                      >
-                        {categories.map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                    </div>
+                    {!disableVideo && (
+                      <div>
+                        <label className="font-bold text-slate-700 block mb-1">ক্যাটাগরি:</label>
+                        <select
+                          className="w-full border border-slate-300 rounded-xl px-3 py-2 bg-white"
+                          value={category}
+                          onChange={(e) => setCategory(e.target.value)}
+                        >
+                          {categories.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     {communityPages.length > 0 && (
                       <div>
@@ -1850,7 +1638,7 @@ export default function FbPostComposer({
                           value={selectedPageId}
                           onChange={(e) => setSelectedPageId(e.target.value)}
                         >
-                          {!lockToPage && <option value="">— শুধু সাধারণ সংবাদ —</option>}
+                          {!lockToPage && <option value="">— শুধু সাধারণ পোস্ট —</option>}
                           {communityPages.map((cp) => (
                             <option key={cp.id} value={cp.id}>
                               {cp.name} (/p/{cp.slug})
@@ -1859,152 +1647,8 @@ export default function FbPostComposer({
                         </select>
                       </div>
                     )}
-
-                    {!lockToPage && (category.includes("ক্লাব") || category.includes("Club")) && clubs.length > 0 && (
-                      <div>
-                        <label className="font-bold text-slate-700 block mb-1">
-                          ⭐ কোন ক্লাবের সংবাদ?:
-                        </label>
-                        <select
-                          className="w-full border border-slate-300 rounded-xl px-3 py-2 bg-white"
-                          value={selectedClubId}
-                          onChange={(e) => setSelectedClubId(e.target.value)}
-                        >
-                          <option value="">— নির্দিষ্ট ক্লাব নয় —</option>
-                          {clubs.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name_bn || c.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
                   </div>
                 )}
-
-                {mode === "notice" && (
-                  <div className="space-y-2.5 text-xs">
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">নোটিশের শাখা:</label>
-                      <select
-                        className="w-full border border-slate-300 rounded-xl px-3 py-2 bg-white"
-                        value={noticeBranch}
-                        onChange={(e) => setNoticeBranch(e.target.value)}
-                      >
-                        {BRANCHES.map((b) => (
-                          <option key={b.key} value={b.key}>{b.bn}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {noticeBranch === "department" && departments.length > 0 && (
-                      <div>
-                        <label className="font-bold text-slate-700 block mb-1">ডিপার্টমেন্ট:</label>
-                        <select
-                          className="w-full border border-slate-300 rounded-xl px-3 py-2 bg-white"
-                          value={noticeDeptId}
-                          onChange={(e) => setNoticeDeptId(e.target.value)}
-                        >
-                          <option value="">— সব ডিপার্টমেন্ট —</option>
-                          {departments.map((d) => (
-                            <option key={d.id} value={d.id}>{d.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        className="border border-slate-300 rounded-xl px-3 py-2 bg-white"
-                        placeholder="রেফ নম্বর (ঐচ্ছিক)"
-                        value={noticeRef}
-                        onChange={(e) => setNoticeRef(e.target.value)}
-                      />
-                      <input
-                        type="date"
-                        className="border border-slate-300 rounded-xl px-3 py-2 bg-white"
-                        value={noticeExpiry}
-                        onChange={(e) => setNoticeExpiry(e.target.value)}
-                        title="মেয়াদ শেষের তারিখ"
-                      />
-                    </div>
-
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                      <label className="font-bold text-slate-700 block">
-                        📎 PDF / DOC ফাইল সংযুক্ত করুন (ঐচ্ছিক, সর্বোচ্চ {MAX_NOTICE_FILE_MB} MB):
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*,application/pdf,.pdf,.doc,.docx"
-                        className="text-xs w-full"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0]
-                          if (!f) return
-                          if (f.size > MAX_NOTICE_FILE_MB * 1024 * 1024) {
-                            setMsg(`❌ ফাইল ${MAX_NOTICE_FILE_MB} MB-এর বেশি হতে পারবে না`)
-                            return
-                          }
-                          setNoticeFile(f)
-                        }}
-                      />
-                      {(noticeFile || oldNoticeFile) && (
-                        <p className="text-[11px] text-blue-700 font-semibold truncate">
-                          ✓ {noticeFile ? noticeFile.name : oldNoticeFile?.name || "সংযুক্ত ফাইল"}
-                        </p>
-                      )}
-                    </div>
-
-                    <label className="flex items-center gap-2 text-xs text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={noticeShowName}
-                        onChange={(e) => setNoticeShowName(e.target.checked)}
-                      />
-                      <span>নোটিশে আমার নাম দেখান</span>
-                    </label>
-                  </div>
-                )}
-
-                {mode === "student" && (
-                  <div className="space-y-2.5 text-xs">
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">ক্যাটাগরি:</label>
-                      <select
-                        className="w-full border border-slate-300 rounded-xl px-3 py-2 bg-white"
-                        value={studentKind}
-                        onChange={(e) => setStudentKind(e.target.value)}
-                      >
-                        {studentKinds.map((k) => (
-                          <option key={k} value={k}>{k}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        className="border border-slate-300 rounded-xl px-3 py-2 bg-white"
-                        placeholder="বিভাগ (যেমন: CSE)"
-                        value={studentDept}
-                        onChange={(e) => setStudentDept(e.target.value)}
-                      />
-                      <input
-                        className="border border-slate-300 rounded-xl px-3 py-2 bg-white"
-                        placeholder="ব্যাচ (যেমন: 19th Batch)"
-                        value={studentBatch}
-                        onChange={(e) => setStudentBatch(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 pt-1">
-                  <Video className="size-4 text-slate-500 shrink-0" />
-                  <input
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs bg-white"
-                    placeholder="YouTube / Facebook ভিডিও লিংক (ঐচ্ছিক)"
-                    value={embedMediaUrl}
-                    onChange={(e) => setEmbedMediaUrl(e.target.value)}
-                  />
-                </div>
 
                 <div className="flex items-center gap-2">
                   <Link2 className="size-4 text-slate-500 shrink-0" />
@@ -2064,7 +1708,7 @@ export default function FbPostComposer({
           </>
         )}
 
-        {/* ==================== ধাপ ৩বি: Audience Selector ==================== */}
+        {/* ==================== ধাপ ৩বি: Audience ==================== */}
         {step === "audience" && (
           <>
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white shrink-0">
@@ -2080,13 +1724,6 @@ export default function FbPostComposer({
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              <div>
-                <h3 className="font-bold text-lg text-slate-900">Who can see your post?</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  আপনার পোস্টটি ওয়েবসাইটের কোথায় এবং কাদের কাছে দৃশ্যমান হবে তা নির্বাচন করুন।
-                </p>
-              </div>
-
               <div className="space-y-1">
                 <button
                   type="button"
@@ -2099,7 +1736,7 @@ export default function FbPostComposer({
                     </div>
                     <div>
                       <p className="font-bold text-sm text-slate-900">Public</p>
-                      <p className="text-xs text-slate-500">ওয়েবসাইটের সকল ভিজিটর দেখতে পাবেন</p>
+                      <p className="text-xs text-slate-500">ওয়েবসাইটের সকল পাঠক ও হোমপেজে দেখা যাবে</p>
                     </div>
                   </div>
                   <span
@@ -2110,56 +1747,6 @@ export default function FbPostComposer({
                     {audience === "public" && <span className="size-2.5 rounded-full bg-blue-600" />}
                   </span>
                 </button>
-
-                {mode === "notice" && isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => setAudience("pinned")}
-                    className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 cursor-pointer text-left"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div className="size-11 rounded-full bg-amber-50 flex items-center justify-center text-amber-700">
-                        <Pin className="size-5" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm text-slate-900">Pinned (সবার ওপরে)</p>
-                        <p className="text-xs text-slate-500">নোটিশ বোর্ডের সবার ওপরে পিন হয়ে থাকবে</p>
-                      </div>
-                    </div>
-                    <span
-                      className={`size-5 rounded-full border-2 flex items-center justify-center ${
-                        audience === "pinned" ? "border-blue-600" : "border-slate-400"
-                      }`}
-                    >
-                      {audience === "pinned" && <span className="size-2.5 rounded-full bg-blue-600" />}
-                    </span>
-                  </button>
-                )}
-
-                {mode === "student" && (
-                  <button
-                    type="button"
-                    onClick={() => setAudience("featured")}
-                    className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 cursor-pointer text-left"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div className="size-11 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
-                        <Star className="size-5" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm text-slate-900">Featured (বড় কার্ড)</p>
-                        <p className="text-xs text-slate-500">স্টুডেন্ট কর্নারের প্রধান বড় কার্ডে দেখাবে</p>
-                      </div>
-                    </div>
-                    <span
-                      className={`size-5 rounded-full border-2 flex items-center justify-center ${
-                        audience === "featured" ? "border-blue-600" : "border-slate-400"
-                      }`}
-                    >
-                      {audience === "featured" && <span className="size-2.5 rounded-full bg-blue-600" />}
-                    </span>
-                  </button>
-                )}
 
                 {mode !== "notice" && (
                   <button
@@ -2173,7 +1760,7 @@ export default function FbPostComposer({
                       </div>
                       <div>
                         <p className="font-bold text-sm text-slate-900">Only me (খসড়া / লুকানো)</p>
-                        <p className="text-xs text-slate-500">শুধু আপনার ড্যাশবোর্ডে থাকবে, পাবলিক সাইটে দেখাবে না</p>
+                        <p className="text-xs text-slate-500">শুধু আপনার ড্যাশবোর্ডে থাকবে, ওয়েবসাইটে দেখাবে না</p>
                       </div>
                     </div>
                     <span
@@ -2199,7 +1786,6 @@ export default function FbPostComposer({
             </div>
           </>
         )}
-
       </div>
     </div>
   )
