@@ -32,6 +32,7 @@ import StoryManager from "./story-manager"
 import UsersManager from "./users-manager"
 import SubmissionSender from "./submission-sender"
 import SubmissionsInbox from "./submissions-inbox"
+import TeacherColumnManager from "./teacher-column-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
@@ -39,7 +40,7 @@ import {
   Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
   Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2,
-  Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send
+  Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send, Feather
 } from "lucide-react"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -55,7 +56,7 @@ type Tab =
   | "posts" | "stories" | "comments" | "profile" | "leaders" | "notices"
   | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "directors" | "categories"
   | "clubs" | "faculties" | "associations" | "social_sites" | "administration"
-  | "community_pages" | "send_submission" | "submissions_inbox"
+  | "community_pages" | "send_submission" | "submissions_inbox" | "teacher_columns"
   | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
 
 type NavItem = {
@@ -899,6 +900,7 @@ export default function AdminPage() {
       items: [
         { id: "send_submission", label: "নোটিশ / সংবাদ / তথ্য পাঠান", icon: Send, senderAccess: true },
         { id: "submissions_inbox", label: "প্রাপ্ত তথ্য ও ইমেইল", icon: Inbox, badge: inboxCount, adminOnly: true },
+        { id: "teacher_columns", label: "শিক্ষকদের কলাম মনিটরিং", icon: Feather, adminOnly: true },
         { id: "posts", label: "সংবাদ ও পোস্ট", icon: Newspaper, modOrAdmin: true },
         { id: "stories", label: "ফেসবুক স্টোরিজ ও রিলস", icon: Film, modOrAdmin: true },
         { id: "notices", label: "ডিজিটাল নোটিশ", icon: Bell, noticeAccess: true },
@@ -1101,6 +1103,10 @@ export default function AdminPage() {
 
         {tab === "submissions_inbox" && isAdmin && (
           <SubmissionsInbox token={token} />
+        )}
+
+        {tab === "teacher_columns" && isAdmin && (
+          <TeacherColumnManager token={token} />
         )}
 
         {tab === "posts" && canPublishMain && (
@@ -1445,6 +1451,7 @@ export default function AdminPage() {
               authorName={me.full_name}
               authorAvatar={me.avatar_url}
               currentUserId={me.id}
+              currentUserType={me.user_type}
               isAdmin={!!isAdmin}
               onPostCreated={() => refresh(token, me)}
             />
@@ -1518,6 +1525,8 @@ export default function AdminPage() {
             isAdmin={!!isAdmin}
             authorName={me.full_name}
             authorAvatar={me.avatar_url}
+            currentUserId={me.id}
+            userType={me.user_type}
           />
         )}
 
