@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   getAdministrationOfficials,
   createAdministrationOfficial,
@@ -25,7 +25,6 @@ export default function AdministrationManager({
   const [list, setList] = useState<AdministrationOfficial[]>([])
   const [editId, setEditId] = useState<string | null>(null)
 
-  // ফর্মের ফিল্ডসমূহ
   const [category, setCategory] = useState<string>(ADMIN_CATEGORIES[0])
   const [officeName, setOfficeName] = useState<string>(DEFAULT_OFFICES[ADMIN_CATEGORIES[0]][0])
   const [customOffice, setCustomOffice] = useState("")
@@ -38,15 +37,24 @@ export default function AdministrationManager({
   const [bio, setBio] = useState("")
   const [order, setOrder] = useState(0)
 
-  // ছবি
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
 
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState("")
 
-  // ফিল্টার ভিউ
   const [selectedCatFilter, setSelectedCatFilter] = useState("all")
+
+  const photoPreview = useMemo(
+    () => (photoFile ? URL.createObjectURL(photoFile) : photoUrl),
+    [photoFile, photoUrl]
+  )
+
+  useEffect(() => {
+    return () => {
+      if (photoFile && photoPreview) URL.revokeObjectURL(photoPreview)
+    }
+  }, [photoFile, photoPreview])
 
   async function load() {
     setList(await getAdministrationOfficials())
@@ -71,7 +79,18 @@ export default function AdministrationManager({
   function startEdit(item: AdministrationOfficial) {
     setEditId(item.id)
     setCategory(item.category)
-    setOfficeName(item.office_name)
+
+    const defaults = DEFAULT_OFFICES[item.category] || []
+    if (defaults.includes(item.office_name)) {
+      setIsCustomOffice(false)
+      setOfficeName(item.office_name)
+      setCustomOffice("")
+    } else {
+      setIsCustomOffice(true)
+      setOfficeName(defaults[0] || "")
+      setCustomOffice(item.office_name)
+    }
+
     setName(item.name)
     setDesignation(item.designation)
     setEmail(item.email || "")
@@ -146,7 +165,6 @@ export default function AdministrationManager({
 
   return (
     <div className="space-y-4">
-      {/* এডিট বা যোগ করার ফর্ম */}
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
         <h2 className="font-bold text-base text-gray-800">
           {editId ? "✏️ প্রশাসনিক কর্মকর্তার তথ্য এডিট করুন" : "➕ নতুন প্রশাসনিক কর্মকর্তা/দায়িত্বপ্রাপ্ত সদস্য যুক্ত করুন"}
@@ -155,7 +173,6 @@ export default function AdministrationManager({
           মাভাবিপ্রবির শীর্ষ প্রশাসন, রেজিস্ট্রার, প্রক্টর, ডিন, বা যেকোনো প্রশাসনিক দপ্তরের সদস্যদের তথ্য এখান থেকে যুক্ত ও পরিচালনা করুন।
         </p>
 
-        {/* ক্যাটাগরি ও দপ্তর নির্বাচন */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <label className="text-xs font-semibold text-gray-700 block mb-1">প্রশাসনিক স্তর/ক্যাটাগরি:</label>
@@ -214,7 +231,6 @@ export default function AdministrationManager({
           </div>
         </div>
 
-        {/* ছবি আপলোড */}
         <div className="rounded-xl border p-2.5 bg-gray-50 space-y-1.5">
           <label className="text-xs font-semibold text-gray-700 block">কর্মকর্তার অফিসিয়াল ছবি (ঐচ্ছিক):</label>
           <input
@@ -223,11 +239,11 @@ export default function AdministrationManager({
             onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
             className="text-xs"
           />
-          {(photoFile || photoUrl) && (
+          {photoPreview && (
             <div className="flex items-center gap-2 pt-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={photoFile ? URL.createObjectURL(photoFile) : photoUrl || ""}
+                src={photoPreview}
                 alt="Preview"
                 className="size-14 rounded-full object-cover bg-white border p-0.5"
               />
@@ -242,7 +258,6 @@ export default function AdministrationManager({
           )}
         </div>
 
-        {/* নাম ও পদবি */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <input
             className={inp}
@@ -258,7 +273,6 @@ export default function AdministrationManager({
           />
         </div>
 
-        {/* ইমেইল ও মোবাইল */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <input
             className={inp}
@@ -274,7 +288,6 @@ export default function AdministrationManager({
           />
         </div>
 
-        {/* সংক্ষিপ্ত পরিচিতি বা বার্তা */}
         <textarea
           className={inp}
           rows={2}
@@ -283,7 +296,6 @@ export default function AdministrationManager({
           onChange={(e) => setBio(e.target.value)}
         />
 
-        {/* ক্রম নম্বর */}
         <div>
           <label className="text-xs text-gray-500 block mb-1">প্রদর্শনের ক্রম (ছোট সংখ্যা আগে দেখাবে, যেমন ১, ২, ৩):</label>
           <input
@@ -307,7 +319,6 @@ export default function AdministrationManager({
         {msg && <p className="text-xs font-bold text-center text-green-800 bg-green-50 p-2.5 rounded-xl border border-green-200">{msg}</p>}
       </div>
 
-      {/* তালিকা */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-sm text-gray-800">
