@@ -20,6 +20,7 @@ import {
   deletePost,
   removeAllImages,
   type Post,
+  type UserType,
 } from "../../lib/sb"
 import { getCampusClubs, type ClubItem } from "../../lib/clubs"
 import FbPostComposer from "../../components/admin/fb-post-composer"
@@ -37,6 +38,7 @@ import {
   Check,
   Settings,
   Newspaper,
+  Feather,
 } from "lucide-react"
 
 const inp = "w-full border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white text-slate-900 focus:outline-none focus:border-blue-600"
@@ -58,6 +60,7 @@ export default function CommunityPageManager({
   authorName,
   authorAvatar,
   currentUserId,
+  currentUserType,
   isAdmin = false,
   onPostCreated,
 }: {
@@ -66,16 +69,22 @@ export default function CommunityPageManager({
   authorName?: string
   authorAvatar?: string | null
   currentUserId?: string
+  currentUserType?: UserType
   isAdmin?: boolean
   onPostCreated?: () => Promise<void> | void
 }) {
+  const [resolvedUserType, setResolvedUserType] = useState<UserType | undefined>(currentUserType)
   const [list, setList] = useState<CommunityPage[]>([])
   const [activePageId, setActivePageId] = useState<string>("")
   const [pagePosts, setPagePosts] = useState<Post[]>([])
   const [followerCount, setFollowerCount] = useState(0)
   const [loadingPosts, setLoadingPosts] = useState(false)
 
-  const [cats, setCats] = useState<string[]>(["ক্যাম্পাস সংগঠন"])
+  const isTeacher = Boolean(resolvedUserType === "teacher" && !isAdmin)
+
+  const [cats, setCats] = useState<string[]>(
+    isTeacher ? ["সম্পাদকীয় ও মতামত"] : ["ক্যাম্পাস সংগঠন"]
+  )
   const [clubs, setClubs] = useState<ClubItem[]>([])
 
   const [showForm, setShowForm] = useState(false)
@@ -87,7 +96,7 @@ export default function CommunityPageManager({
   const [name, setName] = useState("")
   const [nameEn, setNameEn] = useState("")
   const [slug, setSlug] = useState("")
-  const [category, setCategory] = useState("ক্যাম্পাস সংগঠন")
+  const [category, setCategory] = useState(isTeacher ? "শিক্ষক পেজ" : "ক্যাম্পাস সংগঠন")
   const [bio, setBio] = useState("")
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
@@ -136,10 +145,13 @@ export default function CommunityPageManager({
     ])
 
     let pages = rawPages
-    if (!isAdmin && currentUserId && pages.length === 0) {
+    if (!isAdmin && currentUserId) {
       const meProfile = await getMe(token).catch(() => null)
       if (meProfile) {
-        pages = await ensureUserAutoPage(token, meProfile)
+        if (meProfile.user_type) setResolvedUserType(meProfile.user_type)
+        if (pages.length === 0) {
+          pages = await ensureUserAutoPage(token, meProfile)
+        }
       }
     }
 
@@ -149,7 +161,7 @@ export default function CommunityPageManager({
     } else {
       setActivePageId("")
     }
-    if (catNames.length) setCats(catNames)
+    if (catNames.length && !isTeacher) setCats(catNames)
     setClubs(clubList)
   }
 
@@ -189,7 +201,7 @@ export default function CommunityPageManager({
     setName("")
     setNameEn("")
     setSlug("")
-    setCategory("ক্যাম্পাস সংগঠন")
+    setCategory(isTeacher ? "শিক্ষক পেজ" : "ক্যাম্পাস সংগঠন")
     setBio("")
     setPhone("")
     setEmail("")
@@ -217,7 +229,7 @@ export default function CommunityPageManager({
     setName(p.name)
     setNameEn(p.name_en || "")
     setSlug(p.slug)
-    setCategory(p.category || "ক্যাম্পাস সংগঠন")
+    setCategory(p.category || (isTeacher ? "শিক্ষক পেজ" : "ক্যাম্পাস সংগঠন"))
     setBio(p.bio || "")
     setPhone(p.phone || "")
     setEmail(p.email || "")
@@ -273,14 +285,14 @@ export default function CommunityPageManager({
         name: name.trim(),
         name_en: nameEn.trim() || null,
         slug: cleanSlug,
-        category: category.trim() || "ক্যাম্পাস সংগঠন",
+        category: category.trim() || (isTeacher ? "শিক্ষক পেজ" : "ক্যাম্পাস সংগঠন"),
         bio: bio.trim() || null,
         phone: phone.trim() || null,
         email: email.trim() || null,
         location: location.trim() || null,
         website_url: finalWebsiteUrl,
         fb_url: finalFbUrl,
-        yt_url: finalYtUrl,
+        yt_url: isTeacher ? null : finalYtUrl,
         avatar_url: finalAvatar,
         cover_url: finalCover,
         is_active: isActive,
@@ -337,25 +349,25 @@ export default function CommunityPageManager({
     try {
       await setPostHidden(token, p.id, !p.hidden)
       if (selectedPage) await loadPageDetails(selectedPage.id)
-      setMsg(p.hidden ? "✅ পোস্টটি পাবলিক করা হয়েছে" : "✅ পোস্টটি লুকানো (Only Me) করা হয়েছে")
+      setMsg(p.hidden ? "✅ লেখাটি পাবলিক করা হয়েছে" : "✅ লেখাটি লুকানো (Only Me) করা হয়েছে")
       if (onPostCreated) await onPostCreated()
     } catch (e: any) {
-      setMsg("❌ " + (e?.message || "পোস্ট আপডেট করা যায়নি"))
+      setMsg("❌ " + (e?.message || "আপডেট করা যায়নি"))
     }
   }
 
   async function handleDeletePost(p: Post) {
-    if (!confirm(`"${p.title}" পোস্টটি মুছে ফেলতে চান?`)) return
+    if (!confirm(`"${p.title}" কলামটি মুছে ফেলতে চান?`)) return
     try {
       try {
         await removeAllImages(token, "post", p.id)
       } catch {}
       await deletePost(token, p.id)
       if (selectedPage) await loadPageDetails(selectedPage.id)
-      setMsg("✅ পোস্ট মুছে ফেলা হয়েছে")
+      setMsg("✅ কলাম মুছে ফেলা হয়েছে")
       if (onPostCreated) await onPostCreated()
     } catch (e: any) {
-      setMsg("❌ " + (e?.message || "পোস্ট মুছতে সমস্যা হয়েছে"))
+      setMsg("❌ " + (e?.message || "মুছতে সমস্যা হয়েছে"))
     }
   }
 
@@ -378,11 +390,12 @@ export default function CommunityPageManager({
           authorName={authorName}
           authorAvatar={authorAvatar}
           shrink={shrink}
-          categories={cats}
+          categories={isTeacher ? ["সম্পাদকীয় ও মতামত"] : cats}
           clubs={clubs}
           communityPages={list}
           defaultPageId={fbPostPageId}
           lockToPage={!isAdmin}
+          disableVideo={isTeacher}
           editItem={fbEditPost}
           onCancel={() => {
             setFbPostPageId(null)
@@ -407,7 +420,7 @@ export default function CommunityPageManager({
 
       {selectedPage && !showForm && (
         <div className="bg-white rounded-3xl shadow border border-slate-200 overflow-hidden">
-          <div className="relative z-0 h-28 sm:h-40 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900">
+          <div className="relative z-0 h-28 sm:h-40 bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900">
             {selectedPage.cover_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={selectedPage.cover_url} alt="" className="size-full object-cover" />
@@ -455,7 +468,7 @@ export default function CommunityPageManager({
                     </span>
                     <span>·</span>
                     <span className="font-semibold text-slate-700">
-                      {pagePosts.length.toLocaleString("bn-BD")} টি পোস্ট
+                      {pagePosts.length.toLocaleString("bn-BD")} টি লেখা
                     </span>
                   </div>
                 </div>
@@ -485,8 +498,8 @@ export default function CommunityPageManager({
                 }}
                 className="flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-3 shadow-sm cursor-pointer transition"
               >
-                <PlusCircle className="size-4" />
-                <span>পোস্ট দিন</span>
+                {isTeacher ? <Feather className="size-4" /> : <PlusCircle className="size-4" />}
+                <span>{isTeacher ? "কলাম লিখুন" : "পোস্ট দিন"}</span>
               </button>
 
               <button
@@ -535,18 +548,22 @@ export default function CommunityPageManager({
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
               <Newspaper className="size-4 text-blue-600" />
-              <span>“{selectedPage.name}”-এর পোস্টসমূহ ({pagePosts.length})</span>
+              <span>
+                “{selectedPage.name}”-এর {isTeacher ? "সম্পাদকীয় ও মতামত কলামসমূহ" : "পোস্টসমূহ"} ({pagePosts.length})
+              </span>
             </h3>
-            <button
-              type="button"
-              onClick={openNewPageForm}
-              className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
-            >
-              + নতুন পেজ খুলুন
-            </button>
+            {!isTeacher && (
+              <button
+                type="button"
+                onClick={openNewPageForm}
+                className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+              >
+                + নতুন পেজ খুলুন
+              </button>
+            )}
           </div>
 
-          {loadingPosts && <p className="text-xs text-slate-500 text-center py-4">পোস্ট লোড হচ্ছে...</p>}
+          {loadingPosts && <p className="text-xs text-slate-500 text-center py-4">লেখা লোড হচ্ছে...</p>}
 
           {!loadingPosts && pagePosts.length > 0 && (
             <div className="space-y-2.5">
@@ -618,7 +635,11 @@ export default function CommunityPageManager({
 
           {!loadingPosts && pagePosts.length === 0 && (
             <div className="text-center py-6 space-y-2">
-              <p className="text-xs text-slate-500">এই পেজে এখনো কোনো পোস্ট দেওয়া হয়নি।</p>
+              <p className="text-xs text-slate-500">
+                {isTeacher
+                  ? "আপনার পেজে এখনো কোনো সম্পাদকীয় বা মতামত কলাম লেখা হয়নি।"
+                  : "এই পেজে এখনো কোনো পোস্ট দেওয়া হয়নি।"}
+              </p>
               <button
                 type="button"
                 onClick={() => {
@@ -627,7 +648,8 @@ export default function CommunityPageManager({
                 }}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 text-white px-4 py-2 text-xs font-bold cursor-pointer shadow"
               >
-                <PlusCircle className="size-3.5" /> প্রথম পোস্ট দিন
+                {isTeacher ? <Feather className="size-3.5" /> : <PlusCircle className="size-3.5" />}
+                <span>{isTeacher ? "প্রথম কলামটি লিখুন" : "প্রথম পোস্ট দিন"}</span>
               </button>
             </div>
           )}
@@ -662,7 +684,7 @@ export default function CommunityPageManager({
               </span>
               <input
                 className={`${inp} rounded-l-none font-mono text-xs`}
-                placeholder="যেমন: cse-21-batch অথবা rahim-uddin"
+                placeholder="যেমন: cse-21-batch অথবা prof-rahim"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
               />
@@ -757,7 +779,9 @@ export default function CommunityPageManager({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <input className={inp} placeholder="ফেসবুক লিংক (https://...)" value={fbUrl} onChange={(e) => setFbUrl(e.target.value)} />
-            <input className={inp} placeholder="ইউটিউব লিংক (https://...)" value={ytUrl} onChange={(e) => setYtUrl(e.target.value)} />
+            {!isTeacher && (
+              <input className={inp} placeholder="ইউটিউব লিংক (https://...)" value={ytUrl} onChange={(e) => setYtUrl(e.target.value)} />
+            )}
             <input className={inp} placeholder="ওয়েবসাইট (https://...)" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} />
           </div>
 
@@ -773,7 +797,7 @@ export default function CommunityPageManager({
             <h3 className="font-bold text-sm text-slate-800">
               {isAdmin ? `সকল কমিউনিটি পেজ (${list.length})` : `আমার পেজসমূহ (${list.length})`}
             </h3>
-            {!showForm && (
+            {!showForm && !isTeacher && (
               <button
                 type="button"
                 onClick={openNewPageForm}
@@ -851,9 +875,10 @@ export default function CommunityPageManager({
                     setFbEditPost(null)
                     setFbPostPageId(item.id)
                   }}
-                  className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 cursor-pointer"
+                  className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 cursor-pointer flex items-center gap-1"
                 >
-                  📱 পোস্ট দিন
+                  {isTeacher ? <Feather className="size-3.5" /> : null}
+                  <span>{isTeacher ? "কলাম লিখুন" : "পোস্ট দিন"}</span>
                 </button>
 
                 <button
