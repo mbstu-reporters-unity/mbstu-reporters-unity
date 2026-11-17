@@ -402,7 +402,11 @@ export async function getMe(token: string): Promise<Profile | null> {
     if (retry.ok) rows = await retry.json()
   }
 
-  return rows && rows.length > 0 ? rows[0] : null
+  const found = rows && rows.length > 0 ? rows[0] : null
+  if (found && !found.user_type) {
+    found.user_type = found.newspaper_name ? "reporter" : "student"
+  }
+  return found
 }
 
 /* ---------- অ্যাডমিনের জন্য সকল ব্যবহারকারী, রোল ও অনুমোদন ব্যবস্থাপনা ---------- */
@@ -482,12 +486,24 @@ export async function approveReporter(token: string, id: string) {
 }
 
 export async function removeReporter(token: string, id: string) {
-  await ok(
-    await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`, {
-      method: "DELETE",
-      headers: hdr(token),
-    })
-  )
+  const rpcRes = await fetch(`${SB_URL}/rest/v1/rpc/admin_delete_user`, {
+    method: "POST",
+    headers: hdr(token, true),
+    body: JSON.stringify({ target_id: id }),
+  })
+  if (rpcRes.ok) return
+
+  if (rpcRes.status === 404) {
+    await ok(
+      await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: hdr(token),
+      })
+    )
+    return
+  }
+
+  await ok(rpcRes)
 }
 
 export async function updateMyProfile(
