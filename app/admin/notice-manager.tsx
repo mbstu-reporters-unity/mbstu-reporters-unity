@@ -2,18 +2,28 @@
 
 import { useEffect, useState } from "react"
 import {
-  BRANCHES, MAX_NOTICE_FILE_MB, getNotices, getNoticeOwners, createNoticeReturningId, updateNotice,
-  deleteNotice, uploadNoticeFile, getNoticeComments, deleteNoticeComment,
-  fmtDateTime, isImageType,
+  BRANCHES,
+  MAX_NOTICE_FILE_MB,
+  getNotices,
+  getNoticeOwners,
+  createNoticeReturningId,
+  updateNotice,
+  deleteNotice,
+  uploadNoticeFile,
+  getNoticeComments,
+  deleteNoticeComment,
+  fmtDateTime,
+  isImageType,
 } from "../../lib/notices"
 import type { Notice, NoticeOwner, NoticeComment } from "../../lib/notices"
 import { getDepartments, type Department } from "../../lib/faculties"
-import { removeAllImages } from "../../lib/sb"
+import { removeAllImages, getMe, SB_URL, SB_KEY, type UserType } from "../../lib/sb"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import FbPostComposer from "../../components/admin/fb-post-composer"
+import { Pin, Bell, GraduationCap, Briefcase, ShieldCheck } from "lucide-react"
 
 const inp = "w-full border rounded-xl px-3 py-2 text-base bg-white"
-const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50"
+const btn = "w-full bg-green-700 text-white rounded-xl py-3 font-semibold disabled:opacity-50 cursor-pointer shadow-sm hover:bg-green-800 transition"
 
 async function shrink(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file)
@@ -37,7 +47,7 @@ function ManageComments({ id, token }: { id: string; token: string }) {
         <div key={c.id} className="flex justify-between gap-2 text-sm">
           <p><b>{c.name || "নামহীন"}:</b> {c.message}</p>
           <button
-            className="text-red-600 shrink-0"
+            className="text-red-600 shrink-0 cursor-pointer hover:underline"
             onClick={async () => {
               if (!confirm("কমেন্ট মুছবেন?")) return
               try { await deleteNoticeComment(token, c.id); await load() } catch {}
@@ -57,15 +67,22 @@ export default function NoticeManager({
   isAdmin,
   authorName,
   authorAvatar,
+  currentUserId,
+  userType,
 }: {
   token: string
   isAdmin: boolean
   authorName?: string
   authorAvatar?: string | null
+  currentUserId?: string
+  userType?: UserType
 }) {
+  const [myId, setMyId] = useState<string>(currentUserId || "")
+  const [myType, setMyType] = useState<UserType | undefined>(userType)
+
   const [list, setList] = useState<Notice[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
-  const [owners, setOwners] = useState<Record<string, NoticeOwner>>({})
+  const [owners, setOwners] = useState<Record<string, any>>({})
   const [editId, setEditId] = useState<string | null>(null)
   const [branch, setBranch] = useState<string>(BRANCHES[0].key)
   const [deptId, setDeptId] = useState<string>("")
@@ -90,22 +107,53 @@ export default function NoticeManager({
 
   const imgs = useImageSection("notice")
 
+  useEffect(() => {
+    if (!myId) {
+      getMe(token).then((p) => {
+        if (p) {
+          setMyId(p.id)
+          setMyType(p.user_type)
+        }
+      }).catch(() => {})
+    }
+  }, [token, myId])
+
   async function load() {
-    const [ns, os, depts] = await Promise.all([
+    const [ns, osRows, depts] = await Promise.all([
       getNotices(token, true),
-      getNoticeOwners(token),
+      fetch(
+        `${SB_URL}/rest/v1/board_notice_owners?select=notice_id,user_id,created_at,profiles(full_name)`,
+        { headers: { apikey: SB_KEY, Authorization: `Bearer ${token}` }, cache: "no-store" }
+      )
+        .then((r) => (r.ok ? r.json() : getNoticeOwners(token)))
+        .catch(() => getNoticeOwners(token)),
       getDepartments(),
     ])
     setList(ns)
     setDepartments(depts)
-    const m: Record<string, NoticeOwner> = {}
-    os.forEach((o) => { m[o.notice_id] = o })
+    const m: Record<string, any> = {}
+    if (Array.isArray(osRows)) {
+      osRows.forEach((o: any) => {
+        if (o?.notice_id) m[o.notice_id] = o
+      })
+    }
     setOwners(m)
   }
+
   useEffect(() => { load() }, [token])
 
-  const canEdit = (n: Notice) => isAdmin || !!owners[n.id]
-  const bn = (k: string) => BRANCHES.find((b) => b.key === k)?.bn || k
+  // শুধু অ্যাডমিন সব নোটিশ এডিট করতে পারবেন, আর শিক্ষকরা/অন্যরা শুধু নিজেদের নোটিশ এডিট করতে পারবেন
+  const canEdit = (n: Notice) => {
+    if (isAdmin) return true
+    const o = owners[n.id]
+    if (!o) return false
+    if (o.user_id && myId) {
+      return o.user_id === myId
+    }
+    return Boolean(o)
+  }
+
+  const bnBranch = (k: string) => BRANCHES.find((b) => b.key === k)?.bn || k
 
   function reset() {
     setEditId(null); setBranch(BRANCHES[0].key); setDeptId(""); setTitle(""); setHeading(""); setRef("")
@@ -182,8 +230,24 @@ export default function NoticeManager({
       }
 
       let noticeId = editId
-      if (editId) await updateNotice(token, editId, data)
-      else noticeId = await createNoticeReturningId(token, data)
+      if (editId) {
+        await updateNotice(token, editId, data)
+      } else {
+        noticeId = await createNoticeReturningId(token, data)
+        // নতুন নোটিশ হলে মালিকানা সংরক্ষণ
+        if (noticeId && myId) {
+          await fetch(`${SB_URL}/rest/v1/board_notice_owners`, {
+            method: "POST",
+            headers: {
+              apikey: SB_KEY,
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              Prefer: "resolution=ignore-duplicates,return=minimal",
+            },
+            body: JSON.stringify({ notice_id: noticeId, user_id: myId }),
+          }).catch(() => {})
+        }
+      }
 
       let warn = ""
       if (noticeId) {
@@ -195,7 +259,7 @@ export default function NoticeManager({
       }
 
       reset()
-      setMsg("✅ সেভ হয়েছে" + warn)
+      setMsg("✅ নোটিশ সফলভাবে সেভ হয়েছে" + warn)
       await load()
     } catch (e) {
       setMsg("❌ " + (e instanceof Error ? e.message : "কিছু ভুল হয়েছে"))
@@ -212,6 +276,20 @@ export default function NoticeManager({
 
   return (
     <div className="space-y-4">
+      {/* ব্যবহারকারী ভূমিকা অনুযায়ী নির্দেশনামূলক ব্যানার */}
+      {myType === "teacher" && !isAdmin && (
+        <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-2xl text-xs text-indigo-950 flex items-center gap-2">
+          <GraduationCap className="size-4 text-indigo-700 shrink-0" />
+          <span><b>শিক্ষক প্যানেল:</b> আপনি সরাসরি নোটিশ প্রকাশ করতে পারবেন এবং আপনার দেওয়া নোটিশগুলো এডিট ও ডিলিট করতে পারবেন।</span>
+        </div>
+      )}
+      {myType === "staff" && !isAdmin && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-950 flex items-center gap-2">
+          <Briefcase className="size-4 text-amber-700 shrink-0" />
+          <span><b>কর্মকর্তা প্যানেল:</b> আপনি সরাসরি নোটিশ প্রকাশ ও নিজের নোটিশ পরিচালনা করার অনুমতিপ্রাপ্ত।</span>
+        </div>
+      )}
+
       {/* পোস্ট করার মোড সুইচার */}
       <div className="flex bg-white rounded-2xl p-1.5 shadow-sm border border-slate-200 gap-1.5 text-xs font-bold">
         <button
@@ -221,7 +299,7 @@ export default function NoticeManager({
             !fbMode ? "bg-green-700 text-white shadow" : "text-slate-600 hover:bg-slate-100"
           }`}
         >
-          📝 ক্লাসিক ফর্ম (বর্তমান)
+          📝 ক্লাসিক ফর্ম
         </button>
         <button
           type="button"
@@ -230,7 +308,7 @@ export default function NoticeManager({
             fbMode ? "bg-blue-600 text-white shadow" : "text-slate-600 hover:bg-slate-100"
           }`}
         >
-          📱 ফেসবুক স্টাইল পোস্ট (নতুন)
+          📱 ফেসবুক স্টাইল পোস্ট
         </button>
       </div>
 
@@ -255,7 +333,9 @@ export default function NoticeManager({
       )}
 
       <div className="bg-white rounded-2xl shadow p-4 space-y-3">
-        <h2 className="font-semibold">{editId ? "নোটিশ এডিট করুন" : "নতুন নোটিশ"}</h2>
+        <h2 className="font-semibold text-base text-gray-800">
+          {editId ? "✏️ নোটিশ এডিট করুন" : "➕ নতুন নোটিশ প্রকাশ করুন"}
+        </h2>
 
         <select className={inp} value={branch} onChange={(e) => setBranch(e.target.value)}>
           {BRANCHES.map((b) => <option key={b.key} value={b.key}>{b.bn}</option>)}
@@ -282,9 +362,9 @@ export default function NoticeManager({
         )}
 
         <input className={inp} placeholder="শিরোনাম (টাইটেল) *" maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} />
-        <input className={inp} placeholder="হেডিং (উপশিরোনাম)" value={heading} onChange={(e) => setHeading(e.target.value)} />
+        <input className={inp} placeholder="হেডিং (উপশিরোনাম - ঐচ্ছিক)" value={heading} onChange={(e) => setHeading(e.target.value)} />
         <input className={inp} placeholder="রেফ নম্বর (ঐচ্ছিক, যেমন MBSTU-RU/2026/015)" value={ref} onChange={(e) => setRef(e.target.value)} />
-        <textarea className={inp} rows={6} placeholder="নোটিশের লেখা" value={body} onChange={(e) => setBody(e.target.value)} />
+        <textarea className={inp} rows={6} placeholder="নোটিশের লেখা..." value={body} onChange={(e) => setBody(e.target.value)} />
 
         <div className="space-y-1 rounded-xl border border-emerald-300 bg-emerald-50/60 p-3">
           <label className="text-xs font-bold text-emerald-900 block">
@@ -322,7 +402,7 @@ export default function NoticeManager({
               <img src={old.url} alt="" className="w-full max-h-48 object-contain rounded-xl bg-gray-100" />
             )}
             <p className="text-xs text-gray-600">বর্তমান ফাইল: {old.name || "ফাইল"}</p>
-            <button type="button" onClick={() => setOld(null)} className="text-sm text-red-600">ফাইল সরান</button>
+            <button type="button" onClick={() => setOld(null)} className="text-sm text-red-600 cursor-pointer">ফাইল সরান</button>
           </div>
         )}
 
@@ -331,13 +411,13 @@ export default function NoticeManager({
           <input className={inp} type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
         </label>
 
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input type="checkbox" checked={showName} onChange={(e) => setShowName(e.target.checked)} />
           আমার নাম নোটিশে দেখান
         </label>
 
         {isAdmin && (
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} />
             📌 পিন করুন (সবার উপরে থাকবে)
           </label>
@@ -346,67 +426,68 @@ export default function NoticeManager({
         <button className={btn} onClick={save} disabled={busy}>
           {busy ? "অপেক্ষা করুন..." : editId ? "আপডেট করুন" : "প্রকাশ করুন"}
         </button>
-        {editId && <button onClick={reset} className="w-full text-sm underline">বাতিল</button>}
-        {msg && <p className="text-sm font-semibold">{msg}</p>}
+        {editId && <button onClick={reset} className="w-full text-sm underline cursor-pointer text-gray-600">বাতিল</button>}
+        {msg && <p className="text-sm font-semibold text-center text-green-800 bg-green-50 p-2.5 rounded-xl border border-green-200">{msg}</p>}
       </div>
 
       <div className="space-y-3">
-        <h2 className="font-semibold">সব নোটিশ ({list.length})</h2>
+        <h2 className="font-semibold text-sm text-gray-800">সকল নোটিশের তালিকা ({list.length}টি)</h2>
         {list.map((n) => {
           const o = owners[n.id]
           const expired = !!n.expires_at && new Date(n.expires_at) < new Date()
           const dept = departments.find((d) => d.id === n.department_id)
+          const userCanManage = canEdit(n)
 
           return (
-            <div key={n.id} className="bg-white rounded-2xl shadow p-3 text-sm space-y-2">
+            <div key={n.id} className="bg-white rounded-2xl shadow p-3.5 text-sm space-y-2 border border-slate-200">
               <div className="flex flex-wrap gap-2 text-xs">
-                <span className="bg-green-100 text-green-800 rounded-full px-2 py-0.5">
-                  {dept ? `🎓 ${dept.name}` : bn(n.branch)}
+                <span className="bg-green-100 text-green-800 font-semibold rounded-full px-2.5 py-0.5">
+                  {dept ? `🎓 ${dept.name}` : bnBranch(n.branch)}
                 </span>
-                {n.is_pinned && <span className="bg-yellow-100 text-yellow-800 rounded-full px-2 py-0.5">📌 পিন</span>}
-                {n.embed_media_url && <span className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5">🎥 মিডিয়া</span>}
-                {expired && <span className="bg-gray-200 rounded-full px-2 py-0.5">মেয়াদ শেষ</span>}
-                {!n.show_name && <span className="bg-gray-100 rounded-full px-2 py-0.5">নাম লুকানো</span>}
+                {n.is_pinned && <span className="bg-amber-100 text-amber-800 font-bold rounded-full px-2 py-0.5">📌 পিন</span>}
+                {n.embed_media_url && <span className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 font-semibold">🎥 মিডিয়া</span>}
+                {expired && <span className="bg-gray-200 rounded-full px-2 py-0.5 text-gray-600">মেয়াদ শেষ</span>}
+                {!n.show_name && <span className="bg-gray-100 rounded-full px-2 py-0.5 text-gray-500">নাম লুকানো</span>}
               </div>
-              <p className="font-semibold">{n.title}</p>
+              <p className="font-bold text-gray-900 text-base">{n.title}</p>
               <p className="text-xs text-gray-500">{fmtDateTime(n.created_at)}</p>
               {o && (
                 <p className="text-xs text-gray-700">
-                  দিয়েছেন: {o.profiles?.full_name || "(সদস্য নেই)"} · {fmtDateTime(o.created_at)}
+                  দিয়েছেন: <b>{o.profiles?.full_name || "সদস্য"}</b>
                 </p>
               )}
-              {canEdit(n) ? (
-                <div className="flex flex-wrap gap-4">
-                  <button onClick={() => startEdit(n)} className="text-green-700 font-semibold">এডিট</button>
+              {userCanManage ? (
+                <div className="flex flex-wrap gap-4 pt-1 font-bold text-xs">
+                  <button onClick={() => startEdit(n)} className="text-green-700 hover:underline cursor-pointer">এডিট</button>
                   <button
                     onClick={() => {
                       setFbEditNotice(n)
                       setFbMode(true)
                     }}
-                    className="text-blue-600 font-semibold"
+                    className="text-blue-600 hover:underline cursor-pointer"
                   >
                     FB এডিট
                   </button>
                   {isAdmin && (
-                    <button onClick={() => run(() => updateNotice(token, n.id, { is_pinned: !n.is_pinned }))} className="text-gray-700">
+                    <button onClick={() => run(() => updateNotice(token, n.id, { is_pinned: !n.is_pinned }))} className="text-gray-700 hover:underline cursor-pointer">
                       {n.is_pinned ? "পিন সরান" : "পিন করুন"}
                     </button>
                   )}
-                  <button onClick={() => setOpenC(openC === n.id ? "" : n.id)} className="text-gray-700">কমেন্ট</button>
+                  <button onClick={() => setOpenC(openC === n.id ? "" : n.id)} className="text-gray-700 hover:underline cursor-pointer">কমেন্ট</button>
                   <button
                     onClick={() =>
                       run(async () => {
                         try { await removeAllImages(token, "notice", n.id) } catch {}
                         await deleteNotice(token, n.id)
-                      }, "নোটিশ মুছে ফেলবেন?")
+                      }, "সত্যিই নোটিশটি মুছে ফেলবেন?")
                     }
-                    className="text-red-600"
+                    className="text-red-600 hover:underline cursor-pointer"
                   >
                     মুছুন
                   </button>
                 </div>
               ) : (
-                <p className="text-xs text-gray-400">শুধু দেখা যাবে</p>
+                <p className="text-xs text-gray-400">শুধু দেখা যাবে (অন্যের নোটিশ)</p>
               )}
               {openC === n.id && <ManageComments id={n.id} token={token} />}
             </div>
