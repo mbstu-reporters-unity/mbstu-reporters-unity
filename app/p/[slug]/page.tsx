@@ -30,6 +30,12 @@ import { PageFollowButton } from '@/components/portal/page-follow-button'
 
 export const revalidate = 60
 
+function safeHttpUrl(u?: string | null): string | null {
+  if (!u) return null
+  const t = u.trim()
+  return /^https?:\/\//i.test(t) ? t : null
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -72,6 +78,10 @@ export default async function PublicCommunityPage({
 
   const siteUrl = 'https://mbsturu.vercel.app'
   const pageUrl = `${siteUrl}/p/${page.slug}`
+
+  const safeWebsiteUrl = safeHttpUrl(page.website_url)
+  const safeFbUrl = safeHttpUrl(page.fb_url)
+  const safeYtUrl = safeHttpUrl(page.yt_url)
 
   return (
     <>
@@ -217,26 +227,26 @@ export default async function PublicCommunityPage({
                     </a>
                   </p>
                 )}
-                {page.website_url && (
+                {safeWebsiteUrl && (
                   <p className="flex items-center gap-2">
                     <Globe className="size-4 text-cyan-400 shrink-0" />
-                    <a href={page.website_url} target="_blank" rel="noopener noreferrer" className="text-cyan-300 font-bold hover:underline truncate">
+                    <a href={safeWebsiteUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-300 font-bold hover:underline truncate">
                       ওয়েবসাইট ভিজিট করুন
                     </a>
                   </p>
                 )}
-                {page.fb_url && (
+                {safeFbUrl && (
                   <p className="flex items-center gap-2">
                     <span className="size-4 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0">f</span>
-                    <a href={page.fb_url} target="_blank" rel="noopener noreferrer" className="text-cyan-300 font-bold hover:underline truncate">
+                    <a href={safeFbUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-300 font-bold hover:underline truncate">
                       ফেসবুক প্রোফাইল / পেজ
                     </a>
                   </p>
                 )}
-                {page.yt_url && (
+                {safeYtUrl && (
                   <p className="flex items-center gap-2">
                     <Play className="size-4 text-rose-400 shrink-0" />
-                    <a href={page.yt_url} target="_blank" rel="noopener noreferrer" className="text-rose-300 font-bold hover:underline truncate">
+                    <a href={safeYtUrl} target="_blank" rel="noopener noreferrer" className="text-rose-300 font-bold hover:underline truncate">
                       ইউটিউব চ্যানেল
                     </a>
                   </p>
@@ -267,6 +277,7 @@ export default async function PublicCommunityPage({
                       ? [{ url: post.image_url, date: post.created_at }]
                       : []
                 const galleryLayout = layoutsMap[post.id] || 'grid'
+                const safePostLinkUrl = safeHttpUrl(post.link_url)
 
                 return (
                   <article
@@ -353,9 +364,9 @@ export default async function PublicCommunityPage({
                       <UniversalMediaEmbed url={post.embed_media_url} title={post.title} />
                     )}
 
-                    {post.link_url && (
+                    {safePostLinkUrl && (
                       <a
-                        href={post.link_url}
+                        href={safePostLinkUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:underline"
