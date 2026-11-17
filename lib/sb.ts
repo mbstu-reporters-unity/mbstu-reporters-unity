@@ -64,6 +64,7 @@ export type Profile = {
   staff_id?: string | null
   bio?: string | null
   approved: boolean
+  can_publish_notice?: boolean | null
   newspaper_name?: string | null
   avatar_url?: string | null
   director_visible?: boolean | null
@@ -291,7 +292,8 @@ export async function refreshSession(): Promise<string | null> {
 
 export async function signUp(email: string, password: string, info: SignupInfo) {
   const cleanEmail = email.trim()
-  const autoApproved = info.user_type !== "reporter"
+  // শুধুমাত্র শিক্ষার্থীরা সরাসরি অনুমোদিত হবে; শিক্ষক, কর্মকর্তা ও সাংবাদিক অ্যাডমিন অনুমোদনের অপেক্ষায় থাকবে
+  const autoApproved = info.user_type === "student"
 
   const res = await ok(
     await fetch(`${SB_URL}/auth/v1/signup`, {
@@ -373,7 +375,7 @@ export async function getMe(token: string): Promise<Profile | null> {
       m.user_type === "teacher" || m.user_type === "staff" || m.user_type === "reporter"
         ? m.user_type
         : "student"
-    const autoApproved = uType !== "reporter"
+    const autoApproved = uType === "student"
     const fallbackProfile = {
       id: user.id,
       email: user.email || null,
@@ -420,7 +422,22 @@ export async function getAllProfilesAdmin(token: string): Promise<Profile[]> {
       cache: "no-store",
     })
     if (rpcRes.ok) {
-      return await rpcRes.json()
+      const rows: Profile[] = await rpcRes.json()
+      if (rows.length > 0 && !("can_publish_notice" in rows[0])) {
+        try {
+          const extraRes = await fetch(
+            `${SB_URL}/rest/v1/profiles?select=id,can_publish_notice`,
+            { headers: hdr(token), cache: "no-store" }
+          )
+          if (extraRes.ok) {
+            const extraRows: { id: string; can_publish_notice: boolean | null }[] =
+              await extraRes.json()
+            const map = new Map(extraRows.map((x) => [x.id, Boolean(x.can_publish_notice)]))
+            return rows.map((r) => ({ ...r, can_publish_notice: map.get(r.id) ?? false }))
+          }
+        } catch {}
+      }
+      return rows
     }
     const res = await fetch(
       `${SB_URL}/rest/v1/profiles?select=*&order=created_at.desc`,
@@ -456,6 +473,20 @@ export async function setProfileApproved(token: string, id: string, approved: bo
       method: "PATCH",
       headers: { ...hdr(token, true), Prefer: "return=minimal" },
       body: JSON.stringify({ approved }),
+    })
+  )
+}
+
+export async function setStaffNoticePermission(
+  token: string,
+  id: string,
+  canPublish: boolean
+) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify({ can_publish_notice: canPublish }),
     })
   )
 }
