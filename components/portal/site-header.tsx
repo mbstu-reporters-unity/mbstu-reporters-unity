@@ -22,14 +22,12 @@ import {
   Settings,
   Star,
   Users,
-  UserPlus,
   X,
   FileText,
   Globe2,
   ShieldCheck,
   Tag,
   Landmark,
-  MessageSquare,
   User,
   Sparkles,
 } from 'lucide-react'
@@ -41,12 +39,8 @@ import { getUniversityAssociations, type UniversityAssociation } from '@/lib/ass
 import { getSocialSites, type SocialSite } from '@/lib/social-sites'
 import { ADMIN_CATEGORIES } from '@/lib/administration'
 import { SB_URL, SB_KEY, getMe, type Profile } from '@/lib/sb'
-import { getMyFriendships } from '@/lib/friends'
 import { Logo } from './logo'
 import { useLang } from '@/lib/i18n'
-import { CallModal, type CallType, type CallState } from './call-modal'
-import { supabase, syncRealtimeAuth } from '@/lib/chat'
-import { ringtone } from '@/lib/webrtc'
 
 export function SiteHeader() {
   const pathname = usePathname() || '/'
@@ -67,18 +61,9 @@ export function SiteHeader() {
   const [univText, setUnivText] = useState('')
 
   const [me, setMe] = useState<Profile | null>(null)
-  const [incomingReqCount, setIncomingReqCount] = useState(0)
-
-  // গ্লোবাল ইনকামিং কল স্টেট
-  const [callState, setCallState] = useState<CallState>('idle')
-  const [callType, setCallType] = useState<CallType>('audio')
-  const [incomingCaller, setIncomingCaller] = useState<Profile | null>(null)
-  const [activeCallConvId, setActiveCallConvId] = useState<string | null>(null)
 
   useEffect(() => {
     let alive = true
-    let callChannel: ReturnType<typeof supabase.channel> | null = null
-    let friendChannel: ReturnType<typeof supabase.channel> | null = null
 
     fetch(
       `${SB_URL}/rest/v1/app_config?select=key,value&key=in.(univ_logo_url,univ_link_url,univ_text)`,
@@ -106,67 +91,15 @@ export function SiteHeader() {
 
     const t = localStorage.getItem('mbstu_admin_token') || ''
     if (t) {
-      syncRealtimeAuth(t)
-
-      getMe(t).then((profile) => {
-        if (!alive || !profile) return
-        setMe(profile)
-
-        const refreshFriendRequests = () => {
-          getMyFriendships(t, profile.id)
-            .then((f) => {
-              if (alive) setIncomingReqCount(f.incoming.length)
-            })
-            .catch(() => {})
-        }
-
-        refreshFriendRequests()
-
-        callChannel = supabase.channel(`user_calls_${profile.id}`)
-        callChannel
-          .on('broadcast', { event: 'incoming_call' }, ({ payload }) => {
-            setIncomingCaller(payload.caller)
-            setCallType(payload.callType)
-            setActiveCallConvId(payload.conversationId)
-            setCallState('incoming')
-            ringtone.start()
-          })
-          .subscribe()
-
-        friendChannel = supabase
-          .channel(`user_friends_realtime_${profile.id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'friendships',
-              filter: `addressee_id=eq.${profile.id}`,
-            },
-            () => {
-              refreshFriendRequests()
-            }
-          )
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'friendships',
-              filter: `requester_id=eq.${profile.id}`,
-            },
-            () => {
-              refreshFriendRequests()
-            }
-          )
-          .subscribe()
-      })
+      getMe(t)
+        .then((profile) => {
+          if (alive && profile) setMe(profile)
+        })
+        .catch(() => {})
     }
 
     return () => {
       alive = false
-      if (callChannel) supabase.removeChannel(callChannel)
-      if (friendChannel) supabase.removeChannel(friendChannel)
     }
   }, [])
 
@@ -183,7 +116,6 @@ export function SiteHeader() {
     setMenuOpen(false)
   }
 
-  // পপ-আপ খোলা থাকলে বডি স্ক্রল লক ও Escape বাটনে বন্ধ করা
   useEffect(() => {
     if (!menuOpen) return
     const prevOverflow = document.body.style.overflow
@@ -443,31 +375,8 @@ export function SiteHeader() {
             </ul>
           </nav>
 
-          {/* ডানপাশ: বন্ধু, টেক্সট, লগইন/প্রোফাইল বাটন ও হ্যামবার্গার */}
+          {/* ডানপাশ: লগইন/প্রোফাইল বাটন ও হ্যামবার্গার */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <Link
-              href="/friends"
-              className="relative inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition active:scale-95 shadow-sm"
-              title="বন্ধু ও ফ্রেন্ড রিকোয়েস্ট"
-            >
-              <UserPlus className="size-3.5 sm:size-4 text-cyan-300" />
-              <span className="hidden sm:inline">বন্ধু</span>
-              {incomingReqCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-bold animate-pulse">
-                  {incomingReqCount}
-                </span>
-              )}
-            </Link>
-
-            <Link
-              href="/messages"
-              className="inline-flex items-center gap-1.5 rounded-full bg-cyan-600/20 hover:bg-cyan-600/35 text-cyan-300 border border-cyan-400/40 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition active:scale-95 shadow-sm"
-              title="M-RU টেক্সট (মেসেঞ্জার)"
-            >
-              <MessageSquare className="size-3.5 sm:size-4" />
-              <span className="hidden xs:inline">টেক্সট</span>
-            </Link>
-
             {me ? (
               <Link
                 href="/admin"
@@ -687,7 +596,7 @@ export function SiteHeader() {
                     {pathname.startsWith('/p/') && (
                       <span className="size-2 rounded-full bg-blue-400 shadow-[0_0_8px_#60a5fa] shrink-0" />
                     )}
-                  </button>
+                  </Link>
 
                   {/* ৯. স্টুডেন্ট কর্নার */}
                   <Link
@@ -757,43 +666,7 @@ export function SiteHeader() {
                     )}
                   </button>
 
-                  {/* ১৩. বন্ধু রিকোয়েস্ট */}
-                  <Link
-                    href="/friends"
-                    onClick={closeMenuDrawer}
-                    className={tileCls(pathname.startsWith('/friends'))}
-                  >
-                    <span className="size-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shrink-0">
-                      <UserPlus className="size-4.5" />
-                    </span>
-                    <span className="text-[11px] sm:text-xs font-bold text-white leading-tight flex-1">
-                      বন্ধু রিকোয়েস্ট
-                    </span>
-                    {incomingReqCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-bold shrink-0">
-                        {incomingReqCount}
-                      </span>
-                    )}
-                  </Link>
-
-                  {/* ১৪. মেসেঞ্জার (M-RU টেক্সট) */}
-                  <Link
-                    href="/messages"
-                    onClick={closeMenuDrawer}
-                    className={tileCls(pathname.startsWith('/messages'))}
-                  >
-                    <span className="size-9 rounded-xl bg-sky-500 text-white flex items-center justify-center shadow-md shrink-0">
-                      <MessageSquare className="size-4.5" />
-                    </span>
-                    <span className="text-[11px] sm:text-xs font-bold text-white leading-tight flex-1">
-                      মেসেঞ্জার
-                    </span>
-                    {pathname.startsWith('/messages') && (
-                      <span className="size-2 rounded-full bg-blue-400 shadow-[0_0_8px_#60a5fa] shrink-0" />
-                    )}
-                  </Link>
-
-                  {/* ১৫. আমার প্রোফাইল (লগইন থাকলে) অথবা যোগাযোগ */}
+                  {/* ১৩. আমার প্রোফাইল (লগইন থাকলে) অথবা যোগাযোগ */}
                   {me ? (
                     <Link
                       href={`/u/${me.id}`}
@@ -822,7 +695,7 @@ export function SiteHeader() {
                     </button>
                   )}
 
-                  {/* ১৬. ড্যাশবোর্ড / লগইন */}
+                  {/* ১৪. ড্যাশবোর্ড / লগইন */}
                   <Link
                     href="/admin"
                     onClick={closeMenuDrawer}
@@ -1089,25 +962,6 @@ export function SiteHeader() {
             </div>
           </nav>
         </div>
-      )}
-
-      {/* গ্লোবাল কলিং মডাল */}
-      {me && (
-        <CallModal
-          currentUser={me}
-          targetUser={null}
-          conversationId={activeCallConvId}
-          callType={callType}
-          callState={callState}
-          incomingCaller={incomingCaller}
-          onClose={() => {
-            setCallState('idle')
-            setIncomingCaller(null)
-          }}
-          onAcceptIncoming={() => {
-            setCallState('connected')
-          }}
-        />
       )}
     </>
   )
