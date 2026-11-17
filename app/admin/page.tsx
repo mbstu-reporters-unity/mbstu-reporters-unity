@@ -6,13 +6,13 @@ import {
   login, signUp, getMe, getAllPosts, getAllProfilesAdmin, setPostHidden, setPostAuthorAvatarVisible,
   getCategoryNames, getCategories, updatePost, deletePost, uploadImage, uploadVideo,
   getPendingComments, approveComment, deleteComment,
-  getReporters, approveReporter,
-  updateMyProfile, createPostReturningId, removeAllImages,
+  getReporters, updateMyProfile, createPostReturningId, removeAllImages,
   isTokenExpired, refreshSession,
 } from "../../lib/sb"
 import type { Post, PendingComment, Profile, CategoryRow, UserType } from "../../lib/sb"
 import { getCampusClubs, type ClubItem } from "../../lib/clubs"
 import { getCommunityPages, type CommunityPage } from "../../lib/pages"
+import { getAdminSubmissions } from "../../lib/submissions"
 import LeadershipManager from "./leadership-manager"
 import NoticeManager from "./notice-manager"
 import HeroManager from "./hero-manager"
@@ -30,6 +30,8 @@ import AdministrationManager from "./administration-manager"
 import CommunityPageManager from "./community-page-manager"
 import StoryManager from "./story-manager"
 import UsersManager from "./users-manager"
+import SubmissionSender from "./submission-sender"
+import SubmissionsInbox from "./submissions-inbox"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
@@ -37,7 +39,7 @@ import {
   Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
   Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2,
-  Camera, Eye, EyeOff, Film, Briefcase
+  Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send
 } from "lucide-react"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -53,7 +55,7 @@ type Tab =
   | "posts" | "stories" | "comments" | "profile" | "leaders" | "notices"
   | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "directors" | "categories"
   | "clubs" | "faculties" | "associations" | "social_sites" | "administration"
-  | "community_pages"
+  | "community_pages" | "send_submission" | "submissions_inbox"
   | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
 
 type NavItem = {
@@ -64,6 +66,9 @@ type NavItem = {
   adminOnly?: boolean
   modOrAdmin?: boolean
   noticeAccess?: boolean
+  pageAccess?: boolean
+  senderAccess?: boolean
+  profileAccess?: boolean
 }
 
 export type PostMediaItem = {
@@ -123,13 +128,14 @@ export default function AdminPage() {
   const [officeSection, setOfficeSection] = useState("")
   const [staffId, setStaffId] = useState("")
 
-  const [tab, setTab] = useState<Tab>("community_pages")
+  const [tab, setTab] = useState<Tab>("send_submission")
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const [posts, setPosts] = useState<Post[]>([])
   const [pending, setPending] = useState<PendingComment[]>([])
   const [waiting, setWaiting] = useState<Profile[]>([])
   const [active, setActive] = useState<Profile[]>([])
+  const [inboxCount, setInboxCount] = useState(0)
   const [availableClubs, setAvailableClubs] = useState<ClubItem[]>([])
   const [communityPages, setCommunityPages] = useState<CommunityPage[]>([])
 
@@ -186,10 +192,17 @@ export default function AdminPage() {
   const isTeacher = me?.user_type === "teacher" && me.approved
   const isStaffNoticeAllowed =
     me?.user_type === "staff" && me.approved && Boolean(me.can_publish_notice)
-  const canPublishMain = isAdmin || isModerator
+  const isStudentOnly = Boolean(
+    me && !isAdmin && !isModerator && me.user_type === "student"
+  )
+
+  const canPublishMain = Boolean(isAdmin || isModerator)
   const canPublishNotices = Boolean(
     isAdmin || isModerator || isTeacher || isStaffNoticeAllowed
   )
+  const canAccessPages = Boolean(isAdmin || isModerator || isTeacher)
+  const canUseSender = Boolean(me?.approved)
+  const canAccessProfile = Boolean(me && !isStudentOnly)
 
   const selectableCats = useMemo(() => {
     if (isAdmin) return cats
@@ -218,13 +231,28 @@ export default function AdminPage() {
 
       const hasMain = (me.role === "admin" || me.role === "moderator") && me.approved
       if (hasMain) {
-        setTab((prev) => (prev === "community_pages" ? "posts" : prev))
-      } else {
         setTab((prev) =>
-          prev === "community_pages" || prev === "profile" || prev === "notices"
+          prev === "community_pages" || prev === "send_submission" ? "posts" : prev
+        )
+      } else if (me.user_type === "teacher") {
+        setTab((prev) =>
+          prev === "community_pages" ||
+          prev === "notices" ||
+          prev === "send_submission" ||
+          prev === "profile"
             ? prev
             : "community_pages"
         )
+      } else if (me.user_type === "staff") {
+        setTab((prev) =>
+          prev === "send_submission" ||
+          (prev === "notices" && Boolean(me.can_publish_notice)) ||
+          prev === "profile"
+            ? prev
+            : "send_submission"
+        )
+      } else {
+        setTab("send_submission")
       }
     }
   }, [me])
@@ -307,12 +335,14 @@ export default function AdminPage() {
       }
 
       if (isAdm) {
-        const [c, allProfs] = await Promise.all([
+        const [c, allProfs, subs] = await Promise.all([
           getPendingComments(t),
           getAllProfilesAdmin(t),
+          getAdminSubmissions(t).catch(() => []),
         ])
         setPending(c)
         setWaiting(allProfs.filter((u) => !u.approved))
+        setInboxCount(Array.isArray(subs) ? subs.length : 0)
       }
     } catch (e) { await fail(e) }
   }
@@ -865,8 +895,10 @@ export default function AdminPage() {
 
   const navigationGroups: { groupTitle: string; items: NavItem[] }[] = [
     {
-      groupTitle: "১. কন্টেন্ট ও সংবাদ",
+      groupTitle: "১. কন্টেন্ট ও বার্তা",
       items: [
+        { id: "send_submission", label: "নোটিশ / সংবাদ / তথ্য পাঠান", icon: Send, senderAccess: true },
+        { id: "submissions_inbox", label: "প্রাপ্ত তথ্য ও ইমেইল", icon: Inbox, badge: inboxCount, adminOnly: true },
         { id: "posts", label: "সংবাদ ও পোস্ট", icon: Newspaper, modOrAdmin: true },
         { id: "stories", label: "ফেসবুক স্টোরিজ ও রিলস", icon: Film, modOrAdmin: true },
         { id: "notices", label: "ডিজিটাল নোটিশ", icon: Bell, noticeAccess: true },
@@ -895,7 +927,12 @@ export default function AdminPage() {
     {
       groupTitle: "৪. ক্যাম্পাস কমিউনিটি ও পেজ",
       items: [
-        { id: "community_pages", label: "আমার পেজ ও কমিউনিটি", icon: FileText },
+        {
+          id: "community_pages",
+          label: isTeacher ? "আমার পেজ ও সম্পাদকীয়" : "আমার পেজ ও কমিউনিটি",
+          icon: FileText,
+          pageAccess: true,
+        },
         { id: "clubs", label: "ক্যাম্পাস ক্লাবসমূহ", icon: Star, adminOnly: true },
         { id: "students", label: "স্টুডেন্ট কর্নার", icon: BookOpen, adminOnly: true },
         { id: "social_sites", label: "সোশ্যাল সাইট ও গ্রুপ", icon: Globe2, adminOnly: true },
@@ -914,7 +951,7 @@ export default function AdminPage() {
     {
       groupTitle: "৬. ব্যক্তিগত প্রোফাইল",
       items: [
-        { id: "profile", label: "আমার প্রোফাইল", icon: User },
+        { id: "profile", label: "আমার প্রোফাইল", icon: User, profileAccess: true },
       ],
     },
   ]
@@ -986,6 +1023,9 @@ export default function AdminPage() {
               if (it.adminOnly) return Boolean(isAdmin)
               if (it.modOrAdmin) return Boolean(canPublishMain)
               if (it.noticeAccess) return Boolean(canPublishNotices)
+              if (it.pageAccess) return Boolean(canAccessPages)
+              if (it.senderAccess) return Boolean(canUseSender)
+              if (it.profileAccess) return Boolean(canAccessProfile)
               return true
             })
             if (visibleItems.length === 0) return null
@@ -1049,6 +1089,18 @@ export default function AdminPage() {
           <div className="p-3 bg-emerald-50 text-emerald-900 border border-emerald-300 rounded-2xl text-xs sm:text-sm font-bold text-center shadow-xs">
             {msg}
           </div>
+        )}
+
+        {tab === "send_submission" && me && canUseSender && (
+          <SubmissionSender
+            token={token}
+            shrink={shrink}
+            senderName={me.full_name}
+          />
+        )}
+
+        {tab === "submissions_inbox" && isAdmin && (
+          <SubmissionsInbox token={token} />
         )}
 
         {tab === "posts" && canPublishMain && (
@@ -1377,13 +1429,13 @@ export default function AdminPage() {
           </div>
         )}
 
-        {tab === "community_pages" && me && (
+        {tab === "community_pages" && me && canAccessPages && (
           <div className="space-y-3">
             {!canPublishMain && (
               <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3.5 text-xs text-blue-950 space-y-1">
                 <p className="font-bold">📢 স্বাগতম, {me.full_name}!</p>
                 <p>
-                  আপনার একাউন্ট খোলার সাথে সাথেই আপনার নামে একটি পেজ তৈরি হয়েছে। আপনি নিজের পেজ পরিচালনা ও পেজে পোস্ট করতে পারবেন এবং আপনার পেজের সব পোস্ট ওয়েবসাইটের হোমপেজে দেখা যাবে।
+                  আপনি আপনার নিজস্ব পেজে সম্পাদকীয় ও মতামত কলাম লিখতে পারবেন। আপনার লেখা আপনার পেজ, ওয়েবসাইটের হোমপেজ এবং মেনুবারের সম্পাদকীয় ও মতামত পাতায় দৃশ্যমান হবে।
                 </p>
               </div>
             )}
@@ -1399,7 +1451,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {tab === "profile" && (
+        {tab === "profile" && canAccessProfile && (
           <div className="bg-white rounded-2xl shadow p-5 space-y-4 border">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
               <h2 className="font-bold text-base text-slate-800">আমার প্রোফাইল তথ্য ({userRoleText})</h2>
