@@ -173,6 +173,13 @@ export default function AdminPage() {
   const [pBio, setPBio] = useState("")
   const [pFile, setPFile] = useState<File | null>(null)
 
+  const pFilePreview = useMemo(() => (pFile ? URL.createObjectURL(pFile) : null), [pFile])
+  useEffect(() => {
+    return () => {
+      if (pFilePreview) URL.revokeObjectURL(pFilePreview)
+    }
+  }, [pFilePreview])
+
   const isAdmin = me?.role === "admin" && me.approved
   const isModerator = me?.role === "moderator" && me.approved
   const canPublishMain = isAdmin || isModerator
@@ -540,6 +547,10 @@ export default function AdminPage() {
     if (!canPublishMain) return
     if (!title.trim() || !body.trim()) {
       setMsg("শিরোনাম ও ক্যাপশন লিখুন")
+      return
+    }
+    if (linkUrl.trim() && !/^https?:\/\//i.test(linkUrl.trim())) {
+      setMsg("❌ ওয়েবসাইটের লিংক http:// বা https:// দিয়ে শুরু হতে হবে")
       return
     }
 
@@ -990,7 +1001,7 @@ export default function AdminPage() {
                           <span className="truncate">{item.label}</span>
                         </span>
                         {item.badge !== undefined && item.badge > 0 && (
-                          <span className="px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[10px] font-bold">
+                          <span className="px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold">
                             {item.badge}
                           </span>
                         )}
@@ -1239,7 +1250,7 @@ export default function AdminPage() {
                     <div className="flex items-center justify-between border-b pb-1">
                       <span className="font-bold text-emerald-900 flex items-center gap-1.5">
                         <span>মিডিয়া #{idx + 1}</span>
-                        {m.url && <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-semibold">সংযুক্ত</span>}
+                        {m.url && <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-semibold">সংযুক্ত</span>}
                       </span>
                       <button type="button" onClick={() => removeMediaItem(idx)} className="text-rose-600 font-bold hover:underline flex items-center gap-1">
                         <Trash2 className="size-3.5" />
@@ -1262,7 +1273,7 @@ export default function AdminPage() {
                 ))}
               </div>
 
-              <input className={inp} placeholder="অন্য ওয়েবসাইটের লিঙ্ক (ঐচ্ছিক)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
+              <input className={inp} placeholder="অন্য ওয়েবসাইটের লিঙ্ক (https://... ঐচ্ছিক)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
 
               {oldImage && (
                 <div className="relative">
@@ -1388,9 +1399,9 @@ export default function AdminPage() {
               </Link>
             </div>
 
-            {(pFile || me.avatar_url) && (
+            {(pFilePreview || me.avatar_url) && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={pFile ? URL.createObjectURL(pFile) : me.avatar_url || ""} alt="" className="size-24 rounded-full object-cover mx-auto ring-2 ring-emerald-500 shadow" />
+              <img src={pFilePreview || me.avatar_url || ""} alt="" className="size-24 rounded-full object-cover mx-auto ring-2 ring-emerald-500 shadow" />
             )}
             <input type="file" accept="image/*" onChange={(e) => setPFile(e.target.files?.[0] || null)} className="text-xs block mx-auto" />
 
