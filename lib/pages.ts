@@ -87,7 +87,7 @@ export async function ensureUserAutoPage(
 
   const catMap: Record<string, string> = {
     teacher: "শিক্ষক পেজ",
-    staff: "কর্মকর্তা/কর্মচারী পেজ",
+    staff: "কর্মকর্তা পেজ",
     reporter: "সাংবাদিক পেজ",
     student: "শিক্ষার্থী পেজ",
   }
