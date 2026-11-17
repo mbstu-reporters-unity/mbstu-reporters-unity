@@ -111,7 +111,7 @@ export default async function UserProfilePage({
   const userTypeLabels: Record<string, string> = {
     student: '🎓 শিক্ষার্থী',
     teacher: '👨‍🏫 শিক্ষক',
-    staff: '💼 কর্মকর্তা/কর্মচারী',
+    staff: '💼 কর্মকর্তা',
     reporter: '📰 ক্যাম্পাস সাংবাদিক',
   }
 
