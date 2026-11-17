@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { getImagesMeta, getLayout } from "@/lib/sb"
+import { getImagesMetaForMany, getLayoutsForMany } from "@/lib/sb"
 import RichGallery from "./rich-gallery"
 import type { GalleryItem } from "./rich-gallery"
 
@@ -12,6 +12,61 @@ type EmbedParsed = {
     | { kind: "video"; src: string }
   >
   images: GalleryItem[]
+}
+
+type MediaBatchResult = {
+  items: GalleryItem[] | null
+  layout: string
+}
+
+const mediaPending = new Map<string, Array<(res: MediaBatchResult) => void>>()
+let mediaTimer: ReturnType<typeof setTimeout> | null = null
+
+function fetchCardMediaBatched(postId: string): Promise<MediaBatchResult> {
+  return new Promise((resolve) => {
+    const list = mediaPending.get(postId) || []
+    list.push(resolve)
+    mediaPending.set(postId, list)
+
+    if (!mediaTimer) {
+      mediaTimer = setTimeout(async () => {
+        mediaTimer = null
+        const entryMap = new Map(mediaPending)
+        mediaPending.clear()
+        const ids = Array.from(entryMap.keys())
+
+        for (let i = 0; i < ids.length; i += 40) {
+          const chunk = ids.slice(i, i + 40)
+          try {
+            const [imagesMap, layoutsMap] = await Promise.all([
+              getImagesMetaForMany("post", chunk),
+              getLayoutsForMany("post", chunk),
+            ])
+            for (const id of chunk) {
+              const rows = imagesMap[id] || []
+              const items: GalleryItem[] | null =
+                rows.length > 0
+                  ? rows.map((r) => ({
+                      url: r.url,
+                      caption: r.caption,
+                      credit: r.credit,
+                      date: r.created_at || null,
+                    }))
+                  : null
+              const layout = layoutsMap[id] || "grid"
+              const resolvers = entryMap.get(id) || []
+              resolvers.forEach((fn) => fn({ items, layout }))
+            }
+          } catch {
+            for (const id of chunk) {
+              const resolvers = entryMap.get(id) || []
+              resolvers.forEach((fn) => fn({ items: null, layout: "grid" }))
+            }
+          }
+        }
+      }, 25)
+    }
+  })
 }
 
 function classifyMediaUrl(raw: string):
@@ -28,7 +83,6 @@ function classifyMediaUrl(raw: string):
   )
   if (ytMatch && ytMatch[2]?.length === 11) {
     const isShort = /\/shorts\//i.test(url)
-    // enablejsapi=1 যুক্ত করা হয়েছে যাতে স্ক্রল করার সাথে সাথে ব্যাকগ্রাউন্ড সাউন্ড বন্ধ করা যায়
     return {
       kind: "youtube",
       isShort,
@@ -109,7 +163,6 @@ function parseEmbedMedia(raw?: string | null): EmbedParsed {
   return out
 }
 
-/* ==================== স্বয়ংক্রিয় স্ক্রল ডিটেকশন ও অটো-পজ প্লেয়ার ==================== */
 function SmartFeedVideoPlayer({
   directVideoUrl,
   primaryEmbedVideo,
@@ -123,7 +176,6 @@ function SmartFeedVideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
-  // স্ক্রল করে ভিডিও স্ক্রিন থেকে আড়াল হওয়ামাত্র সাউন্ড ও প্লেয়িং বন্ধ করা
   useEffect(() => {
     const target = containerRef.current
     if (!target) return
@@ -131,14 +183,10 @@ function SmartFeedVideoPlayer({
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          // ভিডিও স্ক্রিনে ২০% এর কম থাকলে বা উপরে/নিচে চলে গেলে তৎক্ষণাৎ পজ হবে
           if (!entry.isIntersecting || entry.intersectionRatio < 0.2) {
-            // ১. সাধারণ MP4 ভিডিও পজ করা
             if (videoRef.current && !videoRef.current.paused) {
               videoRef.current.pause()
             }
-
-            // ২. ইউটিউব ভিডিও পজ করা (ব্যাকগ্রাউন্ড সাউন্ড বন্ধ হবে)
             if (iframeRef.current?.contentWindow) {
               iframeRef.current.contentWindow.postMessage(
                 JSON.stringify({ event: "command", func: "pauseVideo", args: [] }),
@@ -148,14 +196,11 @@ function SmartFeedVideoPlayer({
           }
         })
       },
-      {
-        threshold: [0, 0.2], // স্ক্রিনে ২০% দৃশ্যমানতা
-      }
+      { threshold: [0, 0.2] }
     )
 
     observer.observe(target)
 
-    // ব্রাউজার ট্যাব পরিবর্তন করলেও ভিডিও থেমে যাবে
     const handleVisibilityChange = () => {
       if (document.hidden) {
         if (videoRef.current && !videoRef.current.paused) videoRef.current.pause()
@@ -273,24 +318,18 @@ export default function CardGallery({
 
   useEffect(() => {
     let live = true
-    ;(async () => {
-      const [rows, lay] = await Promise.all([
-        getImagesMeta("post", postId),
-        getLayout("post", postId),
-      ])
+    fetchCardMediaBatched(postId).then((res) => {
       if (!live) return
-      setLayout(lay || "grid")
-      if (rows.length > 0) {
+      setLayout(res.layout || "grid")
+      if (res.items && res.items.length > 0) {
         setItems(
-          rows.map((r) => ({
-            url: r.url,
-            caption: r.caption,
-            credit: r.credit,
-            date: r.created_at || postDate || null,
+          res.items.map((r) => ({
+            ...r,
+            date: r.date || postDate || null,
           }))
         )
       }
-    })()
+    })
     return () => {
       live = false
     }
@@ -300,7 +339,6 @@ export default function CardGallery({
   const hasDirectVideo = Boolean(videoUrl && videoUrl.trim())
   const primaryEmbedVideo = embed.videos[0] || null
 
-  // ১. ছবিতে ক্লিক করলে অ্যালবামে বা লাইটবক্সে ওপেন হবে
   if (items && items.length > 0) {
     return (
       <div className="w-full space-y-1 overflow-hidden">
@@ -322,7 +360,6 @@ export default function CardGallery({
     )
   }
 
-  // ২. সরাসরি ভিডিও বা ইউটিউব ভিডিও (স্ক্রল করলে অটো-পজ হবে)
   if (hasDirectVideo || primaryEmbedVideo) {
     return (
       <SmartFeedVideoPlayer
@@ -333,7 +370,6 @@ export default function CardGallery({
     )
   }
 
-  // ৩. embed_media_url-এ ছবি থাকলে
   if (embed.images.length > 0) {
     return (
       <div className="w-full overflow-hidden">
@@ -348,7 +384,6 @@ export default function CardGallery({
     )
   }
 
-  // ৪. একক cover ছবি থাকলে
   if (!cover) return null
 
   return (
