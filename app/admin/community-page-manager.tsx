@@ -42,6 +42,16 @@ import {
 const inp = "w-full border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white text-slate-900 focus:outline-none focus:border-blue-600"
 const btn = "w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2.5 font-bold text-sm disabled:opacity-50 cursor-pointer shadow-sm transition"
 
+function normalizeHttpUrl(raw: string): string | null {
+  const t = raw.trim()
+  if (!t) return null
+  if (/^https?:\/\//i.test(t)) return t
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/i.test(t)) {
+    throw new Error("লিংক অবশ্যই http:// বা https:// দিয়ে শুরু হতে হবে")
+  }
+  return `https://${t}`
+}
+
 export default function CommunityPageManager({
   token,
   shrink,
@@ -231,6 +241,19 @@ export default function CommunityPageManager({
       return
     }
 
+    let finalWebsiteUrl: string | null = null
+    let finalFbUrl: string | null = null
+    let finalYtUrl: string | null = null
+
+    try {
+      finalWebsiteUrl = normalizeHttpUrl(websiteUrl)
+      finalFbUrl = normalizeHttpUrl(fbUrl)
+      finalYtUrl = normalizeHttpUrl(ytUrl)
+    } catch (e: any) {
+      setMsg("❌ " + (e?.message || "সঠিক ওয়েব লিংক লিখুন"))
+      return
+    }
+
     setBusy(true)
     setMsg("")
     try {
@@ -255,9 +278,9 @@ export default function CommunityPageManager({
         phone: phone.trim() || null,
         email: email.trim() || null,
         location: location.trim() || null,
-        website_url: websiteUrl.trim() || null,
-        fb_url: fbUrl.trim() || null,
-        yt_url: ytUrl.trim() || null,
+        website_url: finalWebsiteUrl,
+        fb_url: finalFbUrl,
+        yt_url: finalYtUrl,
         avatar_url: finalAvatar,
         cover_url: finalCover,
         is_active: isActive,
@@ -789,7 +812,7 @@ export default function CommunityPageManager({
                       <p className="font-bold text-slate-900 truncate">{item.name}</p>
                       {item.is_verified && <CheckCircle2 className="size-3.5 fill-blue-600 text-white shrink-0" />}
                       <span
-                        className={`text-[10px] px-2 py-0.2 rounded-full font-bold ${
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                           item.is_active !== false ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                         }`}
                       >
