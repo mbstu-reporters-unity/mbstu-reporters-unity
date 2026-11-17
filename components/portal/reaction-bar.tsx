@@ -58,6 +58,93 @@ function deviceId() {
   }
 }
 
+type ReactionBatchResult = {
+  counts: Record<string, number>
+  mine: string | null
+  commentCount: number
+}
+
+const rxPending = new Map<string, Array<(res: ReactionBatchResult) => void>>()
+let rxTimer: ReturnType<typeof setTimeout> | null = null
+
+function fetchReactionBatched(postId: string, devId: string): Promise<ReactionBatchResult> {
+  return new Promise((resolve) => {
+    const list = rxPending.get(postId) || []
+    list.push(resolve)
+    rxPending.set(postId, list)
+
+    if (!rxTimer) {
+      rxTimer = setTimeout(async () => {
+        rxTimer = null
+        const entryMap = new Map(rxPending)
+        rxPending.clear()
+        const ids = Array.from(entryMap.keys())
+
+        for (let i = 0; i < ids.length; i += 40) {
+          const chunk = ids.slice(i, i + 40)
+          const idParam = chunk.map((id) => encodeURIComponent(id)).join(',')
+          try {
+            const [cRes, mRes, cmRes] = await Promise.all([
+              fetch(`${SB_URL}/rest/v1/post_reaction_counts?select=post_id,emoji,total&post_id=in.(${idParam})`, {
+                headers: H,
+                cache: 'no-store',
+              }),
+              fetch(`${SB_URL}/rest/v1/post_reactions?select=post_id,emoji&device_id=eq.${encodeURIComponent(devId)}&post_id=in.(${idParam})`, {
+                headers: H,
+                cache: 'no-store',
+              }),
+              fetch(`${SB_URL}/rest/v1/comments?select=post_id&approved=eq.true&post_id=in.(${idParam})`, {
+                headers: H,
+                cache: 'no-store',
+              }),
+            ])
+
+            const countsByPost: Record<string, Record<string, number>> = {}
+            if (cRes.ok) {
+              const rows: { post_id: string; emoji: string; total: number }[] = await cRes.json()
+              rows.forEach((r) => {
+                if (!countsByPost[r.post_id]) countsByPost[r.post_id] = {}
+                countsByPost[r.post_id][r.emoji] = r.total
+              })
+            }
+
+            const mineByPost: Record<string, string | null> = {}
+            if (mRes.ok) {
+              const rows: { post_id: string; emoji: string }[] = await mRes.json()
+              rows.forEach((r) => {
+                mineByPost[r.post_id] = r.emoji || null
+              })
+            }
+
+            const commentCountByPost: Record<string, number> = {}
+            if (cmRes.ok) {
+              const rows: { post_id: string }[] = await cmRes.json()
+              rows.forEach((r) => {
+                commentCountByPost[r.post_id] = (commentCountByPost[r.post_id] || 0) + 1
+              })
+            }
+
+            for (const id of chunk) {
+              const resolvers = entryMap.get(id) || []
+              const resObj: ReactionBatchResult = {
+                counts: countsByPost[id] || {},
+                mine: mineByPost[id] || null,
+                commentCount: commentCountByPost[id] || 0,
+              }
+              resolvers.forEach((fn) => fn(resObj))
+            }
+          } catch {
+            for (const id of chunk) {
+              const resolvers = entryMap.get(id) || []
+              resolvers.forEach((fn) => fn({ counts: {}, mine: null, commentCount: 0 }))
+            }
+          }
+        }
+      }, 25)
+    }
+  })
+}
+
 export function ReactionBar({
   postId,
   title,
@@ -77,7 +164,6 @@ export function ReactionBar({
   const [msg, setMsg] = useState('')
   const [copied, setCopied] = useState(false)
 
-  // লং-প্রেস / হোভার রিঅ্যাকশন পিকার স্টেট
   const [pickerOpen, setPickerOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -87,7 +173,6 @@ export function ReactionBar({
   const touchMoved = useRef(false)
   const touchStartPos = useRef<{ x: number; y: number } | null>(null)
 
-  // ইনলাইন কমেন্ট সেকশন স্টেট
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [comments, setComments] = useState<PublicComment[]>([])
   const [commentsLoaded, setCommentsLoaded] = useState(false)
@@ -97,14 +182,13 @@ export function ReactionBar({
   const [cStatus, setCStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [cErr, setCErr] = useState('')
 
-  // রিপ্লাই স্টেট
   const [replyTo, setReplyTo] = useState<string | null>(null)
   const [rName, setRName] = useState('')
   const [rText, setRText] = useState('')
   const [rBusy, setRBusy] = useState(false)
   const [rStatus, setRStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
-  async function load() {
+  async function loadSingle() {
     try {
       const dev = deviceId()
       const [c, m, cm] = await Promise.all([
@@ -139,8 +223,17 @@ export function ReactionBar({
   }
 
   useEffect(() => {
-    load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let live = true
+    const dev = deviceId()
+    fetchReactionBatched(postId, dev).then((res) => {
+      if (!live) return
+      setCounts(res.counts)
+      setMine(res.mine)
+      setCommentCount(res.commentCount)
+    })
+    return () => {
+      live = false
+    }
   }, [postId])
 
   useEffect(() => {
@@ -182,11 +275,10 @@ export function ReactionBar({
       if (!res.ok) throw new Error()
     } catch {
       setMsg('❌ রিঅ্যাকশন সেভ করা যায়নি')
-      load()
+      loadSingle()
     }
   }
 
-  // মোবাইল লং-প্রেস হ্যান্ডলার
   function handleTouchStart(e: React.TouchEvent) {
     touchMoved.current = false
     longPressTriggered.current = false
@@ -224,7 +316,6 @@ export function ReactionBar({
     }
   }
 
-  // ডেস্কটপ হোভার পিকার
   function handleMouseEnter() {
     if (leaveTimer.current) clearTimeout(leaveTimer.current)
     hoverTimer.current = setTimeout(() => setPickerOpen(true), 320)
@@ -323,9 +414,7 @@ export function ReactionBar({
   return (
     <div className={noTopBorder ? 'pt-1 relative' : 'mt-2 border-t border-white/15 pt-2.5 relative'}>
       <div className="flex items-center justify-between gap-2">
-        {/* বাম ও মাঝের বাটনসমূহ: ❤️ রিয়েকশন -> 💬 কমেন্ট -> ↗️ শেয়ার */}
         <div className="flex items-center gap-4 sm:gap-5">
-          {/* ১. সিঙ্গেল ❤️ রিয়েকশন বাটন (লং প্রেস করে ৬টি ইমোজি বাছাই) */}
           <div
             ref={wrapperRef}
             className="relative"
@@ -386,7 +475,6 @@ export function ReactionBar({
             </button>
           </div>
 
-          {/* ২. কমেন্ট সেকশন বাটন */}
           {!hideCommentButton && (
             <button
               type="button"
@@ -402,7 +490,6 @@ export function ReactionBar({
             </button>
           )}
 
-          {/* ৩. শেয়ার বাটন */}
           <button
             type="button"
             onClick={share}
@@ -417,7 +504,6 @@ export function ReactionBar({
           </button>
         </div>
 
-        {/* ডানপাশে ফেসবুকের মতো মিনি রিয়েকশন আইকন সামারি */}
         {topReactions.length > 0 && (
           <button
             type="button"
@@ -439,7 +525,6 @@ export function ReactionBar({
 
       {msg && <p className="mt-1 text-xs text-rose-300">{msg}</p>}
 
-      {/* হোমপেজ কার্ডের ভেতর ইনলাইন ফেসবুক-স্টাইল কমেন্ট সেকশন */}
       {inlineComments && commentsOpen && (
         <div className="mt-3 pt-3 border-t border-white/15 space-y-3 animate-in fade-in">
           {rootComments.length > 0 ? (
@@ -524,7 +609,6 @@ export function ReactionBar({
             <p className="text-xs text-white/60">এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি করুন!</p>
           )}
 
-          {/* ফেসবুকের মতো "Write a comment..." ইনপুট */}
           <div className="space-y-1.5">
             <input
               className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-1.5 text-xs text-white placeholder-white/45 focus:outline-none focus:border-cyan-400"
