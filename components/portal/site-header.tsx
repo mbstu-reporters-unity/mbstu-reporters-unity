@@ -596,7 +596,7 @@ export function SiteHeader() {
                     {pathname.startsWith('/p/') && (
                       <span className="size-2 rounded-full bg-blue-400 shadow-[0_0_8px_#60a5fa] shrink-0" />
                     )}
-                  </Link>
+                  </button>
 
                   {/* ৯. স্টুডেন্ট কর্নার */}
                   <Link
