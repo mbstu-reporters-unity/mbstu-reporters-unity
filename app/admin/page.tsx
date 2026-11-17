@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import {
-  login, signUp, getMe, getAllPosts, setPostHidden, setPostAuthorAvatarVisible, getCategoryNames, getCategories,
-  updatePost, deletePost, uploadImage, uploadVideo,
+  login, signUp, getMe, getAllPosts, getAllProfilesAdmin, setPostHidden, setPostAuthorAvatarVisible,
+  getCategoryNames, getCategories, updatePost, deletePost, uploadImage, uploadVideo,
   getPendingComments, approveComment, deleteComment,
   getReporters, approveReporter,
   updateMyProfile, createPostReturningId, removeAllImages,
@@ -63,6 +63,7 @@ type NavItem = {
   badge?: number
   adminOnly?: boolean
   modOrAdmin?: boolean
+  noticeAccess?: boolean
 }
 
 export type PostMediaItem = {
@@ -182,7 +183,13 @@ export default function AdminPage() {
 
   const isAdmin = me?.role === "admin" && me.approved
   const isModerator = me?.role === "moderator" && me.approved
+  const isTeacher = me?.user_type === "teacher" && me.approved
+  const isStaffNoticeAllowed =
+    me?.user_type === "staff" && me.approved && Boolean(me.can_publish_notice)
   const canPublishMain = isAdmin || isModerator
+  const canPublishNotices = Boolean(
+    isAdmin || isModerator || isTeacher || isStaffNoticeAllowed
+  )
 
   const selectableCats = useMemo(() => {
     if (isAdmin) return cats
@@ -213,7 +220,11 @@ export default function AdminPage() {
       if (hasMain) {
         setTab((prev) => (prev === "community_pages" ? "posts" : prev))
       } else {
-        setTab((prev) => (prev === "community_pages" || prev === "profile" ? prev : "community_pages"))
+        setTab((prev) =>
+          prev === "community_pages" || prev === "profile" || prev === "notices"
+            ? prev
+            : "community_pages"
+        )
       }
     }
   }, [me])
@@ -296,12 +307,12 @@ export default function AdminPage() {
       }
 
       if (isAdm) {
-        const [c, w] = await Promise.all([
+        const [c, allProfs] = await Promise.all([
           getPendingComments(t),
-          getReporters(t, false),
+          getAllProfilesAdmin(t),
         ])
         setPending(c)
-        setWaiting(w)
+        setWaiting(allProfs.filter((u) => !u.approved))
       }
     } catch (e) { await fail(e) }
   }
@@ -410,9 +421,9 @@ export default function AdminPage() {
       setMode("login")
       setPassword("")
       setMsg(
-        userType === "reporter"
-          ? "✅ নিবন্ধন সম্পন্ন। অ্যাডমিন অনুমোদন দিলে লগইন করুন।"
-          : "✅ নিবন্ধন সফল হয়েছে! আপনার নামে একটি পেজও স্বয়ংক্রিয়ভাবে তৈরি হয়েছে। এখন লগইন করুন।"
+        userType === "student"
+          ? "✅ নিবন্ধন সফল হয়েছে! এখন লগইন করুন।"
+          : "✅ নিবন্ধন সম্পন্ন হয়েছে। অ্যাডমিন অনুমোদন দিলে লগইন করতে পারবেন।"
       )
     } catch (e) { await fail(e) }
     setBusy(false)
@@ -681,7 +692,7 @@ export default function AdminPage() {
                   {[
                     { key: "student", label: "🎓 শিক্ষার্থী" },
                     { key: "teacher", label: "👨‍🏫 শিক্ষক" },
-                    { key: "staff", label: "💼 কর্মচারী" },
+                    { key: "staff", label: "💼 কর্মকর্তা" },
                     { key: "reporter", label: "📰 সাংবাদিক" },
                   ].map((t) => (
                     <button
@@ -749,7 +760,7 @@ export default function AdminPage() {
                       <input className={inp} placeholder="যেমন: সহকারী রেজিস্ট্রার *" value={designation} onChange={(e) => setDesignation(e.target.value)} />
                     </div>
                     <div>
-                      <label className={lbl}>স্টাফ আইডি (ঐচ্ছিক)</label>
+                      <label className={lbl}>কর্মকর্তা আইডি (ঐচ্ছিক)</label>
                       <input className={inp} placeholder="আইডি নম্বর" value={staffId} onChange={(e) => setStaffId(e.target.value)} />
                     </div>
                   </div>
@@ -837,7 +848,7 @@ export default function AdminPage() {
   const userTypeLabels: Record<string, string> = {
     student: "🎓 শিক্ষার্থী",
     teacher: "👨‍🏫 শিক্ষক",
-    staff: "💼 কর্মকর্তা/কর্মচারী",
+    staff: "💼 কর্মকর্তা",
     reporter: "📰 সাংবাদিক",
   }
   const userRoleText = isAdmin
@@ -846,17 +857,19 @@ export default function AdminPage() {
     ? "মডারেটর"
     : userTypeLabels[me.user_type || "student"] || "সদস্য"
 
+  const waitingTeachersCount = waiting.filter((r) => r.user_type === "teacher").length
+  const waitingStaffCount = waiting.filter((r) => r.user_type === "staff").length
   const waitingReportersCount = waiting.filter(
     (r) => (r.user_type || (r.newspaper_name ? "reporter" : "student")) === "reporter"
   ).length
 
   const navigationGroups: { groupTitle: string; items: NavItem[] }[] = [
     {
-      groupTitle: "১. কন্টেন্ট ও সংবাদ (অ্যাডমিন / মডারেটর)",
+      groupTitle: "১. কন্টেন্ট ও সংবাদ",
       items: [
         { id: "posts", label: "সংবাদ ও পোস্ট", icon: Newspaper, modOrAdmin: true },
         { id: "stories", label: "ফেসবুক স্টোরিজ ও রিলস", icon: Film, modOrAdmin: true },
-        { id: "notices", label: "ডিজিটাল নোটিশ", icon: Bell, modOrAdmin: true },
+        { id: "notices", label: "ডিজিটাল নোটিশ", icon: Bell, noticeAccess: true },
         { id: "ticker", label: "ব্রেকিং টিকার", icon: Radio, adminOnly: true },
         { id: "comments", label: "কমেন্ট মডারেশন", icon: MessageSquare, badge: pending.length, adminOnly: true },
       ],
@@ -892,9 +905,9 @@ export default function AdminPage() {
     {
       groupTitle: "৫. সদস্য ও ব্যবহারকারী (শুধু অ্যাডমিন)",
       items: [
-        { id: "users_teacher", label: "শিক্ষক তালিকা", icon: GraduationCap, adminOnly: true },
+        { id: "users_teacher", label: "শিক্ষক তালিকা", icon: GraduationCap, badge: waitingTeachersCount, adminOnly: true },
         { id: "users_student", label: "শিক্ষার্থী তালিকা", icon: User, adminOnly: true },
-        { id: "users_staff", label: "কর্মচারী তালিকা", icon: Briefcase, adminOnly: true },
+        { id: "users_staff", label: "কর্মকর্তা তালিকা", icon: Briefcase, badge: waitingStaffCount, adminOnly: true },
         { id: "users_reporter", label: "সাংবাদিক তালিকা", icon: Newspaper, badge: waitingReportersCount, adminOnly: true },
       ],
     },
@@ -972,6 +985,7 @@ export default function AdminPage() {
             const visibleItems = grp.items.filter((it) => {
               if (it.adminOnly) return Boolean(isAdmin)
               if (it.modOrAdmin) return Boolean(canPublishMain)
+              if (it.noticeAccess) return Boolean(canPublishNotices)
               return true
             })
             if (visibleItems.length === 0) return null
@@ -1446,7 +1460,7 @@ export default function AdminPage() {
             shrink={shrink}
           />
         )}
-        {tab === "notices" && canPublishMain && (
+        {tab === "notices" && canPublishNotices && (
           <NoticeManager
             token={token}
             isAdmin={!!isAdmin}
