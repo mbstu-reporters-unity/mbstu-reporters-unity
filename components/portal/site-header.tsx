@@ -42,6 +42,83 @@ import { SB_URL, SB_KEY, getMe, type Profile } from '@/lib/sb'
 import { Logo } from './logo'
 import { useLang } from '@/lib/i18n'
 
+const HEADER_CACHE_KEY = 'mbstu_header_cache_v1'
+const HEADER_CACHE_TTL = 3 * 60 * 1000
+const ME_CACHE_TTL = 60 * 1000
+
+type HeaderCachePayload = {
+  ts: number
+  univLogo: string
+  univLink: string
+  univText: string
+  clubsList: ClubItem[]
+  categoriesList: string[]
+  facultiesList: FacultyWithDepartments[]
+  communityPagesList: CommunityPage[]
+  associationsList: UniversityAssociation[]
+  socialSitesList: SocialSite[]
+}
+
+let memHeaderCache: HeaderCachePayload | null = null
+let memHeaderPromise: Promise<HeaderCachePayload> | null = null
+let memMeCache: { token: string; ts: number; profile: Profile | null } | null = null
+
+async function fetchHeaderData(): Promise<HeaderCachePayload> {
+  if (memHeaderPromise) return memHeaderPromise
+
+  memHeaderPromise = (async () => {
+    let univLogo = 'https://mbstu.ac.bd/images/logo.png'
+    let univLink = 'https://mbstu.ac.bd'
+    let univText = ''
+
+    const [cfgRows, clubs, categories, faculties, pages, associations, socialSites] = await Promise.all([
+      fetch(
+        `${SB_URL}/rest/v1/app_config?select=key,value&key=in.(univ_logo_url,univ_link_url,univ_text)`,
+        { headers: { apikey: SB_KEY }, cache: 'no-store' }
+      )
+        .then((res) => (res.ok ? res.json() : []))
+        .catch(() => []),
+      getCampusClubs().catch(() => []),
+      getVisibleCategoryNames().catch(() => []),
+      getFacultiesWithDepartments().catch(() => []),
+      getCommunityPages().catch(() => []),
+      getUniversityAssociations().catch(() => []),
+      getSocialSites().catch(() => []),
+    ])
+
+    if (Array.isArray(cfgRows)) {
+      cfgRows.forEach((r: { key?: string; value?: string }) => {
+        if (r.key === 'univ_logo_url' && r.value) univLogo = r.value
+        if (r.key === 'univ_link_url' && r.value) univLink = r.value
+        if (r.key === 'univ_text') univText = r.value || ''
+      })
+    }
+
+    const payload: HeaderCachePayload = {
+      ts: Date.now(),
+      univLogo,
+      univLink,
+      univText,
+      clubsList: clubs || [],
+      categoriesList: categories || [],
+      facultiesList: faculties || [],
+      communityPagesList: (pages || []).filter((p) => p.is_active !== false),
+      associationsList: associations || [],
+      socialSitesList: socialSites || [],
+    }
+
+    memHeaderCache = payload
+    try {
+      sessionStorage.setItem(HEADER_CACHE_KEY, JSON.stringify(payload))
+    } catch {}
+    return payload
+  })().finally(() => {
+    memHeaderPromise = null
+  })
+
+  return memHeaderPromise
+}
+
 export function SiteHeader() {
   const pathname = usePathname() || '/'
   const [menuOpen, setMenuOpen] = useState(false)
@@ -65,38 +142,56 @@ export function SiteHeader() {
   useEffect(() => {
     let alive = true
 
-    fetch(
-      `${SB_URL}/rest/v1/app_config?select=key,value&key=in.(univ_logo_url,univ_link_url,univ_text)`,
-      { headers: { apikey: SB_KEY }, cache: 'no-store' }
-    )
-      .then((res) => res.json())
-      .then((rows) => {
-        if (!alive || !Array.isArray(rows)) return
-        rows.forEach((r) => {
-          if (r.key === 'univ_logo_url' && r.value) setUnivLogo(r.value)
-          if (r.key === 'univ_link_url' && r.value) setUnivLink(r.value)
-          if (r.key === 'univ_text') setUnivText(r.value || '')
-        })
-      })
-      .catch(() => {})
-
-    getCampusClubs().then((res) => { if (alive && res && res.length > 0) setClubsList(res) })
-    getVisibleCategoryNames().then((res) => { if (alive) setCategoriesList(res) })
-    getFacultiesWithDepartments().then((res) => { if (alive) setFacultiesList(res) })
-    getCommunityPages().then((res) => {
-      if (alive && res && res.length > 0) setCommunityPagesList(res.filter((p) => p.is_active !== false))
-    })
-    getUniversityAssociations().then((res) => { if (alive) setAssociationsList(res) })
-    getSocialSites().then((res) => { if (alive) setSocialSitesList(res) })
-
-    const t = localStorage.getItem('mbstu_admin_token') || ''
-    if (t) {
-      getMe(t)
-        .then((profile) => {
-          if (alive && profile) setMe(profile)
-        })
-        .catch(() => {})
+    const applyHeaderData = (d: HeaderCachePayload) => {
+      if (!alive) return
+      setUnivLogo(d.univLogo)
+      setUnivLink(d.univLink)
+      setUnivText(d.univText)
+      setClubsList(d.clubsList)
+      setCategoriesList(d.categoriesList)
+      setFacultiesList(d.facultiesList)
+      setCommunityPagesList(d.communityPagesList)
+      setAssociationsList(d.associationsList)
+      setSocialSitesList(d.socialSitesList)
     }
+
+    let servedFromCache = false
+    if (memHeaderCache && Date.now() - memHeaderCache.ts < HEADER_CACHE_TTL) {
+      applyHeaderData(memHeaderCache)
+      servedFromCache = true
+    } else {
+      try {
+        const raw = sessionStorage.getItem(HEADER_CACHE_KEY)
+        if (raw) {
+          const parsed = JSON.parse(raw) as HeaderCachePayload
+          if (parsed?.ts && Date.now() - parsed.ts < HEADER_CACHE_TTL) {
+            memHeaderCache = parsed
+            applyHeaderData(parsed)
+            servedFromCache = true
+          }
+        }
+      } catch {}
+    }
+
+    if (!servedFromCache) {
+      fetchHeaderData().then(applyHeaderData).catch(() => {})
+    }
+
+    try {
+      const t = localStorage.getItem('mbstu_admin_token') || ''
+      if (t) {
+        if (memMeCache && memMeCache.token === t && Date.now() - memMeCache.ts < ME_CACHE_TTL) {
+          if (alive && memMeCache.profile) setMe(memMeCache.profile)
+        } else {
+          getMe(t)
+            .then((profile) => {
+              memMeCache = { token: t, ts: Date.now(), profile }
+              if (alive && profile) setMe(profile)
+            })
+            .catch(() => {})
+        }
+      }
+    } catch {}
 
     return () => {
       alive = false
@@ -171,10 +266,10 @@ export function SiteHeader() {
         url.searchParams.set('club', clubId)
         window.history.pushState({}, '', url.toString())
         window.dispatchEvent(new CustomEvent('open-club-modal', { detail: clubId }))
-        const el = document.getElementById(`club-${clubId}`)
+        const el = document.getElementById(`club-${clubId}`) || document.getElementById('club-news')
         if (el) el.scrollIntoView({ behavior: 'smooth' })
       } else {
-        window.location.href = `/?club=${clubId}#club-${clubId}`
+        window.location.href = `/?club=${clubId}#club-news`
       }
     }
   }
@@ -209,7 +304,6 @@ export function SiteHeader() {
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#071030]/95 shadow-lg backdrop-blur-2xl w-full">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5">
           
-          {/* লোগো ও বিশ্ববিদ্যালয়ের তথ্য */}
           <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 mr-2 overflow-hidden">
             <Logo inverted />
             <span className="h-5 w-px bg-white/20 shrink-0 hidden xs:block" aria-hidden="true" />
@@ -234,7 +328,6 @@ export function SiteHeader() {
             </a>
           </div>
 
-          {/* ডেস্কটপ মেনুবার */}
           <nav aria-label="Main navigation" className="hidden lg:block">
             <ul className="flex items-center gap-1 xl:gap-2 text-sm font-semibold text-white/85">
               <li>
@@ -375,7 +468,6 @@ export function SiteHeader() {
             </ul>
           </nav>
 
-          {/* ডানপাশ: লগইন/প্রোফাইল বাটন ও হ্যামবার্গার */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {me ? (
               <Link
@@ -414,7 +506,6 @@ export function SiteHeader() {
         </div>
       </header>
 
-      {/* ==================== মোবাইল পপ-আপ নেভিগেশন মেনু (২-কলাম গ্রিড কার্ড) ==================== */}
       {menuOpen && (
         <div
           className="fixed inset-0 z-[120] lg:hidden bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-150"
@@ -427,7 +518,6 @@ export function SiteHeader() {
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-md max-h-[88dvh] flex flex-col rounded-3xl border border-white/15 bg-[#0f172a]/95 text-white shadow-[0_24px_60px_rgba(0,0,0,0.75)] overflow-hidden backdrop-blur-2xl animate-in zoom-in-95 fade-in duration-200 select-none"
           >
-            {/* পপ-আপ হেডার */}
             <div className="flex items-center justify-between gap-2.5 px-4 py-3.5 border-b border-white/10 bg-white/[0.03] shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
                 {navStack.length > 1 ? (
@@ -467,11 +557,9 @@ export function SiteHeader() {
               </button>
             </div>
 
-            {/* পপ-আপ বডি */}
             <div className="flex-1 overflow-y-auto p-3.5 scrollbar-none">
               {currentLevel === 'root' && (
                 <div className="grid grid-cols-2 gap-2.5 animate-in fade-in">
-                  {/* ১. হোমপেজ */}
                   <Link
                     href="/"
                     onClick={closeMenuDrawer}
@@ -488,7 +576,6 @@ export function SiteHeader() {
                     )}
                   </Link>
 
-                  {/* ২. ক্যাম্পাস সংবাদ */}
                   <button
                     type="button"
                     onClick={() => scrollToSection('general-news')}
@@ -502,7 +589,6 @@ export function SiteHeader() {
                     </span>
                   </button>
 
-                  {/* ৩. ডিজিটাল নোটিশ */}
                   <Link
                     href="/notices"
                     onClick={closeMenuDrawer}
@@ -519,7 +605,6 @@ export function SiteHeader() {
                     )}
                   </Link>
 
-                  {/* ৪. সংবাদ ও ক্যাটাগরি */}
                   <button
                     type="button"
                     onClick={(e) => goToNextLevel('news', e)}
@@ -533,7 +618,6 @@ export function SiteHeader() {
                     </span>
                   </button>
 
-                  {/* ৫. প্রশাসন ও দপ্তর */}
                   <button
                     type="button"
                     onClick={(e) => goToNextLevel('admin_tier', e)}
@@ -550,7 +634,6 @@ export function SiteHeader() {
                     )}
                   </button>
 
-                  {/* ৬. অনুষদ ও বিভাগ */}
                   <button
                     type="button"
                     onClick={(e) => goToNextLevel('faculties_dept', e)}
@@ -567,7 +650,6 @@ export function SiteHeader() {
                     )}
                   </button>
 
-                  {/* ৭. ক্যাম্পাস ক্লাব */}
                   <button
                     type="button"
                     onClick={(e) => goToNextLevel('clubs_tier', e)}
@@ -581,7 +663,6 @@ export function SiteHeader() {
                     </span>
                   </button>
 
-                  {/* ৮. ক্যাম্পাস পেজ */}
                   <button
                     type="button"
                     onClick={(e) => goToNextLevel('pages_tier', e)}
@@ -598,7 +679,6 @@ export function SiteHeader() {
                     )}
                   </button>
 
-                  {/* ৯. স্টুডেন্ট কর্নার */}
                   <Link
                     href="/student-corner"
                     onClick={closeMenuDrawer}
@@ -615,7 +695,6 @@ export function SiteHeader() {
                     )}
                   </Link>
 
-                  {/* ১০. সোশ্যাল সাইট */}
                   <button
                     type="button"
                     onClick={(e) => goToNextLevel('social_sites', e)}
@@ -632,7 +711,6 @@ export function SiteHeader() {
                     )}
                   </button>
 
-                  {/* ১১. সাংবাদিক সমিতি */}
                   <button
                     type="button"
                     onClick={(e) => goToNextLevel('associations_tier', e)}
@@ -649,7 +727,6 @@ export function SiteHeader() {
                     )}
                   </button>
 
-                  {/* ১২. পরিষদ ও পরিচিতি */}
                   <button
                     type="button"
                     onClick={(e) => goToNextLevel('about', e)}
@@ -666,7 +743,6 @@ export function SiteHeader() {
                     )}
                   </button>
 
-                  {/* ১৩. আমার প্রোফাইল (লগইন থাকলে) অথবা যোগাযোগ */}
                   {me ? (
                     <Link
                       href={`/u/${me.id}`}
@@ -695,7 +771,6 @@ export function SiteHeader() {
                     </button>
                   )}
 
-                  {/* ১৪. ড্যাশবোর্ড / লগইন */}
                   <Link
                     href="/admin"
                     onClick={closeMenuDrawer}
@@ -714,7 +789,6 @@ export function SiteHeader() {
                 </div>
               )}
 
-              {/* ==================== সাব-মেনু: প্রশাসন ও দপ্তর ==================== */}
               {currentLevel === 'admin_tier' && (
                 <div className="space-y-2 animate-in fade-in">
                   {ADMIN_CATEGORIES.map((cat, idx) => (
@@ -741,7 +815,6 @@ export function SiteHeader() {
                 </div>
               )}
 
-              {/* ==================== সাব-মেনু: অনুষদ ও বিভাগ ==================== */}
               {currentLevel === 'faculties_dept' && (
                 <div className="space-y-2.5 animate-in fade-in">
                   {facultiesList.map((f) => (
@@ -768,7 +841,6 @@ export function SiteHeader() {
                 </div>
               )}
 
-              {/* ==================== সাব-মেনু: সংবাদ ও ক্যাটাগরি ==================== */}
               {currentLevel === 'news' && (
                 <div className="space-y-2 animate-in fade-in">
                   <Link
@@ -821,7 +893,6 @@ export function SiteHeader() {
                 </div>
               )}
 
-              {/* ==================== সাব-মেনু: ক্যাম্পাস ক্লাবসমূহ ==================== */}
               {currentLevel === 'clubs_tier' && (
                 <div className="space-y-2 animate-in fade-in">
                   {clubsList.map((club) => (
@@ -847,7 +918,6 @@ export function SiteHeader() {
                 </div>
               )}
 
-              {/* ==================== সাব-মেনু: ক্যাম্পাস পেজসমূহ ==================== */}
               {currentLevel === 'pages_tier' && (
                 <div className="space-y-2 animate-in fade-in">
                   {communityPagesList.map((cp) => (
@@ -871,7 +941,6 @@ export function SiteHeader() {
                 </div>
               )}
 
-              {/* ==================== সাব-মেনু: সোশ্যাল সাইট ও গ্রুপ ==================== */}
               {currentLevel === 'social_sites' && (
                 <div className="space-y-2 animate-in fade-in">
                   {socialSitesList.map((s) => (
@@ -895,7 +964,6 @@ export function SiteHeader() {
                 </div>
               )}
 
-              {/* ==================== সাব-মেনু: সাংবাদিক সমিতি ==================== */}
               {currentLevel === 'associations_tier' && (
                 <div className="space-y-2 animate-in fade-in">
                   {associationsList.map((assoc) => (
@@ -919,7 +987,6 @@ export function SiteHeader() {
                 </div>
               )}
 
-              {/* ==================== সাব-মেনু: পরিষদ ও পরিচিতি ==================== */}
               {currentLevel === 'about' && (
                 <div className="space-y-2 animate-in fade-in">
                   <button
