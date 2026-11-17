@@ -18,6 +18,12 @@ import {
 import { getCommunityPages, type CommunityPage } from '@/lib/pages'
 import { SectionHeading } from './section-heading'
 
+function safeHttpUrl(u?: string | null): string | null {
+  if (!u) return null
+  const t = u.trim()
+  return /^https?:\/\//i.test(t) ? t : null
+}
+
 export function CommunityPagesSection() {
   const [pages, setPages] = useState<CommunityPage[]>([])
   const [filter, setFilter] = useState('All')
@@ -162,112 +168,115 @@ export function CommunityPagesSection() {
           className="relative w-full"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayedPages.map((page) => (
-              <article
-                key={page.id}
-                className="glass-card group flex flex-col justify-between overflow-hidden text-white"
-              >
-                <div>
-                  <div className="relative h-32 sm:h-36 w-full overflow-hidden bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 border-b border-white/10">
-                    {page.cover_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={page.cover_url}
-                        alt=""
-                        loading="lazy"
-                        className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="size-full flex items-center justify-center text-white/20 font-bold text-lg uppercase tracking-widest select-none">
-                        {page.name}
-                      </div>
-                    )}
-                    <span className="absolute top-2.5 right-2.5 rounded-full bg-black/60 backdrop-blur px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
-                      {page.category || 'কমিউনিটি'}
-                    </span>
-                  </div>
-
-                  <div className="px-5 pt-0 pb-4 relative">
-                    <div className="flex items-end justify-between -mt-10 mb-3">
-                      <div className="relative size-20 rounded-full bg-slate-900 ring-4 ring-cyan-400/80 shadow-lg overflow-hidden shrink-0 flex items-center justify-center">
-                        {page.avatar_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={page.avatar_url} alt={page.name} loading="lazy" className="size-full object-cover" />
-                        ) : (
-                          <div className="size-full bg-cyan-600 text-white flex items-center justify-center text-2xl font-bold">
-                            {page.name.charAt(0)}
-                          </div>
-                        )}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={(e) => handleShare(e, page)}
-                        className="rounded-full p-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 transition cursor-pointer"
-                        title={copiedId === page.id ? 'লিংক কপি হয়েছে' : 'শেয়ার করুন'}
-                        aria-label="শেয়ার করুন"
-                      >
-                        {copiedId === page.id ? (
-                          <Check className="size-3.5 text-cyan-300" />
-                        ) : (
-                          <Share2 className="size-3.5" />
-                        )}
-                      </button>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <Link href={`/p/${page.slug}`} className="font-serif text-lg font-bold text-white hover:text-cyan-300 transition-colors line-clamp-1">
+            {displayedPages.map((page) => {
+              const safeWebsiteUrl = safeHttpUrl(page.website_url)
+              return (
+                <article
+                  key={page.id}
+                  className="glass-card group flex flex-col justify-between overflow-hidden text-white"
+                >
+                  <div>
+                    <div className="relative h-32 sm:h-36 w-full overflow-hidden bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 border-b border-white/10">
+                      {page.cover_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={page.cover_url}
+                          alt=""
+                          loading="lazy"
+                          className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="size-full flex items-center justify-center text-white/20 font-bold text-lg uppercase tracking-widest select-none">
                           {page.name}
-                        </Link>
-                        {page.is_verified && (
-                          <span title="ভেরিফাইড পেজ" className="inline-flex shrink-0">
-                            <CheckCircle2 className="size-4 fill-blue-500 text-white" />
-                          </span>
+                        </div>
+                      )}
+                      <span className="absolute top-2.5 right-2.5 rounded-full bg-black/60 backdrop-blur px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
+                        {page.category || 'কমিউনিটি'}
+                      </span>
+                    </div>
+
+                    <div className="px-5 pt-0 pb-4 relative">
+                      <div className="flex items-end justify-between -mt-10 mb-3">
+                        <div className="relative size-20 rounded-full bg-slate-900 ring-4 ring-cyan-400/80 shadow-lg overflow-hidden shrink-0 flex items-center justify-center">
+                          {page.avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={page.avatar_url} alt={page.name} loading="lazy" className="size-full object-cover" />
+                          ) : (
+                            <div className="size-full bg-cyan-600 text-white flex items-center justify-center text-2xl font-bold">
+                              {page.name.charAt(0)}
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => handleShare(e, page)}
+                          className="rounded-full p-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 transition cursor-pointer"
+                          title={copiedId === page.id ? 'লিংক কপি হয়েছে' : 'শেয়ার করুন'}
+                          aria-label="শেয়ার করুন"
+                        >
+                          {copiedId === page.id ? (
+                            <Check className="size-3.5 text-cyan-300" />
+                          ) : (
+                            <Share2 className="size-3.5" />
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <Link href={`/p/${page.slug}`} className="font-serif text-lg font-bold text-white hover:text-cyan-300 transition-colors line-clamp-1">
+                            {page.name}
+                          </Link>
+                          {page.is_verified && (
+                            <span title="ভেরিফাইড পেজ" className="inline-flex shrink-0">
+                              <CheckCircle2 className="size-4 fill-blue-500 text-white" />
+                            </span>
+                          )}
+                        </div>
+                        {page.name_en && (
+                          <p className="text-xs text-cyan-200/80 truncate">{page.name_en}</p>
                         )}
                       </div>
-                      {page.name_en && (
-                        <p className="text-xs text-cyan-200/80 truncate">{page.name_en}</p>
-                      )}
-                    </div>
 
-                    {page.bio && (
-                      <p className="mt-3 text-xs text-slate-200 line-clamp-2 leading-relaxed">
-                        {page.bio}
-                      </p>
-                    )}
-
-                    <div className="mt-4 pt-3 border-t border-white/15 space-y-1.5 text-[11px] text-slate-300">
-                      {page.location && (
-                        <p className="flex items-center gap-1.5 truncate">
-                          <MapPin className="size-3 text-cyan-400 shrink-0" />
-                          <span className="truncate">{page.location}</span>
+                      {page.bio && (
+                        <p className="mt-3 text-xs text-slate-200 line-clamp-2 leading-relaxed">
+                          {page.bio}
                         </p>
                       )}
-                      {page.website_url && (
-                        <p className="flex items-center gap-1.5 truncate">
-                          <Globe className="size-3 text-cyan-400 shrink-0" />
-                          <a href={page.website_url} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline truncate">
-                            অফিসিয়াল ওয়েবসাইট
-                          </a>
-                        </p>
-                      )}
+
+                      <div className="mt-4 pt-3 border-t border-white/15 space-y-1.5 text-[11px] text-slate-300">
+                        {page.location && (
+                          <p className="flex items-center gap-1.5 truncate">
+                            <MapPin className="size-3 text-cyan-400 shrink-0" />
+                            <span className="truncate">{page.location}</span>
+                          </p>
+                        )}
+                        {safeWebsiteUrl && (
+                          <p className="flex items-center gap-1.5 truncate">
+                            <Globe className="size-3 text-cyan-400 shrink-0" />
+                            <a href={safeWebsiteUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline truncate">
+                              অফিসিয়াল ওয়েবসাইট
+                            </a>
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="p-4 border-t border-white/15">
-                  <Link
-                    href={`/p/${page.slug}`}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-4 py-2.5 text-xs font-bold shadow-md transition active:scale-98 border border-white/20"
-                  >
-                    <Newspaper className="size-3.5" />
-                    <span>পেজ ও টাইমলাইন দেখুন</span>
-                    <ArrowRight className="size-3.5" />
-                  </Link>
-                </div>
-              </article>
-            ))}
+                  <div className="p-4 border-t border-white/15">
+                    <Link
+                      href={`/p/${page.slug}`}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-4 py-2.5 text-xs font-bold shadow-md transition active:scale-98 border border-white/20"
+                    >
+                      <Newspaper className="size-3.5" />
+                      <span>পেজ ও টাইমলাইন দেখুন</span>
+                      <ArrowRight className="size-3.5" />
+                    </Link>
+                  </div>
+                </article>
+              )
+            })}
           </div>
 
           {total > 1 && (
