@@ -10,6 +10,7 @@ import {
   Building2,
   ChevronDown,
   ChevronRight,
+  Feather,
   Film,
   GraduationCap,
   Home,
@@ -336,6 +337,21 @@ export function SiteHeader() {
                 </Link>
               </li>
 
+              {/* ⭐ সম্পাদকীয় ও মতামত (নতুন মেনুবার লিংক) ⭐ */}
+              <li>
+                <Link
+                  href="/editorial"
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors ${
+                    pathname.startsWith('/editorial')
+                      ? 'bg-white/20 text-cyan-300 font-bold border border-cyan-400/30'
+                      : 'hover:bg-white/15 hover:text-cyan-300'
+                  }`}
+                >
+                  <Feather className="size-4 text-cyan-400" />
+                  <span>{pick('সম্পাদকীয় ও মতামত', 'Editorial')}</span>
+                </Link>
+              </li>
+
               <li className="relative group">
                 <button type="button" className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 hover:bg-white/15 hover:text-cyan-300 transition-colors cursor-pointer">
                   <Building2 className="size-4 text-cyan-400" />
@@ -384,6 +400,10 @@ export function SiteHeader() {
                 </button>
                 <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 absolute left-0 top-full pt-2 w-72 z-50">
                   <div className="rounded-3xl border border-white/20 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-2xl space-y-1">
+                    <Link href="/editorial" className="flex items-center justify-between rounded-2xl px-3 py-2 text-xs text-white/90 hover:bg-white/15 hover:text-cyan-300 transition-colors">
+                      <span className="flex items-center gap-2"><Feather className="size-3.5 text-cyan-400" /><span>সম্পাদকীয় ও মতামত</span></span>
+                      <ChevronRight className="size-3 opacity-50" />
+                    </Link>
                     <Link href="/notices" className="flex items-center justify-between rounded-2xl px-3 py-2 text-xs text-white/90 hover:bg-white/15 hover:text-cyan-300 transition-colors">
                       <span className="flex items-center gap-2"><Bell className="size-3.5 text-cyan-400" /><span>ডিজিটাল নোটিশ বোর্ড</span></span>
                       <ChevronRight className="size-3 opacity-50" />
@@ -572,6 +592,23 @@ export function SiteHeader() {
                       হোমপেজ
                     </span>
                     {pathname === '/' && (
+                      <span className="size-2 rounded-full bg-blue-400 shadow-[0_0_8px_#60a5fa] shrink-0" />
+                    )}
+                  </Link>
+
+                  {/* মোবাইল মেনুতে সরাসরি "সম্পাদকীয় ও মতামত" */}
+                  <Link
+                    href="/editorial"
+                    onClick={closeMenuDrawer}
+                    className={tileCls(pathname.startsWith('/editorial'))}
+                  >
+                    <span className="size-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
+                      <Feather className="size-4.5" />
+                    </span>
+                    <span className="text-[11px] sm:text-xs font-bold text-white leading-tight flex-1 truncate">
+                      সম্পাদকীয় ও মতামত
+                    </span>
+                    {pathname.startsWith('/editorial') && (
                       <span className="size-2 rounded-full bg-blue-400 shadow-[0_0_8px_#60a5fa] shrink-0" />
                     )}
                   </Link>
@@ -843,6 +880,15 @@ export function SiteHeader() {
 
               {currentLevel === 'news' && (
                 <div className="space-y-2 animate-in fade-in">
+                  <Link
+                    href="/editorial"
+                    onClick={closeMenuDrawer}
+                    className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.1] text-cyan-300 text-xs font-bold border border-white/10"
+                  >
+                    <span className="flex items-center gap-2.5"><Feather className="size-4 text-cyan-400" /><span>সম্পাদকীয় ও মতামত</span></span>
+                    <ChevronRight className="size-4 text-white/40" />
+                  </Link>
+
                   <Link
                     href="/notices"
                     onClick={closeMenuDrawer}
