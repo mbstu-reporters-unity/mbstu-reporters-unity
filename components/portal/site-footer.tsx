@@ -84,10 +84,15 @@ export function SiteFooter() {
           </address>
         </div>
       </div>
-      <div className="border-t border-white/10 bg-[#040918] pb-14 sm:pb-0">
-        <p className="mx-auto max-w-7xl px-4 py-4 text-center text-xs text-white/50">
-          {pick(f.copyrightBn, f.copyrightEn)}
-        </p>
+      <div className="border-t border-white/10 bg-[#040918] py-4 px-4 text-xs text-white/50">
+        <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          <p>{pick(f.copyrightBn, f.copyrightEn)}</p>
+          <div className="flex items-center gap-4 text-slate-400">
+            <Link href="/privacy" className="hover:text-cyan-300 underline">গোপনীয়তা নীতি</Link>
+            <Link href="/terms" className="hover:text-cyan-300 underline">ব্যবহারের শর্তাবলি</Link>
+            <Link href="/constitution" className="hover:text-cyan-300 underline">গঠনতন্ত্র</Link>
+          </div>
+        </div>
       </div>
     </footer>
   )
