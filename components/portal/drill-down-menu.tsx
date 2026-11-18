@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -41,7 +41,7 @@ interface DrillDownMenuProps {
   } | null
 }
 
-const SWIPE_THRESHOLD_PX = 72
+const SWIPE_THRESHOLD_PX = 64
 const TRANSITION_MS = 300
 
 export function DrillDownMenu({
@@ -67,65 +67,22 @@ export function DrillDownMenu({
   const raf2Ref = useRef<number | null>(null)
   const breadcrumbScrollRef = useRef<HTMLDivElement>(null)
 
+  const openRef = useRef(open)
+  openRef.current = open
+
+  const hasGuardRef = useRef(false)
+  const ignoreNextPopRef = useRef(false)
+  const navigatingRef = useRef(false)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   const touchRef = useRef<{
     startX: number
     startY: number
     startTime: number
+    lastDx: number
     lock: 'none' | 'horizontal' | 'vertical'
   } | null>(null)
-
-  // ড্রয়ার খোলা ও বন্ধ হওয়ার স্মুথ স্লাইড অ্যানিমেশন নিয়ন্ত্রণ
-  useEffect(() => {
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
-    if (raf1Ref.current) cancelAnimationFrame(raf1Ref.current)
-    if (raf2Ref.current) cancelAnimationFrame(raf2Ref.current)
-
-    if (open) {
-      setMounted(true)
-      raf1Ref.current = requestAnimationFrame(() => {
-        raf2Ref.current = requestAnimationFrame(() => {
-          setVisible(true)
-        })
-      })
-    } else {
-      setVisible(false)
-      setDragX(0)
-      closeTimerRef.current = setTimeout(() => {
-        setMounted(false)
-        setTrail([])
-        setActiveDepth(0)
-      }, TRANSITION_MS)
-    }
-
-    return () => {
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
-      if (raf1Ref.current) cancelAnimationFrame(raf1Ref.current)
-      if (raf2Ref.current) cancelAnimationFrame(raf2Ref.current)
-    }
-  }, [open])
-
-  // রাউট পরিবর্তন হলে অটোমেটিক ড্রয়ার বন্ধ করা
-  useEffect(() => {
-    if (prevPathRef.current !== pathname) {
-      prevPathRef.current = pathname
-      if (open) onClose()
-    }
-  }, [pathname, open, onClose])
-
-  // বডি স্ক্রল লক ও Escape কী হ্যান্ডলার
-  useEffect(() => {
-    if (!mounted) return
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.body.style.overflow = prevOverflow
-      window.removeEventListener('keydown', onKeyDown)
-    }
-  }, [mounted, onClose])
 
   // রিকার্সিভভাবে বর্তমান ট্রেইল অনুযায়ী সব লেভেলের প্যানেল তৈরি
   const panels = useMemo(() => {
@@ -148,8 +105,150 @@ export function DrillDownMenu({
   }, [items, trail, rootTitle])
 
   const safeActiveDepth = Math.min(activeDepth, panels.length - 1)
+  const safeActiveDepthRef = useRef(safeActiveDepth)
+  safeActiveDepthRef.current = safeActiveDepth
+
   const activePanel = panels[safeActiveDepth] || panels[0]
   const breadcrumbs = panels.slice(0, safeActiveDepth + 1)
+
+  const goToDepth = useCallback((targetDepth: number) => {
+    if (targetDepth < 0 || targetDepth >= safeActiveDepthRef.current) return
+    if (trimTimerRef.current) clearTimeout(trimTimerRef.current)
+
+    setActiveDepth(targetDepth)
+    trimTimerRef.current = setTimeout(() => {
+      setTrail((prev) => prev.slice(0, targetDepth))
+    }, TRANSITION_MS + 20)
+  }, [])
+
+  const goToDepthRef = useRef(goToDepth)
+  goToDepthRef.current = goToDepth
+
+  // X বাটন, ব্যাকড্রপ, Escape বা রুট সোয়াইপে ড্রয়ার বন্ধ করা
+  const dismissDrawer = useCallback(() => {
+    navigatingRef.current = false
+    onCloseRef.current()
+  }, [])
+
+  // কোনো লিংক বা সেকশনে ক্লিক করলে নেভিগেট হয়ে ড্রয়ার বন্ধ করা
+  const navigateAndClose = useCallback(() => {
+    navigatingRef.current = true
+    hasGuardRef.current = false
+    onCloseRef.current()
+  }, [])
+
+  // Android ফোনের সিস্টেম ব্যাক ও এজ-সোয়াইপ (<) ইন্টারসেপ্ট করে মেনুর ভেতরেই ধাপে ধাপে পেছানো
+  useEffect(() => {
+    const onPopState = (e: PopStateEvent) => {
+      if (ignoreNextPopRef.current) {
+        ignoreNextPopRef.current = false
+        return
+      }
+
+      if (openRef.current) {
+        hasGuardRef.current = false
+        const curDepth = safeActiveDepthRef.current
+        if (curDepth > 0) {
+          goToDepthRef.current(curDepth - 1)
+          // পরবর্তী লেভেল ব্যাক করার জন্য আবার গার্ড এন্ট্রি সেট রাখা
+          try {
+            window.history.pushState(
+              { ...(window.history.state || {}), __drillMenu: true },
+              '',
+              window.location.href
+            )
+            hasGuardRef.current = true
+          } catch {}
+        } else {
+          navigatingRef.current = false
+          onCloseRef.current()
+        }
+        return
+      }
+
+      // অন্য পেজ থেকে ব্যাক করে আসার সময় ড্রয়ারের পুরোনো গার্ড এন্ট্রিতে পড়লে তা এড়িয়ে যাওয়া
+      if (e.state?.__drillMenu && window.history.length > 1) {
+        window.history.back()
+      }
+    }
+
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  // ড্রয়ার খোলা ও বন্ধ হওয়ার স্মুথ স্লাইড অ্যানিমেশন + হিস্ট্রি গার্ড নিয়ন্ত্রণ
+  useEffect(() => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+    if (raf1Ref.current) cancelAnimationFrame(raf1Ref.current)
+    if (raf2Ref.current) cancelAnimationFrame(raf2Ref.current)
+
+    if (open) {
+      navigatingRef.current = false
+      if (!hasGuardRef.current) {
+        try {
+          window.history.pushState(
+            { ...(window.history.state || {}), __drillMenu: true },
+            '',
+            window.location.href
+          )
+          hasGuardRef.current = true
+        } catch {}
+      }
+
+      setMounted(true)
+      raf1Ref.current = requestAnimationFrame(() => {
+        raf2Ref.current = requestAnimationFrame(() => {
+          setVisible(true)
+        })
+      })
+    } else {
+      if (hasGuardRef.current && !navigatingRef.current) {
+        hasGuardRef.current = false
+        ignoreNextPopRef.current = true
+        try {
+          window.history.back()
+        } catch {}
+      }
+      navigatingRef.current = false
+
+      setVisible(false)
+      setDragX(0)
+      closeTimerRef.current = setTimeout(() => {
+        setMounted(false)
+        setTrail([])
+        setActiveDepth(0)
+      }, TRANSITION_MS)
+    }
+
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+      if (raf1Ref.current) cancelAnimationFrame(raf1Ref.current)
+      if (raf2Ref.current) cancelAnimationFrame(raf2Ref.current)
+    }
+  }, [open])
+
+  // রাউট পরিবর্তন হলে অটোমেটিক ড্রয়ার বন্ধ করা
+  useEffect(() => {
+    if (prevPathRef.current !== pathname) {
+      prevPathRef.current = pathname
+      if (open) navigateAndClose()
+    }
+  }, [pathname, open, navigateAndClose])
+
+  // বডি স্ক্রল লক ও Escape কী হ্যান্ডলার
+  useEffect(() => {
+    if (!mounted) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') dismissDrawer()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [mounted, dismissDrawer])
 
   // ব্রেডক্রাম্ব বাড়লে ডান দিকে স্ক্রল করে বর্তমান অবস্থান দেখানো
   useEffect(() => {
@@ -174,23 +273,16 @@ export function DrillDownMenu({
     })
   }
 
-  function goToDepth(targetDepth: number) {
-    if (targetDepth < 0 || targetDepth >= safeActiveDepth) return
-    if (trimTimerRef.current) clearTimeout(trimTimerRef.current)
-
-    setActiveDepth(targetDepth)
-    trimTimerRef.current = setTimeout(() => {
-      setTrail((prev) => prev.slice(0, targetDepth))
-    }, TRANSITION_MS + 20)
-  }
-
-  // টাচ সোয়াইপ রাইট (আঙুল দিয়ে ডানে পুশ করে ব্যাকে আসা বা ড্রয়ার বন্ধ করা)
+  // টাচ সোয়াইপ রাইট (আঙুল দিয়ে ডানে পুশ করে ধাপে ধাপে ব্যাকে আসা)
   function handleTouchStart(e: React.TouchEvent) {
     if (e.touches.length !== 1) return
+    if ((e.target as HTMLElement).closest('[data-no-swipe="true"]')) return
+
     touchRef.current = {
       startX: e.touches[0].clientX,
       startY: e.touches[0].clientY,
       startTime: Date.now(),
+      lastDx: 0,
       lock: 'none',
     }
   }
@@ -207,13 +299,15 @@ export function DrillDownMenu({
         t.lock = 'vertical'
         return
       }
-      if (dx > 10 && dx > Math.abs(dy) * 1.2) {
+      if (dx > 10 && dx > Math.abs(dy) * 1.1) {
         t.lock = 'horizontal'
       }
     }
 
     if (t.lock === 'horizontal') {
-      setDragX(Math.max(0, dx))
+      const clamped = Math.max(0, dx)
+      t.lastDx = clamped
+      setDragX(clamped)
     }
   }
 
@@ -225,17 +319,18 @@ export function DrillDownMenu({
       return
     }
 
+    const finalDx = t.lastDx
     const elapsed = Math.max(1, Date.now() - t.startTime)
-    const velocity = dragX / elapsed
+    const velocity = finalDx / elapsed
     const shouldTriggerBack =
-      dragX > SWIPE_THRESHOLD_PX || (dragX > 32 && velocity > 0.45)
+      finalDx > SWIPE_THRESHOLD_PX || (finalDx > 28 && velocity > 0.35)
 
     setDragX(0)
     if (shouldTriggerBack) {
       if (safeActiveDepth > 0) {
         goToDepth(safeActiveDepth - 1)
       } else {
-        onClose()
+        dismissDrawer()
       }
     }
   }
@@ -252,14 +347,14 @@ export function DrillDownMenu({
 
   return (
     <div
-      className="fixed inset-0 z-[120] select-none"
+      className="fixed inset-0 z-[120] select-none overscroll-contain"
       role="dialog"
       aria-modal="true"
       aria-label="সাইড নেভিগেশন মেনু"
     >
       {/* ব্যাকড্রপ ব্লার ওভারলে */}
       <div
-        onClick={onClose}
+        onClick={dismissDrawer}
         className={`fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity duration-300 ${
           visible ? 'opacity-100' : 'opacity-0'
         }`}
@@ -270,12 +365,13 @@ export function DrillDownMenu({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
         style={
           isRootDragging
             ? { transform: `translateX(${dragX}px)`, transition: 'none' }
             : undefined
         }
-        className={`fixed top-0 right-0 z-10 flex h-[100dvh] w-[88vw] max-w-sm flex-col border-l border-white/15 bg-[#0a132e]/95 text-white shadow-[-20px_0_50px_rgba(0,0,0,0.65)] backdrop-blur-2xl ${
+        className={`fixed top-0 right-0 z-10 flex h-[100dvh] w-[88vw] max-w-sm flex-col border-l border-white/15 bg-[#0a132e]/95 text-white shadow-[-20px_0_50px_rgba(0,0,0,0.65)] backdrop-blur-2xl touch-pan-y overscroll-contain ${
           isRootDragging
             ? ''
             : 'transition-transform duration-300 ease-out ' +
@@ -315,7 +411,7 @@ export function DrillDownMenu({
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={dismissDrawer}
               className="flex size-8.5 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 hover:bg-white/20 hover:text-white active:scale-95 transition cursor-pointer"
               aria-label="মেনু বন্ধ করুন"
             >
@@ -323,10 +419,11 @@ export function DrillDownMenu({
             </button>
           </div>
 
-          {/* ক্লিকেবল ব্রেডক্রাম্ব ট্রেইল (হোম > বিশ্ববিদ্যালয় > অনুষদ > ...) */}
+          {/* ক্লিকেবল ব্রেডক্রাম্ব ট্রেইল */}
           {safeActiveDepth > 0 && (
             <div
               ref={breadcrumbScrollRef}
+              data-no-swipe="true"
               className="mt-2.5 flex items-center gap-1 overflow-x-auto pb-0.5 text-[11px] scrollbar-none"
               aria-label="Breadcrumb"
             >
@@ -363,7 +460,7 @@ export function DrillDownMenu({
           <div className="shrink-0 border-b border-white/10 bg-white/[0.02] px-3.5 py-2.5">
             <Link
               href={userBanner.href || '/admin'}
-              onClick={onClose}
+              onClick={navigateAndClose}
               className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.05] p-2 hover:bg-white/[0.1] transition"
             >
               {userBanner.avatarUrl ? (
@@ -390,7 +487,7 @@ export function DrillDownMenu({
         )}
 
         {/* ২. মাল্টি-লেভেল স্লাইডিং প্যানেল ভিউপোর্ট */}
-        <div className="relative flex-1 overflow-hidden">
+        <div className="relative flex-1 overflow-hidden touch-pan-y overscroll-contain">
           {panels.map((panel) => {
             const isActive = panel.depth === safeActiveDepth
             const isPast = panel.depth < safeActiveDepth
@@ -424,7 +521,7 @@ export function DrillDownMenu({
                 key={`${panel.depth}-${panel.id}`}
                 style={inlineStyle}
                 aria-hidden={!isActive}
-                className={`absolute inset-0 overflow-y-auto px-2.5 py-2.5 scrollbar-none ${
+                className={`absolute inset-0 overflow-y-auto px-2.5 py-2.5 scrollbar-none touch-pan-y overscroll-y-contain ${
                   dragX > 0 && (isActive || isImmediateParent)
                     ? ''
                     : 'transition-transform duration-300 ease-out '
@@ -504,7 +601,7 @@ export function DrillDownMenu({
                           <button
                             type="button"
                             onClick={() => {
-                              onClose()
+                              navigateAndClose()
                               item.onSelect?.()
                             }}
                             className={rowClass}
@@ -522,7 +619,7 @@ export function DrillDownMenu({
                             href={item.href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            onClick={onClose}
+                            onClick={navigateAndClose}
                             className={rowClass}
                           >
                             {content}
@@ -535,7 +632,7 @@ export function DrillDownMenu({
                       <li key={item.id}>
                         <Link
                           href={item.href || '/'}
-                          onClick={onClose}
+                          onClick={navigateAndClose}
                           className={rowClass}
                         >
                           {content}
