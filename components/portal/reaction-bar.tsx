@@ -17,6 +17,7 @@ import {
   addComment,
   type PublicComment,
 } from '@/lib/sb'
+import { useSiteSettings } from './site-settings-context'
 
 const REACTIONS = [
   { key: 'like', icon: '👍', label: 'লাইক' },
@@ -158,6 +159,12 @@ export function ReactionBar({
   inlineComments?: boolean
   hideCommentButton?: boolean
 }) {
+  const settings = useSiteSettings()
+  const bp = settings.behaviorAndPages
+  const allowReactions = bp.showReactions !== false
+  const allowComments = bp.showComments !== false && !hideCommentButton
+  const allowShare = bp.showShare !== false
+
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [mine, setMine] = useState<string | null>(null)
   const [commentCount, setCommentCount] = useState(0)
@@ -402,6 +409,8 @@ export function ReactionBar({
     } catch {}
   }
 
+  if (!allowReactions && !allowComments && !allowShare) return null
+
   const totalReactions = Object.values(counts).reduce((sum, v) => sum + (v || 0), 0)
   const topReactions = REACTIONS.filter((r) => (counts[r.key] || 0) > 0)
     .sort((a, b) => (counts[b.key] || 0) - (counts[a.key] || 0))
@@ -415,67 +424,69 @@ export function ReactionBar({
     <div className={noTopBorder ? 'pt-1 relative' : 'mt-2 border-t border-white/15 pt-2.5 relative'}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-4 sm:gap-5">
-          <div
-            ref={wrapperRef}
-            className="relative"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            {pickerOpen && (
-              <div
-                role="listbox"
-                aria-label="রিঅ্যাকশন বাছাই করুন"
-                className="absolute bottom-full left-0 mb-2.5 z-50 flex items-center gap-1 rounded-full border border-white/25 bg-slate-900/95 px-2.5 py-1.5 shadow-2xl backdrop-blur-2xl animate-in zoom-in-95 fade-in"
-              >
-                {REACTIONS.map((r) => (
-                  <button
-                    key={r.key}
-                    type="button"
-                    title={r.label}
-                    aria-label={r.label}
-                    onClick={() => react(r.key, true)}
-                    className={`flex size-9 sm:size-10 items-center justify-center rounded-full text-xl sm:text-2xl transition-transform hover:scale-125 active:scale-125 cursor-pointer ${
-                      mine === r.key ? 'bg-white/20 ring-2 ring-cyan-400 scale-110' : ''
-                    }`}
-                  >
-                    {r.icon}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              onContextMenu={(e) => e.preventDefault()}
-              onClick={() => {
-                if (pickerOpen) {
-                  setPickerOpen(false)
-                  return
-                }
-                react(mine || 'love')
-              }}
-              title="ট্যাপ করুন অথবা চেপে ধরে রিয়েকশন বাছাই করুন"
-              className={`inline-flex items-center gap-1.5 py-1.5 text-xs sm:text-sm font-semibold select-none touch-manipulation transition active:scale-95 cursor-pointer ${
-                activeReaction
-                  ? 'text-rose-400 font-bold'
-                  : 'text-white/80 hover:text-white'
-              }`}
+          {allowReactions && (
+            <div
+              ref={wrapperRef}
+              className="relative"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
             >
-              {activeReaction ? (
-                <span className="text-base sm:text-lg leading-none">{activeReaction.icon}</span>
-              ) : (
-                <Heart className="size-[18px] text-white/85" aria-hidden="true" />
+              {pickerOpen && (
+                <div
+                  role="listbox"
+                  aria-label="রিঅ্যাকশন বাছাই করুন"
+                  className="absolute bottom-full left-0 mb-2.5 z-50 flex items-center gap-1 rounded-full border border-white/25 bg-slate-900/95 px-2.5 py-1.5 shadow-2xl backdrop-blur-2xl animate-in zoom-in-95 fade-in"
+                >
+                  {REACTIONS.map((r) => (
+                    <button
+                      key={r.key}
+                      type="button"
+                      title={r.label}
+                      aria-label={r.label}
+                      onClick={() => react(r.key, true)}
+                      className={`flex size-9 sm:size-10 items-center justify-center rounded-full text-xl sm:text-2xl transition-transform hover:scale-125 active:scale-125 cursor-pointer ${
+                        mine === r.key ? 'bg-white/20 ring-2 ring-cyan-400 scale-110' : ''
+                      }`}
+                    >
+                      {r.icon}
+                    </button>
+                  ))}
+                </div>
               )}
-              <span className="tabular-nums">
-                {totalReactions > 0 ? toBn(totalReactions) : activeReaction ? activeReaction.label : 'রিয়েক্ট'}
-              </span>
-            </button>
-          </div>
 
-          {!hideCommentButton && (
+              <button
+                type="button"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onContextMenu={(e) => e.preventDefault()}
+                onClick={() => {
+                  if (pickerOpen) {
+                    setPickerOpen(false)
+                    return
+                  }
+                  react(mine || 'love')
+                }}
+                title="ট্যাপ করুন অথবা চেপে ধরে রিয়েকশন বাছাই করুন"
+                className={`inline-flex items-center gap-1.5 py-1.5 text-xs sm:text-sm font-semibold select-none touch-manipulation transition active:scale-95 cursor-pointer ${
+                  activeReaction
+                    ? 'text-rose-400 font-bold'
+                    : 'text-white/80 hover:text-white'
+                }`}
+              >
+                {activeReaction ? (
+                  <span className="text-base sm:text-lg leading-none">{activeReaction.icon}</span>
+                ) : (
+                  <Heart className="size-[18px] text-white/85" aria-hidden="true" />
+                )}
+                <span className="tabular-nums">
+                  {totalReactions > 0 ? toBn(totalReactions) : activeReaction ? activeReaction.label : 'রিয়েক্ট'}
+                </span>
+              </button>
+            </div>
+          )}
+
+          {allowComments && (
             <button
               type="button"
               onClick={handleToggleComments}
@@ -490,21 +501,23 @@ export function ReactionBar({
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={share}
-            className="inline-flex items-center gap-1.5 py-1.5 text-xs sm:text-sm font-semibold text-white/80 hover:text-white transition active:scale-95 cursor-pointer"
-          >
-            {copied ? (
-              <Check className="size-[18px] text-emerald-400" />
-            ) : (
-              <Share2 className="size-[18px]" aria-hidden="true" />
-            )}
-            <span>{copied ? 'কপি হয়েছে' : 'শেয়ার'}</span>
-          </button>
+          {allowShare && (
+            <button
+              type="button"
+              onClick={share}
+              className="inline-flex items-center gap-1.5 py-1.5 text-xs sm:text-sm font-semibold text-white/80 hover:text-white transition active:scale-95 cursor-pointer"
+            >
+              {copied ? (
+                <Check className="size-[18px] text-emerald-400" />
+              ) : (
+                <Share2 className="size-[18px]" aria-hidden="true" />
+              )}
+              <span>{copied ? 'কপি হয়েছে' : 'শেয়ার'}</span>
+            </button>
+          )}
         </div>
 
-        {topReactions.length > 0 && (
+        {allowReactions && topReactions.length > 0 && (
           <button
             type="button"
             onClick={() => setPickerOpen((v) => !v)}
@@ -525,7 +538,7 @@ export function ReactionBar({
 
       {msg && <p className="mt-1 text-xs text-rose-300">{msg}</p>}
 
-      {inlineComments && commentsOpen && (
+      {inlineComments && allowComments && commentsOpen && (
         <div className="mt-3 pt-3 border-t border-white/15 space-y-3 animate-in fade-in">
           {rootComments.length > 0 ? (
             <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
