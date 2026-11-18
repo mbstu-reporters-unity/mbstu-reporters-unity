@@ -1,5 +1,7 @@
-import { socialLinks } from '@/lib/data'
+'use client'
+
 import { cn } from '@/lib/utils'
+import { useSiteSettings } from './site-settings-context'
 
 const paths: Record<string, string> = {
   facebook:
@@ -35,12 +37,17 @@ export function SocialLinks({
   size?: 'sm' | 'md'
   tooltip?: 'top' | 'bottom'
 }) {
+  const settings = useSiteSettings()
+  const activeLinks = settings.footer.socialLinks.filter((s) => s.visible && s.href.trim())
+
+  if (activeLinks.length === 0) return null
+
   const box = size === 'sm' ? 'size-7' : 'size-9'
   const icon = size === 'sm' ? 'size-3.5' : 'size-4'
 
   return (
     <ul className="flex items-center gap-2">
-      {socialLinks.map((s) => (
+      {activeLinks.map((s) => (
         <li key={s.slug} className="group relative">
           <a
             href={s.href}
