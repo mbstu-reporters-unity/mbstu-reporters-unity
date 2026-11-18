@@ -1,42 +1,96 @@
-import { MapPin } from 'lucide-react'
+'use client'
+
+import Link from 'next/link'
+import { ExternalLink, MapPin, Megaphone } from 'lucide-react'
 import { LiveClock } from './live-clock'
 import { SocialLinks } from './social-links'
 import { LangSwitcher } from './lang-switcher'
 import { ThemeSwitcher } from './theme-switcher'
-import { Tx } from '@/lib/i18n'
+import { useLang } from '@/lib/i18n'
+import { useSiteSettings } from './site-settings-context'
 
 export function TopBar() {
+  const settings = useSiteSettings()
+  const { pick } = useLang()
+  const tb = settings.topBar
+  const ann = settings.behaviorAndPages
+
+  const showAnnouncement = ann.announcementEnabled && Boolean(ann.announcementText.trim())
+  const showSecondRow =
+    tb.showLangSwitcher || tb.showLocation || tb.showThemeSwitcher || tb.showSocialLinks
+
+  if (!tb.showTopBar && !showAnnouncement) return null
+
   return (
     <div className="bg-[#071030]/95 text-white border-b border-white/10 backdrop-blur-xl relative z-50">
-      <div className="mx-auto max-w-7xl px-3 sm:px-4 py-2 space-y-2">
-        
-        {/* ১ম সারি (উপরে): বামে ক্যালেন্ডার ও তারিখ | ডানে ঘড়ি ও লাইভ সময় */}
-        <div className="w-full">
-          <LiveClock />
+      {showAnnouncement && (
+        <div className="bg-gradient-to-r from-amber-500/25 via-cyan-500/20 to-amber-500/25 border-b border-amber-400/30 px-3 py-1.5 text-center text-xs font-bold text-amber-200">
+          <div className="mx-auto max-w-7xl flex items-center justify-center gap-2 flex-wrap">
+            <Megaphone className="size-3.5 text-amber-300 shrink-0" />
+            <span>{ann.announcementText}</span>
+            {ann.announcementLink.trim() && (
+              /^https?:\/\//i.test(ann.announcementLink.trim()) ? (
+                <a
+                  href={ann.announcementLink.trim()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 underline text-cyan-300 hover:text-white"
+                >
+                  <span>বিস্তারিত</span>
+                  <ExternalLink className="size-3" />
+                </a>
+              ) : (
+                <Link
+                  href={ann.announcementLink.trim()}
+                  className="underline text-cyan-300 hover:text-white"
+                >
+                  বিস্তারিত →
+                </Link>
+              )
+            )}
+          </div>
         </div>
+      )}
 
-        {/* ২য় সারি (নিচে): বামে ভাষা (বাংলা/EN) | মাঝে লোকেশন (সন্তোষ, টাঙ্গাইল) | ডানে ৪টি থিম */}
-        <div className="pt-1.5 border-t border-white/10 flex items-center justify-between gap-1.5 sm:gap-3">
-          <div className="shrink-0">
-            <LangSwitcher />
-          </div>
-
-          <div className="flex justify-center flex-1 min-w-0">
-            <span className="inline-flex items-center gap-1 rounded-full bg-cyan-600/80 border border-cyan-400/30 px-2.5 sm:px-3 py-1 font-semibold text-white shadow-xs text-[11px] sm:text-xs whitespace-nowrap">
-              <MapPin className="size-3 text-cyan-200 shrink-0" aria-hidden="true" />
-              <Tx bn="সন্তোষ, টাঙ্গাইল" en="Santosh, Tangail" />
-            </span>
-          </div>
-
-          <div className="shrink-0 flex items-center gap-2">
-            <ThemeSwitcher />
-            <div className="hidden lg:block">
-              <SocialLinks size="sm" tooltip="bottom" />
+      {tb.showTopBar && (
+        <div className="mx-auto max-w-7xl px-3 sm:px-4 py-2 space-y-2">
+          {tb.showClock && (
+            <div className="w-full">
+              <LiveClock />
             </div>
-          </div>
-        </div>
+          )}
 
-      </div>
+          {showSecondRow && (
+            <div
+              className={`${
+                tb.showClock ? 'pt-1.5 border-t border-white/10' : ''
+              } flex items-center justify-between gap-1.5 sm:gap-3`}
+            >
+              <div className="shrink-0">
+                {tb.showLangSwitcher && <LangSwitcher />}
+              </div>
+
+              {tb.showLocation && (
+                <div className="flex justify-center flex-1 min-w-0">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-cyan-600/80 border border-cyan-400/30 px-2.5 sm:px-3 py-1 font-semibold text-white shadow-xs text-[11px] sm:text-xs whitespace-nowrap">
+                    <MapPin className="size-3 text-cyan-200 shrink-0" aria-hidden="true" />
+                    <span>{pick(tb.locationBn, tb.locationEn)}</span>
+                  </span>
+                </div>
+              )}
+
+              <div className="shrink-0 flex items-center gap-2">
+                {tb.showThemeSwitcher && <ThemeSwitcher />}
+                {tb.showSocialLinks && (
+                  <div className="hidden lg:block">
+                    <SocialLinks size="sm" tooltip="bottom" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
