@@ -2,7 +2,7 @@ import { cache } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { CalendarDays, User, Tag, CheckCircle2 } from 'lucide-react'
+import { CalendarDays, User, Tag, CheckCircle2, Clock, ExternalLink, Sparkles } from 'lucide-react'
 import { ReactionBar } from '@/components/portal/reaction-bar'
 import { getPost, getApprovedComments, getImagesMeta, getLayout } from '@/lib/sb'
 import { CommentForm } from '@/components/portal/comment-form'
@@ -36,6 +36,25 @@ function formatBanglaDate(val?: string | null): string {
     })
   }
   return val
+}
+
+function estimateReadMinutes(text?: string | null): number {
+  if (!text) return 1
+  const clean = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  const words = clean ? clean.split(' ').length : 0
+  return Math.max(1, Math.ceil(words / 160))
+}
+
+function getSpecialReportBadge(category?: string | null): string | null {
+  if (!category) return null
+  const c = category.normalize('NFC')
+  if (c.includes('অনুসন্ধান')) return '🔍 অনুসন্ধানী প্রতিবেদন'
+  if (c.includes('সাক্ষাৎকার')) return '🎤 বিশেষ সাক্ষাৎকার'
+  if (c.includes('বিশ্লেষণ')) return '📊 বিশ্লেষণ ও পর্যালোচনা'
+  if (c.includes('সম্পাদক') || c.includes('মতামত') || c.includes('কলাম')) return '✍️ মতামত ও কলাম'
+  if (c.includes('ফিচার')) return '✨ বিশেষ ফিচার'
+  if (c.includes('ফ্যাক্ট')) return '✅ ফ্যাক্ট-চেক প্রতিবেদন'
+  return null
 }
 
 export async function generateMetadata({
@@ -84,6 +103,10 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         : []
 
   const pageInfo = post.page || null
+  const readMins = estimateReadMinutes(`${post.title || ''} ${post.heading || ''} ${post.body || ''}`)
+  const specialBadge = getSpecialReportBadge(post.category)
+  const safeExternalLink =
+    post.link_url && /^https?:\/\//i.test(post.link_url.trim()) ? post.link_url.trim() : null
 
   return (
     <>
@@ -101,15 +124,24 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
               ]}
             />
 
-            {post.category && (
-              <Link
-                href={pageInfo ? `/p/${pageInfo.slug}` : `/category/${encodeURIComponent(post.category)}`}
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-cyan-200 border border-white/25 backdrop-blur hover:bg-white/25 transition-all"
-              >
-                <Tag className="size-3 text-cyan-300" />
-                <span>{pageInfo ? 'কমিউনিটি পেজ' : post.category}</span>
-              </Link>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {specialBadge && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 px-3 py-1 text-xs font-bold text-amber-200 border border-amber-400/40">
+                  <Sparkles className="size-3 shrink-0" />
+                  <span>{specialBadge}</span>
+                </span>
+              )}
+
+              {post.category && (
+                <Link
+                  href={pageInfo ? `/p/${pageInfo.slug}` : `/category/${encodeURIComponent(post.category)}`}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-cyan-200 border border-white/25 backdrop-blur hover:bg-white/25 transition-all"
+                >
+                  <Tag className="size-3 text-cyan-300" />
+                  <span>{pageInfo ? 'কমিউনিটি পেজ' : post.category}</span>
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* পেজের পোস্ট হলে ফেসবুক পেজের ব্যানার হেডার */}
@@ -162,6 +194,11 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                 <span>{formatBanglaDate(post.created_at)}</span>
               </span>
 
+              <span className="inline-flex items-center gap-1.5 font-semibold text-amber-200 bg-white/10 border border-white/20 px-3 py-1 rounded-full">
+                <Clock className="size-3.5 text-amber-300 shrink-0" />
+                <span>{readMins.toLocaleString('bn-BD')} মিনিট পাঠ</span>
+              </span>
+
               {post.author && (
                 <span className="inline-flex items-center gap-1.5 font-semibold text-white/90 bg-white/10 border border-white/20 px-3 py-1 rounded-full">
                   <User className="size-3.5 text-cyan-300 shrink-0" />
@@ -193,6 +230,20 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           <div className="py-2 text-slate-100 text-base sm:text-lg leading-relaxed">
             <FormattedText text={post.body} className="text-slate-100 leading-relaxed" />
           </div>
+
+          {safeExternalLink && (
+            <div className="pt-1">
+              <a
+                href={safeExternalLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 px-4 py-2 text-xs font-bold transition"
+              >
+                <ExternalLink className="size-3.5" />
+                <span>সংযুক্ত মূল সূত্র / ওয়েবসাইট দেখুন</span>
+              </a>
+            </div>
+          )}
 
           {post.embed_media_url && (
             <UniversalMediaEmbed url={post.embed_media_url} title={post.title} />
