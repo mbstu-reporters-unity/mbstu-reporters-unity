@@ -34,6 +34,7 @@ import UsersManager from "./users-manager"
 import SubmissionSender from "./submission-sender"
 import SubmissionsInbox from "./submissions-inbox"
 import TeacherColumnManager from "./teacher-column-manager"
+import ContentHubManager from "./content-hub-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
@@ -58,7 +59,7 @@ type Tab =
   | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "site_settings"
   | "directors" | "categories" | "clubs" | "faculties" | "associations"
   | "social_sites" | "administration" | "community_pages" | "send_submission"
-  | "submissions_inbox" | "teacher_columns"
+  | "submissions_inbox" | "teacher_columns" | "content_hub"
   | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
 
 type NavItem = {
@@ -907,6 +908,7 @@ export default function AdminPage() {
         { id: "stories", label: "ফেসবুক স্টোরিজ ও রিলস", icon: Film, modOrAdmin: true },
         { id: "notices", label: "ডিজিটাল নোটিশ", icon: Bell, noticeAccess: true },
         { id: "ticker", label: "ব্রেকিং টিকার", icon: Radio, adminOnly: true },
+        { id: "content_hub", label: "টাইমলাইন, ফ্যাক্ট-চেক ও প্রকাশনা", icon: BookOpen, adminOnly: true },
         { id: "comments", label: "কমেন্ট মডারেশন", icon: MessageSquare, badge: pending.length, adminOnly: true },
       ],
     },
@@ -1110,6 +1112,10 @@ export default function AdminPage() {
 
         {tab === "teacher_columns" && isAdmin && (
           <TeacherColumnManager token={token} />
+        )}
+
+        {tab === "content_hub" && isAdmin && (
+          <ContentHubManager token={token} shrink={shrink} />
         )}
 
         {tab === "posts" && canPublishMain && (
