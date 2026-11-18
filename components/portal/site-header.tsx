@@ -36,6 +36,7 @@ import {
   Tag,
   User,
   UserCheck,
+  UserPlus,
   Users,
 } from 'lucide-react'
 import { getCampusClubs, type ClubItem } from '@/lib/clubs'
@@ -461,7 +462,6 @@ export function SiteHeader() {
       ...customByPlacement('university'),
     ]
 
-    // ⭐ "সংবাদ ও মিডিয়া"-তে ২য় পর্বের নতুন ৪টি পেজ (/gallery, /timeline, /fact-check, /publications) যুক্ত করা হয়েছে ⭐
     const newsChildren: MenuItem[] = [
       ...(isVisible('news-campus')
         ? [
@@ -723,7 +723,7 @@ export function SiteHeader() {
       ? [
           {
             id: 'my-profile',
-            label: 'আমার প্রোফাইল',
+            label: 'আমার প্রোফাইল ও প্রেস কার্ড',
             sublabel: me.full_name,
             icon: User,
             iconClass: 'bg-pink-600 text-white',
@@ -769,6 +769,15 @@ export function SiteHeader() {
             },
           ]
         : []),
+      // ⭐ সদস্যপদ আবেদন লিংক মেনুবারের একদম শুরুতে বা দৃশ্যমান স্থানে যুক্ত করা হলো ⭐
+      {
+        id: 'membership-apply',
+        label: pick('সদস্যপদ আবেদন', 'Join as Member'),
+        sublabel: 'অনলাইন রিক্রুটমেন্ট ফর্ম',
+        icon: UserPlus,
+        iconClass: 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white',
+        href: '/apply',
+      },
       ...(isVisible('editorial')
         ? [
             {
