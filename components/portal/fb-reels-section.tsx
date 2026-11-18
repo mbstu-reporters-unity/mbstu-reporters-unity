@@ -1,8 +1,10 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
-import { Play, Film, X, Share2, ExternalLink, ChevronUp, ChevronDown } from "lucide-react"
+import { Play, Film, Share2, ExternalLink, ChevronUp, ChevronDown } from "lucide-react"
 import { getLiveReels, type ReelItem } from "@/lib/reels"
+import { useLang } from "@/lib/i18n"
+import { useSiteSettings } from "./site-settings-context"
 
 function extractYouTubeId(url: string): string | null {
   const match = url.match(
@@ -12,9 +14,11 @@ function extractYouTubeId(url: string): string | null {
 }
 
 export function FbReelsSection() {
+  const settings = useSiteSettings()
+  const { pick } = useLang()
   const [reels, setReels] = useState<ReelItem[]>([])
   const [currentIndex, setCurrentIndex] = useState<number | null>(null)
-  
+
   const containerRef = useRef<HTMLDivElement>(null)
   const itemRefs = useRef<(HTMLDivElement | null)[]>([])
 
@@ -22,7 +26,6 @@ export function FbReelsSection() {
     getLiveReels().then(setReels)
   }, [])
 
-  // মোবাইলের ব্যাক বাটন চাপলে সোজা রিলস প্লেয়ার বন্ধ হওয়া
   useEffect(() => {
     const handlePopState = () => {
       setCurrentIndex(null)
@@ -31,7 +34,6 @@ export function FbReelsSection() {
     return () => window.removeEventListener("popstate", handlePopState)
   }, [])
 
-  // নির্দিষ্ট রিলস ওপেন করা
   const openReelAt = (index: number) => {
     setCurrentIndex(index)
     window.history.pushState({ reelOpen: true }, "")
@@ -44,7 +46,6 @@ export function FbReelsSection() {
     }
   }
 
-  // রিলস ওপেন হলে নির্বাচিত রিলসটিতে স্ক্রল যাওয়া
   useEffect(() => {
     if (currentIndex !== null && itemRefs.current[currentIndex]) {
       setTimeout(() => {
@@ -53,7 +54,6 @@ export function FbReelsSection() {
     }
   }, [currentIndex === null])
 
-  // উপরে/নিচে স্ক্রল করলে কোন রিলসটি স্ক্রিনে আছে তা ট্র্যাক করা (Auto play/pause)
   useEffect(() => {
     if (currentIndex === null || !containerRef.current) return
 
@@ -70,7 +70,7 @@ export function FbReelsSection() {
       },
       {
         root: containerRef.current,
-        threshold: 0.65, // ৬৫% স্ক্রিনে এলেই সেটি একটিভ হবে
+        threshold: 0.65,
       }
     )
 
@@ -81,7 +81,6 @@ export function FbReelsSection() {
     return () => observer.disconnect()
   }, [currentIndex === null, reels.length])
 
-  // বাটন দিয়ে পরের ও আগের রিলসে যাওয়া
   const scrollToIndex = (idx: number) => {
     if (idx >= 0 && idx < reels.length) {
       itemRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -91,21 +90,27 @@ export function FbReelsSection() {
 
   if (reels.length === 0) return null
 
+  const sec = settings.homeSections.sections.find((s) => s.key === "reels")
+  const headingText = pick(sec?.titleBn || "Reels ও ভিডিও গ্যালারি", sec?.titleEn || "Reels & Video Gallery")
+  const badgeText = sec?.eyebrow || "LIVE"
+
   return (
     <div id="reels-hub" className="w-full my-6 space-y-3">
-      {/* ১. হোমপেজে রিলসের অনুভূমিক গ্রিড হেডার */}
       <div className="flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Film className="size-5 text-rose-500" />
           <h3 className="font-serif text-lg font-bold text-white flex items-center gap-1.5">
-            <span>Reels ও ভিডিও গ্যালারি</span>
-            <span className="text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded-full">LIVE</span>
+            <span>{headingText}</span>
+            {badgeText && (
+              <span className="text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded-full">
+                {badgeText}
+              </span>
+            )}
           </h3>
         </div>
         <span className="text-xs text-cyan-300 font-semibold">{reels.length}টি ভিডিও</span>
       </div>
 
-      {/* ২. অনুভূমিক রিলস থাম্বনেইল তালিকা */}
       <div className="flex gap-2.5 overflow-x-auto px-4 pb-2 scrollbar-none select-none">
         {reels.map((reel, idx) => {
           const ytId = extractYouTubeId(reel.video_url)
@@ -160,11 +165,8 @@ export function FbReelsSection() {
         })}
       </div>
 
-      {/* ৩. সম্পূর্ণ ফেসবুক / টিকটক স্টাইল ভার্টিকাল স্ক্রলিং প্লেয়ার */}
       {currentIndex !== null && (
         <div className="fixed inset-0 z-[999999] bg-black text-white select-none">
-          
-          {/* টপ ফিক্সড কন্ট্রোল বার */}
           <div className="fixed top-0 inset-x-0 z-50 flex items-center justify-between p-4 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-none">
             <button
               type="button"
@@ -182,7 +184,6 @@ export function FbReelsSection() {
             </div>
           </div>
 
-          {/* ডেস্কটপ বা ট্যাবের জন্য আপ/ডাউন তীর বাটন */}
           <div className="hidden sm:flex fixed right-4 top-1/2 -translate-y-1/2 z-50 flex-col gap-3">
             <button
               type="button"
@@ -204,7 +205,6 @@ export function FbReelsSection() {
             </button>
           </div>
 
-          {/* ভার্টিকাল স্ন্যাপ স্ক্রল কন্টেইনার (মোবাইলে সোয়াইপ করার জন্য) */}
           <div
             ref={containerRef}
             className="w-full h-[100dvh] overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
@@ -222,7 +222,6 @@ export function FbReelsSection() {
                   ref={(el) => { itemRefs.current[idx] = el }}
                   className="w-full h-[100dvh] snap-start snap-always relative flex flex-col justify-between overflow-hidden bg-black"
                 >
-                  {/* প্লেয়ার ফ্রেম (শুধুমাত্র বর্তমান সক্রিয় ভিডিওটি প্লে হবে, যাতে মোবাইল হ্যাং না করে) */}
                   <div className="relative w-full flex-1 flex items-center justify-center bg-black my-auto">
                     {isActive ? (
                       ytId ? (
@@ -250,7 +249,6 @@ export function FbReelsSection() {
                         />
                       )
                     ) : isNearby && reel.thumbnail_url ? (
-                      // পাশের রিলসগুলোর জন্য হালকা থাম্বনেইল লোড রাখা
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={reel.thumbnail_url}
@@ -262,7 +260,6 @@ export function FbReelsSection() {
                     )}
                   </div>
 
-                  {/* ফুটার বিস্তারিত ও শেয়ার বার */}
                   <div className="p-4 pb-6 bg-gradient-to-t from-black via-slate-950/80 to-transparent space-y-2 z-20">
                     <p className="font-serif text-sm sm:text-base font-bold text-white drop-shadow">
                       {reel.title}
@@ -305,7 +302,7 @@ export function FbReelsSection() {
                           }}
                           className="inline-flex items-center gap-1 text-white hover:text-cyan-300 cursor-pointer"
                         >
-                          <Share2 className="size-3.5" /> 
+                          <Share2 className="size-3.5" />
                           <span>শেয়ার</span>
                         </button>
                       </div>
@@ -315,7 +312,6 @@ export function FbReelsSection() {
               )
             })}
           </div>
-
         </div>
       )}
     </div>
