@@ -1,8 +1,9 @@
 import { getVisiblePosts, getLimits, CAT_CLUB, CAT_STUDENT } from '@/lib/sb'
+import type { HomeSectionConfig } from '@/lib/site-settings'
 import { SectionHeading } from './section-heading'
 import { NewsGrid } from './news-card'
 
-export async function GeneralNews() {
+export async function GeneralNews({ sectionConfig }: { sectionConfig?: HomeSectionConfig }) {
   const [all, limits] = await Promise.all([getVisiblePosts(1000), getLimits()])
   const limit = limits['home_news_limit'] || 12
   const posts = all
@@ -15,9 +16,11 @@ export async function GeneralNews() {
         <div className="px-4 md:px-0">
           <SectionHeading
             inverted
-            eyebrow="Campus News"
-            title="ক্যাম্পাস সংবাদ"
-            subtitle="মাভাবিপ্রবির সর্বত্র থেকে যাচাইকৃত নির্ভরযোগ্য প্রতিবেদন।"
+            eyebrow={sectionConfig?.eyebrow ?? 'Campus News'}
+            title={sectionConfig?.titleBn || 'ক্যাম্পাস সংবাদ'}
+            titleEn={sectionConfig?.titleEn || 'Latest Campus Reports'}
+            subtitle={sectionConfig?.subtitleBn || 'মাভাবিপ্রবির সর্বত্র থেকে যাচাইকৃত নির্ভরযোগ্য প্রতিবেদন।'}
+            subtitleEn={sectionConfig?.subtitleEn || 'Verified reports from across MBSTU.'}
           />
         </div>
         {posts.length ? (
