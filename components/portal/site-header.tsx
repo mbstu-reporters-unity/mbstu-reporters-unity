@@ -7,6 +7,8 @@ import {
   BookOpen,
   Briefcase,
   Building2,
+  Camera,
+  Clock,
   Feather,
   FileText,
   Film,
@@ -27,6 +29,7 @@ import {
   Phone,
   Scale,
   Settings,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   Star,
@@ -458,6 +461,7 @@ export function SiteHeader() {
       ...customByPlacement('university'),
     ]
 
+    // ⭐ "সংবাদ ও মিডিয়া"-তে ২য় পর্বের নতুন ৪টি পেজ (/gallery, /timeline, /fact-check, /publications) যুক্ত করা হয়েছে ⭐
     const newsChildren: MenuItem[] = [
       ...(isVisible('news-campus')
         ? [
@@ -478,6 +482,54 @@ export function SiteHeader() {
               icon: Bell,
               iconClass: 'bg-emerald-600 text-white',
               href: '/notices',
+            },
+          ]
+        : []),
+      ...(isVisible('news-gallery')
+        ? [
+            {
+              id: 'news-gallery',
+              label: getLabel('news-gallery', 'ফটো ও ভিডিও গ্যালারি', 'Photo & Video Gallery'),
+              sublabel: 'ক্যাম্পাসের সকল ছবি ও ভিডিও',
+              icon: Camera,
+              iconClass: 'bg-cyan-600 text-white',
+              href: '/gallery',
+            },
+          ]
+        : []),
+      ...(isVisible('news-timeline')
+        ? [
+            {
+              id: 'news-timeline',
+              label: getLabel('news-timeline', 'ক্যাম্পাস টাইমলাইন', 'Campus Timeline'),
+              sublabel: 'ঘটনাবলির ধারাবাহিক দলিল',
+              icon: Clock,
+              iconClass: 'bg-purple-600 text-white',
+              href: '/timeline',
+            },
+          ]
+        : []),
+      ...(isVisible('news-factcheck')
+        ? [
+            {
+              id: 'news-factcheck',
+              label: getLabel('news-factcheck', 'ফ্যাক্ট-চেক ডেস্ক', 'Fact-Check Desk'),
+              sublabel: 'গুজব ও তথ্যের সত্যতা যাচাই',
+              icon: ShieldAlert,
+              iconClass: 'bg-rose-600 text-white',
+              href: '/fact-check',
+            },
+          ]
+        : []),
+      ...(isVisible('news-publications')
+        ? [
+            {
+              id: 'news-publications',
+              label: getLabel('news-publications', 'প্রকাশনা ও আর্কাইভ', 'Publications & Archive'),
+              sublabel: 'ম্যাগাজিন, বুলেটিন ও সংবাদ আর্কাইভ',
+              icon: BookOpen,
+              iconClass: 'bg-indigo-600 text-white',
+              href: '/publications',
             },
           ]
         : []),
@@ -555,7 +607,6 @@ export function SiteHeader() {
       ...customByPlacement('community-clubs'),
     ]
 
-    // ⭐ এখানে আমাদের নতুন ৬টি পেজ "পরিষদ ও পরিচিতি"-এর ভেতর সাব-মেনু হিসেবে যুক্ত করা হলো ⭐
     const aboutChildren: MenuItem[] = [
       ...(isVisible('about-unity')
         ? [
