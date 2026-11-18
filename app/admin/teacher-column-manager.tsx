@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useEffect, useMemo, useState } from "react"
-import Link from "next/link"
 import {
   Feather,
   Trash2,
@@ -10,7 +9,6 @@ import {
   Search,
   CalendarDays,
   User,
-  GraduationCap,
   Eye,
   EyeOff,
 } from "lucide-react"
@@ -35,7 +33,7 @@ export default function TeacherColumnManager({ token }: { token: string }) {
     setLoading(true)
     try {
       const res = await fetch(
-        `${SB_URL}/rest/v1/posts?select=*&or=(category.eq.সম্পাদকীয় ও মতামত,author_user_type.eq.teacher)&order=created_at.desc&limit=150`,
+        `${SB_URL}/rest/v1/posts?select=*&order=created_at.desc&limit=200`,
         {
           headers: { apikey: SB_KEY, Authorization: `Bearer ${token}` },
           cache: "no-store",
@@ -44,7 +42,11 @@ export default function TeacherColumnManager({ token }: { token: string }) {
       if (res.ok) {
         const rows: Post[] = await res.json()
         const enriched = await attachProfileAvatars(rows)
-        setList(enriched)
+        const teacherColumns = enriched.filter((p) => {
+          const cat = (p.category || "").normalize("NFC")
+          return p.author_user_type === "teacher" || cat.includes("সম্পাদক")
+        })
+        setList(teacherColumns)
       } else {
         setList([])
       }
