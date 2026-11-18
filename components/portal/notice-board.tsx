@@ -6,6 +6,7 @@ import { ArrowRight, Download, ExternalLink, FileText, Megaphone, Pin } from "lu
 import { BRANCHES, getNotices, downloadUrl, timeAgo } from "@/lib/notices"
 import type { Notice } from "@/lib/notices"
 import { SectionHeading } from "./section-heading"
+import { useSiteSettings } from "./site-settings-context"
 
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", timeZone: "Asia/Dhaka" })
@@ -14,24 +15,34 @@ const month = (iso: string) =>
 const safeUrl = (u: string | null) => !!u && /^https?:\/\//i.test(u)
 
 export function NoticeBoard() {
-  const [list, setList] = useState<Notice[]>([])
+  const settings = useSiteSettings()
+  const [allRows, setAllRows] = useState<Notice[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     getNotices().then((rows) => {
-      setList(rows.slice(0, 5))
+      setAllRows(rows)
       setLoading(false)
     })
   }, [])
+
+  const sec = settings.homeSections.sections.find((s) => s.key === "notice_board")
+  const limit = Math.max(1, settings.homeSections.homeNoticesLimit || 5)
+  const list = allRows.slice(0, limit)
 
   return (
     <section id="notices" className="py-16 sm:py-20">
       <div className="mx-auto max-w-5xl px-4">
         <SectionHeading
           inverted
-          eyebrow="Digital Notice Board"
-          title="ডিজিটাল নোটিশ বোর্ড"
-          subtitle="বিশ্ববিদ্যালয়, বিভিন্ন হল, বিভাগ ও মাভাবিপ্রবি রিপোর্টার্স ইউনিটির সর্বশেষ নোটিশসমূহ।"
+          eyebrow={sec?.eyebrow ?? "Digital Notice Board"}
+          title={sec?.titleBn || "ডিজিটাল নোটিশ বোর্ড"}
+          titleEn={sec?.titleEn || "Digital Notice Board"}
+          subtitle={
+            sec?.subtitleBn ||
+            "বিশ্ববিদ্যালয়, বিভিন্ন হল, বিভাগ ও মাভাবিপ্রবি রিপোর্টার্স ইউনিটির সর্বশেষ নোটিশসমূহ।"
+          }
+          subtitleEn={sec?.subtitleEn || "Latest notices from MBSTU & MBSTURU."}
         />
 
         <div className="glass-card overflow-hidden">
@@ -76,7 +87,7 @@ export function NoticeBoard() {
                         </p>
                       )}
                     </div>
-                    
+
                     <Link
                       href={`/notices?n=${n.id}`}
                       className="mt-1.5 block font-serif font-bold text-base text-white hover:text-cyan-300 transition-colors"
