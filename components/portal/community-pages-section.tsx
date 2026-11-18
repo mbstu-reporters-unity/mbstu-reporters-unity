@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { getCommunityPages, type CommunityPage } from '@/lib/pages'
 import { SectionHeading } from './section-heading'
+import { useSiteSettings } from './site-settings-context'
 
 function safeHttpUrl(u?: string | null): string | null {
   if (!u) return null
@@ -25,6 +26,7 @@ function safeHttpUrl(u?: string | null): string | null {
 }
 
 export function CommunityPagesSection() {
+  const settings = useSiteSettings()
   const [pages, setPages] = useState<CommunityPage[]>([])
   const [filter, setFilter] = useState('All')
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -118,6 +120,7 @@ export function CommunityPagesSection() {
 
   if (pages.length === 0) return null
 
+  const sec = settings.homeSections.sections.find((s) => s.key === 'community_pages')
   const displayedPages: CommunityPage[] = []
   if (total > 0) {
     for (let i = 0; i < Math.min(cardsCount, total); i++) {
@@ -130,9 +133,14 @@ export function CommunityPagesSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           inverted
-          eyebrow="Community & Organizations"
-          title="ক্যাম্পাস পেজ ও কমিউনিটি"
-          subtitle="মাভাবিপ্রবির বিভিন্ন সমিতি, হল সংসদ ও ক্যাম্পাস সংগঠনসমূহের অফিসিয়াল পেজ ও সাম্প্রতিক কার্যক্রম।"
+          eyebrow={sec?.eyebrow ?? 'Community & Organizations'}
+          title={sec?.titleBn || 'ক্যাম্পাস পেজ ও কমিউনিটি'}
+          titleEn={sec?.titleEn || 'Campus Pages & Community'}
+          subtitle={
+            sec?.subtitleBn ||
+            'মাভাবিপ্রবির বিভিন্ন সমিতি, হল সংসদ ও ক্যাম্পাস সংগঠনসমূহের অফিসিয়াল পেজ ও সাম্প্রতিক কার্যক্রম।'
+          }
+          subtitleEn={sec?.subtitleEn || 'Official campus pages and recent updates.'}
         />
 
         {categories.length > 2 && (
