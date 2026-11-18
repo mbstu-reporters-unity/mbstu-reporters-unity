@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowUpRight, ArrowRight, Award, BookOpen, Feather, GraduationCap, MessageSquareQuote, Sparkles } from 'lucide-react'
+import { ArrowUpRight, ArrowRight, Award, BookOpen, Feather, GraduationCap, MessageSquareQuote } from 'lucide-react'
 import { getStudentItems, type StudentItem } from '@/lib/sb'
 import { SectionHeading } from './section-heading'
 import { StudentDialog } from './student-dialog'
+import { useSiteSettings } from './site-settings-context'
 
 const typeIcon: Record<string, any> = {
   Opinion: MessageSquareQuote,
@@ -15,6 +16,7 @@ const typeIcon: Record<string, any> = {
 }
 
 export function StudentCorner() {
+  const settings = useSiteSettings()
   const [items, setItems] = useState<StudentItem[]>([])
   const [selected, setSelected] = useState<StudentItem | null>(null)
 
@@ -24,6 +26,7 @@ export function StudentCorner() {
 
   if (!items.length) return null
 
+  const sec = settings.homeSections.sections.find((s) => s.key === 'student_corner')
   const featured = items.find((i) => i.featured) || items[0]
   const rest = items.filter((i) => i.id !== featured.id).slice(0, 4)
   const FeaturedIcon = typeIcon[featured.kind] || MessageSquareQuote
@@ -33,13 +36,14 @@ export function StudentCorner() {
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeading
           inverted
-          eyebrow="Student Corner"
-          title="স্টুডেন্ট কর্নার"
-          subtitle="মাভাবিপ্রবি শিক্ষার্থীদের মতামত, সাহিত্য, গবেষণা ও অর্জনের উন্মুক্ত মঞ্চ।"
+          eyebrow={sec?.eyebrow ?? 'Student Corner'}
+          title={sec?.titleBn || 'স্টুডেন্ট কর্নার'}
+          titleEn={sec?.titleEn || 'Student Corner'}
+          subtitle={sec?.subtitleBn || 'মাভাবিপ্রবি শিক্ষার্থীদের মতামত, সাহিত্য, গবেষণা ও অর্জনের উন্মুক্ত মঞ্চ।'}
+          subtitleEn={sec?.subtitleEn || 'Opinions, creative writing and achievements by MBSTU students.'}
         />
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* বড় ফিচার্ড কার্ড */}
           <article
             onClick={() => setSelected(featured)}
             className="glass-card group relative overflow-hidden text-white shadow-xl cursor-pointer"
@@ -86,7 +90,6 @@ export function StudentCorner() {
             </div>
           </article>
 
-          {/* বাকি কার্ডগুলো */}
           <ul className="grid gap-4 sm:grid-cols-2">
             {rest.map((item) => {
               const Icon = typeIcon[item.kind] || MessageSquareQuote
