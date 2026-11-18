@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   ArrowLeft,
   CheckCircle2,
@@ -52,6 +52,7 @@ export function DrillDownMenu({
   userBanner = null,
 }: DrillDownMenuProps) {
   const pathname = usePathname() || '/'
+  const router = useRouter()
   const prevPathRef = useRef(pathname)
 
   const [mounted, setMounted] = useState(false)
@@ -70,9 +71,11 @@ export function DrillDownMenu({
   const openRef = useRef(open)
   openRef.current = open
 
-  const hasGuardRef = useRef(false)
-  const ignoreNextPopRef = useRef(false)
-  const navigatingRef = useRef(false)
+  // প্রতিটি ক্লিকে তৈরি হওয়া হিস্ট্রি এন্ট্রির সংখ্যা (Chrome History Intervention এড়াতে)
+  const guardCountRef = useRef(0)
+  const ignorePopCountRef = useRef(0)
+  const pendingActionRef = useRef<(() => void) | null>(null)
+  const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
@@ -111,7 +114,8 @@ export function DrillDownMenu({
   const activePanel = panels[safeActiveDepth] || panels[0]
   const breadcrumbs = panels.slice(0, safeActiveDepth + 1)
 
-  const goToDepth = useCallback((targetDepth: number) => {
+  // শুধু UI-তে এক ধাপ/বহু ধাপ পেছনে স্লাইড করার ফাংশন
+  const applyDepthUI = useCallback((targetDepth: number) => {
     if (targetDepth < 0 || targetDepth >= safeActiveDepthRef.current) return
     if (trimTimerRef.current) clearTimeout(trimTimerRef.current)
 
@@ -121,77 +125,134 @@ export function DrillDownMenu({
     }, TRANSITION_MS + 20)
   }, [])
 
-  const goToDepthRef = useRef(goToDepth)
-  goToDepthRef.current = goToDepth
+  const applyDepthUIRef = useRef(applyDepthUI)
+  applyDepthUIRef.current = applyDepthUI
+
+  // তীর (←), ব্রেডক্রাম্ব বা ভেতরের সোয়াইপ দিয়ে পেছনে যাওয়া (হিস্ট্রি সিঙ্কসহ)
+  const goToDepth = useCallback(
+    (targetDepth: number) => {
+      const cur = safeActiveDepthRef.current
+      if (targetDepth < 0 || targetDepth >= cur) return
+
+      const diff = cur - targetDepth
+      const toPop = Math.min(diff, guardCountRef.current)
+      if (toPop > 0) {
+        guardCountRef.current -= toPop
+        ignorePopCountRef.current += 1
+        try {
+          window.history.go(-toPop)
+        } catch {
+          ignorePopCountRef.current = Math.max(0, ignorePopCountRef.current - 1)
+        }
+      }
+
+      applyDepthUI(targetDepth)
+    },
+    [applyDepthUI]
+  )
 
   // X বাটন, ব্যাকড্রপ, Escape বা রুট সোয়াইপে ড্রয়ার বন্ধ করা
   const dismissDrawer = useCallback(() => {
-    navigatingRef.current = false
+    const toPop = guardCountRef.current
+    if (toPop > 0) {
+      guardCountRef.current = 0
+      ignorePopCountRef.current += 1
+      try {
+        window.history.go(-toPop)
+      } catch {
+        ignorePopCountRef.current = Math.max(0, ignorePopCountRef.current - 1)
+      }
+    }
     onCloseRef.current()
   }, [])
 
-  // কোনো লিংক বা সেকশনে ক্লিক করলে নেভিগেট হয়ে ড্রয়ার বন্ধ করা
-  const navigateAndClose = useCallback(() => {
-    navigatingRef.current = true
-    hasGuardRef.current = false
+  // কোনো পেজ লিংকে ক্লিক করলে মেনুর হিস্ট্রি ধাপগুলো মুছে আসল পেজে নেভিগেট করা
+  const runAfterClearingGuards = useCallback((action: () => void) => {
+    const steps = guardCountRef.current
+    if (steps <= 0) {
+      onCloseRef.current()
+      action()
+      return
+    }
+
+    guardCountRef.current = 0
+    if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current)
+
+    const fireOnce = () => {
+      const fn = pendingActionRef.current
+      pendingActionRef.current = null
+      if (pendingTimerRef.current) {
+        clearTimeout(pendingTimerRef.current)
+        pendingTimerRef.current = null
+      }
+      fn?.()
+    }
+
+    pendingActionRef.current = action
+    pendingTimerRef.current = setTimeout(fireOnce, 150)
     onCloseRef.current()
+
+    try {
+      window.history.go(-steps)
+    } catch {
+      fireOnce()
+    }
   }, [])
 
-  // Android ফোনের সিস্টেম ব্যাক ও এজ-সোয়াইপ (<) ইন্টারসেপ্ট করে মেনুর ভেতরেই ধাপে ধাপে পেছানো
+  // Android ফোনের সিস্টেম ব্যাক ও কিনারার (<) সোয়াইপ হ্যান্ডলার
   useEffect(() => {
-    const onPopState = (e: PopStateEvent) => {
-      if (ignoreNextPopRef.current) {
-        ignoreNextPopRef.current = false
+    const onPopState = () => {
+      if (pendingActionRef.current) {
+        const fn = pendingActionRef.current
+        pendingActionRef.current = null
+        if (pendingTimerRef.current) {
+          clearTimeout(pendingTimerRef.current)
+          pendingTimerRef.current = null
+        }
+        fn()
+        return
+      }
+
+      if (ignorePopCountRef.current > 0) {
+        ignorePopCountRef.current -= 1
         return
       }
 
       if (openRef.current) {
-        hasGuardRef.current = false
+        if (guardCountRef.current > 0) {
+          guardCountRef.current -= 1
+        }
         const curDepth = safeActiveDepthRef.current
         if (curDepth > 0) {
-          goToDepthRef.current(curDepth - 1)
-          // পরবর্তী লেভেল ব্যাক করার জন্য আবার গার্ড এন্ট্রি সেট রাখা
-          try {
-            window.history.pushState(
-              { ...(window.history.state || {}), __drillMenu: true },
-              '',
-              window.location.href
-            )
-            hasGuardRef.current = true
-          } catch {}
+          applyDepthUIRef.current(curDepth - 1)
         } else {
-          navigatingRef.current = false
           onCloseRef.current()
         }
-        return
-      }
-
-      // অন্য পেজ থেকে ব্যাক করে আসার সময় ড্রয়ারের পুরোনো গার্ড এন্ট্রিতে পড়লে তা এড়িয়ে যাওয়া
-      if (e.state?.__drillMenu && window.history.length > 1) {
-        window.history.back()
       }
     }
 
     window.addEventListener('popstate', onPopState)
-    return () => window.removeEventListener('popstate', onPopState)
+    return () => {
+      window.removeEventListener('popstate', onPopState)
+      if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current)
+    }
   }, [])
 
-  // ড্রয়ার খোলা ও বন্ধ হওয়ার স্মুথ স্লাইড অ্যানিমেশন + হিস্ট্রি গার্ড নিয়ন্ত্রণ
+  // ড্রয়ার খোলা ও বন্ধ হওয়ার স্মুথ স্লাইড অ্যানিমেশন + রুট গার্ড সেট করা
   useEffect(() => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     if (raf1Ref.current) cancelAnimationFrame(raf1Ref.current)
     if (raf2Ref.current) cancelAnimationFrame(raf2Ref.current)
 
     if (open) {
-      navigatingRef.current = false
-      if (!hasGuardRef.current) {
+      if (guardCountRef.current === 0) {
         try {
           window.history.pushState(
-            { ...(window.history.state || {}), __drillMenu: true },
+            { ...(window.history.state || {}), __drillMenu: true, __drillDepth: 0 },
             '',
             window.location.href
           )
-          hasGuardRef.current = true
+          guardCountRef.current = 1
         } catch {}
       }
 
@@ -202,15 +263,6 @@ export function DrillDownMenu({
         })
       })
     } else {
-      if (hasGuardRef.current && !navigatingRef.current) {
-        hasGuardRef.current = false
-        ignoreNextPopRef.current = true
-        try {
-          window.history.back()
-        } catch {}
-      }
-      navigatingRef.current = false
-
       setVisible(false)
       setDragX(0)
       closeTimerRef.current = setTimeout(() => {
@@ -231,9 +283,10 @@ export function DrillDownMenu({
   useEffect(() => {
     if (prevPathRef.current !== pathname) {
       prevPathRef.current = pathname
-      if (open) navigateAndClose()
+      guardCountRef.current = 0
+      if (open) onCloseRef.current()
     }
-  }, [pathname, open, navigateAndClose])
+  }, [pathname, open])
 
   // বডি স্ক্রল লক ও Escape কী হ্যান্ডলার
   useEffect(() => {
@@ -258,10 +311,20 @@ export function DrillDownMenu({
     }
   }, [safeActiveDepth])
 
+  // সাবমেনুতে প্রবেশ: সরাসরি ইউজারের ক্লিকের সাথে সাথে ১টি আসল হিস্ট্রি এন্ট্রি যোগ করা
   function drillDown(itemId: string, fromDepth: number) {
     if (trimTimerRef.current) clearTimeout(trimTimerRef.current)
     if (raf1Ref.current) cancelAnimationFrame(raf1Ref.current)
     if (raf2Ref.current) cancelAnimationFrame(raf2Ref.current)
+
+    try {
+      window.history.pushState(
+        { ...(window.history.state || {}), __drillMenu: true, __drillDepth: fromDepth + 1 },
+        '',
+        window.location.href
+      )
+      guardCountRef.current += 1
+    } catch {}
 
     const nextTrail = [...trail.slice(0, fromDepth), itemId]
     setTrail(nextTrail)
@@ -460,7 +523,10 @@ export function DrillDownMenu({
           <div className="shrink-0 border-b border-white/10 bg-white/[0.02] px-3.5 py-2.5">
             <Link
               href={userBanner.href || '/admin'}
-              onClick={navigateAndClose}
+              onClick={(e) => {
+                e.preventDefault()
+                runAfterClearingGuards(() => router.push(userBanner.href || '/admin'))
+              }}
               className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.05] p-2 hover:bg-white/[0.1] transition"
             >
               {userBanner.avatarUrl ? (
@@ -600,10 +666,7 @@ export function DrillDownMenu({
                         <li key={item.id}>
                           <button
                             type="button"
-                            onClick={() => {
-                              navigateAndClose()
-                              item.onSelect?.()
-                            }}
+                            onClick={() => runAfterClearingGuards(() => item.onSelect?.())}
                             className={rowClass}
                           >
                             {content}
@@ -619,7 +682,7 @@ export function DrillDownMenu({
                             href={item.href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            onClick={navigateAndClose}
+                            onClick={dismissDrawer}
                             className={rowClass}
                           >
                             {content}
@@ -628,11 +691,15 @@ export function DrillDownMenu({
                       )
                     }
 
+                    const targetHref = item.href || '/'
                     return (
                       <li key={item.id}>
                         <Link
-                          href={item.href || '/'}
-                          onClick={navigateAndClose}
+                          href={targetHref}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            runAfterClearingGuards(() => router.push(targetHref))
+                          }}
                           className={rowClass}
                         >
                           {content}
