@@ -20,6 +20,7 @@ import HeroBannerManager from "./hero-banner-manager"
 import TickerManager from "./ticker-manager"
 import StudentManager from "./student-manager"
 import SectionLimits from "./section-limits"
+import SiteSettingsManager from "./site-settings-manager"
 import DirectorManager from "./director-manager"
 import CategoryManager from "./category-manager"
 import ClubManager from "./club-manager"
@@ -54,9 +55,10 @@ const lbl = "text-[11px] font-semibold text-cyan-200/90 block mb-1"
 
 type Tab =
   | "posts" | "stories" | "comments" | "profile" | "leaders" | "notices"
-  | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "directors" | "categories"
-  | "clubs" | "faculties" | "associations" | "social_sites" | "administration"
-  | "community_pages" | "send_submission" | "submissions_inbox" | "teacher_columns"
+  | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "site_settings"
+  | "directors" | "categories" | "clubs" | "faculties" | "associations"
+  | "social_sites" | "administration" | "community_pages" | "send_submission"
+  | "submissions_inbox" | "teacher_columns"
   | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
 
 type NavItem = {
@@ -911,9 +913,10 @@ export default function AdminPage() {
     {
       groupTitle: "২. হোমপেজ ও ডিজাইন",
       items: [
+        { id: "site_settings", label: "সাইট সেটিংস", icon: Settings, adminOnly: true },
         { id: "hero", label: "হিরো স্লাইডার", icon: Sparkles, adminOnly: true },
         { id: "hero_banner", label: "হিরো ব্যানার", icon: Sliders, adminOnly: true },
-        { id: "limits", label: "হোম সেটিং ও লোগো", icon: Settings, adminOnly: true },
+        { id: "limits", label: "সংবাদ ও ক্যাটাগরি সংখ্যা", icon: Layers, adminOnly: true },
         { id: "categories", label: "ক্যাটাগরি কন্ট্রোল", icon: Layers, adminOnly: true },
       ],
     },
@@ -1530,6 +1533,7 @@ export default function AdminPage() {
           />
         )}
 
+        {tab === "site_settings" && isAdmin && <SiteSettingsManager token={token} shrink={shrink} />}
         {tab === "hero" && isAdmin && <HeroManager token={token} shrink={shrink} />}
         {tab === "hero_banner" && isAdmin && <HeroBannerManager token={token} shrink={shrink} />}
         {tab === "ticker" && isAdmin && <TickerManager token={token} author={me.full_name} />}
