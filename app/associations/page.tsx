@@ -6,6 +6,7 @@ import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
+import { getSiteSettings } from '@/lib/site-settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +16,12 @@ export const metadata: Metadata = {
 }
 
 export default async function AssociationsPage() {
-  const associations = await getUniversityAssociations()
+  const [associations, settings] = await Promise.all([
+    getUniversityAssociations(),
+    getSiteSettings(),
+  ])
+
+  const banner = settings.behaviorAndPages.subPages.associations
 
   return (
     <>
@@ -24,20 +30,22 @@ export default async function AssociationsPage() {
       <main className="min-h-screen py-6 sm:py-10">
         <div className="mx-auto max-w-6xl px-4 space-y-6">
           
-          {/* ✅ ধাপে ধাপে ফেরা ও ব্রেডক্রাম্ব */}
           <BackNavigation items={[{ label: 'অন্যান্য সাংবাদিক সমিতি' }]} />
 
-          {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center">
-            <span className="inline-block px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider mb-2 shadow">
-              University Press & Reporters
-            </span>
+            {banner.eyebrow && (
+              <span className="inline-block px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider mb-2 shadow">
+                {banner.eyebrow}
+              </span>
+            )}
             <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
-              অন্যান্য সাংবাদিক সমিতি
+              {banner.title || 'অন্যান্য সাংবাদিক সমিতি'}
             </h1>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mt-1">
-              Other University Journalist Associations Across Bangladesh
-            </p>
+            {banner.subtitle && (
+              <p className="text-white/80 text-xs sm:text-sm font-medium mt-1">
+                {banner.subtitle}
+              </p>
+            )}
           </div>
 
           {associations.length > 0 ? (
