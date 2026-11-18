@@ -8,6 +8,7 @@ import { ReactionBar } from './reaction-bar'
 import CardGallery from './card-gallery'
 import { PostMetaBadges } from './post-meta-badges'
 import { FormattedText } from './formatted-text'
+import { useSiteSettings } from './site-settings-context'
 
 function formatBanglaDate(val?: string | null): string {
   if (!val) return ''
@@ -40,11 +41,13 @@ function truncateText(clean: string, maxLength = 140): { short: string; hasMore:
 }
 
 export function NewsCard({ p }: { p: Post }) {
+  const settings = useSiteSettings()
   const [expanded, setExpanded] = useState(false)
   const articleRef = useRef<HTMLElement>(null)
 
   const formattedDate = formatBanglaDate(p.created_at)
-  const authorName = p.author?.trim() || 'মাভাবিপ্রবি রিপোর্টার্স ইউনিটি'
+  const fallbackAuthor = settings.behaviorAndPages.defaultAuthorName?.trim() || 'মাভাবিপ্রবি রিপোর্টার্স ইউনিটি'
+  const authorName = p.author?.trim() || fallbackAuthor
   const categoryName = p.category || 'ক্যাম্পাস সংবাদ'
   const showAvatar = Boolean(p.author_avatar && p.show_author_avatar !== false)
 
@@ -65,7 +68,6 @@ export function NewsCard({ p }: { p: Post }) {
       ref={articleRef}
       className="scroll-mt-20 group flex flex-col bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card rounded-2xl border border-white/10"
     >
-      {/* ১. পেজ ও পোস্টদাতার তথ্য */}
       <div className="flex items-center justify-between gap-2.5 px-3.5 pt-3.5 pb-2.5 sm:px-5">
         <div className="flex items-center gap-2.5 min-w-0">
           {primaryHref ? (
@@ -146,7 +148,6 @@ export function NewsCard({ p }: { p: Post }) {
         </Link>
       </div>
 
-      {/* ২. মিডিয়া (ভিডিও বা ছবি) */}
       <CardGallery
         postId={p.id}
         cover={p.image_url}
@@ -156,7 +157,6 @@ export function NewsCard({ p }: { p: Post }) {
         postDate={p.created_at}
       />
 
-      {/* ৩. শিরোনাম ও লেখা */}
       <div className="flex flex-1 flex-col px-3.5 pt-3 pb-3 sm:px-5 sm:pb-4 space-y-2">
         <h3
           onClick={toggleExpand}
@@ -207,7 +207,6 @@ export function NewsCard({ p }: { p: Post }) {
           </div>
         )}
 
-        {/* ৪. ইনলাইন রিয়েক্ট ও ফেসবুক কমেন্ট */}
         <div className="mt-auto pt-2 border-t border-white/15">
           <ReactionBar
             postId={p.id}
