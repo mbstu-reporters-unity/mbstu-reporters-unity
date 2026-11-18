@@ -1,13 +1,18 @@
 import { getVisiblePosts, getLimits, getCategoryNames, CAT_CAMPUS, CAT_CLUB, CAT_STUDENT } from '@/lib/sb'
+import type { HomeSectionConfig } from '@/lib/site-settings'
 import { SectionHeading } from './section-heading'
 import { NewsGrid } from './news-card'
 
-export async function CategorySections() {
+export async function CategorySections({ sectionConfig }: { sectionConfig?: HomeSectionConfig }) {
   const [all, limits, names] = await Promise.all([getVisiblePosts(1000), getLimits(), getCategoryNames()])
   const skip = [CAT_CAMPUS, CAT_CLUB, CAT_STUDENT]
   const newsOnly = all.filter((p) => !p.page_id)
   const used = Array.from(new Set(newsOnly.map((p) => p.category).filter((c): c is string => !!c)))
   const cats = [...names, ...used.filter((c) => !names.includes(c))].filter((c) => !skip.includes(c))
+
+  const eyebrowText = sectionConfig?.eyebrow ?? 'News'
+  const subSuffixBn = sectionConfig?.subtitleBn || 'বিভাগের সর্বশেষ সংবাদ ও প্রতিবেদন'
+  const subPrefixEn = sectionConfig?.subtitleEn || 'Latest news in'
 
   return (
     <>
@@ -20,9 +25,10 @@ export async function CategorySections() {
               <div className="px-4 md:px-0">
                 <SectionHeading
                   inverted
-                  eyebrow="News"
+                  eyebrow={eyebrowText}
                   title={cat}
-                  subtitle={`${cat} বিভাগের সর্বশেষ সংবাদ ও প্রতিবেদন`}
+                  subtitle={`${cat} ${subSuffixBn}`}
+                  subtitleEn={`${subPrefixEn} ${cat}`}
                 />
               </div>
               <NewsGrid posts={posts} />
