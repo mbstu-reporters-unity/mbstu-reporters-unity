@@ -7,6 +7,7 @@ import {
   BookOpen,
   Briefcase,
   Building2,
+  CalendarDays,
   Camera,
   Clock,
   Feather,
@@ -607,6 +608,42 @@ export function SiteHeader() {
       ...customByPlacement('community-clubs'),
     ]
 
+    // ⭐ শিক্ষা ও রিসোর্স ড্রপডাউন মেনু (নতুন যুক্ত হওয়া ৪ নম্বর সেকশনের পেজগুলোর জন্য) ⭐
+    const educationChildren: MenuItem[] = [
+      {
+        id: 'res-center',
+        label: 'রিসোর্স সেন্টার',
+        sublabel: 'সাংবাদিকতা গাইড ও RTI ফরম্যাট',
+        icon: BookOpen,
+        iconClass: 'bg-cyan-600 text-white',
+        href: '/resources',
+      },
+      {
+        id: 'res-opp',
+        label: 'ওয়ার্কশপ ও ইন্টার্নশিপ',
+        sublabel: 'প্রশিক্ষণ ও চাকরির সুযোগ',
+        icon: Briefcase,
+        iconClass: 'bg-purple-600 text-white',
+        href: '/opportunities',
+      },
+      {
+        id: 'res-alumni',
+        label: 'অ্যালামনাই নেটওয়ার্ক',
+        sublabel: 'প্রাক্তন সদস্য ও মেন্টরশিপ',
+        icon: Users,
+        iconClass: 'bg-amber-600 text-white',
+        href: '/alumni',
+      },
+      {
+        id: 'res-events',
+        label: 'ইভেন্ট ও ক্যালেন্ডার',
+        sublabel: 'কর্মশালা ও সার্টিফিকেট ভেরিফিকেশন',
+        icon: CalendarDays,
+        iconClass: 'bg-rose-600 text-white',
+        href: '/events',
+      },
+    ]
+
     const aboutChildren: MenuItem[] = [
       ...(isVisible('about-unity')
         ? [
@@ -769,7 +806,6 @@ export function SiteHeader() {
             },
           ]
         : []),
-      // ⭐ সদস্যপদ আবেদন লিংক মেনুবারের একদম শুরুতে বা দৃশ্যমান স্থানে যুক্ত করা হলো ⭐
       {
         id: 'membership-apply',
         label: pick('সদস্যপদ আবেদন', 'Join as Member'),
@@ -811,6 +847,14 @@ export function SiteHeader() {
             },
           ]
         : []),
+      {
+        id: 'menu-education',
+        label: pick('শিক্ষা ও রিসোর্স', 'Education & Resources'),
+        sublabel: 'রিসোর্স, ইন্টার্নশিপ ও অ্যালামনাই',
+        icon: BookOpen,
+        iconClass: 'bg-emerald-600 text-white',
+        children: educationChildren,
+      },
       ...(isVisible('community-clubs') && commChildren.length > 0
         ? [
             {
@@ -818,7 +862,7 @@ export function SiteHeader() {
               label: getLabel('community-clubs', 'কমিউনিটি ও ক্লাব', 'Community & Clubs'),
               icon: Star,
               iconClass: 'bg-orange-500 text-white',
-              children: commChildren,
+              children: clubChildren,
             },
           ]
         : []),
