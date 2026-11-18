@@ -5,8 +5,12 @@ import Link from "next/link"
 import { X, Play, Pause, Sparkles, ChevronLeft, ChevronRight, ExternalLink, Plus } from "lucide-react"
 import { getActiveStories, type StoryItem } from "@/lib/stories"
 import { getMe, type Profile } from "@/lib/sb"
+import { useLang } from "@/lib/i18n"
+import { useSiteSettings } from "./site-settings-context"
 
 export function FbStoriesTray() {
+  const settings = useSiteSettings()
+  const { pick } = useLang()
   const [stories, setStories] = useState<StoryItem[]>([])
   const [activeStoryIdx, setActiveStoryIdx] = useState<number | null>(null)
   const [progress, setProgress] = useState(0)
@@ -146,18 +150,16 @@ export function FbStoriesTray() {
     }
   }
 
-  // যদি কোনো স্টোরিও না থাকে এবং ইউজার লগইন করা না থাকে তাহলেই শুধু ফাঁকা থাকবে
   if (stories.length === 0 && !me) return null
 
+  const sec = settings.homeSections.sections.find((s) => s.key === "stories")
+  const addStoryLabel = pick(sec?.subtitleBn || "স্টোরি দিন", sec?.subtitleEn || "Add Story")
   const currentActiveStory = activeStoryIdx !== null ? stories[activeStoryIdx] : null
 
   return (
     <div className="w-full my-4">
-      {/* ফেসবুক স্টাইল অনুভূমিক স্টোরি ট্রে */}
       <div className="w-full overflow-x-auto py-1 px-3 sm:px-4 scrollbar-none select-none">
         <div className="flex gap-2 sm:gap-2.5 min-w-max items-center">
-          
-          {/* ১. Create Story কার্ড (ফেসবুক স্টাইল) */}
           <Link
             href="/admin"
             className="relative w-[105px] sm:w-[125px] h-[175px] sm:h-[205px] rounded-2xl overflow-hidden border border-white/20 bg-slate-900/90 shadow-lg flex flex-col justify-between group active:scale-95 transition-all shrink-0 cursor-pointer text-center"
@@ -177,11 +179,10 @@ export function FbStoriesTray() {
               <span className="absolute -top-4 size-8 rounded-full bg-blue-600 text-white ring-4 ring-slate-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition">
                 <Plus className="size-5" />
               </span>
-              <span className="text-[10px] font-bold text-white leading-tight">স্টোরি দিন</span>
+              <span className="text-[10px] font-bold text-white leading-tight">{addStoryLabel}</span>
             </div>
           </Link>
 
-          {/* ২. স্টোরিগুলোর থাম্বনেইল তালিকা */}
           {stories.map((st, idx) => (
             <div
               key={st.id}
@@ -231,7 +232,6 @@ export function FbStoriesTray() {
         </div>
       </div>
 
-      {/* ফুলস্ক্রিন সোয়াইপ স্টোরি ভিউয়ার */}
       {currentActiveStory && (
         <div
           className="fixed inset-0 z-[999999] bg-black/95 flex flex-col items-center justify-center p-0 sm:p-4 backdrop-blur-xl animate-in fade-in select-none"
@@ -239,7 +239,6 @@ export function FbStoriesTray() {
           onTouchEnd={handleTouchEnd}
         >
           <div className="relative w-full h-[100dvh] sm:h-[90vh] sm:max-w-md bg-slate-950 sm:rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl border border-white/10">
-            
             <div className="absolute top-3 inset-x-3 z-30 flex gap-1 pointer-events-none">
               {stories.map((_, i) => (
                 <div key={i} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
