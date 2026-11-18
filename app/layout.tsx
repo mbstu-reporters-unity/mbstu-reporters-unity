@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Noto_Sans_Bengali, Noto_Serif_Bengali } from 'next/font/google'
 import './globals.css'
 import { LangProvider } from '@/lib/i18n'
+import { SiteSettingsProvider } from '@/components/portal/site-settings-context'
 import { OfflinePwaManager } from '@/components/portal/offline-pwa-manager'
 
 const notoSans = Noto_Sans_Bengali({
@@ -111,7 +112,6 @@ const organizationJsonLd = {
   },
 }
 
-/* শুধুমাত্র নির্বাচিত ৪টি থিমের রিলোডহীন ফাস্ট এক্সিকিউশন */
 const themeScript = `(function(){try{var ok=['ocean-glass','sunset-peach','pure-frost','midnight-neon'];var t=localStorage.getItem('mbstu_theme');if(!t||ok.indexOf(t)<0){t='ocean-glass';}document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('mbstu_lang');if(l==='en'||l==='bn'){document.documentElement.lang=l;}}catch(e){}})();`
 
 export default function RootLayout({
@@ -136,8 +136,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
         <LangProvider>
-          {children}
-          <OfflinePwaManager />
+          <SiteSettingsProvider>
+            {children}
+            <OfflinePwaManager />
+          </SiteSettingsProvider>
         </LangProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
