@@ -608,7 +608,6 @@ export function SiteHeader() {
       ...customByPlacement('community-clubs'),
     ]
 
-    // ⭐ শিক্ষা ও রিসোর্স ড্রপডাউন মেনু (নতুন যুক্ত হওয়া ৪ নম্বর সেকশনের পেজগুলোর জন্য) ⭐
     const educationChildren: MenuItem[] = [
       {
         id: 'res-center',
@@ -862,7 +861,7 @@ export function SiteHeader() {
               label: getLabel('community-clubs', 'কমিউনিটি ও ক্লাব', 'Community & Clubs'),
               icon: Star,
               iconClass: 'bg-orange-500 text-white',
-              children: clubChildren,
+              children: commChildren,
             },
           ]
         : []),
