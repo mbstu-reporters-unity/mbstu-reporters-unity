@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  Award,
   Bell,
   BookOpen,
   Briefcase,
@@ -13,6 +14,7 @@ import {
   Globe2,
   GraduationCap,
   Hash,
+  History,
   Home,
   Info,
   Landmark,
@@ -23,6 +25,7 @@ import {
   Menu,
   Newspaper,
   Phone,
+  Scale,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -552,15 +555,77 @@ export function SiteHeader() {
       ...customByPlacement('community-clubs'),
     ]
 
+    // ⭐ এখানে আমাদের নতুন ৬টি পেজ "পরিষদ ও পরিচিতি"-এর ভেতর সাব-মেনু হিসেবে যুক্ত করা হলো ⭐
     const aboutChildren: MenuItem[] = [
-      ...(isVisible('about-leadership')
+      ...(isVisible('about-unity')
         ? [
             {
-              id: 'about-leadership',
-              label: getLabel('about-leadership', 'কার্যনির্বাহী পরিষদ', 'Executive Council'),
-              icon: Users,
+              id: 'about-unity',
+              label: getLabel('about-unity', 'আমাদের সম্পর্কে', 'About Us'),
+              sublabel: 'ইতিহাস, ভিশন ও অর্জন',
+              icon: Info,
+              iconClass: 'bg-amber-600 text-white',
+              href: '/about',
+            },
+          ]
+        : []),
+      ...(isVisible('about-committee')
+        ? [
+            {
+              id: 'about-committee',
+              label: getLabel('about-committee', 'বর্তমান কমিটি', 'Executive Committee'),
+              sublabel: 'কার্যনির্বাহী পরিষদের কর্মকর্তা',
+              icon: Award,
               iconClass: 'bg-teal-600 text-white',
-              onSelect: () => scrollToSection('leadership'),
+              href: '/committee',
+            },
+          ]
+        : []),
+      ...(isVisible('about-advisors')
+        ? [
+            {
+              id: 'about-advisors',
+              label: getLabel('about-advisors', 'উপদেষ্টা পরিষদ', 'Advisory Council'),
+              sublabel: 'প্রধান পৃষ্ঠপোষক ও উপদেষ্টাবৃন্দ',
+              icon: ShieldCheck,
+              iconClass: 'bg-purple-600 text-white',
+              href: '/advisors',
+            },
+          ]
+        : []),
+      ...(isVisible('about-members')
+        ? [
+            {
+              id: 'about-members',
+              label: getLabel('about-members', 'সদস্য ডিরেক্টরি', 'Member Directory'),
+              sublabel: 'অনুমোদিত সাংবাদিক ও সদস্যবৃন্দ',
+              icon: UserCheck,
+              iconClass: 'bg-cyan-600 text-white',
+              href: '/members',
+            },
+          ]
+        : []),
+      ...(isVisible('about-constitution')
+        ? [
+            {
+              id: 'about-constitution',
+              label: getLabel('about-constitution', 'গঠনতন্ত্র ও আচরণবিধি', 'Constitution & Ethics'),
+              sublabel: 'সাংগঠনিক নীতিমালা ও ধারা',
+              icon: Scale,
+              iconClass: 'bg-blue-600 text-white',
+              href: '/constitution',
+            },
+          ]
+        : []),
+      ...(isVisible('about-archive')
+        ? [
+            {
+              id: 'about-archive',
+              label: getLabel('about-archive', 'প্রাক্তন কমিটি আর্কাইভ', 'Past Committee Archive'),
+              sublabel: 'পূর্ববর্তী মেয়াদের নেতৃত্ব',
+              icon: History,
+              iconClass: 'bg-rose-600 text-white',
+              href: '/committee/archive',
             },
           ]
         : []),
@@ -569,20 +634,22 @@ export function SiteHeader() {
             {
               id: 'about-council',
               label: getLabel('about-council', 'ডিরেক্টর প্যানেল', 'Director Panel'),
+              sublabel: 'মডারেশন ও অ্যাডমিন কাউন্সিল',
               icon: ShieldCheck,
               iconClass: 'bg-emerald-600 text-white',
               href: '/council',
             },
           ]
         : []),
-      ...(isVisible('about-unity')
+      ...(isVisible('about-leadership')
         ? [
             {
-              id: 'about-unity',
-              label: getLabel('about-unity', 'ইউনিটি পরিচিতি', 'About Unity'),
-              icon: Info,
-              iconClass: 'bg-amber-600 text-white',
-              onSelect: () => scrollToSection('about'),
+              id: 'about-leadership',
+              label: getLabel('about-leadership', 'কার্যনির্বাহী বাণী', 'Executive Messages'),
+              sublabel: 'হোমপেজে নেতৃত্বের বার্তা',
+              icon: Users,
+              iconClass: 'bg-teal-700 text-white',
+              onSelect: () => scrollToSection('leadership'),
             },
           ]
         : []),
@@ -591,6 +658,7 @@ export function SiteHeader() {
             {
               id: 'about-contact',
               label: getLabel('about-contact', 'যোগাযোগ', 'Contact'),
+              sublabel: 'অফিস ও যোগাযোগ ডেস্ক',
               icon: Phone,
               iconClass: 'bg-pink-600 text-white',
               onSelect: () => scrollToSection('contact'),
