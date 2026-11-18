@@ -6,6 +6,7 @@ import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
+import { getSiteSettings } from '@/lib/site-settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +16,12 @@ export const metadata: Metadata = {
 }
 
 export default async function AdministrationPage() {
-  const officials = await getAdministrationOfficials()
+  const [officials, settings] = await Promise.all([
+    getAdministrationOfficials(),
+    getSiteSettings(),
+  ])
+
+  const banner = settings.behaviorAndPages.subPages.administration
 
   const grouped: Record<string, AdministrationOfficial[]> = {}
   ADMIN_CATEGORIES.forEach((cat) => {
@@ -29,7 +35,6 @@ export default async function AdministrationPage() {
       <main className="min-h-screen py-6 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 space-y-6">
           
-          {/* ✅ ধাপে ধাপে ফেরা ও ব্রেডক্রাম্ব নেভিগেশন */}
           <BackNavigation
             items={[
               { label: 'বিশ্ববিদ্যালয়' },
@@ -37,20 +42,22 @@ export default async function AdministrationPage() {
             ]}
           />
 
-          {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center">
-            <span className="inline-block px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider mb-2 shadow">
-              Mawlana Bhashani Science and Technology University
-            </span>
+            {banner.eyebrow && (
+              <span className="inline-block px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider mb-2 shadow">
+                {banner.eyebrow}
+              </span>
+            )}
             <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
-              MBSTU Administration (মাভাবিপ্রবি প্রশাসন)
+              {banner.title || 'MBSTU Administration (মাভাবিপ্রবি প্রশাসন)'}
             </h1>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mt-1.5 max-w-2xl mx-auto">
-              বিশ্ববিদ্যালয়ের শীর্ষ প্রশাসন, রেজিস্ট্রার অফিস, প্রক্টর অফিস, অনুষদীয় ডিন এবং সকল প্রশাসনিক দপ্তরের দায়িত্বপ্রাপ্ত ব্যক্তিবর্গের তথ্যাবলি
-            </p>
+            {banner.subtitle && (
+              <p className="text-white/80 text-xs sm:text-sm font-medium mt-1.5 max-w-2xl mx-auto">
+                {banner.subtitle}
+              </p>
+            )}
           </div>
 
-          {/* প্রশাসনিক স্তরসমূহ প্রদর্শন */}
           {ADMIN_CATEGORIES.map((cat) => {
             const list = grouped[cat] || []
             if (list.length === 0) return null
@@ -138,7 +145,6 @@ export default async function AdministrationPage() {
             </div>
           )}
 
-          {/* পেজের নিচের নেভিগেশন */}
           <div className="pt-4 border-t border-white/15">
             <BackNavigation fallbackHref="/" showHome={true} />
           </div>
