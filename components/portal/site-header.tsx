@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
 import {
   Bell,
   BookOpen,
@@ -19,6 +18,7 @@ import {
   Landmark,
   LayoutGrid,
   Lock,
+  LogOut,
   Menu,
   Newspaper,
   Phone,
@@ -38,7 +38,14 @@ import { getCommunityPages, type CommunityPage } from '@/lib/pages'
 import { getUniversityAssociations, type UniversityAssociation } from '@/lib/associations'
 import { getSocialSites, type SocialSite } from '@/lib/social-sites'
 import { ADMIN_CATEGORIES, DEFAULT_OFFICES } from '@/lib/administration'
-import { SB_URL, SB_KEY, getMe, type Profile } from '@/lib/sb'
+import {
+  SB_URL,
+  SB_KEY,
+  getMe,
+  isTokenExpired,
+  refreshSession,
+  type Profile,
+} from '@/lib/sb'
 import { Logo } from './logo'
 import { useLang } from '@/lib/i18n'
 import { DrillDownMenu, type MenuItem } from './drill-down-menu'
@@ -181,25 +188,37 @@ export function SiteHeader() {
       fetchHeaderData().then(applyHeaderData).catch(() => {})
     }
 
-    try {
-      const t = localStorage.getItem('mbstu_admin_token') || ''
-      if (t) {
+    ;(async () => {
+      try {
+        let t = localStorage.getItem('mbstu_admin_token') || ''
+        if (!t) return
+        if (isTokenExpired(t)) {
+          const fresh = await refreshSession()
+          if (!fresh) return
+          t = fresh
+        }
         if (memMeCache && memMeCache.token === t && Date.now() - memMeCache.ts < ME_CACHE_TTL) {
           if (alive && memMeCache.profile) setMe(memMeCache.profile)
-        } else {
-          getMe(t)
-            .then((profile) => {
-              memMeCache = { token: t, ts: Date.now(), profile }
-              if (alive && profile) setMe(profile)
-            })
-            .catch(() => {})
+          return
         }
-      }
-    } catch {}
+        const profile = await getMe(t).catch(() => null)
+        memMeCache = { token: t, ts: Date.now(), profile }
+        if (alive && profile) setMe(profile)
+      } catch {}
+    })()
 
     return () => {
       alive = false
     }
+  }, [])
+
+  const handleLogout = useCallback(() => {
+    try {
+      localStorage.removeItem('mbstu_admin_token')
+      localStorage.removeItem('mbstu_admin_refresh_token')
+    } catch {}
+    memMeCache = null
+    setMe(null)
   }, [])
 
   const scrollToSection = useCallback((sectionId: string) => {
@@ -391,6 +410,14 @@ export function SiteHeader() {
             iconClass: 'bg-emerald-600 text-white',
             href: '/admin',
           },
+          {
+            id: 'my-logout',
+            label: 'লগআউট',
+            sublabel: 'অ্যাকাউন্ট থেকে বের হন',
+            icon: LogOut,
+            iconClass: 'bg-rose-600/80 text-white',
+            onSelect: handleLogout,
+          },
         ]
       : [
           {
@@ -575,6 +602,7 @@ export function SiteHeader() {
     associationsList,
     scrollToSection,
     openClubWindow,
+    handleLogout,
   ])
 
   const userBanner = me
@@ -590,15 +618,15 @@ export function SiteHeader() {
     <>
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#071030]/95 shadow-lg backdrop-blur-2xl w-full">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5">
-          {/* বামে: সংগঠনের লোগো ও বিশ্ববিদ্যালয়ের লোগো */}
-          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 mr-2 overflow-hidden">
+          {/* বামে: সংগঠনের লোগো ও বিশ্ববিদ্যালয়ের লোগো (দুইটিই সমান size-9 sm:size-11) */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2 overflow-hidden">
             <Logo inverted />
-            <span className="h-5 w-px bg-white/20 shrink-0 hidden xs:block" aria-hidden="true" />
+            <span className="h-6 w-px bg-white/20 shrink-0" aria-hidden="true" />
             <a
               href={univLink || 'https://mbstu.ac.bd'}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 shrink-0"
+              className="flex items-center gap-1.5 sm:gap-2 shrink-0"
               title="মাভাবিপ্রবি"
             >
               {univLogo && (
@@ -606,55 +634,27 @@ export function SiteHeader() {
                 <img
                   src={univLogo}
                   alt="MBSTU"
-                  className="size-7 sm:size-9 rounded-full object-cover shrink-0 select-none ring-1 sm:ring-2 ring-white/20 shadow-xs"
+                  className="size-9 sm:size-11 rounded-full object-cover shrink-0 select-none bg-white/95 shadow-xs transition-transform hover:scale-105"
                 />
               )}
-              <span className="hidden md:inline text-[11px] font-bold text-white/90 truncate max-w-[140px]">
-                {univText || 'MBSTU'}
-              </span>
+              {univText && (
+                <span className="hidden md:inline text-xs font-bold text-white/90 truncate max-w-[140px]">
+                  {univText}
+                </span>
+              )}
             </a>
           </div>
 
-          {/* ডানে: লগইন/প্রোফাইল বাটন + ড্রিল-ডাউন মেনু বাটন (মোবাইল ও ডেস্কটপ উভয়েই) */}
-          <div className="flex items-center gap-2 shrink-0">
-            {me ? (
-              <Link
-                href="/admin"
-                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 shadow-md border border-white/20 transition active:scale-95 shrink-0"
-                title="আমার প্রোফাইল ও ড্যাশবোর্ড"
-              >
-                {me.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={me.avatar_url}
-                    alt=""
-                    className="size-4 sm:size-4.5 rounded-full object-cover"
-                  />
-                ) : (
-                  <User className="size-3 sm:size-3.5" />
-                )}
-                <span className="max-w-[75px] sm:max-w-[120px] truncate">
-                  {me.full_name.split(' ')[0]}
-                </span>
-              </Link>
-            ) : (
-              <Link
-                href="/admin"
-                className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-[11px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2 shadow-md border border-white/20 transition active:scale-95 shrink-0"
-              >
-                <Lock className="size-3 sm:size-3.5" />
-                <span>{pick('লগইন', 'Login')}</span>
-              </Link>
-            )}
-
+          {/* ডানে: শুধুমাত্র ড্রিল-ডাউন মেনু বাটন (মোবাইল ও ডেস্কটপ উভয়েই) */}
+          <div className="flex items-center shrink-0">
             <button
               type="button"
               onClick={() => setMenuOpen((prev) => !prev)}
               aria-expanded={menuOpen}
               aria-label="Toggle Navigation Menu"
-              className="inline-flex items-center gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/20 cursor-pointer shrink-0 active:scale-95 transition"
+              className="inline-flex items-center gap-1.5 h-9 sm:h-10 px-3 sm:px-4 rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/20 cursor-pointer shrink-0 active:scale-95 transition"
             >
-              <Menu className="size-4 sm:size-4.5" />
+              <Menu className="size-4.5 sm:size-5" />
               <span className="hidden sm:inline text-xs font-bold">
                 {pick('মেনু', 'Menu')}
               </span>
