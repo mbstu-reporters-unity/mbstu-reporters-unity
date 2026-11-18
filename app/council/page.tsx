@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/portal/site-header"
 import { SiteFooter } from "@/components/portal/site-footer"
 import { BackToTop } from "@/components/portal/back-to-top"
 import { BackNavigation } from "@/components/portal/back-navigation"
+import { useSiteSettings } from "@/components/portal/site-settings-context"
 
 type Member = {
   id: string
@@ -65,6 +66,7 @@ function Card({ m, style, isAdmin = false }: { m: Member; style: PhotoStyle; isA
 }
 
 export default function CouncilPage() {
+  const settings = useSiteSettings()
   const [list, setList] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [style, setStyle] = useState<PhotoStyle>(compact(DEFAULT_STYLE))
@@ -84,6 +86,7 @@ export default function CouncilPage() {
     getGlobalStyle().then((g) => setStyle(compact(g)))
   }, [])
 
+  const banner = settings.behaviorAndPages.subPages.council
   const admins = list.filter((m) => m.role === "admin")
   const others = list.filter((m) => m.role === "moderator")
 
@@ -102,15 +105,19 @@ export default function CouncilPage() {
           />
 
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-8 shadow-2xl border border-white/20 text-center">
-            <span className="inline-block px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider mb-2 shadow">
-              Management & Moderation Panel
-            </span>
+            {banner.eyebrow && (
+              <span className="inline-block px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider mb-2 shadow">
+                {banner.eyebrow}
+              </span>
+            )}
             <h1 className="font-serif text-2xl sm:text-3xl font-bold leading-tight drop-shadow-md">
-              ডিরেক্টর প্যানেল / Director Panel
+              {banner.title || 'ডিরেক্টর প্যানেল / Director Panel'}
             </h1>
-            <p className="text-white/80 text-xs sm:text-sm font-medium mt-1">
-              মাভাবিপ্রবি রিপোর্টার্স ইউনিটির ওয়েবসাইট পরিচালনা ও মডারেশন প্যানেল
-            </p>
+            {banner.subtitle && (
+              <p className="text-white/80 text-xs sm:text-sm font-medium mt-1">
+                {banner.subtitle}
+              </p>
+            )}
           </div>
 
           {loading && <p className="text-center text-sm text-cyan-200/70 py-6">তথ্য লোড হচ্ছে...</p>}
