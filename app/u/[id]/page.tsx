@@ -7,8 +7,11 @@ import {
   FileText,
   CheckCircle2,
   BookOpen,
+  QrCode,
+  Sparkles,
 } from 'lucide-react'
 import { SB_URL, SB_KEY, attachProfileAvatars, type Profile, type Post } from '@/lib/sb'
+import { parseBioAndSkills } from '@/lib/member-skills'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
@@ -88,9 +91,10 @@ export async function generateMetadata({
   const { id } = await params
   const p = await getProfileById(id)
   if (!p) return { title: 'প্রোফাইল পাওয়া যায়নি' }
+  const { bioText } = parseBioAndSkills(p.bio)
   return {
     title: `${p.full_name} | MBSTU প্রোফাইল`,
-    description: p.bio || `${p.full_name}-এর মাভাবিপ্রবি প্রোফাইল`,
+    description: bioText || `${p.full_name}-এর মাভাবিপ্রবি প্রোফাইল`,
   }
 }
 
@@ -107,6 +111,8 @@ export default async function UserProfilePage({
     getUserPosts(id),
     getUserPages(id),
   ])
+
+  const { bioText, skills } = parseBioAndSkills(profile.bio)
 
   const userTypeLabels: Record<string, string> = {
     student: '🎓 শিক্ষার্থী',
@@ -131,7 +137,7 @@ export default async function UserProfilePage({
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
               
               {/* অ্যাভাটার */}
-              <div className="relative size-28 sm:size-32 rounded-full ring-4 ring-cyan-400/80 shadow-2xl overflow-hidden shrink-0 bg-slate-900 flex items-center justify-center">
+              <div className="relative size-28 sm:size-32 rounded-full ring-4 ring-cyan-400/80 shadow-2xl overflow-hidden shrink-0 z-10 bg-slate-900 flex items-center justify-center">
                 {profile.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={profile.avatar_url} alt={profile.full_name} className="size-full object-cover object-top" />
@@ -184,19 +190,44 @@ export default async function UserProfilePage({
                   )}
                 </div>
 
-                {profile.bio && (
+                {bioText && (
                   <p className="text-xs sm:text-sm text-slate-200 leading-relaxed pt-2 max-w-2xl whitespace-pre-line">
-                    {profile.bio}
+                    {bioText}
                   </p>
                 )}
 
-                {profile.newspaper_name && (
-                  <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2.5 text-xs font-bold">
+                {skills.length > 0 && (
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 pt-2">
+                    <span className="text-[11px] font-bold text-cyan-300 inline-flex items-center gap-1 mr-1">
+                      <Sparkles className="size-3" /> দক্ষতা:
+                    </span>
+                    {skills.map((sk) => (
+                      <span
+                        key={sk}
+                        className="rounded-full bg-cyan-500/15 border border-cyan-400/30 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-200"
+                      >
+                        {sk}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2.5 text-xs font-bold">
+                  {profile.newspaper_name && (
                     <span className="bg-white/10 border border-white/20 px-3 py-2 rounded-xl text-slate-200 flex items-center gap-1.5">
                       <span>📰 {profile.newspaper_name}</span>
                     </span>
-                  </div>
-                )}
+                  )}
+                  {profile.approved && (
+                    <Link
+                      href={`/verify-member/${profile.id}`}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 px-3 py-2 text-cyan-200 transition"
+                    >
+                      <QrCode className="size-3.5 text-cyan-300" />
+                      <span>ভেরিফাইড আইডি কার্ড যাচাই</span>
+                    </Link>
+                  )}
+                </div>
               </div>
 
             </div>
