@@ -13,7 +13,6 @@ import {
   Sparkles,
   ArrowRight,
   RefreshCw,
-  User,
 } from 'lucide-react'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
@@ -21,6 +20,7 @@ import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
 import { SB_URL, SB_KEY } from '@/lib/sb'
+import { MEMBER_SKILLS, parseBioAndSkills } from '@/lib/member-skills'
 
 interface PublicMember {
   id: string
@@ -32,6 +32,7 @@ interface PublicMember {
   role: string
   user_type: string
   designation?: string | null
+  bio?: string | null
   created_at: string
 }
 
@@ -45,6 +46,7 @@ const FALLBACK_MEMBERS: PublicMember[] = [
     avatar_url: null,
     role: 'moderator',
     user_type: 'reporter',
+    bio: '[[SKILLS:সংবাদ লেখা|অনুসন্ধানী রিপোর্টিং]]',
     created_at: new Date().toISOString(),
   },
   {
@@ -56,6 +58,7 @@ const FALLBACK_MEMBERS: PublicMember[] = [
     avatar_url: null,
     role: 'user',
     user_type: 'reporter',
+    bio: '[[SKILLS:ফটোগ্রাফি|ফিচার ও কলাম]]',
     created_at: new Date().toISOString(),
   },
   {
@@ -68,6 +71,7 @@ const FALLBACK_MEMBERS: PublicMember[] = [
     role: 'user',
     user_type: 'teacher',
     designation: 'অধ্যাপক ও কলামিস্ট',
+    bio: '[[SKILLS:ফিচার ও কলাম]]',
     created_at: new Date().toISOString(),
   },
 ]
@@ -79,12 +83,14 @@ export default function MembersDirectoryPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState<FilterRole>('all')
+  const [deptFilter, setDeptFilter] = useState<string>('সব')
+  const [skillFilter, setSkillFilter] = useState<string>('সব')
 
   async function loadApprovedMembers() {
     setLoading(true)
     try {
       const res = await fetch(
-        `${SB_URL}/rest/v1/profiles?select=id,full_name,department,batch,newspaper_name,avatar_url,role,user_type,designation,created_at&approved=eq.true&order=created_at.asc`,
+        `${SB_URL}/rest/v1/profiles?select=id,full_name,department,batch,newspaper_name,avatar_url,role,user_type,designation,bio,created_at&approved=eq.true&order=created_at.asc`,
         {
           headers: {
             apikey: SB_KEY,
@@ -113,21 +119,41 @@ export default function MembersDirectoryPage() {
     loadApprovedMembers()
   }, [])
 
+  const enrichedMembers = useMemo(() => {
+    return members.map((m) => {
+      const parsed = parseBioAndSkills(m.bio)
+      return {
+        ...m,
+        cleanBio: parsed.bioText,
+        skills: parsed.skills,
+      }
+    })
+  }, [members])
+
+  const departments = useMemo(() => {
+    const set = new Set<string>(['সব'])
+    enrichedMembers.forEach((m) => {
+      if (m.department && m.department.trim()) set.add(m.department.trim())
+    })
+    return Array.from(set)
+  }, [enrichedMembers])
+
   const filteredMembers = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return members.filter((m) => {
-      // ফিল্টার ক্যাটাগরি যাচাই
+    return enrichedMembers.filter((m) => {
       if (activeFilter === 'reporter' && m.user_type !== 'reporter' && !m.newspaper_name) return false
       if (activeFilter === 'moderator' && m.role !== 'admin' && m.role !== 'moderator') return false
       if (activeFilter === 'teacher' && m.user_type !== 'teacher') return false
+      if (deptFilter !== 'সব' && (m.department || '').trim() !== deptFilter) return false
+      if (skillFilter !== 'সব' && !m.skills.includes(skillFilter)) return false
 
       if (!q) return true
 
-      return [m.full_name, m.department, m.batch, m.newspaper_name, m.designation]
+      return [m.full_name, m.department, m.batch, m.newspaper_name, m.designation, ...m.skills]
         .filter(Boolean)
         .some((val) => String(val).toLowerCase().includes(q))
     })
-  }, [members, activeFilter, search])
+  }, [enrichedMembers, activeFilter, deptFilter, skillFilter, search])
 
   const counts = useMemo(() => {
     return {
@@ -153,7 +179,6 @@ export default function MembersDirectoryPage() {
       <main className="min-h-screen py-6 sm:py-10">
         <div className="mx-auto max-w-6xl px-4 space-y-8">
 
-          {/* ব্রেডক্রাম্ব নেভিগেশন */}
           <BackNavigation
             items={[
               { label: 'আমাদের সম্পর্কে', href: '/about' },
@@ -161,7 +186,7 @@ export default function MembersDirectoryPage() {
             ]}
           />
 
-          {/* ১. হেডার ব্যানার */}
+          {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-12 shadow-2xl border border-white/20 text-center space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow">
               <Users className="size-3.5" />
@@ -177,39 +202,63 @@ export default function MembersDirectoryPage() {
             </p>
 
             <p className="text-slate-200 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed pt-1">
-              সংগঠনের সকল অনুমোদিত ক্যাম্পাস সাংবাদিক, মডারেটর পরিষদ এবং শিক্ষক কলামিস্টদের অফিশিয়াল পরিচিতি তালিকা।
+              বিভাগ, সেশন ও দক্ষতা (সংবাদ লেখা, ফটোগ্রাফি, ভিডিও এডিটিং, ফ্যাক্ট-চেকিং) অনুযায়ী অনুমোদিত ক্যাম্পাস সাংবাদিক ও সদস্যদের তালিকা।
             </p>
           </div>
 
-          {/* ২. সার্চ ও ফিল্টার বার */}
+          {/* সার্চ ও ফিল্টার বার */}
           <section className="glass-card p-4 sm:p-6 space-y-4 text-white">
-            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-              
-              {/* সার্চ ইনপুট */}
-              <div className="relative flex-1 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-center">
+              <div className="relative sm:col-span-2 w-full">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/50" />
                 <input
                   type="text"
-                  placeholder="নাম, বিভাগ, সেশন বা পত্রিকার নাম লিখে খুঁজুন..."
+                  placeholder="নাম, বিভাগ, ব্যাচ, পত্রিকা বা দক্ষতা লিখুন..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full rounded-2xl border border-white/20 bg-white/10 pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 backdrop-blur transition"
                 />
               </div>
 
-              {/* রিফ্রেশ বাটন */}
-              <button
-                type="button"
-                onClick={loadApprovedMembers}
-                disabled={loading}
-                className="inline-flex items-center gap-1.5 rounded-2xl border border-white/20 bg-white/10 hover:bg-white/20 px-4 py-2.5 text-xs font-bold transition shrink-0 cursor-pointer"
+              <select
+                value={deptFilter}
+                onChange={(e) => setDeptFilter(e.target.value)}
+                className="w-full rounded-2xl border border-white/20 bg-slate-900 px-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400"
               >
-                <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
-                <span>রিফ্রেশ</span>
-              </button>
+                {departments.map((d) => (
+                  <option key={d} value={d}>
+                    {d === 'সব' ? 'সব বিভাগ (Department)' : d}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex gap-2">
+                <select
+                  value={skillFilter}
+                  onChange={(e) => setSkillFilter(e.target.value)}
+                  className="flex-1 rounded-2xl border border-white/20 bg-slate-900 px-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400"
+                >
+                  <option value="সব">সব দক্ষতা (Skills)</option>
+                  {MEMBER_SKILLS.map((sk) => (
+                    <option key={sk} value={sk}>
+                      {sk}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={loadApprovedMembers}
+                  disabled={loading}
+                  className="p-2.5 rounded-2xl border border-white/20 bg-white/10 hover:bg-white/20 text-white cursor-pointer shrink-0"
+                  title="রিফ্রেশ"
+                >
+                  <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
             </div>
 
-            {/* ফিল্টার বাটনসমূহ */}
+            {/* ভূমিকা ফিল্টার বাটন */}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none pt-1">
               {[
                 { key: 'all' as FilterRole, label: 'সকল সদস্য', count: counts.all, icon: Users },
@@ -239,7 +288,7 @@ export default function MembersDirectoryPage() {
             </div>
           </section>
 
-          {/* ৩. সদস্যদের কার্ড গ্রিড */}
+          {/* সদস্যদের কার্ড গ্রিড */}
           <section className="space-y-4">
             <div className="flex items-center justify-between px-1 text-white">
               <h2 className="font-serif text-lg sm:text-xl font-bold flex items-center gap-2">
@@ -309,9 +358,21 @@ export default function MembersDirectoryPage() {
                             )}
                           </div>
                         </div>
+
+                        {m.skills.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {m.skills.map((sk) => (
+                              <span
+                                key={sk}
+                                className="rounded-full bg-white/10 border border-white/15 px-2 py-0.5 text-[10px] font-semibold text-cyan-200"
+                              >
+                                {sk}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
-                      {/* পোর্টফোলিও লিংক বাটন */}
                       <div className="border-t border-white/10 pt-3 flex items-center justify-between">
                         <span className="text-[10px] text-white/50">
                           ভেরিফাইড আইডি • MBSTURU
@@ -332,12 +393,11 @@ export default function MembersDirectoryPage() {
             ) : (
               <div className="glass-card p-12 text-center text-slate-300 text-sm space-y-1">
                 <p className="font-bold text-white">কোনো সদস্য পাওয়া যায়নি।</p>
-                <p className="text-xs text-white/60">ভিন্ন কোনো নাম বা বিভাগ দিয়ে পুনরায় সার্চ করুন।</p>
+                <p className="text-xs text-white/60">ভিন্ন কোনো নাম, বিভাগ বা দক্ষতা দিয়ে পুনরায় সার্চ করুন।</p>
               </div>
             )}
           </section>
 
-          {/* ৪. দ্রুত রেফারেন্স ও সম্পর্কিত পাতার লিংক */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
             <Link
               href="/committee"
@@ -356,19 +416,19 @@ export default function MembersDirectoryPage() {
             </Link>
 
             <Link
-              href="/advisors"
+              href="/apply"
               className="glass-card p-4 rounded-2xl flex items-center justify-between hover:border-cyan-400 transition group text-white"
             >
               <div className="flex items-center gap-3">
-                <span className="p-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-400/30">
-                  <ShieldCheck className="size-4" />
+                <span className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                  <UserCheck className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">উপদেষ্টা পরিষদ</p>
-                  <p className="text-[10px] text-slate-300">শিক্ষক ও পেশাদার উপদেষ্টা</p>
+                  <p className="font-bold text-xs sm:text-sm">সদস্যপদ আবেদন</p>
+                  <p className="text-[10px] text-slate-300">নতুন সদস্য হওয়ার আবেদন ফর্ম</p>
                 </div>
               </div>
-              <ArrowRight className="size-4 text-purple-300 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="size-4 text-emerald-300 group-hover:translate-x-1 transition-transform" />
             </Link>
 
             <Link
@@ -388,7 +448,6 @@ export default function MembersDirectoryPage() {
             </Link>
           </div>
 
-          {/* ফুটার ব্যাক বাটন */}
           <div className="pt-4 border-t border-white/15">
             <BackNavigation fallbackHref="/" />
           </div>
