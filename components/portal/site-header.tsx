@@ -17,6 +17,7 @@ import {
   Info,
   Landmark,
   LayoutGrid,
+  Link2,
   Lock,
   LogOut,
   Menu,
@@ -49,6 +50,7 @@ import {
 import { Logo } from './logo'
 import { useLang } from '@/lib/i18n'
 import { DrillDownMenu, type MenuItem } from './drill-down-menu'
+import { useSiteSettings } from './site-settings-context'
 
 const HEADER_CACHE_KEY = 'mbstu_header_cache_v2'
 const HEADER_CACHE_TTL = 3 * 60 * 1000
@@ -129,6 +131,7 @@ async function fetchHeaderData(): Promise<HeaderCachePayload> {
 }
 
 export function SiteHeader() {
+  const settings = useSiteSettings()
   const [menuOpen, setMenuOpen] = useState(false)
 
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
@@ -251,6 +254,28 @@ export function SiteHeader() {
   }, [])
 
   const menuItems = useMemo<MenuItem[]>(() => {
+    const ctrlMap = new Map(settings.menu.items.map((c) => [c.id, c]))
+    const isVisible = (id: string) => ctrlMap.get(id)?.visible !== false
+    const getLabel = (id: string, fallbackBn: string, fallbackEn: string) => {
+      const found = ctrlMap.get(id)
+      if (!found) return pick(fallbackBn, fallbackEn)
+      return pick(found.labelBn || fallbackBn, found.labelEn || fallbackEn)
+    }
+
+    const customByPlacement = (
+      placement: 'root' | 'university' | 'news-media' | 'community-clubs' | 'council-about'
+    ): MenuItem[] =>
+      settings.menu.customLinks
+        .filter((cl) => cl.visible && cl.placement === placement && (cl.labelBn.trim() || cl.labelEn.trim()) && cl.href.trim())
+        .map((cl) => ({
+          id: cl.id,
+          label: pick(cl.labelBn || cl.labelEn, cl.labelEn || cl.labelBn),
+          icon: Link2,
+          iconClass: 'bg-cyan-600/80 text-white',
+          href: cl.href.trim(),
+          external: cl.external || /^https?:\/\//i.test(cl.href.trim()),
+        }))
+
     const adminChildren: MenuItem[] = [
       {
         id: 'admin-all',
@@ -391,6 +416,190 @@ export function SiteHeader() {
       }),
     ]
 
+    const univChildren: MenuItem[] = [
+      ...(isVisible('univ-admin')
+        ? [
+            {
+              id: 'univ-admin',
+              label: getLabel('univ-admin', 'প্রশাসন ও দপ্তর', 'Administration'),
+              icon: Landmark,
+              iconClass: 'bg-cyan-600/80 text-white',
+              children: adminChildren,
+            },
+          ]
+        : []),
+      ...(isVisible('univ-faculties')
+        ? [
+            {
+              id: 'univ-faculties',
+              label: getLabel('univ-faculties', 'অনুষদ ও বিভাগ', 'Faculties & Depts'),
+              badge: facultiesList.length ? `${facultiesList.length}` : undefined,
+              icon: GraduationCap,
+              iconClass: 'bg-teal-600 text-white',
+              children: facultyChildren,
+            },
+          ]
+        : []),
+      ...(isVisible('univ-social')
+        ? [
+            {
+              id: 'univ-social',
+              label: getLabel('univ-social', 'সোশ্যাল সাইট', 'Social Sites'),
+              badge: socialSitesList.length ? `${socialSitesList.length}` : undefined,
+              icon: Globe2,
+              iconClass: 'bg-emerald-600 text-white',
+              children: socialSiteChildren,
+            },
+          ]
+        : []),
+      ...customByPlacement('university'),
+    ]
+
+    const newsChildren: MenuItem[] = [
+      ...(isVisible('news-campus')
+        ? [
+            {
+              id: 'news-campus',
+              label: getLabel('news-campus', 'ক্যাম্পাস সংবাদ', 'Campus News'),
+              icon: Newspaper,
+              iconClass: 'bg-amber-500/80 text-white',
+              onSelect: () => scrollToSection('general-news'),
+            },
+          ]
+        : []),
+      ...(isVisible('news-notices')
+        ? [
+            {
+              id: 'news-notices',
+              label: getLabel('news-notices', 'ডিজিটাল নোটিশ', 'Digital Notices'),
+              icon: Bell,
+              iconClass: 'bg-emerald-600 text-white',
+              href: '/notices',
+            },
+          ]
+        : []),
+      ...(isVisible('news-reels')
+        ? [
+            {
+              id: 'news-reels',
+              label: getLabel('news-reels', 'রিলস ও ভিডিও হাব', 'Reels & Video Hub'),
+              badge: 'LIVE',
+              icon: Film,
+              iconClass: 'bg-rose-600 text-white',
+              onSelect: () => scrollToSection('reels-hub'),
+            },
+          ]
+        : []),
+      {
+        id: 'news-categories',
+        label: pick('সংবাদের ক্যাটাগরি', 'News Categories'),
+        badge: categoriesList.length ? `${categoriesList.length}` : undefined,
+        icon: Tag,
+        iconClass: 'bg-blue-600 text-white',
+        children: categoryChildren,
+      },
+      ...customByPlacement('news-media'),
+    ]
+
+    const commChildren: MenuItem[] = [
+      ...(isVisible('comm-clubs')
+        ? [
+            {
+              id: 'comm-clubs',
+              label: getLabel('comm-clubs', 'ক্যাম্পাস ক্লাবসমূহ', 'Campus Clubs'),
+              badge: clubsList.length ? `${clubsList.length}` : undefined,
+              icon: Star,
+              iconClass: 'bg-orange-500 text-white',
+              children: clubChildren,
+            },
+          ]
+        : []),
+      ...(isVisible('comm-pages')
+        ? [
+            {
+              id: 'comm-pages',
+              label: getLabel('comm-pages', 'ক্যাম্পাস পেজসমূহ', 'Campus Pages'),
+              badge: communityPagesList.length ? `${communityPagesList.length}` : undefined,
+              icon: FileText,
+              iconClass: 'bg-violet-600 text-white',
+              children: pageChildren,
+            },
+          ]
+        : []),
+      ...(isVisible('comm-student')
+        ? [
+            {
+              id: 'comm-student',
+              label: getLabel('comm-student', 'স্টুডেন্ট কর্নার', 'Student Corner'),
+              icon: BookOpen,
+              iconClass: 'bg-sky-500 text-white',
+              href: '/student-corner',
+            },
+          ]
+        : []),
+      ...(isVisible('comm-associations')
+        ? [
+            {
+              id: 'comm-associations',
+              label: getLabel('comm-associations', 'অন্যান্য সাংবাদিক সমিতি', 'Associations'),
+              badge: associationsList.length ? `${associationsList.length}` : undefined,
+              icon: ShieldCheck,
+              iconClass: 'bg-indigo-600 text-white',
+              children: associationChildren,
+            },
+          ]
+        : []),
+      ...customByPlacement('community-clubs'),
+    ]
+
+    const aboutChildren: MenuItem[] = [
+      ...(isVisible('about-leadership')
+        ? [
+            {
+              id: 'about-leadership',
+              label: getLabel('about-leadership', 'কার্যনির্বাহী পরিষদ', 'Executive Council'),
+              icon: Users,
+              iconClass: 'bg-teal-600 text-white',
+              onSelect: () => scrollToSection('leadership'),
+            },
+          ]
+        : []),
+      ...(isVisible('about-council')
+        ? [
+            {
+              id: 'about-council',
+              label: getLabel('about-council', 'ডিরেক্টর প্যানেল', 'Director Panel'),
+              icon: ShieldCheck,
+              iconClass: 'bg-emerald-600 text-white',
+              href: '/council',
+            },
+          ]
+        : []),
+      ...(isVisible('about-unity')
+        ? [
+            {
+              id: 'about-unity',
+              label: getLabel('about-unity', 'ইউনিটি পরিচিতি', 'About Unity'),
+              icon: Info,
+              iconClass: 'bg-amber-600 text-white',
+              onSelect: () => scrollToSection('about'),
+            },
+          ]
+        : []),
+      ...(isVisible('about-contact')
+        ? [
+            {
+              id: 'about-contact',
+              label: getLabel('about-contact', 'যোগাযোগ', 'Contact'),
+              icon: Phone,
+              iconClass: 'bg-pink-600 text-white',
+              onSelect: () => scrollToSection('contact'),
+            },
+          ]
+        : []),
+      ...customByPlacement('council-about'),
+    ]
+
     const authItems: MenuItem[] = me
       ? [
           {
@@ -430,167 +639,77 @@ export function SiteHeader() {
         ]
 
     return [
-      {
-        id: 'home',
-        label: pick('হোম', 'Home'),
-        icon: Home,
-        iconClass: 'bg-blue-600 text-white',
-        href: '/',
-      },
-      {
-        id: 'editorial',
-        label: pick('সম্পাদকীয় ও মতামত', 'Editorial & Opinion'),
-        icon: Feather,
-        iconClass: 'bg-indigo-600 text-white',
-        href: '/editorial',
-      },
-      {
-        id: 'university',
-        label: pick('বিশ্ববিদ্যালয়', 'University'),
-        icon: Building2,
-        iconClass: 'bg-cyan-600 text-white',
-        children: [
-          {
-            id: 'univ-admin',
-            label: 'প্রশাসন ও দপ্তর',
-            icon: Landmark,
-            iconClass: 'bg-cyan-600/80 text-white',
-            children: adminChildren,
-          },
-          {
-            id: 'univ-faculties',
-            label: 'অনুষদ ও বিভাগ',
-            badge: facultiesList.length ? `${facultiesList.length}` : undefined,
-            icon: GraduationCap,
-            iconClass: 'bg-teal-600 text-white',
-            children: facultyChildren,
-          },
-          {
-            id: 'univ-social',
-            label: 'সোশ্যাল সাইট',
-            badge: socialSitesList.length ? `${socialSitesList.length}` : undefined,
-            icon: Globe2,
-            iconClass: 'bg-emerald-600 text-white',
-            children: socialSiteChildren,
-          },
-        ],
-      },
-      {
-        id: 'news-media',
-        label: pick('সংবাদ ও মিডিয়া', 'News & Media'),
-        icon: Newspaper,
-        iconClass: 'bg-amber-500 text-white',
-        children: [
-          {
-            id: 'news-campus',
-            label: 'ক্যাম্পাস সংবাদ',
-            icon: Newspaper,
-            iconClass: 'bg-amber-500/80 text-white',
-            onSelect: () => scrollToSection('general-news'),
-          },
-          {
-            id: 'news-notices',
-            label: 'ডিজিটাল নোটিশ',
-            icon: Bell,
-            iconClass: 'bg-emerald-600 text-white',
-            href: '/notices',
-          },
-          {
-            id: 'news-reels',
-            label: 'রিলস ও ভিডিও হাব',
-            badge: 'LIVE',
-            icon: Film,
-            iconClass: 'bg-rose-600 text-white',
-            onSelect: () => scrollToSection('reels-hub'),
-          },
-          {
-            id: 'news-categories',
-            label: 'সংবাদের ক্যাটাগরি',
-            badge: categoriesList.length ? `${categoriesList.length}` : undefined,
-            icon: Tag,
-            iconClass: 'bg-blue-600 text-white',
-            children: categoryChildren,
-          },
-        ],
-      },
-      {
-        id: 'community-clubs',
-        label: pick('কমিউনিটি ও ক্লাব', 'Community & Clubs'),
-        icon: Star,
-        iconClass: 'bg-orange-500 text-white',
-        children: [
-          {
-            id: 'comm-clubs',
-            label: 'ক্যাম্পাস ক্লাবসমূহ',
-            badge: clubsList.length ? `${clubsList.length}` : undefined,
-            icon: Star,
-            iconClass: 'bg-orange-500 text-white',
-            children: clubChildren,
-          },
-          {
-            id: 'comm-pages',
-            label: 'ক্যাম্পাস পেজসমূহ',
-            badge: communityPagesList.length ? `${communityPagesList.length}` : undefined,
-            icon: FileText,
-            iconClass: 'bg-violet-600 text-white',
-            children: pageChildren,
-          },
-          {
-            id: 'comm-student',
-            label: 'স্টুডেন্ট কর্নার',
-            icon: BookOpen,
-            iconClass: 'bg-sky-500 text-white',
-            href: '/student-corner',
-          },
-          {
-            id: 'comm-associations',
-            label: 'অন্যান্য সাংবাদিক সমিতি',
-            badge: associationsList.length ? `${associationsList.length}` : undefined,
-            icon: ShieldCheck,
-            iconClass: 'bg-indigo-600 text-white',
-            children: associationChildren,
-          },
-        ],
-      },
-      {
-        id: 'council-about',
-        label: pick('পরিষদ ও পরিচিতি', 'Council & About'),
-        icon: Users,
-        iconClass: 'bg-teal-600 text-white',
-        children: [
-          {
-            id: 'about-leadership',
-            label: 'কার্যনির্বাহী পরিষদ',
-            icon: Users,
-            iconClass: 'bg-teal-600 text-white',
-            onSelect: () => scrollToSection('leadership'),
-          },
-          {
-            id: 'about-council',
-            label: 'ডিরেক্টর প্যানেল',
-            icon: ShieldCheck,
-            iconClass: 'bg-emerald-600 text-white',
-            href: '/council',
-          },
-          {
-            id: 'about-unity',
-            label: 'ইউনিটি পরিচিতি',
-            icon: Info,
-            iconClass: 'bg-amber-600 text-white',
-            onSelect: () => scrollToSection('about'),
-          },
-          {
-            id: 'about-contact',
-            label: 'যোগাযোগ',
-            icon: Phone,
-            iconClass: 'bg-pink-600 text-white',
-            onSelect: () => scrollToSection('contact'),
-          },
-        ],
-      },
+      ...(isVisible('home')
+        ? [
+            {
+              id: 'home',
+              label: getLabel('home', 'হোম', 'Home'),
+              icon: Home,
+              iconClass: 'bg-blue-600 text-white',
+              href: '/',
+            },
+          ]
+        : []),
+      ...(isVisible('editorial')
+        ? [
+            {
+              id: 'editorial',
+              label: getLabel('editorial', 'সম্পাদকীয় ও মতামত', 'Editorial & Opinion'),
+              icon: Feather,
+              iconClass: 'bg-indigo-600 text-white',
+              href: '/editorial',
+            },
+          ]
+        : []),
+      ...(isVisible('university') && univChildren.length > 0
+        ? [
+            {
+              id: 'university',
+              label: getLabel('university', 'বিশ্ববিদ্যালয়', 'University'),
+              icon: Building2,
+              iconClass: 'bg-cyan-600 text-white',
+              children: univChildren,
+            },
+          ]
+        : []),
+      ...(isVisible('news-media') && newsChildren.length > 0
+        ? [
+            {
+              id: 'news-media',
+              label: getLabel('news-media', 'সংবাদ ও মিডিয়া', 'News & Media'),
+              icon: Newspaper,
+              iconClass: 'bg-amber-500 text-white',
+              children: newsChildren,
+            },
+          ]
+        : []),
+      ...(isVisible('community-clubs') && commChildren.length > 0
+        ? [
+            {
+              id: 'community-clubs',
+              label: getLabel('community-clubs', 'কমিউনিটি ও ক্লাব', 'Community & Clubs'),
+              icon: Star,
+              iconClass: 'bg-orange-500 text-white',
+              children: commChildren,
+            },
+          ]
+        : []),
+      ...(isVisible('council-about') && aboutChildren.length > 0
+        ? [
+            {
+              id: 'council-about',
+              label: getLabel('council-about', 'পরিষদ ও পরিচিতি', 'Council & About'),
+              icon: Users,
+              iconClass: 'bg-teal-600 text-white',
+              children: aboutChildren,
+            },
+          ]
+        : []),
+      ...customByPlacement('root'),
       ...authItems,
     ]
   }, [
+    settings.menu,
     me,
     pick,
     facultiesList,
@@ -613,33 +732,35 @@ export function SiteHeader() {
       }
     : null
 
+  const activeUnivLogo = settings.branding.univLogoUrl || univLogo
+  const activeUnivLink = settings.branding.univLinkUrl || univLink || 'https://mbstu.ac.bd'
+  const activeUnivText = settings.branding.univText !== undefined ? settings.branding.univText : univText
+
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#071030]/95 shadow-lg backdrop-blur-2xl w-full">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 gap-2">
-          {/* বামে: সংগঠনের লোগো ও বড় নাম */}
           <div className="min-w-0 flex-1 overflow-hidden">
             <Logo inverted />
           </div>
 
-          {/* ডানে: বিশ্ববিদ্যালয়ের লোগো (রিপোর্টার্স ইউনিটির সমান size-9 sm:size-11) + মেনু বাটন */}
           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             <a
-              href={univLink || 'https://mbstu.ac.bd'}
+              href={activeUnivLink}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 sm:gap-2 shrink-0"
               title="মাভাবিপ্রবি"
             >
-              {univText && (
+              {activeUnivText && (
                 <span className="hidden md:inline text-xs font-bold text-white/90 truncate max-w-[140px]">
-                  {univText}
+                  {activeUnivText}
                 </span>
               )}
-              {univLogo && (
+              {activeUnivLogo && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={univLogo}
+                  src={activeUnivLogo}
                   alt="MBSTU"
                   className="size-9 sm:size-11 rounded-full object-cover shrink-0 select-none bg-white/95 shadow-xs transition-transform hover:scale-105"
                 />
