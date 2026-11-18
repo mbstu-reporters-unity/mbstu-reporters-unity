@@ -35,14 +35,16 @@ import SubmissionSender from "./submission-sender"
 import SubmissionsInbox from "./submissions-inbox"
 import TeacherColumnManager from "./teacher-column-manager"
 import ContentHubManager from "./content-hub-manager"
+import MembershipManager from "./membership-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
+import { DigitalIdCard } from "../../components/portal/digital-id-card"
 import {
   Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
   Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2,
-  Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send, Feather
+  Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send, Feather, CreditCard, UserPlus
 } from "lucide-react"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -59,7 +61,7 @@ type Tab =
   | "hero" | "hero_banner" | "ticker" | "students" | "limits" | "site_settings"
   | "directors" | "categories" | "clubs" | "faculties" | "associations"
   | "social_sites" | "administration" | "community_pages" | "send_submission"
-  | "submissions_inbox" | "teacher_columns" | "content_hub"
+  | "submissions_inbox" | "teacher_columns" | "content_hub" | "membership_apps"
   | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
 
 type NavItem = {
@@ -140,6 +142,7 @@ export default function AdminPage() {
   const [waiting, setWaiting] = useState<Profile[]>([])
   const [active, setActive] = useState<Profile[]>([])
   const [inboxCount, setInboxCount] = useState(0)
+  const [appInboxCount, setAppInboxCount] = useState(0)
   const [availableClubs, setAvailableClubs] = useState<ClubItem[]>([])
   const [communityPages, setCommunityPages] = useState<CommunityPage[]>([])
 
@@ -339,14 +342,19 @@ export default function AdminPage() {
       }
 
       if (isAdm) {
-        const [c, allProfs, subs] = await Promise.all([
+        const [c, allProfs, subs, apps] = await Promise.all([
           getPendingComments(t),
           getAllProfilesAdmin(t),
           getAdminSubmissions(t).catch(() => []),
+          fetch(`${SB_URL}/rest/v1/membership_applications?select=id,status&status=eq.pending`, {
+            headers: { apikey: SB_KEY, Authorization: `Bearer ${t}` },
+            cache: "no-store",
+          }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
         ])
         setPending(c)
         setWaiting(allProfs.filter((u) => !u.approved))
         setInboxCount(Array.isArray(subs) ? subs.length : 0)
+        setAppInboxCount(Array.isArray(apps) ? apps.length : 0)
       }
     } catch (e) { await fail(e) }
   }
@@ -903,6 +911,7 @@ export default function AdminPage() {
       items: [
         { id: "send_submission", label: "নোটিশ / সংবাদ / তথ্য পাঠান", icon: Send, senderAccess: true },
         { id: "submissions_inbox", label: "প্রাপ্ত তথ্য ও ইমেইল", icon: Inbox, badge: inboxCount, adminOnly: true },
+        { id: "membership_apps", label: "সদস্যপদ আবেদন", icon: UserPlus, badge: appInboxCount, adminOnly: true },
         { id: "teacher_columns", label: "শিক্ষকদের কলাম মনিটরিং", icon: Feather, adminOnly: true },
         { id: "posts", label: "সংবাদ ও পোস্ট", icon: Newspaper, modOrAdmin: true },
         { id: "stories", label: "ফেসবুক স্টোরিজ ও রিলস", icon: Film, modOrAdmin: true },
@@ -958,7 +967,7 @@ export default function AdminPage() {
     {
       groupTitle: "৬. ব্যক্তিগত প্রোফাইল",
       items: [
-        { id: "profile", label: "আমার প্রোফাইল", icon: User, profileAccess: true },
+        { id: "profile", label: "আমার প্রোফাইল ও প্রেস কার্ড", icon: CreditCard, profileAccess: true },
       ],
     },
   ]
@@ -1108,6 +1117,10 @@ export default function AdminPage() {
 
         {tab === "submissions_inbox" && isAdmin && (
           <SubmissionsInbox token={token} />
+        )}
+
+        {tab === "membership_apps" && isAdmin && (
+          <MembershipManager token={token} />
         )}
 
         {tab === "teacher_columns" && isAdmin && (
@@ -1468,55 +1481,73 @@ export default function AdminPage() {
         )}
 
         {tab === "profile" && canAccessProfile && (
-          <div className="bg-white rounded-2xl shadow p-5 space-y-4 border">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
-              <h2 className="font-bold text-base text-slate-800">আমার প্রোফাইল তথ্য ({userRoleText})</h2>
-              <Link
-                href={`/u/${me.id}`}
-                target="_blank"
-                className="inline-flex items-center gap-1 rounded-xl bg-cyan-50 border border-cyan-200 px-3 py-1.5 text-xs font-bold text-cyan-800 hover:bg-cyan-100"
-              >
-                <span>পাবলিক প্রোফাইল দেখুন</span>
-                <ExternalLink className="size-3.5" />
-              </Link>
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl shadow p-5 space-y-4 border">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
+                <h2 className="font-bold text-base text-slate-800">আমার প্রোফাইল তথ্য ({userRoleText})</h2>
+                <Link
+                  href={`/u/${me.id}`}
+                  target="_blank"
+                  className="inline-flex items-center gap-1 rounded-xl bg-cyan-50 border border-cyan-200 px-3 py-1.5 text-xs font-bold text-cyan-800 hover:bg-cyan-100"
+                >
+                  <span>পাবলিক প্রোফাইল দেখুন</span>
+                  <ExternalLink className="size-3.5" />
+                </Link>
+              </div>
+
+              {(pFilePreview || me.avatar_url) && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={pFilePreview || me.avatar_url || ""} alt="" className="size-24 rounded-full object-cover mx-auto ring-2 ring-emerald-500 shadow" />
+              )}
+              <input type="file" accept="image/*" onChange={(e) => setPFile(e.target.files?.[0] || null)} className="text-xs block mx-auto" />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <input className={inp} placeholder="পূর্ণ নাম" value={pName} onChange={(e) => setPName(e.target.value)} />
+                <input className={inp} type="tel" placeholder="মোবাইল নম্বর" value={pPhone} onChange={(e) => setPPhone(e.target.value)} />
+              </div>
+
+              {(me.user_type === "student" || me.user_type === "teacher" || me.user_type === "reporter") && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input className={inp} placeholder="বিভাগ (Department)" value={pDept} onChange={(e) => setPDept(e.target.value)} />
+                  {me.user_type !== "teacher" && (
+                    <input className={inp} placeholder="ব্যাচ / সেশন" value={pBatch} onChange={(e) => setPBatch(e.target.value)} />
+                  )}
+                </div>
+              )}
+
+              {(me.user_type === "teacher" || me.user_type === "staff") && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input className={inp} placeholder="পদবি (Designation)" value={pDesignation} onChange={(e) => setPDesignation(e.target.value)} />
+                  {me.user_type === "staff" && (
+                    <input className={inp} placeholder="দপ্তর / শাখা" value={pOfficeSection} onChange={(e) => setPOfficeSection(e.target.value)} />
+                  )}
+                </div>
+              )}
+
+              {me.user_type === "reporter" && (
+                <input className={inp} placeholder="পত্রিকার নাম" value={pPaper} onChange={(e) => setPPaper(e.target.value)} />
+              )}
+
+              <textarea className={inp} rows={3} placeholder="সংক্ষিপ্ত পরিচিতি বা বায়ো (Bio)" value={pBio} onChange={(e) => setPBio(e.target.value)} />
+
+              <button className={btn} onClick={saveProfile} disabled={busy}>{busy ? "অপেক্ষা করুন..." : "প্রোফাইল সেভ করুন"}</button>
             </div>
 
-            {(pFilePreview || me.avatar_url) && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={pFilePreview || me.avatar_url || ""} alt="" className="size-24 rounded-full object-cover mx-auto ring-2 ring-emerald-500 shadow" />
-            )}
-            <input type="file" accept="image/*" onChange={(e) => setPFile(e.target.files?.[0] || null)} className="text-xs block mx-auto" />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input className={inp} placeholder="পূর্ণ নাম" value={pName} onChange={(e) => setPName(e.target.value)} />
-              <input className={inp} type="tel" placeholder="মোবাইল নম্বর" value={pPhone} onChange={(e) => setPPhone(e.target.value)} />
-            </div>
-
-            {(me.user_type === "student" || me.user_type === "teacher" || me.user_type === "reporter") && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input className={inp} placeholder="বিভাগ (Department)" value={pDept} onChange={(e) => setPDept(e.target.value)} />
-                {me.user_type !== "teacher" && (
-                  <input className={inp} placeholder="ব্যাচ / সেশন" value={pBatch} onChange={(e) => setPBatch(e.target.value)} />
-                )}
+            {/* ড্যাশবোর্ডে নিজের ডিজিটাল প্রেস কার্ড ও সনদ */}
+            {me.approved && (
+              <div className="bg-white rounded-2xl shadow p-5 space-y-3 border">
+                <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2 border-b pb-2">
+                  <CreditCard className="size-4 text-cyan-700" />
+                  <span>আমার অফিশিয়াল ডিজিটাল প্রেস আইডি কার্ড ও সনদ</span>
+                </h3>
+                <p className="text-xs text-slate-500">
+                  নিচের কার্ডটি আপনার অফিশিয়াল ভেরিফাইড প্রেস কার্ড। প্রয়োজনমতো প্রিন্ট বা PDF হিসেবে সেভ করতে পারবেন।
+                </p>
+                <div className="pt-2">
+                  <DigitalIdCard member={me} />
+                </div>
               </div>
             )}
-
-            {(me.user_type === "teacher" || me.user_type === "staff") && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input className={inp} placeholder="পদবি (Designation)" value={pDesignation} onChange={(e) => setPDesignation(e.target.value)} />
-                {me.user_type === "staff" && (
-                  <input className={inp} placeholder="দপ্তর / শাখা" value={pOfficeSection} onChange={(e) => setPOfficeSection(e.target.value)} />
-                )}
-              </div>
-            )}
-
-            {me.user_type === "reporter" && (
-              <input className={inp} placeholder="পত্রিকার নাম" value={pPaper} onChange={(e) => setPPaper(e.target.value)} />
-            )}
-
-            <textarea className={inp} rows={3} placeholder="সংক্ষিপ্ত পরিচিতি বা বায়ো (Bio)" value={pBio} onChange={(e) => setPBio(e.target.value)} />
-
-            <button className={btn} onClick={saveProfile} disabled={busy}>{busy ? "অপেক্ষা করুন..." : "প্রোফাইল সেভ করুন"}</button>
           </div>
         )}
 
