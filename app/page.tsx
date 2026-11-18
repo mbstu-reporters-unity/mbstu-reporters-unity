@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { NewsTicker } from '@/components/portal/news-ticker'
@@ -15,46 +16,60 @@ import { CommunityPagesSection } from '@/components/portal/community-pages-secti
 import { NoticeBoard } from '@/components/portal/notice-board'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
+import { getSiteSettings, type HomeSectionConfig } from '@/lib/site-settings'
 
 export const dynamic = 'force-dynamic'
 
-export default function Page() {
+export default async function Page() {
+  const settings = await getSiteSettings()
+  const sections = settings.homeSections.sections
+
+  const renderSection = (sec: HomeSectionConfig): ReactNode => {
+    if (!sec.visible) return null
+    switch (sec.key) {
+      case 'hero':
+        return <HeroCarousel key={sec.key} />
+      case 'stories':
+        return <FbStoriesTray key={sec.key} />
+      case 'reels':
+        return <FbReelsSection key={sec.key} />
+      case 'general_news':
+        return <GeneralNews key={sec.key} sectionConfig={sec} />
+      case 'community_feed':
+        return <CommunityFeed key={sec.key} />
+      case 'leadership':
+        return <LeadershipSection key={sec.key} />
+      case 'category_sections':
+        return <CategorySections key={sec.key} sectionConfig={sec} />
+      case 'student_corner':
+        return <StudentCorner key={sec.key} />
+      case 'club_news':
+        return <ClubNews key={sec.key} />
+      case 'club_posts':
+        return <ClubPosts key={sec.key} sectionConfig={sec} />
+      case 'community_pages':
+        return <CommunityPagesSection key={sec.key} />
+      case 'notice_board':
+        return <NoticeBoard key={sec.key} />
+      default:
+        return null
+    }
+  }
+
   return (
     <>
       <TopBar />
       <SiteHeader />
       <NewsTicker />
       <main>
-        {/* Google SEO ও স্ক্রিন রিডারের জন্য মূল পরিচিতি */}
         <section className="sr-only" aria-label="পরিচিতি">
           <h1>
-            MBSTU Reporters&apos; Unity | মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয় রিপোর্টার্স ইউনিটি
+            {settings.branding.orgNameEn} | {settings.branding.orgNameBn}
           </h1>
-          <p>
-            মাভাবিপ্রবি রিপোর্টার্স ইউনিটি (MBSTURU) হলো মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয় (MBSTU), সন্তোষ, টাঙ্গাইলের ক্যাম্পাস সাংবাদিকদের অফিসিয়াল সংগঠন ও সংবাদ পোর্টাল। এখানে বিশ্ববিদ্যালয়ের সর্বশেষ ক্যাম্পাস সংবাদ, ডিজিটাল নোটিশ বোর্ড, অনুষদ ও বিভাগসমূহ, প্রশাসন, ক্লাব কার্যক্রম ও শিক্ষার্থীদের লেখা প্রকাশিত হয়।
-          </p>
+          <p>{settings.footer.descriptionBn}</p>
         </section>
 
-        {/* ব্যানার ও স্লাইডার */}
-        <HeroCarousel />
-
-        {/* ১. ফেসবুক স্টোরিজ ও হাইলাইটস ট্রে */}
-        <FbStoriesTray />
-
-        {/* ২. ফেসবুক রিলস ও ভিডিও হাব */}
-        <FbReelsSection />
-
-        {/* ৩. মূল ক্যাম্পাস সংবাদ ও সবার পোস্ট (কমিউনিটি ফিড) */}
-        <GeneralNews />
-        <CommunityFeed />
-
-        <LeadershipSection />
-        <CategorySections />
-        <StudentCorner />
-        <ClubNews />
-        <ClubPosts />
-        <CommunityPagesSection />
-        <NoticeBoard />
+        {sections.map(renderSection)}
       </main>
       <SiteFooter />
       <BackToTop />
