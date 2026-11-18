@@ -20,6 +20,7 @@ import { SiteHeader } from "../../components/portal/site-header"
 import { SiteFooter } from "../../components/portal/site-footer"
 import { BackToTop } from "../../components/portal/back-to-top"
 import { BackNavigation } from "@/components/portal/back-navigation"
+import { useSiteSettings } from "@/components/portal/site-settings-context"
 
 const safeUrl = (u: string | null) => !!u && /^https?:\/\//i.test(u)
 
@@ -273,6 +274,7 @@ function NoticeCard({
 }
 
 export default function NoticesPage() {
+  const settings = useSiteSettings()
   const [list, setList] = useState<Notice[]>([])
   const [departments, setDepartments] = useState<Record<string, Department>>({})
   const [imgs, setImgs] = useState<Record<string, GalleryItem[]>>({})
@@ -307,6 +309,8 @@ export default function NoticesPage() {
     })
   }, [])
 
+  const banner = settings.behaviorAndPages.subPages.notices
+
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase()
     return list.filter((n) => {
@@ -334,15 +338,16 @@ export default function NoticesPage() {
       <main className="min-h-screen py-6 sm:py-10 px-4 pb-20">
         <div className="max-w-2xl mx-auto space-y-5">
 
-          {/* ✅ ধাপে ধাপে ফেরা ও ব্রেডক্রাম্ব */}
           <BackNavigation items={[{ label: 'ডিজিটাল নোটিশ' }]} />
 
           <div className="text-center space-y-1">
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white flex items-center justify-center gap-2 drop-shadow-md">
               <Bell className="size-6 text-cyan-400" />
-              <span>ডিজিটাল নোটিশ বোর্ড</span>
+              <span>{banner.title || 'ডিজিটাল নোটিশ বোর্ড'}</span>
             </h1>
-            <p className="text-xs text-cyan-200/80">বিশ্ববিদ্যালয়, হল, বিভাগ ও রিপোর্টার্স ইউনিটির সকল আনুষ্ঠানিক বিজ্ঞপ্তি</p>
+            <p className="text-xs text-cyan-200/80">
+              {banner.subtitle || 'বিশ্ববিদ্যালয়, হল, বিভাগ ও রিপোর্টার্স ইউনিটির সকল আনুষ্ঠানিক বিজ্ঞপ্তি'}
+            </p>
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
