@@ -5,6 +5,7 @@ import { Briefcase, GraduationCap, Newspaper, Sparkles, User, Users } from 'luci
 import { SB_URL, SB_KEY, attachProfileAvatars, type Post, type UserType } from '@/lib/sb'
 import { SectionHeading } from './section-heading'
 import { NewsGrid } from './news-card'
+import { useSiteSettings } from './site-settings-context'
 
 type FeedFilter = 'all' | UserType
 
@@ -41,6 +42,7 @@ async function getCommunityPageFeedPosts(limit = 100): Promise<Post[]> {
 }
 
 export function CommunityFeed() {
+  const settings = useSiteSettings()
   const [posts, setPosts] = useState<Post[]>([])
   const [loaded, setLoaded] = useState(false)
   const [filter, setFilter] = useState<FeedFilter>('all')
@@ -77,6 +79,7 @@ export function CommunityFeed() {
 
   if (!loaded || posts.length === 0) return null
 
+  const sec = settings.homeSections.sections.find((s) => s.key === 'community_feed')
   const visiblePosts = filtered.slice(0, shownCount)
   const remaining = Math.max(0, filtered.length - visiblePosts.length)
 
@@ -86,9 +89,14 @@ export function CommunityFeed() {
         <div className="px-4 md:px-0">
           <SectionHeading
             inverted
-            eyebrow="Campus Community Feed"
-            title="সবার পোস্ট ও পেজ টাইমলাইন"
-            subtitle="শিক্ষক, শিক্ষার্থী, কর্মকর্তা ও সাংবাদিকদের নিজস্ব পেজে প্রকাশিত সর্বশেষ লেখা, ছবি ও পোস্টসমূহ।"
+            eyebrow={sec?.eyebrow ?? 'Campus Community Feed'}
+            title={sec?.titleBn || 'সবার পোস্ট ও পেজ টাইমলাইন'}
+            titleEn={sec?.titleEn || 'Campus Community Feed'}
+            subtitle={
+              sec?.subtitleBn ||
+              'শিক্ষক, শিক্ষার্থী, কর্মকর্তা ও সাংবাদিকদের নিজস্ব পেজে প্রকাশিত সর্বশেষ লেখা, ছবি ও পোস্টসমূহ।'
+            }
+            subtitleEn={sec?.subtitleEn || 'Latest posts from teachers, students, staff and campus pages.'}
           />
 
           <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
