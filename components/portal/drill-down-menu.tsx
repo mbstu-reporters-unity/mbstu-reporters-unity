@@ -71,7 +71,6 @@ export function DrillDownMenu({
   const openRef = useRef(open)
   openRef.current = open
 
-  // প্রতিটি ক্লিকে তৈরি হওয়া হিস্ট্রি এন্ট্রির সংখ্যা (Chrome History Intervention এড়াতে)
   const guardCountRef = useRef(0)
   const ignorePopCountRef = useRef(0)
   const pendingActionRef = useRef<(() => void) | null>(null)
@@ -87,7 +86,6 @@ export function DrillDownMenu({
     lock: 'none' | 'horizontal' | 'vertical'
   } | null>(null)
 
-  // রিকার্সিভভাবে বর্তমান ট্রেইল অনুযায়ী সব লেভেলের প্যানেল তৈরি
   const panels = useMemo(() => {
     const out: Array<{ depth: number; id: string; title: string; items: MenuItem[] }> = [
       { depth: 0, id: 'root', title: rootTitle, items },
@@ -114,7 +112,6 @@ export function DrillDownMenu({
   const activePanel = panels[safeActiveDepth] || panels[0]
   const breadcrumbs = panels.slice(0, safeActiveDepth + 1)
 
-  // শুধু UI-তে এক ধাপ/বহু ধাপ পেছনে স্লাইড করার ফাংশন
   const applyDepthUI = useCallback((targetDepth: number) => {
     if (targetDepth < 0 || targetDepth >= safeActiveDepthRef.current) return
     if (trimTimerRef.current) clearTimeout(trimTimerRef.current)
@@ -128,7 +125,6 @@ export function DrillDownMenu({
   const applyDepthUIRef = useRef(applyDepthUI)
   applyDepthUIRef.current = applyDepthUI
 
-  // তীর (←), ব্রেডক্রাম্ব বা ভেতরের সোয়াইপ দিয়ে পেছনে যাওয়া (হিস্ট্রি সিঙ্কসহ)
   const goToDepth = useCallback(
     (targetDepth: number) => {
       const cur = safeActiveDepthRef.current
@@ -151,7 +147,6 @@ export function DrillDownMenu({
     [applyDepthUI]
   )
 
-  // X বাটন, ব্যাকড্রপ, Escape বা রুট সোয়াইপে ড্রয়ার বন্ধ করা
   const dismissDrawer = useCallback(() => {
     const toPop = guardCountRef.current
     if (toPop > 0) {
@@ -166,7 +161,6 @@ export function DrillDownMenu({
     onCloseRef.current()
   }, [])
 
-  // কোনো পেজ লিংকে ক্লিক করলে মেনুর হিস্ট্রি ধাপগুলো মুছে আসল পেজে নেভিগেট করা
   const runAfterClearingGuards = useCallback((action: () => void) => {
     const steps = guardCountRef.current
     if (steps <= 0) {
@@ -189,7 +183,7 @@ export function DrillDownMenu({
     }
 
     pendingActionRef.current = action
-    pendingTimerRef.current = setTimeout(fireOnce, 150)
+    pendingTimerRef.current = setTimeout(fireOnce, 160)
     onCloseRef.current()
 
     try {
@@ -199,7 +193,6 @@ export function DrillDownMenu({
     }
   }, [])
 
-  // Android ফোনের সিস্টেম ব্যাক ও কিনারার (<) সোয়াইপ হ্যান্ডলার
   useEffect(() => {
     const onPopState = () => {
       if (pendingActionRef.current) {
@@ -209,7 +202,8 @@ export function DrillDownMenu({
           clearTimeout(pendingTimerRef.current)
           pendingTimerRef.current = null
         }
-        fn()
+        // ব্রাউজার popstate প্রসেস শেষ করার পরপরই নতুন রুটে নেভিগেট করা
+        setTimeout(() => fn(), 10)
         return
       }
 
@@ -238,7 +232,6 @@ export function DrillDownMenu({
     }
   }, [])
 
-  // ড্রয়ার খোলা ও বন্ধ হওয়ার স্মুথ স্লাইড অ্যানিমেশন + রুট গার্ড সেট করা
   useEffect(() => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     if (raf1Ref.current) cancelAnimationFrame(raf1Ref.current)
@@ -279,7 +272,6 @@ export function DrillDownMenu({
     }
   }, [open])
 
-  // রাউট পরিবর্তন হলে অটোমেটিক ড্রয়ার বন্ধ করা
   useEffect(() => {
     if (prevPathRef.current !== pathname) {
       prevPathRef.current = pathname
@@ -288,7 +280,6 @@ export function DrillDownMenu({
     }
   }, [pathname, open])
 
-  // বডি স্ক্রল লক ও Escape কী হ্যান্ডলার
   useEffect(() => {
     if (!mounted) return
     const prevOverflow = document.body.style.overflow
@@ -303,7 +294,6 @@ export function DrillDownMenu({
     }
   }, [mounted, dismissDrawer])
 
-  // ব্রেডক্রাম্ব বাড়লে ডান দিকে স্ক্রল করে বর্তমান অবস্থান দেখানো
   useEffect(() => {
     const el = breadcrumbScrollRef.current
     if (el) {
@@ -311,7 +301,6 @@ export function DrillDownMenu({
     }
   }, [safeActiveDepth])
 
-  // সাবমেনুতে প্রবেশ: সরাসরি ইউজারের ক্লিকের সাথে সাথে ১টি আসল হিস্ট্রি এন্ট্রি যোগ করা
   function drillDown(itemId: string, fromDepth: number) {
     if (trimTimerRef.current) clearTimeout(trimTimerRef.current)
     if (raf1Ref.current) cancelAnimationFrame(raf1Ref.current)
@@ -336,7 +325,6 @@ export function DrillDownMenu({
     })
   }
 
-  // টাচ সোয়াইপ রাইট (আঙুল দিয়ে ডানে পুশ করে ধাপে ধাপে ব্যাকে আসা)
   function handleTouchStart(e: React.TouchEvent) {
     if (e.touches.length !== 1) return
     if ((e.target as HTMLElement).closest('[data-no-swipe="true"]')) return
@@ -415,7 +403,6 @@ export function DrillDownMenu({
       aria-modal="true"
       aria-label="সাইড নেভিগেশন মেনু"
     >
-      {/* ব্যাকড্রপ ব্লার ওভারলে */}
       <div
         onClick={dismissDrawer}
         className={`fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity duration-300 ${
@@ -423,7 +410,6 @@ export function DrillDownMenu({
         }`}
       />
 
-      {/* ডান পাশের স্লাইডিং ড্রয়ার */}
       <aside
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -441,7 +427,6 @@ export function DrillDownMenu({
               (visible ? 'translate-x-0' : 'translate-x-full')
         }`}
       >
-        {/* ১. স্টিকি কনটেক্সচুয়াল হেডার ও ব্রেডক্রাম্ব */}
         <div className="shrink-0 border-b border-white/10 bg-white/[0.04] px-3.5 py-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -482,7 +467,6 @@ export function DrillDownMenu({
             </button>
           </div>
 
-          {/* ক্লিকেবল ব্রেডক্রাম্ব ট্রেইল */}
           {safeActiveDepth > 0 && (
             <div
               ref={breadcrumbScrollRef}
@@ -518,7 +502,6 @@ export function DrillDownMenu({
           )}
         </div>
 
-        {/* ইউজার পরিচিতি কার্ড (লগইন থাকলে শুধু রুট লেভেলে দেখাবে) */}
         {userBanner && safeActiveDepth === 0 && (
           <div className="shrink-0 border-b border-white/10 bg-white/[0.02] px-3.5 py-2.5">
             <Link
@@ -552,7 +535,6 @@ export function DrillDownMenu({
           </div>
         )}
 
-        {/* ২. মাল্টি-লেভেল স্লাইডিং প্যানেল ভিউপোর্ট */}
         <div className="relative flex-1 overflow-hidden touch-pan-y overscroll-contain">
           {panels.map((panel) => {
             const isActive = panel.depth === safeActiveDepth
