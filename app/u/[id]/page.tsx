@@ -7,11 +7,10 @@ import {
   FileText,
   CheckCircle2,
   BookOpen,
-  QrCode,
-  Sparkles,
+  CreditCard,
+  ShieldCheck,
 } from 'lucide-react'
-import { SB_URL, SB_KEY, attachProfileAvatars, type Profile, type Post } from '@/lib/sb'
-import { parseBioAndSkills } from '@/lib/member-skills'
+import { SB_URL, SB_KEY, attachProfileAvatars, POSITIONS, type Profile, type Post } from '@/lib/sb'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
@@ -19,38 +18,46 @@ import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
 import { NewsGrid } from '@/components/portal/news-card'
 import type { CommunityPage } from '@/lib/pages'
+import { DigitalIdCard, type DigitalMemberInfo } from '@/components/portal/digital-id-card'
+import { getSiteSettings } from '@/lib/site-settings'
 
 export const dynamic = 'force-dynamic'
 
-type PublicProfile = Pick<
-  Profile,
-  | 'id'
-  | 'full_name'
-  | 'department'
-  | 'batch'
-  | 'role'
-  | 'user_type'
-  | 'designation'
-  | 'office_section'
-  | 'bio'
-  | 'newspaper_name'
-  | 'avatar_url'
-  | 'approved'
-  | 'created_at'
->
-
-async function getProfileById(id: string): Promise<PublicProfile | null> {
+async function getProfileById(id: string): Promise<DigitalMemberInfo | null> {
   try {
-    const res = await fetch(
-      `${SB_URL}/rest/v1/profiles?select=id,full_name,department,batch,role,user_type,designation,office_section,bio,newspaper_name,avatar_url,approved,created_at&id=eq.${encodeURIComponent(id)}&limit=1`,
-      {
-        headers: { apikey: SB_KEY },
-        cache: 'no-store',
+    const [profRes, leadRes] = await Promise.all([
+      fetch(
+        `${SB_URL}/rest/v1/profiles?select=id,full_name,department,batch,role,user_type,designation,office_section,bio,newspaper_name,avatar_url,approved,created_at&id=eq.${encodeURIComponent(
+          id
+        )}&limit=1`,
+        { headers: { apikey: SB_KEY }, cache: 'no-store' }
+      ),
+      fetch(
+        `${SB_URL}/rest/v1/leaders?select=position,is_visible&profile_id=eq.${encodeURIComponent(
+          id
+        )}&limit=1`,
+        { headers: { apikey: SB_KEY }, cache: 'no-store' }
+      ),
+    ])
+
+    if (!profRes.ok) return null
+    const rows: Profile[] = await profRes.json()
+    const profile = rows[0]
+    if (!profile) return null
+
+    let execPosBn: string | null = null
+    if (leadRes.ok) {
+      const leaders: Array<{ position: string }> = await leadRes.json()
+      if (leaders[0]?.position) {
+        const found = POSITIONS.find((p) => p.key === leaders[0].position)
+        execPosBn = found?.bn || leaders[0].position
       }
-    )
-    if (!res.ok) return null
-    const rows: PublicProfile[] = await res.json()
-    return rows[0] || null
+    }
+
+    return {
+      ...profile,
+      executive_position_bn: execPosBn,
+    }
   } catch {
     return null
   }
@@ -91,10 +98,9 @@ export async function generateMetadata({
   const { id } = await params
   const p = await getProfileById(id)
   if (!p) return { title: 'প্রোফাইল পাওয়া যায়নি' }
-  const { bioText } = parseBioAndSkills(p.bio)
   return {
     title: `${p.full_name} | MBSTU প্রোফাইল`,
-    description: bioText || `${p.full_name}-এর মাভাবিপ্রবি প্রোফাইল`,
+    description: p.bio || `${p.full_name}-এর মাভাবিপ্রবি প্রোফাইল`,
   }
 }
 
@@ -104,16 +110,16 @@ export default async function UserProfilePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const profile = await getProfileById(id)
-  if (!profile) notFound()
-
-  const [posts, pages] = await Promise.all([
+  const [profile, posts, pages, settings] = await Promise.all([
+    getProfileById(id),
     getUserPosts(id),
     getUserPages(id),
+    getSiteSettings(),
   ])
 
-  const { bioText, skills } = parseBioAndSkills(profile.bio)
+  if (!profile) notFound()
 
+  const b = settings.branding
   const userTypeLabels: Record<string, string> = {
     student: '🎓 শিক্ষার্থী',
     teacher: '👨‍🏫 শিক্ষক',
@@ -137,7 +143,7 @@ export default async function UserProfilePage({
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
               
               {/* অ্যাভাটার */}
-              <div className="relative size-28 sm:size-32 rounded-full ring-4 ring-cyan-400/80 shadow-2xl overflow-hidden shrink-0 z-10 bg-slate-900 flex items-center justify-center">
+              <div className="relative size-28 sm:size-32 rounded-full ring-4 ring-cyan-400/80 shadow-2xl overflow-hidden shrink-0 bg-slate-900 flex items-center justify-center">
                 {profile.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={profile.avatar_url} alt={profile.full_name} className="size-full object-cover object-top" />
@@ -160,14 +166,25 @@ export default async function UserProfilePage({
                       <span>অ্যাডমিন</span>
                     </span>
                   )}
+                  {profile.approved && (
+                    <span className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full text-xs font-bold">
+                      <ShieldCheck className="size-3.5" />
+                      <span>ভেরিফাইড সদস্য</span>
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs">
                   <span className="bg-white/15 text-cyan-200 border border-white/20 font-bold px-3 py-1 rounded-full">
                     {roleBadge}
                   </span>
+                  {profile.executive_position_bn && (
+                    <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full font-bold">
+                      ⭐ {profile.executive_position_bn}
+                    </span>
+                  )}
                   {profile.designation && (
-                    <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 px-3 py-1 rounded-full font-semibold">
+                    <span className="bg-white/10 text-slate-200 border border-white/15 px-3 py-1 rounded-full font-semibold">
                       {profile.designation}
                     </span>
                   )}
@@ -190,48 +207,45 @@ export default async function UserProfilePage({
                   )}
                 </div>
 
-                {bioText && (
+                {profile.bio && (
                   <p className="text-xs sm:text-sm text-slate-200 leading-relaxed pt-2 max-w-2xl whitespace-pre-line">
-                    {bioText}
+                    {profile.bio}
                   </p>
                 )}
 
-                {skills.length > 0 && (
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 pt-2">
-                    <span className="text-[11px] font-bold text-cyan-300 inline-flex items-center gap-1 mr-1">
-                      <Sparkles className="size-3" /> দক্ষতা:
-                    </span>
-                    {skills.map((sk) => (
-                      <span
-                        key={sk}
-                        className="rounded-full bg-cyan-500/15 border border-cyan-400/30 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-200"
-                      >
-                        {sk}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2.5 text-xs font-bold">
-                  {profile.newspaper_name && (
-                    <span className="bg-white/10 border border-white/20 px-3 py-2 rounded-xl text-slate-200 flex items-center gap-1.5">
+                {profile.newspaper_name && (
+                  <div className="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-2.5 text-xs font-bold">
+                    <span className="bg-white/10 border border-white/20 px-3 py-1.5 rounded-xl text-slate-200">
                       <span>📰 {profile.newspaper_name}</span>
                     </span>
-                  )}
-                  {profile.approved && (
-                    <Link
-                      href={`/verify-member/${profile.id}`}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 px-3 py-2 text-cyan-200 transition"
-                    >
-                      <QrCode className="size-3.5 text-cyan-300" />
-                      <span>ভেরিফাইড আইডি কার্ড যাচাই</span>
-                    </Link>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
             </div>
           </div>
+
+          {/* ডিজিটাল প্রেস আইডি কার্ড ও সনদ সেকশন */}
+          {profile.approved && (
+            <div className="glass-card p-6 sm:p-8 space-y-4 text-white">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-white border-b border-white/15 pb-2.5 flex items-center gap-2">
+                <CreditCard className="size-5 text-cyan-400" />
+                <span>অফিশিয়াল ডিজিটাল প্রেস কার্ড ও সদস্যতা সনদ</span>
+              </h2>
+              <p className="text-xs text-slate-300">
+                মাভাবিপ্রবি রিপোর্টার্স ইউনিটির এই কার্ডটি যেকোনো স্থানে স্ক্যান করে সত্যতা যাচাই করা যাবে।
+              </p>
+
+              <div className="pt-2">
+                <DigitalIdCard
+                  member={profile}
+                  orgNameBn={b.orgNameBn}
+                  orgNameEn={b.orgNameEn}
+                  orgLogoUrl={b.orgLogoUrl}
+                />
+              </div>
+            </div>
+          )}
 
           {/* ব্যবহারকারীর নিজস্ব পেজসমূহ */}
           {pages.length > 0 && (
