@@ -36,6 +36,7 @@ import {
 import { cn } from '@/lib/utils'
 import { SectionHeading } from './section-heading'
 import { ClubReportsDialog } from './club-reports-dialog'
+import { useSiteSettings } from './site-settings-context'
 
 export const clubIcons: Record<string, LucideIcon> = {
   megaphone: Megaphone,
@@ -82,6 +83,7 @@ function formatClub(c: ClubItem): Club {
 const bn = (n: number | string) => String(n).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)])
 
 export function ClubNews() {
+  const settings = useSiteSettings()
   const [list, setList] = useState<Club[]>(fallbackClubs)
   const [dbMap, setDbMap] = useState<Record<string, ClubItem>>({})
   const [filter, setFilter] = useState('All')
@@ -359,6 +361,7 @@ export function ClubNews() {
     )
   }
 
+  const sec = settings.homeSections.sections.find((s) => s.key === 'club_news')
   const animMs = config.anim_speed_ms || 600
   const useDiscreteGrid =
     !isContinuous &&
@@ -396,12 +399,16 @@ export function ClubNews() {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         <SectionHeading
-          eyebrow="Campus Organizations & Clubs"
-          title="ক্যাম্পাস ক্লাব ও সংগঠনসমূহ"
-          subtitle="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের সাম্প্রতিক অর্জন, কার্যক্রম এবং পূর্ণাঙ্গ পরিচিতি।"
+          eyebrow={sec?.eyebrow ?? 'Campus Organizations & Clubs'}
+          title={sec?.titleBn || 'ক্যাম্পাস ক্লাব ও সংগঠনসমূহ'}
+          titleEn={sec?.titleEn || 'Campus Organizations & Clubs'}
+          subtitle={
+            sec?.subtitleBn ||
+            'মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের সাম্প্রতিক অর্জন, কার্যক্রম এবং পূর্ণাঙ্গ পরিচিতি।'
+          }
+          subtitleEn={sec?.subtitleEn || 'Latest activities and profiles of MBSTU campus clubs and organizations.'}
         />
 
-        {/* ফিল্টার বাটন */}
         <div className="-mx-4 px-4 sm:mx-0 sm:px-0 mb-6 flex gap-2.5 overflow-x-auto pb-2.5 pt-1 scrollbar-none" role="group">
           {tags.map((tag) => (
             <button
@@ -426,7 +433,6 @@ export function ClubNews() {
           ))}
         </div>
 
-        {/* স্লাইডার বক্স */}
         <div
           ref={sliderContainerRef}
           onMouseEnter={() => { if (config.pause_on_hover) setIsPaused(true) }}
@@ -497,10 +503,8 @@ export function ClubNews() {
           )}
         </div>
 
-        {/* কন্ট্রোল বার */}
         {total > itemsPerView && (
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
-
             {config.enabled && (
               <button
                 type="button"
@@ -557,10 +561,8 @@ export function ClubNews() {
                 </button>
               </div>
             )}
-
           </div>
         )}
-
       </div>
 
       <ClubReportsDialog
