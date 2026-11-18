@@ -10,6 +10,7 @@ import { BackToTop } from '@/components/portal/back-to-top'
 import { SectionHeading } from '@/components/portal/section-heading'
 import { StudentDialog } from '@/components/portal/student-dialog'
 import { BackNavigation } from '@/components/portal/back-navigation'
+import { useSiteSettings } from '@/components/portal/site-settings-context'
 
 const kindIcons: Record<string, any> = {
   Opinion: MessageSquareQuote,
@@ -19,6 +20,7 @@ const kindIcons: Record<string, any> = {
 }
 
 export default function StudentCornerPage() {
+  const settings = useSiteSettings()
   const [items, setItems] = useState<StudentItem[]>([])
   const [kinds, setKinds] = useState<string[]>([])
   const [filter, setFilter] = useState('All')
@@ -39,6 +41,7 @@ export default function StudentCornerPage() {
     })
   }, [])
 
+  const banner = settings.behaviorAndPages.subPages.studentCorner
   const visible = filter === 'All' ? items : items.filter((it) => it.kind === filter)
 
   return (
@@ -48,17 +51,15 @@ export default function StudentCornerPage() {
       <main className="min-h-[75vh] py-6 sm:py-12">
         <div className="mx-auto max-w-7xl px-4 space-y-6">
           
-          {/* ✅ ধাপে ধাপে ফেরা ও ব্রেডক্রাম্ব */}
           <BackNavigation items={[{ label: 'কমিউনিটি' }, { label: 'স্টুডেন্ট কর্নার' }]} />
 
           <SectionHeading
             inverted
-            eyebrow="Student Corner"
-            title="শিক্ষার্থীদের লেখা ও কর্নার"
-            subtitle="মাভাবিপ্রবি শিক্ষার্থীদের মতামত, সাহিত্য, গবেষণা ও অর্জনের উন্মুক্ত মঞ্চ।"
+            eyebrow={banner.eyebrow ?? 'Student Corner'}
+            title={banner.title || 'শিক্ষার্থীদের লেখা ও কর্নার'}
+            subtitle={banner.subtitle || 'মাভাবিপ্রবি শিক্ষার্থীদের মতামত, সাহিত্য, গবেষণা ও অর্জনের উন্মুক্ত মঞ্চ।'}
           />
 
-          {/* ফিল্টার বাটন */}
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none" role="group">
             {kinds.map((k) => (
               <button
@@ -67,7 +68,7 @@ export default function StudentCornerPage() {
                 onClick={() => setFilter(k)}
                 className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                   filter === k
-                    ? 'border-cyan-300/40 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
+                    ? 'border-cyan-300/60 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
                     : 'border-white/20 bg-white/10 text-white/80 hover:bg-white/20'
                 }`}
               >
@@ -79,7 +80,6 @@ export default function StudentCornerPage() {
             ))}
           </div>
 
-          {/* পোস্ট গ্রিড */}
           {visible.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {visible.map((item) => {
