@@ -92,7 +92,7 @@ export function FbReelsSection() {
   if (reels.length === 0) return null
 
   return (
-    <div className="w-full my-6 space-y-3">
+    <div id="reels-hub" className="w-full my-6 space-y-3">
       {/* ১. হোমপেজে রিলসের অনুভূমিক গ্রিড হেডার */}
       <div className="flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
