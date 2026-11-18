@@ -1,7 +1,9 @@
 import { getVisiblePosts, getLimits, CAT_CLUB } from '@/lib/sb'
+import type { HomeSectionConfig } from '@/lib/site-settings'
+import { Tx } from '@/lib/i18n'
 import { NewsGrid } from './news-card'
 
-export async function ClubPosts() {
+export async function ClubPosts({ sectionConfig }: { sectionConfig?: HomeSectionConfig }) {
   const [all, limits] = await Promise.all([getVisiblePosts(1000), getLimits()])
 
   const isClubPost = (p: any) =>
@@ -19,10 +21,16 @@ export async function ClubPosts() {
       <div className="mx-auto max-w-7xl md:px-6 lg:px-8">
         <div className="mb-8 px-4 md:px-0">
           <h3 className="font-serif text-2xl font-bold text-white sm:text-3xl drop-shadow-md">
-            সর্বশেষ ক্লাব সংবাদ
+            <Tx
+              bn={sectionConfig?.titleBn || 'সর্বশেষ ক্লাব সংবাদ'}
+              en={sectionConfig?.titleEn || 'Latest Club News'}
+            />
           </h3>
           <p className="mt-1 text-xs sm:text-sm text-cyan-100/80">
-            Latest news posted by our campus club reporters.
+            <Tx
+              bn={sectionConfig?.subtitleBn || 'ক্যাম্পাস ক্লাব রিপোর্টারদের প্রকাশিত সর্বশেষ সংবাদ।'}
+              en={sectionConfig?.subtitleEn || 'Latest news posted by our campus club reporters.'}
+            />
           </p>
         </div>
         <NewsGrid posts={posts} />
