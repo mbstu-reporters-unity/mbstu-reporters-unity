@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server'
 import { SB_URL, SB_KEY } from '@/lib/sb'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: Request) {
   try {
+    const rl = checkRateLimit(`ev:${getClientIp(req)}`, 5, 15 * 60 * 1000)
+    if (!rl.allowed) {
+      return NextResponse.json(
+        {
+          error: `অতিরিক্ত চেষ্টা করা হয়েছে। অনুগ্রহ করে ${rl.retryAfterSec} সেকেন্ড পর আবার চেষ্টা করুন।`,
+        },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json().catch(() => ({}))
 
     const event_id = typeof body.event_id === 'string' ? body.event_id.trim() : ''
