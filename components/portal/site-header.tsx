@@ -17,6 +17,7 @@ import {
   Globe2,
   GraduationCap,
   Hash,
+  Headphones,
   History,
   Home,
   Info,
@@ -25,6 +26,7 @@ import {
   Link2,
   Lock,
   LogOut,
+  Mail,
   Menu,
   Newspaper,
   Phone,
@@ -547,6 +549,14 @@ export function SiteHeader() {
           ]
         : []),
       {
+        id: 'news-podcast',
+        label: pick('পডকাস্ট ও ভিডিও সিরিজ', 'Podcast & Video Series'),
+        sublabel: 'অডিও-ভিডিও কথোপকথন ও সিরিজ',
+        icon: Headphones,
+        iconClass: 'bg-purple-600 text-white',
+        href: '/podcast',
+      },
+      {
         id: 'news-categories',
         label: pick('সংবাদের ক্যাটাগরি', 'News Categories'),
         badge: categoriesList.length ? `${categoriesList.length}` : undefined,
@@ -752,6 +762,14 @@ export function SiteHeader() {
             },
           ]
         : []),
+      {
+        id: 'about-contact-desk',
+        label: pick('যোগাযোগ, ম্যাপ ও অভিযোগ ডেস্ক', 'Contact, Map & Feedback'),
+        sublabel: 'বার্তা, ম্যাপ, অভিযোগ ও সংশোধন',
+        icon: Mail,
+        iconClass: 'bg-cyan-600 text-white',
+        href: '/contact',
+      },
       ...customByPlacement('council-about'),
     ]
 
