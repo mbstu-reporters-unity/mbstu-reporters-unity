@@ -22,7 +22,7 @@ import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
-import { getVisiblePosts, getImagesMetaForMany } from '@/lib/sb'
+import { getVisiblePosts, getImagesMetaForMany, type ImageMeta } from '@/lib/sb'
 import { getLiveReels } from '@/lib/reels'
 
 type MediaKind = 'photo' | 'video'
@@ -147,7 +147,7 @@ export default function GalleryPage() {
       ])
 
       const postIds = posts.map((p) => p.id).slice(0, 45)
-      const imagesMap =
+      const imagesMap: Record<string, ImageMeta[]> =
         postIds.length > 0 ? await getImagesMetaForMany('post', postIds) : {}
 
       const seenUrls = new Set<string>()
