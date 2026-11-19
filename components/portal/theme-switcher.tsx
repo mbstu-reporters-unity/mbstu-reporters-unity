@@ -43,6 +43,15 @@ export const THEMES = [
     bg: '#030712',
     dot: '#22c55e',
   },
+  {
+    id: 'daylight-light',
+    bn: '৫. ডে-লাইট মোড (সাদা)',
+    en: 'Daylight Light Mode',
+    dbn: 'দিনের আলোতে আরামদায়ক পড়ার জন্য হালকা থিম',
+    den: 'Clean bright light mode for reading',
+    bg: '#ffffff',
+    dot: '#0284c7',
+  },
 ] as const
 
 export type ThemeId = (typeof THEMES)[number]['id']
@@ -98,7 +107,7 @@ export function ThemeSwitcher() {
         className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/15 px-3 py-1 text-xs font-bold text-white shadow-xs backdrop-blur-md transition-all hover:bg-white/25 active:scale-95 cursor-pointer"
       >
         <Palette className="size-3.5" aria-hidden="true" />
-        <span>{pick('৪টি থিম', '4 Themes')}</span>
+        <span>{pick('৫টি থিম', '5 Themes')}</span>
       </button>
 
       {open && (
@@ -108,9 +117,9 @@ export function ThemeSwitcher() {
         >
           <div className="px-3 pb-2 pt-2 border-b border-white/10 mb-1 flex items-center justify-between">
             <p className="text-[11px] font-bold uppercase tracking-wider text-white/70">
-              {pick('৪টি প্রিমিয়াম গ্লাস থিম', '4 Premium Glass Themes')}
+              {pick('৫টি প্রিমিয়াম গ্লাস ও লাইট থিম', '5 Glass & Light Themes')}
             </p>
-            <span className="text-[10px] text-cyan-400 font-bold">৪টি শৈলী</span>
+            <span className="text-[10px] text-cyan-400 font-bold">৫টি শৈলী</span>
           </div>
 
           <div className="space-y-1">
