@@ -1,10 +1,21 @@
-import { getVisiblePosts, getLimits, CAT_CLUB, CAT_STUDENT } from '@/lib/sb'
+import { getVisiblePosts, getLimits, CAT_CLUB, CAT_STUDENT, type Post } from '@/lib/sb'
 import type { HomeSectionConfig } from '@/lib/site-settings'
 import { SectionHeading } from './section-heading'
 import { NewsGrid } from './news-card'
 
-export async function GeneralNews({ sectionConfig }: { sectionConfig?: HomeSectionConfig }) {
-  const [all, limits] = await Promise.all([getVisiblePosts(1000), getLimits()])
+export async function GeneralNews({
+  sectionConfig,
+  prefetchedPosts,
+  prefetchedLimits,
+}: {
+  sectionConfig?: HomeSectionConfig
+  prefetchedPosts?: Post[]
+  prefetchedLimits?: Record<string, number>
+}) {
+  const [all, limits] = await Promise.all([
+    prefetchedPosts ? Promise.resolve(prefetchedPosts) : getVisiblePosts(200),
+    prefetchedLimits ? Promise.resolve(prefetchedLimits) : getLimits(),
+  ])
   const limit = limits['home_news_limit'] || 12
   const posts = all
     .filter((p) => !p.page_id && p.category !== CAT_CLUB && p.category !== CAT_STUDENT)
