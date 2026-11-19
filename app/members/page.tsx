@@ -102,7 +102,16 @@ export default function MembersDirectoryPage() {
       if (res.ok) {
         const rows: PublicMember[] = await res.json()
         if (Array.isArray(rows) && rows.length > 0) {
-          setMembers(rows)
+          // সাধারণ শিক্ষার্থী ব্যবহারকারী ফিল্টার করে শুধুমাত্র অনুমোদিত সাংবাদিক ও পরিষদ সদস্যদের রাখা
+          const unityMembers = rows.filter(
+            (m) =>
+              m.user_type === 'reporter' ||
+              m.user_type === 'teacher' ||
+              m.role === 'admin' ||
+              m.role === 'moderator' ||
+              Boolean(m.newspaper_name)
+          )
+          setMembers(unityMembers.length > 0 ? unityMembers : rows)
         } else {
           setMembers(FALLBACK_MEMBERS)
         }
