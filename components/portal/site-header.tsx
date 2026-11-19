@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import {
   Award,
   Bell,
@@ -31,6 +32,7 @@ import {
   Newspaper,
   Phone,
   Scale,
+  Search,
   Settings,
   ShieldAlert,
   ShieldCheck,
@@ -824,6 +826,14 @@ export function SiteHeader() {
           ]
         : []),
       {
+        id: 'global-search',
+        label: pick('সংবাদ অনুসন্ধান', 'Search News'),
+        sublabel: 'তারিখ, লেখক ও ক্যাটাগরি দিয়ে খুঁজুন',
+        icon: Search,
+        iconClass: 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white',
+        href: '/search',
+      },
+      {
         id: 'membership-apply',
         label: pick('সদস্যপদ আবেদন', 'Join as Member'),
         sublabel: 'অনলাইন রিক্রুটমেন্ট ফর্ম',
@@ -933,7 +943,18 @@ export function SiteHeader() {
             <Logo inverted />
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* ১. দ্রুত গ্লোবাল সার্চ বাটন */}
+            <Link
+              href="/search"
+              aria-label="Search"
+              title="সংবাদ অনুসন্ধান করুন"
+              className="flex size-9 sm:size-10 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-cyan-300 hover:text-white border border-white/20 transition cursor-pointer active:scale-95"
+            >
+              <Search className="size-4 sm:size-4.5" />
+            </Link>
+
+            {/* ২. বিশ্ববিদ্যালয়ের অফিশিয়াল লিংক */}
             <a
               href={activeUnivLink}
               target="_blank"
@@ -958,6 +979,7 @@ export function SiteHeader() {
 
             <span className="h-6 w-px bg-white/15 shrink-0" aria-hidden="true" />
 
+            {/* ৩. ড্রিল-ডাউন মেনু টগল */}
             <button
               type="button"
               onClick={() => setMenuOpen((prev) => !prev)}
