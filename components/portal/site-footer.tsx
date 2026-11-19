@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Mail, MapPin, Phone } from 'lucide-react'
 import { Logo } from './logo'
 import { SocialLinks } from './social-links'
+import { NewsletterBox } from './newsletter-box'
 import { Tx, useLang } from '@/lib/i18n'
 import { useSiteSettings } from './site-settings-context'
 
@@ -25,6 +26,9 @@ export function SiteFooter() {
           </p>
           <div className="pt-2">
             <SocialLinks />
+          </div>
+          <div className="pt-2 max-w-md">
+            <NewsletterBox />
           </div>
         </div>
 
@@ -82,6 +86,14 @@ export function SiteFooter() {
               </p>
             )}
           </address>
+          <div className="mt-4">
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-1.5 text-xs font-bold text-cyan-300 hover:text-white transition"
+            >
+              <span>{pick('যোগাযোগ ফর্ম, ম্যাপ ও অভিযোগ ডেস্ক →', 'Contact Form, Map & Feedback →')}</span>
+            </Link>
+          </div>
         </div>
       </div>
       <div className="border-t border-white/10 bg-[#040918] py-4 px-4 text-xs text-white/50">
