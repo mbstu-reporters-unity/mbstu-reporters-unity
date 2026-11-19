@@ -174,7 +174,7 @@ export default function FactCheckPage() {
 
             <div className="pt-2">
               <Link
-                href="/admin"
+                href="/tip"
                 className="inline-flex items-center gap-1.5 rounded-full bg-white text-slate-950 hover:bg-cyan-100 px-4 py-2 text-xs font-bold shadow-lg transition active:scale-95"
               >
                 <Send className="size-3.5 text-rose-600" />
