@@ -6,6 +6,7 @@ import { LiveClock } from './live-clock'
 import { SocialLinks } from './social-links'
 import { LangSwitcher } from './lang-switcher'
 import { ThemeSwitcher } from './theme-switcher'
+import { FontSizeSwitcher } from './font-size-switcher'
 import { useLang } from '@/lib/i18n'
 import { useSiteSettings } from './site-settings-context'
 
@@ -79,7 +80,8 @@ export function TopBar() {
                 </div>
               )}
 
-              <div className="shrink-0 flex items-center gap-2">
+              <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">
+                <FontSizeSwitcher />
                 {tb.showThemeSwitcher && <ThemeSwitcher />}
                 {tb.showSocialLinks && (
                   <div className="hidden lg:block">
