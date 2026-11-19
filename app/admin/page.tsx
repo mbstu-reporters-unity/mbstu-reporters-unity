@@ -40,6 +40,7 @@ import ResourceManager from "./resource-manager"
 import EventManager from "./event-manager"
 import FeedbackNewsletterManager from "./feedback-newsletter-manager"
 import PollsPodcastManager from "./polls-podcast-manager"
+import BackupExportManager from "./backup-export-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
@@ -48,7 +49,7 @@ import {
   Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
   Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2,
-  Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send, Feather, CreditCard, UserPlus, CalendarDays, Mail, BarChart3
+  Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send, Feather, CreditCard, UserPlus, CalendarDays, Mail, BarChart3, Database
 } from "lucide-react"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -66,7 +67,7 @@ type Tab =
   | "directors" | "categories" | "clubs" | "faculties" | "associations"
   | "social_sites" | "administration" | "community_pages" | "send_submission"
   | "submissions_inbox" | "teacher_columns" | "content_hub" | "membership_apps"
-  | "resource_manager" | "event_manager" | "feedback_newsletter" | "polls_podcast"
+  | "resource_manager" | "event_manager" | "feedback_newsletter" | "polls_podcast" | "backup_export"
   | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
 
 type NavItem = {
@@ -931,13 +932,14 @@ export default function AdminPage() {
       ],
     },
     {
-      groupTitle: "২. হোমপেজ ও ডিজাইন",
+      groupTitle: "২. হোমপেজ, ডিজাইন ও ব্যাকআপ",
       items: [
         { id: "site_settings", label: "সাইট সেটিংস", icon: Settings, adminOnly: true },
         { id: "hero", label: "হিরো স্লাইডার", icon: Sparkles, adminOnly: true },
         { id: "hero_banner", label: "হিরো ব্যানার", icon: Sliders, adminOnly: true },
         { id: "limits", label: "সংবাদ ও ক্যাটাগরি সংখ্যা", icon: Layers, adminOnly: true },
         { id: "categories", label: "ক্যাটাগরি কন্ট্রোল", icon: Layers, adminOnly: true },
+        { id: "backup_export", label: "১-ক্লিকে ডাটাবেজ ব্যাকআপ (JSON)", icon: Database, adminOnly: true },
       ],
     },
     {
@@ -1008,6 +1010,9 @@ export default function AdminPage() {
         </div>
 
         <div className="flex items-center gap-2 text-xs">
+          <Link href="/search" className="p-1.5 rounded-lg bg-white/10 text-cyan-300 hover:text-white" title="সংবাদ অনুসন্ধান">
+            <Search className="size-4" />
+          </Link>
           <a href="/" target="_blank" className="p-1.5 rounded-lg bg-white/10 text-white/80 hover:text-white" title="লাইভ সাইট দেখুন">
             <ExternalLink className="size-4" />
           </a>
@@ -1094,6 +1099,10 @@ export default function AdminPage() {
         </div>
 
         <div className="p-3 border-t border-slate-800 flex items-center justify-between text-xs bg-slate-950/60">
+          <Link href="/search" className="flex items-center gap-1.5 text-slate-300 hover:text-cyan-300 font-semibold">
+            <Search className="size-3.5" />
+            <span>অনুসন্ধান</span>
+          </Link>
           <a href="/" target="_blank" className="flex items-center gap-1.5 text-slate-300 hover:text-cyan-300 font-semibold">
             <ExternalLink className="size-3.5" />
             <span>লাইভ সাইট</span>
@@ -1154,6 +1163,10 @@ export default function AdminPage() {
 
         {tab === "polls_podcast" && isAdmin && (
           <PollsPodcastManager token={token} shrink={shrink} />
+        )}
+
+        {tab === "backup_export" && isAdmin && (
+          <BackupExportManager token={token} />
         )}
 
         {tab === "posts" && canPublishMain && (
