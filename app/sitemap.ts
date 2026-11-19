@@ -49,8 +49,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const coreStaticRoutes: MetadataRoute.Sitemap = [
     { url: base, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
+    { url: `${base}/search`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${base}/notices`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${base}/editorial`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${base}/podcast`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${base}/timeline`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${base}/fact-check`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
     { url: `${base}/gallery`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
@@ -68,6 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/alumni`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/events`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${base}/apply`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${base}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/associations`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/social-sites`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${base}/council`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
