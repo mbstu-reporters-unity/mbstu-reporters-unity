@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { ShieldCheck, Send, CheckCircle2, Lock, EyeOff } from 'lucide-react'
+import { Send, CheckCircle2, Lock, EyeOff } from 'lucide-react'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
@@ -21,34 +21,44 @@ export default function AnonymousTipPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!title.trim() || !details.trim()) {
-      setErrMsg('❌ বিষয় এবং খবরের বিবরণ লিখুন')
+    if (title.trim().length < 3 || details.trim().length < 10) {
+      setErrMsg('❌ বিষয় (কমপক্ষে ৩ অক্ষর) এবং বিস্তারিত বিবরণ (কমপক্ষে ১০ অক্ষর) লিখুন')
+      return
+    }
+    if (!isAnonymous && name.trim().length < 2) {
+      setErrMsg('❌ আপনার নাম লিখুন অথবা পরিচয় গোপন রাখার অপশনে টিক দিন')
       return
     }
 
     setBusy(true)
     setErrMsg('')
 
+    const cleanContact = contact.trim()
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanContact)
+
     try {
-      const res = await fetch('/api/send-submission', {
+      const res = await fetch('/api/contact-feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          submission_type: 'info',
-          title: `[হুইসেলব্লোয়ার টিপ] ${title.trim()}`,
-          details: `প্রেরকের নাম: ${isAnonymous ? 'গোপন (Anonymous)' : name || 'নামহীন'}\nযোগাযোগ: ${contact || 'নেই'}\n\nবিবরণ:\n${details}`,
-          truth_pledge: 'এই তথ্যের প্রাথমিক সত্যতা যাচাইয়ের অনুরোধ করা হলো।',
-          media_urls: [],
+          kind: 'student_feedback',
+          is_anonymous: isAnonymous,
+          name: isAnonymous ? 'গোপন (Anonymous)' : name.trim(),
+          email: !isAnonymous && isEmail ? cleanContact : '',
+          phone: !isAnonymous && !isEmail ? cleanContact : '',
+          subject: `[গোপন টিপস] ${title.trim()}`,
+          message: `${details.trim()}\n\n[প্রাথমিক তথ্য যাচাইয়ের অনুরোধসহ গোপন টিপস ফর্ম থেকে প্রেরিত]`,
         }),
       })
 
+      const j = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error('তথ্যটি পাঠানো যায়নি')
+        throw new Error(j.error || 'তথ্যটি পাঠানো যায়নি')
       }
 
       setSubmitted(true)
-    } catch {
-      setErrMsg('❌ তথ্য পাঠাতে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন।')
+    } catch (err: any) {
+      setErrMsg('❌ ' + (err?.message || 'তথ্য পাঠাতে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন।'))
     }
     setBusy(false)
   }
@@ -122,8 +132,9 @@ export default function AnonymousTipPage() {
                 {!isAnonymous && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in fade-in">
                     <div>
-                      <label className="font-bold text-slate-300 block mb-1">আপনার নাম (ঐচ্ছিক):</label>
+                      <label className="font-bold text-slate-300 block mb-1">আপনার নাম *:</label>
                       <input
+                        required
                         className="w-full rounded-xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-white focus:outline-none focus:border-cyan-400"
                         placeholder="আপনার নাম"
                         value={name}
