@@ -1,0 +1,434 @@
+'use client'
+
+import React, { useState } from 'react'
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Send,
+  CheckCircle2,
+  MessageSquare,
+  ShieldAlert,
+  Building2,
+  EyeOff,
+  FileWarning,
+} from 'lucide-react'
+import { TopBar } from '@/components/portal/top-bar'
+import { SiteHeader } from '@/components/portal/site-header'
+import { SiteFooter } from '@/components/portal/site-footer'
+import { BackToTop } from '@/components/portal/back-to-top'
+import { BackNavigation } from '@/components/portal/back-navigation'
+import { NewsletterBox } from '@/components/portal/newsletter-box'
+import { useSiteSettings } from '@/components/portal/site-settings-context'
+
+type FormKind = 'contact' | 'student_feedback' | 'admin_feedback' | 'correction'
+
+const inp =
+  'w-full rounded-xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-white/45 focus:outline-none focus:border-cyan-400 transition'
+
+const TAB_INFO: Record<
+  FormKind,
+  { label: string; title: string; subtitle: string; icon: typeof MessageSquare }
+> = {
+  contact: {
+    label: 'সাধারণ যোগাযোগ',
+    title: 'সরাসরি যোগাযোগ ফর্ম',
+    subtitle: 'যেকোনো প্রশ্ন, সাক্ষাৎকারের আমন্ত্রণ বা মতামতের জন্য বার্তা পাঠান।',
+    icon: Mail,
+  },
+  student_feedback: {
+    label: 'শিক্ষার্থীর অভিযোগ / মতামত',
+    title: 'শিক্ষার্থীদের অভিযোগ ও মতামত ফর্ম',
+    subtitle:
+      'আবাসন, পরিবহন, ডাইনিং বা ক্যাম্পাসের যেকোনো সমস্যার কথা জানান (নাম গোপন রাখার সুযোগসহ)।',
+    icon: ShieldAlert,
+  },
+  admin_feedback: {
+    label: 'প্রশাসনের মতামত / প্রেস রিলিজ',
+    title: 'বিশ্ববিদ্যালয় প্রশাসনের মতামত ও বার্তা',
+    subtitle:
+      'বিশ্ববিদ্যালয় কর্তৃপক্ষ বা দপ্তরসমূহের আনুষ্ঠানিক বক্তব্য, প্রতিবাদলিপি বা মতামত পাঠান।',
+    icon: Building2,
+  },
+  correction: {
+    label: 'সংবাদ সংশোধন অনুরোধ',
+    title: 'সংবাদ সংশোধন ও ভুল ধরিয়ে দেওয়ার ফর্ম',
+    subtitle:
+      'আমাদের কোনো সংবাদে তথ্যের ভুল নজরে এলে উপযুক্ত সূত্রসহ সংশোধনের অনুরোধ জানান।',
+    icon: FileWarning,
+  },
+}
+
+export default function ContactAndFeedbackPage() {
+  const settings = useSiteSettings()
+  const f = settings.footer
+
+  const [kind, setKind] = useState<FormKind>('contact')
+  const [isAnonymous, setIsAnonymous] = useState(false)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [deptOrOffice, setDeptOrOffice] = useState('')
+  const [subject, setSubject] = useState('')
+  const [message, setMessage] = useState('')
+  const [postUrl, setPostUrl] = useState('')
+
+  const [busy, setBusy] = useState(false)
+  const [errMsg, setErrMsg] = useState('')
+  const [sent, setSent] = useState(false)
+
+  function switchTab(next: FormKind) {
+    setKind(next)
+    setErrMsg('')
+    setSent(false)
+    if (next !== 'student_feedback') {
+      setIsAnonymous(false)
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setErrMsg('')
+    setBusy(true)
+
+    try {
+      const res = await fetch('/api/contact-feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind,
+          is_anonymous: kind === 'student_feedback' ? isAnonymous : false,
+          name,
+          email,
+          phone,
+          department_or_office: deptOrOffice,
+          subject,
+          message,
+          post_url: kind === 'correction' ? postUrl : '',
+        }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(j.error || 'বার্তা পাঠানো যায়নি')
+      }
+      setSent(true)
+      setName('')
+      setEmail('')
+      setPhone('')
+      setDeptOrOffice('')
+      setSubject('')
+      setMessage('')
+      setPostUrl('')
+    } catch (err: any) {
+      setErrMsg('❌ ' + (err?.message || 'বার্তা পাঠাতে সমস্যা হয়েছে'))
+    }
+    setBusy(false)
+  }
+
+  const activeMeta = TAB_INFO[kind]
+  const ActiveIcon = activeMeta.icon
+
+  return (
+    <>
+      <TopBar />
+      <SiteHeader />
+      <main className="min-h-screen py-6 sm:py-10">
+        <div className="mx-auto max-w-6xl px-4 space-y-6">
+          <BackNavigation items={[{ label: 'যোগাযোগ ও অভিযোগ ডেস্ক' }]} />
+
+          {/* হেডার ব্যানার */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center space-y-3">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow">
+              <MessageSquare className="size-3.5" />
+              <span>Contact, Map & Grievance Desk</span>
+            </span>
+
+            <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
+              যোগাযোগ, ক্যাম্পাস ম্যাপ ও অভিযোগ/মতামত ডেস্ক
+            </h1>
+            <p className="text-slate-200 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed">
+              মাভাবিপ্রবি রিপোর্টার্স ইউনিটির দপ্তরের ঠিকানা, অবস্থান ম্যাপ এবং শিক্ষার্থী ও প্রশাসনের সরাসরি বার্তা, অভিযোগ ও সংশোধনী পাঠানোর ডিজিটাল ডেস্ক।
+            </p>
+          </div>
+
+          {/* ১. যোগাযোগ কার্ড + ক্যাম্পাস ম্যাপ */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-2 glass-card p-5 sm:p-6 space-y-4 text-white">
+              <h2 className="font-serif text-lg font-bold border-b border-white/15 pb-2">
+                অফিসিয়াল যোগাযোগ তথ্য
+              </h2>
+
+              <div className="space-y-3 text-xs sm:text-sm text-slate-200">
+                <div className="flex items-start gap-3">
+                  <span className="p-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shrink-0">
+                    <MapPin className="size-4" />
+                  </span>
+                  <div>
+                    <p className="font-bold text-white text-xs">কার্যালয়ের ঠিকানা</p>
+                    <p className="text-slate-300 mt-0.5 leading-relaxed">{f.addressBn}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 shrink-0">
+                    <Phone className="size-4" />
+                  </span>
+                  <div>
+                    <p className="font-bold text-white text-xs">ফোন / হটলাইন</p>
+                    <a
+                      href={`tel:${f.phone.replace(/[^+\d]/g, '')}`}
+                      className="text-cyan-300 hover:underline font-semibold mt-0.5 block"
+                    >
+                      {f.phone}
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/30 shrink-0">
+                    <Mail className="size-4" />
+                  </span>
+                  <div>
+                    <p className="font-bold text-white text-xs">ইমেইল</p>
+                    <a
+                      href={`mailto:${f.email}`}
+                      className="text-cyan-300 hover:underline font-semibold break-all mt-0.5 block"
+                    >
+                      {f.email}
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <NewsletterBox />
+              </div>
+            </div>
+
+            <div className="lg:col-span-3 glass-card overflow-hidden p-3 sm:p-4 flex flex-col space-y-2.5 text-white">
+              <div className="flex items-center justify-between px-1">
+                <h2 className="font-serif text-base sm:text-lg font-bold flex items-center gap-2">
+                  <MapPin className="size-4 text-cyan-400" />
+                  <span>ক্যাম্পাস লোকেশন ম্যাপ (সন্তোষ, টাঙ্গাইল)</span>
+                </h2>
+                <a
+                  href="https://maps.google.com/?q=Mawlana+Bhashani+Science+and+Technology+University"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-cyan-300 hover:underline"
+                >
+                  Google Maps-এ খুলুন →
+                </a>
+              </div>
+              <div className="flex-1 min-h-[260px] sm:min-h-[320px] rounded-2xl overflow-hidden border border-white/15 bg-slate-900">
+                <iframe
+                  title="MBSTU Campus Map"
+                  src="https://maps.google.com/maps?q=Mawlana+Bhashani+Science+and+Technology+University,+Santosh,+Tangail&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                  className="w-full h-full min-h-[260px] sm:min-h-[320px] border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ২. যোগাযোগ, অভিযোগ ও মতামত ফর্ম */}
+          <section className="glass-card p-5 sm:p-8 space-y-5 text-white">
+            {/* ৪টি ট্যাব */}
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {(Object.keys(TAB_INFO) as FormKind[]).map((k) => {
+                const TIcon = TAB_INFO[k].icon
+                const active = kind === k
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => switchTab(k)}
+                    className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-bold cursor-pointer transition ${
+                      active
+                        ? 'border-cyan-300 bg-cyan-500 text-slate-950 shadow-md'
+                        : 'border-white/20 bg-white/10 text-white/85 hover:bg-white/20'
+                    }`}
+                  >
+                    <TIcon className="size-3.5" />
+                    <span>{TAB_INFO[k].label}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="border-b border-white/15 pb-3">
+              <h2 className="font-serif text-xl sm:text-2xl font-bold flex items-center gap-2 text-white">
+                <ActiveIcon className="size-5 text-cyan-400" />
+                <span>{activeMeta.title}</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1">{activeMeta.subtitle}</p>
+            </div>
+
+            {sent ? (
+              <div className="py-8 text-center space-y-3 animate-in fade-in">
+                <div className="size-14 rounded-full bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="size-8" />
+                </div>
+                <h3 className="font-serif text-lg font-bold text-emerald-300">
+                  আপনার বার্তা সফলভাবে পৌঁছেছে!
+                </h3>
+                <p className="text-xs text-slate-300 max-w-md mx-auto">
+                  মাভাবিপ্রবি রিপোর্টার্স ইউনিটির দায়িত্বশীল টিম বিষয়টি পর্যালোচনা করে প্রয়োজনীয় পদক্ষেপ নেবে।
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSent(false)}
+                  className="rounded-full bg-cyan-500 text-slate-950 px-5 py-2 text-xs font-bold cursor-pointer"
+                >
+                  আরেকটি বার্তা পাঠান
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+                {errMsg && (
+                  <p className="p-3 rounded-xl bg-rose-500/20 border border-rose-400/40 text-rose-200 font-bold text-center">
+                    {errMsg}
+                  </p>
+                )}
+
+                {kind === 'student_feedback' && (
+                  <label className="flex items-center gap-2.5 p-3 rounded-2xl bg-white/10 border border-white/15 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isAnonymous}
+                      onChange={(e) => setIsAnonymous(e.target.checked)}
+                      className="size-4 accent-cyan-400"
+                    />
+                    <div>
+                      <p className="font-bold text-sm text-white flex items-center gap-1.5">
+                        <EyeOff className="size-3.5 text-cyan-300" />
+                        <span>আমার পরিচয় গোপন রাখুন (Anonymous)</span>
+                      </p>
+                      <p className="text-[10px] text-slate-300">
+                        নাম ও ব্যক্তিগত যোগাযোগের তথ্য ছাড়াই অভিযোগ বা মতামত পাঠান।
+                      </p>
+                    </div>
+                  </label>
+                )}
+
+                {!isAnonymous && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="font-bold text-cyan-200 block mb-1">
+                        {kind === 'admin_feedback' ? 'কর্মকর্তা / দপ্তরের নাম *' : 'আপনার পূর্ণ নাম *'}
+                      </label>
+                      <input
+                        required
+                        className={inp}
+                        placeholder="পূর্ণ নাম লিখুন"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-cyan-200 block mb-1">
+                        ইমেইল {kind === 'contact' ? '*' : '(ঐচ্ছিক)'}
+                      </label>
+                      <input
+                        type="email"
+                        className={inp}
+                        placeholder="example@gmail.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-cyan-200 block mb-1">
+                        মোবাইল নম্বর (ঐচ্ছিক)
+                      </label>
+                      <input
+                        type="tel"
+                        className={inp}
+                        placeholder="017XXXXXXXX"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-cyan-200 block mb-1">
+                      {kind === 'admin_feedback'
+                        ? 'দপ্তর / অনুষদের নাম'
+                        : 'বিভাগ / ব্যাচ / হল (ঐচ্ছিক)'}
+                    </label>
+                    <input
+                      className={inp}
+                      placeholder={
+                        kind === 'admin_feedback'
+                          ? 'যেমন: রেজিস্ট্রার অফিস / প্রক্টর অফিস'
+                          : 'যেমন: CSE ১৮তম ব্যাচ / শহীদ জিয়া হল'
+                      }
+                      value={deptOrOffice}
+                      onChange={(e) => setDeptOrOffice(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-cyan-200 block mb-1">বিষয় *</label>
+                    <input
+                      required
+                      className={inp}
+                      placeholder="সংক্ষিপ্ত বিষয় লিখুন"
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {kind === 'correction' && (
+                  <div>
+                    <label className="font-bold text-cyan-200 block mb-1">
+                      যে সংবাদের সংশোধন প্রয়োজন তার লিংক (ঐচ্ছিক)
+                    </label>
+                    <input
+                      className={inp}
+                      placeholder="https://mbsturu.vercel.app/post/..."
+                      value={postUrl}
+                      onChange={(e) => setPostUrl(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="font-bold text-cyan-200 block mb-1">বিস্তারিত বার্তা *</label>
+                  <textarea
+                    required
+                    rows={5}
+                    className={inp}
+                    placeholder="আপনার অভিযোগ, মতামত বা বার্তাটি বিস্তারিত লিখুন..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-7 py-3 font-bold text-sm shadow-lg transition cursor-pointer disabled:opacity-50"
+                >
+                  <Send className="size-4" />
+                  <span>{busy ? 'পাঠানো হচ্ছে...' : 'বার্তা পাঠান'}</span>
+                </button>
+              </form>
+            )}
+          </section>
+
+          <div className="pt-4 border-t border-white/15">
+            <BackNavigation fallbackHref="/" />
+          </div>
+        </div>
+      </main>
+      <SiteFooter />
+      <BackToTop />
+    </>
+  )
+}
