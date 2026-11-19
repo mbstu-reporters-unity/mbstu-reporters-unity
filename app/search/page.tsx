@@ -51,8 +51,13 @@ export default function GlobalSearchPage() {
   useEffect(() => {
     load()
     if (typeof window !== 'undefined') {
-      const q = new URLSearchParams(window.location.search).get('q')
+      const params = new URLSearchParams(window.location.search)
+      const q = params.get('q')
+      const sort = params.get('sort')
       if (q) setQuery(q)
+      if (sort === 'popular' || sort === 'oldest' || sort === 'newest') {
+        setSortBy(sort)
+      }
     }
   }, [])
 
