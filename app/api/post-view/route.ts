@@ -21,7 +21,21 @@ export async function POST(req: Request) {
     })
 
     if (!res.ok) {
-      // RPC না থাকলে সাধারণ PATCH দিয়ে ফলব্যাক
+      // RPC না থাকলে বর্তমান view_count পড়ে +1 করে আপডেট করা
+      const getRes = await fetch(
+        `${SB_URL}/rest/v1/posts?select=view_count&id=eq.${encodeURIComponent(postId)}&limit=1`,
+        {
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+          cache: 'no-store',
+        }
+      ).catch(() => null)
+
+      let nextCount = 1
+      if (getRes && getRes.ok) {
+        const rows: Array<{ view_count?: number | null }> = await getRes.json().catch(() => [])
+        nextCount = (Number(rows[0]?.view_count) || 0) + 1
+      }
+
       await fetch(`${SB_URL}/rest/v1/posts?id=eq.${encodeURIComponent(postId)}`, {
         method: 'PATCH',
         headers: {
@@ -30,7 +44,7 @@ export async function POST(req: Request) {
           'Content-Type': 'application/json',
           Prefer: 'return=minimal',
         },
-        body: JSON.stringify({ view_count: 1 }),
+        body: JSON.stringify({ view_count: nextCount }),
       }).catch(() => {})
     }
 
