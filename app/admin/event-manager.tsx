@@ -50,7 +50,7 @@ export default function EventManager({ token }: { token: string }) {
     setLoading(true)
     const [evs, regs] = await Promise.all([
       getCampusEvents(),
-      getEventRegistrations(),
+      getEventRegistrations(token),
     ])
     setEvents(evs)
     setRegistrations(regs)
