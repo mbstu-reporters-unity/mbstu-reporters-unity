@@ -293,7 +293,6 @@ export async function refreshSession(): Promise<string | null> {
 
 export async function signUp(email: string, password: string, info: SignupInfo) {
   const cleanEmail = email.trim()
-  // শুধুমাত্র শিক্ষার্থীরা সরাসরি অনুমোদিত হবে; শিক্ষক, কর্মকর্তা ও সাংবাদিক অ্যাডমিন অনুমোদনের অপেক্ষায় থাকবে
   const autoApproved = info.user_type === "student"
 
   const res = await ok(
@@ -775,9 +774,13 @@ export const POSITIONS = [
   { key: "president", en: "President", bn: "সভাপতি" },
   { key: "vice_president", en: "Vice President", bn: "সহ-সভাপতি" },
   { key: "general_secretary", en: "General Secretary", bn: "সাধারণ সম্পাদক" },
+  { key: "joint_general_secretary", en: "Joint General Secretary", bn: "যুগ্ম-সাধারণ সম্পাদক" },
+  { key: "organizing_secretary", en: "Organizing Secretary", bn: "সাংগঠনিক সম্পাদক" },
+  { key: "treasurer", en: "Treasurer", bn: "কোষাধ্যক্ষ / অর্থ সম্পাদক" },
   { key: "office_secretary", en: "Office Secretary", bn: "দপ্তর সম্পাদক" },
-  { key: "treasurer", en: "Treasurer", bn: "কোষাধ্যক্ষ" },
   { key: "publicity_secretary", en: "Publicity & Publication Secretary", bn: "প্রচার ও প্রকাশনা সম্পাদক" },
+  { key: "it_secretary", en: "IT & Technical Secretary", bn: "তথ্য ও প্রযুক্তি সম্পাদক" },
+  { key: "sports_cultural_secretary", en: "Sports & Cultural Secretary", bn: "ক্রীড়া ও সাংস্কৃতিক সম্পাদক" },
   { key: "executive_member", en: "Executive Member", bn: "কার্যনির্বাহী সদস্য" },
 ] as const
 
