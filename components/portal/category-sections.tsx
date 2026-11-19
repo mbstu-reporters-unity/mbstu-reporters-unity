@@ -1,10 +1,32 @@
-import { getVisiblePosts, getLimits, getCategoryNames, CAT_CAMPUS, CAT_CLUB, CAT_STUDENT } from '@/lib/sb'
+import {
+  getVisiblePosts,
+  getLimits,
+  getCategoryNames,
+  CAT_CAMPUS,
+  CAT_CLUB,
+  CAT_STUDENT,
+  type Post,
+} from '@/lib/sb'
 import type { HomeSectionConfig } from '@/lib/site-settings'
 import { SectionHeading } from './section-heading'
 import { NewsGrid } from './news-card'
 
-export async function CategorySections({ sectionConfig }: { sectionConfig?: HomeSectionConfig }) {
-  const [all, limits, names] = await Promise.all([getVisiblePosts(1000), getLimits(), getCategoryNames()])
+export async function CategorySections({
+  sectionConfig,
+  prefetchedPosts,
+  prefetchedLimits,
+  prefetchedCategories,
+}: {
+  sectionConfig?: HomeSectionConfig
+  prefetchedPosts?: Post[]
+  prefetchedLimits?: Record<string, number>
+  prefetchedCategories?: string[]
+}) {
+  const [all, limits, names] = await Promise.all([
+    prefetchedPosts ? Promise.resolve(prefetchedPosts) : getVisiblePosts(200),
+    prefetchedLimits ? Promise.resolve(prefetchedLimits) : getLimits(),
+    prefetchedCategories ? Promise.resolve(prefetchedCategories) : getCategoryNames(),
+  ])
   const skip = [CAT_CAMPUS, CAT_CLUB, CAT_STUDENT]
   const newsOnly = all.filter((p) => !p.page_id)
   const used = Array.from(new Set(newsOnly.map((p) => p.category).filter((c): c is string => !!c)))
