@@ -37,7 +37,7 @@ import {
   type TickerBadgeConfig,
 } from '@/lib/ticker'
 
-const POLL = 20000
+const POLL = 120000
 const MASK = 'linear-gradient(to right, transparent 0, #000 30px, #000 calc(100% - 30px), transparent 100%)'
 
 export function renderTickerBadgeIcon(key?: string, className = "size-4 shrink-0") {
