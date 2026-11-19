@@ -24,7 +24,12 @@ import { getSiteSettings } from '@/lib/site-settings'
 
 export const dynamic = 'force-dynamic'
 
-async function getProfileById(id: string): Promise<DigitalMemberInfo | null> {
+type PublicUserProfile = DigitalMemberInfo & {
+  bio?: string | null
+  office_section?: string | null
+}
+
+async function getProfileById(id: string): Promise<PublicUserProfile | null> {
   try {
     const [profRes, leadRes] = await Promise.all([
       fetch(
@@ -99,7 +104,7 @@ export async function generateMetadata({
   const { id } = await params
   const p = await getProfileById(id)
   if (!p) return { title: 'প্রোফাইল পাওয়া যায়নি' }
-  const { bioText } = parseBioAndSkills((p as Profile).bio)
+  const { bioText } = parseBioAndSkills(p.bio)
   return {
     title: `${p.full_name} | MBSTU প্রোফাইল`,
     description: bioText || `${p.full_name}-এর মাভাবিপ্রবি প্রোফাইল`,
@@ -130,7 +135,7 @@ export default async function UserProfilePage({
   }
 
   const roleBadge = userTypeLabels[profile.user_type || 'student'] || 'সদস্য'
-  const parsedBio = parseBioAndSkills((profile as Profile).bio)
+  const parsedBio = parseBioAndSkills(profile.bio)
 
   return (
     <>
@@ -186,9 +191,9 @@ export default async function UserProfilePage({
                       ⭐ {profile.executive_position_bn}
                     </span>
                   )}
-                  {(profile as Profile).designation && (
+                  {profile.designation && (
                     <span className="bg-white/10 text-slate-200 border border-white/15 px-3 py-1 rounded-full font-semibold">
-                      {(profile as Profile).designation}
+                      {profile.designation}
                     </span>
                   )}
                   {profile.department && (
@@ -202,10 +207,10 @@ export default async function UserProfilePage({
                       (ব্যাচ: {profile.batch})
                     </span>
                   )}
-                  {(profile as Profile).office_section && (
+                  {profile.office_section && (
                     <span className="text-slate-200 flex items-center gap-1">
                       <Building2 className="size-3.5 text-cyan-400" />
-                      <span>{(profile as Profile).office_section}</span>
+                      <span>{profile.office_section}</span>
                     </span>
                   )}
                 </div>
