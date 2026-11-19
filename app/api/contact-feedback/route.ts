@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import nodemailer from "nodemailer"
 import { SB_URL, SB_KEY } from "@/lib/sb"
 import { SUBMISSION_EMAIL_KEY } from "@/lib/submissions"
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 
 export const runtime = "nodejs"
 
@@ -24,6 +25,16 @@ const KIND_LABELS: Record<string, string> = {
 
 export async function POST(req: Request) {
   try {
+    const rl = checkRateLimit(`cf:${getClientIp(req)}`, 5, 10 * 60 * 1000)
+    if (!rl.allowed) {
+      return NextResponse.json(
+        {
+          error: `অতিরিক্ত বার্তা পাঠানো হয়েছে। অনুগ্রহ করে ${rl.retryAfterSec} সেকেন্ড পর আবার চেষ্টা করুন।`,
+        },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json().catch(() => ({}))
 
     const kind =
