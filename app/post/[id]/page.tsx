@@ -15,6 +15,7 @@ import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
+import { PostViewTracker } from '@/components/portal/post-view-tracker'
 
 export const revalidate = 60
 
@@ -113,6 +114,8 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       <TopBar />
       <SiteHeader />
       <main className="min-h-screen py-6 sm:py-10 px-4 pb-20">
+        <PostViewTracker postId={id} />
+
         <article className="glass-card mx-auto max-w-3xl space-y-6 p-5 sm:p-9 text-white">
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 pb-4">
