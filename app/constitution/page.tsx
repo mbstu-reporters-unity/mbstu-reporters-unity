@@ -3,7 +3,6 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import {
-  FileText,
   Download,
   Printer,
   Scale,
@@ -21,7 +20,6 @@ import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
 import { useSiteSettings } from '@/components/portal/site-settings-context'
-import { FileDown } from 'lucide-react'
 
 interface ArticleItem {
   id: string
@@ -125,12 +123,13 @@ const ETHICS_CODE = [
 
 export default function ConstitutionPage() {
   const settings = useSiteSettings()
-  const constitutionPdfUrl = settings.behaviorAndPages.subPages.constitutionPdfUrl || ''
   const [openArticle, setOpenArticle] = useState<string | null>('art-1')
 
   // অ্যাডমিন প্যানেলের site_settings থেকে ডায়নামিক PDF লিংক পড়া (যদি থাকে)
-  const constitutionPdfUrl =
-    ((settings?.behaviorAndPages?.subPages as Record<string, unknown>)?.constitutionPdfUrl as string)?.trim() || ''
+  const rawPdfUrl = (
+    settings?.behaviorAndPages?.subPages as Record<string, unknown> | undefined
+  )?.constitutionPdfUrl
+  const constitutionPdfUrl = typeof rawPdfUrl === 'string' ? rawPdfUrl.trim() : ''
 
   const toggleArticle = (id: string) => {
     setOpenArticle((prev) => (prev === id ? null : id))
