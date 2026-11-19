@@ -44,6 +44,7 @@ import FeedbackNewsletterManager from "./feedback-newsletter-manager"
 import PollsPodcastManager from "./polls-podcast-manager"
 import BackupExportManager from "./backup-export-manager"
 import NewsroomWorkflow from "./newsroom-workflow"
+import CouncilArchiveManager from "./council-archive-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
@@ -53,7 +54,7 @@ import {
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
   Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2,
   Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send, Feather, CreditCard, UserPlus,
-  CalendarDays, Mail, BarChart3, Database, Search, FileEdit
+  CalendarDays, Mail, BarChart3, Database, Search, FileEdit, History,
 } from "lucide-react"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -72,7 +73,8 @@ type Tab =
   | "social_sites" | "administration" | "community_pages" | "send_submission"
   | "submissions_inbox" | "teacher_columns" | "content_hub" | "membership_apps"
   | "resource_manager" | "event_manager" | "feedback_newsletter" | "polls_podcast" | "backup_export"
-  | "newsroom" | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
+  | "newsroom" | "council_archive"
+  | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
 
 type NavItem = {
   id: Tab
@@ -508,7 +510,7 @@ export default function AdminPage() {
       })
       setPFile(null)
       if (!editId) setAuthorAvatar(avatar)
-      setMsg("✅ প্রোফাইল সফলভাবে আপডেট হয়েছে")
+      setMsg("✅ প্রোফাইল ও দক্ষতা সফলভাবে আপডেট হয়েছে")
       await loadMe(token)
     } catch (e) { await fail(e) }
     setBusy(false)
@@ -902,6 +904,7 @@ export default function AdminPage() {
   if (!me) return null
 
   const canManage = (p: Post) => Boolean(isAdmin || p.user_id === me.id)
+  const isClubCategory = category.includes("ক্লাব") || category.includes("Club")
 
   const userTypeLabels: Record<string, string> = {
     student: "🎓 শিক্ষার্থী",
@@ -959,6 +962,7 @@ export default function AdminPage() {
         { id: "administration", label: "প্রশাসন ও কর্মকর্তা", icon: Building2, adminOnly: true },
         { id: "faculties", label: "অনুষদ ও বিভাগসমূহ", icon: GraduationCap, adminOnly: true },
         { id: "leaders", label: "কার্যনির্বাহী পরিষদ", icon: Users, adminOnly: true },
+        { id: "council_archive", label: "উপদেষ্টা ও প্রাক্তন কমিটি", icon: History, adminOnly: true },
         { id: "directors", label: "ডিরেক্টর প্যানেল", icon: UserCheck, adminOnly: true },
       ],
     },
@@ -1001,7 +1005,6 @@ export default function AdminPage() {
   }
 
   const dropdownCats = selectableCats.includes(category) ? selectableCats : [...selectableCats, category]
-  const isClubCategory = category.includes("ক্লাব") || category.includes("Club")
 
   return (
     <div className="min-h-dvh bg-slate-100 flex flex-col lg:flex-row text-slate-800">
@@ -1150,7 +1153,7 @@ export default function AdminPage() {
             token={token}
             currentUser={me}
             isEditor={Boolean(isAdmin || isModerator)}
-            categories={selectableCats.length > 0 ? selectableCats : cats}
+            categories={selectableCats}
             shrink={shrink}
             onPublished={() => refresh(token, me)}
           />
@@ -1624,7 +1627,6 @@ export default function AdminPage() {
               <button className={btn} onClick={saveProfile} disabled={busy}>{busy ? "অপেক্ষা করুন..." : "প্রোফাইল সেভ করুন"}</button>
             </div>
 
-            {/* ড্যাশবোর্ডে নিজের ডিজিটাল প্রেস কার্ড ও সনদ */}
             {me.approved && (
               <div className="bg-white rounded-2xl shadow p-5 space-y-3 border">
                 <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2 border-b pb-2">
@@ -1701,6 +1703,7 @@ export default function AdminPage() {
           </div>
         )}
         {tab === "leaders" && isAdmin && <LeadershipManager token={token} members={active} shrink={shrink} />}
+        {tab === "council_archive" && isAdmin && <CouncilArchiveManager token={token} shrink={shrink} />}
 
         {(tab === "users_teacher" ||
           tab === "users_student" ||
