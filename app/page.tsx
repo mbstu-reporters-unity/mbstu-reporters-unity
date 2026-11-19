@@ -100,7 +100,6 @@ export default async function Page() {
         </section>
 
         {sections.map(renderSection)}
-        {sections.map(renderSection)}
         <HomeEventsAndPopular />
         <PollWidget />
       </main>
