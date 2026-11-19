@@ -18,6 +18,7 @@ import {
   Upload,
 } from "lucide-react"
 import { uploadImage } from "../../lib/sb"
+import { uploadNoticeFile } from "../../lib/notices"
 import {
   DEFAULT_SITE_SETTINGS,
   getSiteSettings,
@@ -60,6 +61,7 @@ export default function SiteSettingsManager({
 
   const [orgLogoFile, setOrgLogoFile] = useState<File | null>(null)
   const [univLogoFile, setUnivLogoFile] = useState<File | null>(null)
+  const [constitutionFile, setConstitutionFile] = useState<File | null>(null)
 
   useEffect(() => {
     getSiteSettings()
@@ -90,6 +92,13 @@ export default function SiteSettingsManager({
         setUnivLogoFile(null)
       }
 
+      if (constitutionFile) {
+        setMsg("গঠনতন্ত্রের PDF আপলোড হচ্ছে...")
+        const uploadRes = await uploadNoticeFile(token, constitutionFile)
+        nextCfg.behaviorAndPages.constitutionPdfUrl = uploadRes.url
+        setConstitutionFile(null)
+      }
+
       setMsg("সেটিংস সংরক্ষণ হচ্ছে...")
       await saveSiteSettings(token, nextCfg)
       setCfg(nextCfg)
@@ -105,6 +114,7 @@ export default function SiteSettingsManager({
     setCfg(structuredClone(DEFAULT_SITE_SETTINGS))
     setOrgLogoFile(null)
     setUnivLogoFile(null)
+    setConstitutionFile(null)
     setMsg("⚠️ ডিফল্ট সেটিংস লোড হয়েছে — স্থায়ী করতে নিচে 'সেভ করুন' চাপুন।")
   }
 
@@ -1131,6 +1141,74 @@ export default function SiteSettingsManager({
             <h3 className="font-bold text-sm text-slate-900 border-b pb-2">
               ১. ছবি, পোস্ট ও গ্লোবাল ফিচার সেটিংস
             </h3>
+
+            {/* গঠনতন্ত্র PDF আপলোড ও লিংক বক্স */}
+            <div className="p-4 rounded-2xl border border-cyan-200 bg-cyan-50/50 space-y-3">
+              <div className="flex items-center justify-between border-b border-cyan-200/60 pb-2">
+                <span className="text-xs font-bold text-cyan-950 flex items-center gap-1.5">
+                  <FileText className="size-4 text-cyan-700" />
+                  <span>অফিসিয়াল গঠনতন্ত্রের PDF ফাইল বা ডাউনলোড লিংক:</span>
+                </span>
+                {cfg.behaviorAndPages.constitutionPdfUrl && (
+                  <a
+                    href={cfg.behaviorAndPages.constitutionPdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-bold text-cyan-700 hover:underline inline-flex items-center gap-0.5"
+                  >
+                    বর্তমান PDF দেখুন →
+                  </a>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] text-slate-600 block">
+                  মোবাইল বা ডিভাইস থেকে সরাসরি PDF আপলোড করুন (সর্বোচ্চ ২০ MB):
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white px-3.5 py-2 text-xs font-bold cursor-pointer transition shadow-xs">
+                    <Upload className="size-3.5" />
+                    <span>PDF ফাইল বাছাই করুন</span>
+                    <input
+                      type="file"
+                      accept="application/pdf,.pdf"
+                      className="hidden"
+                      onChange={(e) => setConstitutionFile(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                  {constitutionFile && (
+                    <span className="text-xs font-bold text-emerald-700 bg-white px-2.5 py-1 rounded-lg border border-emerald-300">
+                      ✓ নির্বাচিত: {constitutionFile.name}
+                    </span>
+                  )}
+                  {cfg.behaviorAndPages.constitutionPdfUrl && !constitutionFile && (
+                    <span className="text-xs font-semibold text-slate-600 truncate max-w-xs">
+                      লিংক সংযুক্ত আছে
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-slate-600 block mb-1">
+                    অথবা গুগল ড্রাইভ / অন্য কোনো সরাসরি PDF লিংক পেস্ট করুন:
+                  </label>
+                  <input
+                    className={inp}
+                    placeholder="https://drive.google.com/... বা https://...pdf"
+                    value={cfg.behaviorAndPages.constitutionPdfUrl || ""}
+                    onChange={(e) =>
+                      setCfg({
+                        ...cfg,
+                        behaviorAndPages: {
+                          ...cfg.behaviorAndPages,
+                          constitutionPdfUrl: e.target.value,
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
 
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">
