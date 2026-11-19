@@ -1,3 +1,4 @@
+import { HomeEventsAndPopular } from '@/components/portal/home-events-popular'
 import type { ReactNode } from 'react'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
@@ -99,6 +100,8 @@ export default async function Page() {
         </section>
 
         {sections.map(renderSection)}
+        {sections.map(renderSection)}
+        <HomeEventsAndPopular />
         <PollWidget />
       </main>
       <SiteFooter />
