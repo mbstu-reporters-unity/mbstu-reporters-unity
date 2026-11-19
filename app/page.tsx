@@ -14,6 +14,7 @@ import { ClubNews } from '@/components/portal/club-news'
 import { ClubPosts } from '@/components/portal/club-posts'
 import { CommunityPagesSection } from '@/components/portal/community-pages-section'
 import { NoticeBoard } from '@/components/portal/notice-board'
+import { PollWidget } from '@/components/portal/poll-widget'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { getSiteSettings, type HomeSectionConfig } from '@/lib/site-settings'
@@ -70,6 +71,7 @@ export default async function Page() {
         </section>
 
         {sections.map(renderSection)}
+        <PollWidget />
       </main>
       <SiteFooter />
       <BackToTop />
