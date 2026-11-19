@@ -11,9 +11,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  AlertCircle,
   Users,
-  Award,
   ArrowRight,
   BookOpen,
 } from 'lucide-react'
@@ -22,6 +20,7 @@ import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
+import { useSiteSettings } from '@/components/portal/site-settings-context'
 
 interface ArticleItem {
   id: string
@@ -124,7 +123,12 @@ const ETHICS_CODE = [
 ]
 
 export default function ConstitutionPage() {
+  const settings = useSiteSettings()
   const [openArticle, setOpenArticle] = useState<string | null>('art-1')
+
+  // অ্যাডমিন প্যানেলের site_settings থেকে ডায়নামিক PDF লিংক পড়া (যদি থাকে)
+  const constitutionPdfUrl =
+    ((settings?.behaviorAndPages?.subPages as Record<string, unknown>)?.constitutionPdfUrl as string)?.trim() || ''
 
   const toggleArticle = (id: string) => {
     setOpenArticle((prev) => (prev === id ? null : id))
@@ -138,18 +142,46 @@ export default function ConstitutionPage() {
 
   return (
     <>
-      <TopBar />
-      <SiteHeader />
+      {/* ক্লিন প্রিন্ট হওয়ার স্টাইল */}
+      <style>{`
+        @media print {
+          body {
+            background: #ffffff !important;
+            color: #000000 !important;
+          }
+          header, footer, nav, .print-hidden {
+            display: none !important;
+          }
+          .glass-card {
+            background: #ffffff !important;
+            color: #000000 !important;
+            border: 1px solid #d1d5db !important;
+            box-shadow: none !important;
+            page-break-inside: avoid;
+          }
+          h1, h2, h3, p, span {
+            color: #111827 !important;
+          }
+        }
+      `}</style>
+
+      <div className="print-hidden">
+        <TopBar />
+        <SiteHeader />
+      </div>
+
       <main className="min-h-screen py-6 sm:py-10">
         <div className="mx-auto max-w-5xl px-4 space-y-6">
 
           {/* ব্রেডক্রাম্ব নেভিগেশন */}
-          <BackNavigation
-            items={[
-              { label: 'আমাদের সম্পর্কে', href: '/about' },
-              { label: 'গঠনতন্ত্র ও নীতিমালা' },
-            ]}
-          />
+          <div className="print-hidden">
+            <BackNavigation
+              items={[
+                { label: 'আমাদের সম্পর্কে', href: '/about' },
+                { label: 'গঠনতন্ত্র ও নীতিমালা' },
+              ]}
+            />
+          </div>
 
           {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center space-y-3">
@@ -168,15 +200,28 @@ export default function ConstitutionPage() {
               মাভাবিপ্রবি রিপোর্টার্স ইউনিটি পরিচালনাকারী সংবিধিবদ্ধ নীতিমালা, সদস্যপদের বিধান, নির্বাচন প্রক্রিয়া ও দায়িত্বশীল সাংবাদিকতার নৈতিক আচরণবিধি।
             </p>
 
-            {/* অ্যাকশন বাটন: প্রিন্ট ও ডাউনলোড */}
-            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-3">
+            {/* অ্যাকশন বাটন: আসল PDF ডাউনলোড, প্রিন্ট ও আচরণবিধি লিংক */}
+            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-3 print-hidden">
+              {constitutionPdfUrl ? (
+                <a
+                  href={constitutionPdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white px-5 py-2 text-xs font-bold shadow-lg transition active:scale-95 cursor-pointer"
+                >
+                  <Download className="size-4" />
+                  <span>অফিসিয়াল PDF ডাউনলোড</span>
+                </a>
+              ) : null}
+
               <button
                 type="button"
                 onClick={handlePrint}
                 className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 text-xs font-bold shadow-lg transition active:scale-95 cursor-pointer"
               >
                 <Printer className="size-4" />
-                <span>প্রিন্ট / PDF সংরক্ষণ করুন</span>
+                <span>প্রিন্ট / PDF সংরক্ষণ</span>
               </button>
 
               <a
@@ -229,12 +274,12 @@ export default function ConstitutionPage() {
 
           {/* মূল গঠনতন্ত্রের ধারাসমূহ (Interactive Accordion) */}
           <section className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="font-serif text-xl font-bold text-white flex items-center gap-2">
+            <div className="flex items-center justify-between px-1 text-white">
+              <h2 className="font-serif text-xl font-bold flex items-center gap-2">
                 <Scale className="size-5 text-cyan-400" />
                 <span>গঠনতন্ত্রের পূর্ণাঙ্গ ধারাসমূহ ({ARTICLES.length}টি ধারা)</span>
               </h2>
-              <span className="text-xs text-cyan-200">ক্লিক করে বিস্তারিত পড়ুন</span>
+              <span className="text-xs text-cyan-200 print-hidden">ক্লিক করে বিস্তারিত পড়ুন</span>
             </div>
 
             <div className="space-y-2.5">
@@ -260,7 +305,7 @@ export default function ConstitutionPage() {
                           {art.title}
                         </h3>
                       </div>
-                      <span className="p-1 rounded-full bg-white/10 text-white/70 shrink-0">
+                      <span className="p-1 rounded-full bg-white/10 text-white/70 shrink-0 print-hidden">
                         {isOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
                       </span>
                     </button>
@@ -282,7 +327,7 @@ export default function ConstitutionPage() {
           </section>
 
           {/* দ্রুত লিংক ও রেফারেন্স */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 print-hidden">
             <Link
               href="/committee"
               className="glass-card p-4 rounded-2xl flex items-center justify-between hover:border-cyan-400 transition group text-white"
@@ -317,14 +362,17 @@ export default function ConstitutionPage() {
           </div>
 
           {/* ফুটার ব্যাক বাটন */}
-          <div className="pt-4 border-t border-white/15">
+          <div className="pt-4 border-t border-white/15 print-hidden">
             <BackNavigation fallbackHref="/" />
           </div>
 
         </div>
       </main>
-      <SiteFooter />
-      <BackToTop />
+
+      <div className="print-hidden">
+        <SiteFooter />
+        <BackToTop />
+      </div>
     </>
   )
 }
