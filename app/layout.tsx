@@ -112,7 +112,7 @@ const organizationJsonLd = {
   },
 }
 
-const themeScript = `(function(){try{var ok=['ocean-glass','sunset-peach','pure-frost','midnight-neon'];var t=localStorage.getItem('mbstu_theme');if(!t||ok.indexOf(t)<0){t='ocean-glass';}document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('mbstu_lang');if(l==='en'||l==='bn'){document.documentElement.lang=l;}}catch(e){}})();`
+const themeScript = `(function(){try{var ok=['ocean-glass','sunset-peach','pure-frost','midnight-neon','daylight-light'];var t=localStorage.getItem('mbstu_theme');if(!t||ok.indexOf(t)<0){t='ocean-glass';}document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('mbstu_lang');if(l==='en'||l==='bn'){document.documentElement.lang=l;}var fs=localStorage.getItem('mbstu_font_scale');if(fs){document.documentElement.style.fontSize=fs;}}catch(e){}})();`
 
 export default function RootLayout({
   children,
