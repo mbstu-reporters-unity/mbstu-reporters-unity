@@ -14,6 +14,7 @@ import type { Post, PendingComment, Profile, CategoryRow, UserType } from "../..
 import { getCampusClubs, type ClubItem } from "../../lib/clubs"
 import { getCommunityPages, type CommunityPage } from "../../lib/pages"
 import { getAdminSubmissions } from "../../lib/submissions"
+import { MEMBER_SKILLS, parseBioAndSkills, encodeBioAndSkills } from "../../lib/member-skills"
 import LeadershipManager from "./leadership-manager"
 import NoticeManager from "./notice-manager"
 import HeroManager from "./hero-manager"
@@ -42,15 +43,17 @@ import EventManager from "./event-manager"
 import FeedbackNewsletterManager from "./feedback-newsletter-manager"
 import PollsPodcastManager from "./polls-podcast-manager"
 import BackupExportManager from "./backup-export-manager"
+import NewsroomWorkflow from "./newsroom-workflow"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
 import { DigitalIdCard } from "../../components/portal/digital-id-card"
 import {
-  Menu, X, Search, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
+  Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
   Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2,
-  Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send, Feather, CreditCard, UserPlus, CalendarDays, Mail, BarChart3, Database
+  Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send, Feather, CreditCard, UserPlus,
+  CalendarDays, Mail, BarChart3, Database, Search, FileEdit
 } from "lucide-react"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -69,7 +72,7 @@ type Tab =
   | "social_sites" | "administration" | "community_pages" | "send_submission"
   | "submissions_inbox" | "teacher_columns" | "content_hub" | "membership_apps"
   | "resource_manager" | "event_manager" | "feedback_newsletter" | "polls_podcast" | "backup_export"
-  | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
+  | "newsroom" | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
 
 type NavItem = {
   id: Tab
@@ -192,6 +195,7 @@ export default function AdminPage() {
   const [pDesignation, setPDesignation] = useState("")
   const [pOfficeSection, setPOfficeSection] = useState("")
   const [pBio, setPBio] = useState("")
+  const [pSkills, setPSkills] = useState<string[]>([])
   const [pFile, setPFile] = useState<File | null>(null)
 
   const pFilePreview = useMemo(() => (pFile ? URL.createObjectURL(pFile) : null), [pFile])
@@ -206,9 +210,6 @@ export default function AdminPage() {
   const isTeacher = me?.user_type === "teacher" && me.approved
   const isStaffNoticeAllowed =
     me?.user_type === "staff" && me.approved && Boolean(me.can_publish_notice)
-  const isStudentOnly = Boolean(
-    me && !isAdmin && !isModerator && me.user_type === "student"
-  )
 
   const canPublishMain = Boolean(isAdmin || isModerator)
   const canPublishNotices = Boolean(
@@ -216,7 +217,7 @@ export default function AdminPage() {
   )
   const canAccessPages = Boolean(isAdmin || isModerator || isTeacher)
   const canUseSender = Boolean(me?.approved)
-  const canAccessProfile = Boolean(me && !isStudentOnly)
+  const canAccessProfile = Boolean(me && me.approved)
 
   const selectableCats = useMemo(() => {
     if (isAdmin) return cats
@@ -241,7 +242,10 @@ export default function AdminPage() {
       setPPhone(me.phone || "")
       setPDesignation(me.designation || "")
       setPOfficeSection(me.office_section || "")
-      setPBio(me.bio || "")
+
+      const parsedBio = parseBioAndSkills(me.bio)
+      setPBio(parsedBio.bioText)
+      setPSkills(parsedBio.skills)
 
       const hasMain = (me.role === "admin" || me.role === "moderator") && me.approved
       if (hasMain) {
@@ -253,6 +257,7 @@ export default function AdminPage() {
           prev === "community_pages" ||
           prev === "notices" ||
           prev === "send_submission" ||
+          prev === "newsroom" ||
           prev === "profile"
             ? prev
             : "community_pages"
@@ -260,13 +265,18 @@ export default function AdminPage() {
       } else if (me.user_type === "staff") {
         setTab((prev) =>
           prev === "send_submission" ||
+          prev === "newsroom" ||
           (prev === "notices" && Boolean(me.can_publish_notice)) ||
           prev === "profile"
             ? prev
             : "send_submission"
         )
       } else {
-        setTab("send_submission")
+        setTab((prev) =>
+          prev === "send_submission" || prev === "newsroom" || prev === "profile"
+            ? prev
+            : "send_submission"
+        )
       }
     }
   }, [me])
@@ -493,7 +503,7 @@ export default function AdminPage() {
         phone: pPhone.trim(),
         designation: pDesignation.trim() || null,
         office_section: pOfficeSection.trim() || null,
-        bio: pBio.trim() || null,
+        bio: encodeBioAndSkills(pBio, pSkills),
         avatar_url: avatar,
       })
       setPFile(null)
@@ -892,7 +902,6 @@ export default function AdminPage() {
   if (!me) return null
 
   const canManage = (p: Post) => Boolean(isAdmin || p.user_id === me.id)
-  const isClubCategory = category.includes("ক্লাব") || category.includes("Club")
 
   const userTypeLabels: Record<string, string> = {
     student: "🎓 শিক্ষার্থী",
@@ -917,6 +926,7 @@ export default function AdminPage() {
       groupTitle: "১. কন্টেন্ট ও বার্তা",
       items: [
         { id: "send_submission", label: "নোটিশ / সংবাদ / তথ্য পাঠান", icon: Send, senderAccess: true },
+        { id: "newsroom", label: "নিউজরুম (খসড়া → প্রকাশ)", icon: FileEdit, senderAccess: true },
         { id: "submissions_inbox", label: "প্রাপ্ত তথ্য ও ইমেইল", icon: Inbox, badge: inboxCount, adminOnly: true },
         { id: "membership_apps", label: "সদস্যপদ আবেদন", icon: UserPlus, badge: appInboxCount, adminOnly: true },
         { id: "teacher_columns", label: "শিক্ষকদের কলাম মনিটরিং", icon: Feather, adminOnly: true },
@@ -991,6 +1001,7 @@ export default function AdminPage() {
   }
 
   const dropdownCats = selectableCats.includes(category) ? selectableCats : [...selectableCats, category]
+  const isClubCategory = category.includes("ক্লাব") || category.includes("Club")
 
   return (
     <div className="min-h-dvh bg-slate-100 flex flex-col lg:flex-row text-slate-800">
@@ -1131,6 +1142,17 @@ export default function AdminPage() {
             token={token}
             shrink={shrink}
             senderName={me.full_name}
+          />
+        )}
+
+        {tab === "newsroom" && me && canUseSender && (
+          <NewsroomWorkflow
+            token={token}
+            currentUser={me}
+            isEditor={Boolean(isAdmin || isModerator)}
+            categories={selectableCats.length > 0 ? selectableCats : cats}
+            shrink={shrink}
+            onPublished={() => refresh(token, me)}
           />
         )}
 
@@ -1568,6 +1590,36 @@ export default function AdminPage() {
               )}
 
               <textarea className={inp} rows={3} placeholder="সংক্ষিপ্ত পরিচিতি বা বায়ো (Bio)" value={pBio} onChange={(e) => setPBio(e.target.value)} />
+
+              <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
+                <p className="text-xs font-bold text-slate-700">
+                  আমার সাংবাদিকতা ও কারিগরি দক্ষতা (সদস্য ডিরেক্টরিতে দেখাবে):
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {MEMBER_SKILLS.map((sk) => {
+                    const activeSkill = pSkills.includes(sk)
+                    return (
+                      <button
+                        key={sk}
+                        type="button"
+                        onClick={() =>
+                          setPSkills((prev) =>
+                            prev.includes(sk) ? prev.filter((x) => x !== sk) : [...prev, sk]
+                          )
+                        }
+                        className={`rounded-full border px-3 py-1 text-xs font-bold cursor-pointer transition ${
+                          activeSkill
+                            ? "bg-emerald-700 border-emerald-700 text-white shadow-xs"
+                            : "bg-white border-slate-300 text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        {activeSkill ? "✓ " : "+ "}
+                        {sk}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
 
               <button className={btn} onClick={saveProfile} disabled={busy}>{busy ? "অপেক্ষা করুন..." : "প্রোফাইল সেভ করুন"}</button>
             </div>
