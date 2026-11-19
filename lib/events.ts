@@ -6,8 +6,8 @@ export interface CampusEvent {
   subtitle?: string | null
   description: string
   venue: string
-  event_date: string // e.g. "২০ নভেম্বর ২০২৬"
-  event_time?: string | null // e.g. "সকাল ১০:০০ টা"
+  event_date: string
+  event_time?: string | null
   organizer: string
   image_url?: string | null
   capacity?: number
@@ -103,50 +103,52 @@ export async function saveCampusEvents(token: string, items: CampusEvent[]): Pro
   }
 }
 
-export async function getEventRegistrations(): Promise<EventRegistration[]> {
+export async function getEventRegistrations(token?: string): Promise<EventRegistration[]> {
+  const list: EventRegistration[] = []
+
+  // ১. নতুন নিরাপদ টেবিল থেকে পড়া (অ্যাডমিন টোকেন থাকলে)
+  if (token) {
+    try {
+      const tblRes = await fetch(
+        `${SB_URL}/rest/v1/event_registrations?select=*&order=created_at.desc&limit=500`,
+        { headers: hdr(token), cache: 'no-store' }
+      )
+      if (tblRes.ok) {
+        const rows = await tblRes.json()
+        if (Array.isArray(rows)) list.push(...rows)
+      }
+    } catch {}
+  }
+
+  // ২. পুরোনো app_config ব্যাকআপ থেকে মার্জ করা (যাতে আগের ডেটাও দেখা যায়)
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/app_config?select=value&key=eq.${REGISTRATIONS_CONFIG_KEY}`,
-      { headers: hdr(), cache: 'no-store' }
+      { headers: hdr(token), cache: 'no-store' }
     )
-    if (!res.ok) return []
-    const rows = await res.json()
-    if (Array.isArray(rows) && rows[0]?.value) {
-      const parsed = JSON.parse(rows[0].value)
-      return Array.isArray(parsed) ? parsed : []
+    if (res.ok) {
+      const rows = await res.json()
+      if (Array.isArray(rows) && rows[0]?.value) {
+        const parsed = JSON.parse(rows[0].value)
+        if (Array.isArray(parsed)) list.push(...parsed)
+      }
     }
-    return []
-  } catch {
-    return []
-  }
+  } catch {}
+
+  return list
 }
 
-export async function registerForEvent(data: Omit<EventRegistration, 'id' | 'created_at' | 'certificate_code'>): Promise<{ code: string }> {
-  try {
-    const current = await getEventRegistrations()
-    const code = `CERT-${data.event_id.toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
-    const newReg: EventRegistration = {
-      id: `reg-${Date.now()}`,
-      ...data,
-      certificate_code: code,
-      created_at: new Date().toISOString(),
-    }
-    const nextList = [newReg, ...current]
-    
-    await fetch(`${SB_URL}/rest/v1/app_config`, {
-      method: 'POST',
-      headers: {
-        ...hdr(undefined, true),
-        Prefer: 'resolution=merge-duplicates,return=minimal',
-      },
-      body: JSON.stringify({
-        key: REGISTRATIONS_CONFIG_KEY,
-        value: JSON.stringify(nextList),
-      }),
-    })
-
-    return { code }
-  } catch (e: any) {
-    throw new Error(e?.message || 'রেজিস্ট্রেশন সম্পন্ন করা যায়নি')
+export async function registerForEvent(
+  data: Omit<EventRegistration, 'id' | 'created_at' | 'certificate_code'>
+): Promise<{ code: string }> {
+  const res = await fetch('/api/event-register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  const j = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(j.error || 'রেজিস্ট্রেশন সম্পন্ন করা যায়নি')
   }
+  return { code: j.code }
 }
