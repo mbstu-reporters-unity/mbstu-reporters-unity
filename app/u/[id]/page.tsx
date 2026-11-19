@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { SB_URL, SB_KEY, attachProfileAvatars, POSITIONS, type Profile, type Post } from '@/lib/sb'
+import { parseBioAndSkills } from '@/lib/member-skills'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
@@ -98,9 +99,10 @@ export async function generateMetadata({
   const { id } = await params
   const p = await getProfileById(id)
   if (!p) return { title: 'প্রোফাইল পাওয়া যায়নি' }
+  const { bioText } = parseBioAndSkills((p as Profile).bio)
   return {
     title: `${p.full_name} | MBSTU প্রোফাইল`,
-    description: p.bio || `${p.full_name}-এর মাভাবিপ্রবি প্রোফাইল`,
+    description: bioText || `${p.full_name}-এর মাভাবিপ্রবি প্রোফাইল`,
   }
 }
 
@@ -128,6 +130,7 @@ export default async function UserProfilePage({
   }
 
   const roleBadge = userTypeLabels[profile.user_type || 'student'] || 'সদস্য'
+  const parsedBio = parseBioAndSkills((profile as Profile).bio)
 
   return (
     <>
@@ -183,9 +186,9 @@ export default async function UserProfilePage({
                       ⭐ {profile.executive_position_bn}
                     </span>
                   )}
-                  {profile.designation && (
+                  {(profile as Profile).designation && (
                     <span className="bg-white/10 text-slate-200 border border-white/15 px-3 py-1 rounded-full font-semibold">
-                      {profile.designation}
+                      {(profile as Profile).designation}
                     </span>
                   )}
                   {profile.department && (
@@ -199,18 +202,31 @@ export default async function UserProfilePage({
                       (ব্যাচ: {profile.batch})
                     </span>
                   )}
-                  {profile.office_section && (
+                  {(profile as Profile).office_section && (
                     <span className="text-slate-200 flex items-center gap-1">
                       <Building2 className="size-3.5 text-cyan-400" />
-                      <span>{profile.office_section}</span>
+                      <span>{(profile as Profile).office_section}</span>
                     </span>
                   )}
                 </div>
 
-                {profile.bio && (
+                {parsedBio.bioText && (
                   <p className="text-xs sm:text-sm text-slate-200 leading-relaxed pt-2 max-w-2xl whitespace-pre-line">
-                    {profile.bio}
+                    {parsedBio.bioText}
                   </p>
+                )}
+
+                {parsedBio.skills.length > 0 && (
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 pt-1.5">
+                    {parsedBio.skills.map((sk) => (
+                      <span
+                        key={sk}
+                        className="rounded-full bg-cyan-500/20 border border-cyan-400/35 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-200"
+                      >
+                        {sk}
+                      </span>
+                    ))}
+                  </div>
                 )}
 
                 {profile.newspaper_name && (
