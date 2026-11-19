@@ -125,10 +125,10 @@ export default function ConstitutionPage() {
   const settings = useSiteSettings()
   const [openArticle, setOpenArticle] = useState<string | null>('art-1')
 
-  // অ্যাডমিন প্যানেলের site_settings থেকে ডায়নামিক PDF লিংক পড়া (যদি থাকে)
-  const rawPdfUrl = (
-    settings?.behaviorAndPages?.subPages as Record<string, unknown> | undefined
-  )?.constitutionPdfUrl
+  // অ্যাডমিন প্যানেলের site_settings থেকে ডায়নামিক PDF লিংক পড়া
+  const rawPdfUrl =
+    settings?.behaviorAndPages?.constitutionPdfUrl ||
+    (settings?.behaviorAndPages?.subPages as Record<string, unknown> | undefined)?.constitutionPdfUrl
   const constitutionPdfUrl = typeof rawPdfUrl === 'string' ? rawPdfUrl.trim() : ''
 
   const toggleArticle = (id: string) => {
