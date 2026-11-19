@@ -1,12 +1,23 @@
-import { getVisiblePosts, getLimits, CAT_CLUB } from '@/lib/sb'
+import { getVisiblePosts, getLimits, CAT_CLUB, type Post } from '@/lib/sb'
 import type { HomeSectionConfig } from '@/lib/site-settings'
 import { Tx } from '@/lib/i18n'
 import { NewsGrid } from './news-card'
 
-export async function ClubPosts({ sectionConfig }: { sectionConfig?: HomeSectionConfig }) {
-  const [all, limits] = await Promise.all([getVisiblePosts(1000), getLimits()])
+export async function ClubPosts({
+  sectionConfig,
+  prefetchedPosts,
+  prefetchedLimits,
+}: {
+  sectionConfig?: HomeSectionConfig
+  prefetchedPosts?: Post[]
+  prefetchedLimits?: Record<string, number>
+}) {
+  const [all, limits] = await Promise.all([
+    prefetchedPosts ? Promise.resolve(prefetchedPosts) : getVisiblePosts(200),
+    prefetchedLimits ? Promise.resolve(prefetchedLimits) : getLimits(),
+  ])
 
-  const isClubPost = (p: any) =>
+  const isClubPost = (p: Post) =>
     p.category === CAT_CLUB ||
     (p.category && (p.category.includes('ক্লাব') || p.category.toLowerCase().includes('club'))) ||
     Boolean(p.club_id)
