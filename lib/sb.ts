@@ -32,9 +32,10 @@ export type Post = {
   created_at: string
   hidden?: boolean | null
   link_url?: string | null
+  view_count?: number | null
 }
 
-export type PostInput = Omit<Post, "id" | "created_at" | "user_id" | "page" | "author_user_type">
+export type PostInput = Omit<Post, "id" | "created_at" | "user_id" | "page" | "author_user_type" | "view_count">
 
 export type PublicComment = {
   id: string
