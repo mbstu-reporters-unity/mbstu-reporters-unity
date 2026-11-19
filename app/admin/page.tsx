@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import {
+  SB_URL, SB_KEY,
   login, signUp, getMe, getAllPosts, getAllProfilesAdmin, setPostHidden, setPostAuthorAvatarVisible,
   getCategoryNames, getCategories, updatePost, deletePost, uploadImage, uploadVideo,
   getPendingComments, approveComment, deleteComment,
@@ -46,7 +47,7 @@ import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
 import { DigitalIdCard } from "../../components/portal/digital-id-card"
 import {
-  Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
+  Menu, X, Search, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
   Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2,
   Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send, Feather, CreditCard, UserPlus, CalendarDays, Mail, BarChart3, Database
