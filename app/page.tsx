@@ -18,11 +18,17 @@ import { PollWidget } from '@/components/portal/poll-widget'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { getSiteSettings, type HomeSectionConfig } from '@/lib/site-settings'
+import { getVisiblePosts, getLimits, getCategoryNames } from '@/lib/sb'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export default async function Page() {
-  const settings = await getSiteSettings()
+  const [settings, homePosts, limits, categoryNames] = await Promise.all([
+    getSiteSettings(),
+    getVisiblePosts(200),
+    getLimits(),
+    getCategoryNames(),
+  ])
   const sections = settings.homeSections.sections
 
   const renderSection = (sec: HomeSectionConfig): ReactNode => {
@@ -35,19 +41,41 @@ export default async function Page() {
       case 'reels':
         return <FbReelsSection key={sec.key} />
       case 'general_news':
-        return <GeneralNews key={sec.key} sectionConfig={sec} />
+        return (
+          <GeneralNews
+            key={sec.key}
+            sectionConfig={sec}
+            prefetchedPosts={homePosts}
+            prefetchedLimits={limits}
+          />
+        )
       case 'community_feed':
         return <CommunityFeed key={sec.key} />
       case 'leadership':
         return <LeadershipSection key={sec.key} />
       case 'category_sections':
-        return <CategorySections key={sec.key} sectionConfig={sec} />
+        return (
+          <CategorySections
+            key={sec.key}
+            sectionConfig={sec}
+            prefetchedPosts={homePosts}
+            prefetchedLimits={limits}
+            prefetchedCategories={categoryNames}
+          />
+        )
       case 'student_corner':
         return <StudentCorner key={sec.key} />
       case 'club_news':
         return <ClubNews key={sec.key} />
       case 'club_posts':
-        return <ClubPosts key={sec.key} sectionConfig={sec} />
+        return (
+          <ClubPosts
+            key={sec.key}
+            sectionConfig={sec}
+            prefetchedPosts={homePosts}
+            prefetchedLimits={limits}
+          />
+        )
       case 'community_pages':
         return <CommunityPagesSection key={sec.key} />
       case 'notice_board':
