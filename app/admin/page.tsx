@@ -39,6 +39,7 @@ import MembershipManager from "./membership-manager"
 import ResourceManager from "./resource-manager"
 import EventManager from "./event-manager"
 import FeedbackNewsletterManager from "./feedback-newsletter-manager"
+import PollsPodcastManager from "./polls-podcast-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
@@ -47,7 +48,7 @@ import {
   Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
   Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2,
-  Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send, Feather, CreditCard, UserPlus, CalendarDays, Mail
+  Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send, Feather, CreditCard, UserPlus, CalendarDays, Mail, BarChart3
 } from "lucide-react"
 
 const TOKEN_KEY = "mbstu_admin_token"
@@ -65,7 +66,7 @@ type Tab =
   | "directors" | "categories" | "clubs" | "faculties" | "associations"
   | "social_sites" | "administration" | "community_pages" | "send_submission"
   | "submissions_inbox" | "teacher_columns" | "content_hub" | "membership_apps"
-  | "resource_manager" | "event_manager" | "feedback_newsletter"
+  | "resource_manager" | "event_manager" | "feedback_newsletter" | "polls_podcast"
   | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
 
 type NavItem = {
@@ -925,6 +926,7 @@ export default function AdminPage() {
         { id: "resource_manager", label: "রিসোর্স সেন্টার ম্যানেজার", icon: BookOpen, adminOnly: true },
         { id: "event_manager", label: "ইভেন্ট ও সার্টিফিকেট ম্যানেজার", icon: CalendarDays, adminOnly: true },
         { id: "feedback_newsletter", label: "যোগাযোগ, অভিযোগ ও নিউজলেটার", icon: Mail, adminOnly: true },
+        { id: "polls_podcast", label: "জরিপ (Poll) ও পডকাস্ট সিরিজ", icon: BarChart3, adminOnly: true },
         { id: "comments", label: "কমেন্ট মডারেশন", icon: MessageSquare, badge: pending.length, adminOnly: true },
       ],
     },
@@ -1148,6 +1150,10 @@ export default function AdminPage() {
 
         {tab === "feedback_newsletter" && isAdmin && (
           <FeedbackNewsletterManager token={token} />
+        )}
+
+        {tab === "polls_podcast" && isAdmin && (
+          <PollsPodcastManager token={token} shrink={shrink} />
         )}
 
         {tab === "posts" && canPublishMain && (
