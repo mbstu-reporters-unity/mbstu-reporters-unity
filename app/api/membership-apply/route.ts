@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import nodemailer from "nodemailer"
 import { SB_URL, SB_KEY } from "@/lib/sb"
 import { SUBMISSION_EMAIL_KEY } from "@/lib/submissions"
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 
 export const runtime = "nodejs"
 
@@ -17,6 +18,16 @@ function escHtml(s?: string | null): string {
 
 export async function POST(req: Request) {
   try {
+    const rl = checkRateLimit(`apply:${getClientIp(req)}`, 3, 15 * 60 * 1000)
+    if (!rl.allowed) {
+      return NextResponse.json(
+        {
+          error: `অতিরিক্ত আবেদন চেষ্টা করা হয়েছে। অনুগ্রহ করে ${rl.retryAfterSec} সেকেন্ড পর আবার চেষ্টা করুন।`,
+        },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json().catch(() => ({}))
 
     const full_name = typeof body.full_name === "string" ? body.full_name.trim() : ""
