@@ -21,6 +21,7 @@ import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
 import { useSiteSettings } from '@/components/portal/site-settings-context'
+import { FileDown } from 'lucide-react'
 
 interface ArticleItem {
   id: string
@@ -124,6 +125,7 @@ const ETHICS_CODE = [
 
 export default function ConstitutionPage() {
   const settings = useSiteSettings()
+  const constitutionPdfUrl = settings.behaviorAndPages.subPages.constitutionPdfUrl || ''
   const [openArticle, setOpenArticle] = useState<string | null>('art-1')
 
   // অ্যাডমিন প্যানেলের site_settings থেকে ডায়নামিক PDF লিংক পড়া (যদি থাকে)
