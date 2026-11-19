@@ -143,6 +143,7 @@ export interface SiteSettings {
     announcementEnabled: boolean
     announcementText: string
     announcementLink: string
+    constitutionPdfUrl?: string
     subPages: {
       editorial: SubPageBannerConfig
       administration: SubPageBannerConfig
@@ -375,6 +376,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     announcementEnabled: false,
     announcementText: "",
     announcementLink: "",
+    constitutionPdfUrl: "",
     subPages: {
       editorial: {
         eyebrow: "Editorial & Opinion Column",
@@ -431,7 +433,6 @@ function mergeSiteSettings(
     } catch {}
   }
 
-  // ডিফল্টের সাথে মার্জ করে কোনো নতুন ফিল্ড মিসিং না থাকা নিশ্চিত করা
   const existingMenuIds = new Set((parsed.menu?.items || []).map((i) => i.id))
   const mergedMenuItems = [
     ...(parsed.menu?.items || []),
@@ -484,6 +485,10 @@ function mergeSiteSettings(
         ? { photoClickMode: legacy.photoClickMode }
         : {}),
       ...(parsed.behaviorAndPages || {}),
+      constitutionPdfUrl:
+        parsed.behaviorAndPages?.constitutionPdfUrl ??
+        (parsed.behaviorAndPages?.subPages as any)?.constitutionPdfUrl ??
+        DEFAULT_SITE_SETTINGS.behaviorAndPages.constitutionPdfUrl,
       subPages: {
         ...DEFAULT_SITE_SETTINGS.behaviorAndPages.subPages,
         ...(parsed.behaviorAndPages?.subPages || {}),
@@ -529,7 +534,6 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 }
 
 export async function saveSiteSettings(token: string, settings: SiteSettings): Promise<void> {
-  // পুরোনো app_config কী-গুলোর সাথেও সিঙ্ক রাখা হচ্ছে যাতে কোনো অংশ ভেঙে না যায়
   const rows = [
     { key: SITE_SETTINGS_KEY, value: JSON.stringify(settings) },
     { key: "univ_logo_url", value: settings.branding.univLogoUrl.trim() },
