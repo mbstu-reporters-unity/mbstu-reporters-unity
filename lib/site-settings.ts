@@ -71,6 +71,8 @@ export interface HomeSectionConfig {
   key: HomeSectionKey
   name: string
   visible: boolean
+  priority?: number
+  pinned?: boolean
   eyebrow: string
   titleBn: string
   titleEn: string
@@ -107,6 +109,15 @@ export interface SubPageBannerConfig {
   subtitle: string
 }
 
+export type FeedRotationMode = "time" | "scroll"
+
+export interface FeedRotationConfig {
+  enabled?: boolean
+  mode?: FeedRotationMode
+  intervalHours?: number
+  maxItemsPerRotation?: number
+}
+
 export interface SiteSettings {
   branding: {
     orgLogoUrl: string
@@ -129,6 +140,9 @@ export interface SiteSettings {
     defaultLang: "bn" | "en"
     defaultTheme: DefaultThemeId
   }
+  moderatorPanel: {
+    globalEnabled: boolean
+  }
   menu: {
     items: SiteMenuControlItem[]
     customLinks: SiteCustomMenuLink[]
@@ -137,6 +151,8 @@ export interface SiteSettings {
     sections: HomeSectionConfig[]
     homeNoticesLimit: number
     layoutVersion: number
+    feedRotation?: FeedRotationConfig
+    sectionPriorityOverrides?: Record<string, number>
   }
   stats: {
     showStats: boolean
@@ -197,6 +213,9 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     showSocialLinks: true,
     defaultLang: "bn",
     defaultTheme: "ocean-glass",
+  },
+  moderatorPanel: {
+    globalEnabled: true,
   },
   menu: {
     items: [
@@ -420,6 +439,13 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       },
     ],
     homeNoticesLimit: 5,
+    feedRotation: {
+      enabled: true,
+      mode: "time",
+      intervalHours: 12,
+      maxItemsPerRotation: 1,
+    },
+    sectionPriorityOverrides: {},
   },
   stats: {
     showStats: true,
@@ -598,6 +624,10 @@ function mergeSiteSettings(
       ...DEFAULT_SITE_SETTINGS.topBar,
       ...(parsed.topBar || {}),
     },
+moderatorPanel: {
+      ...DEFAULT_SITE_SETTINGS.moderatorPanel,
+      ...(parsed.moderatorPanel || {}),
+    },
     menu: {
       items: mergedMenuItems,
       customLinks: parsed.menu?.customLinks || DEFAULT_SITE_SETTINGS.menu.customLinks,
@@ -607,6 +637,14 @@ function mergeSiteSettings(
       layoutVersion: HOME_LAYOUT_VERSION,
       homeNoticesLimit:
         parsed.homeSections?.homeNoticesLimit || DEFAULT_SITE_SETTINGS.homeSections.homeNoticesLimit,
+      feedRotation: {
+        ...DEFAULT_SITE_SETTINGS.homeSections.feedRotation,
+        ...(parsed.homeSections?.feedRotation || {}),
+      },
+      sectionPriorityOverrides: {
+        ...DEFAULT_SITE_SETTINGS.homeSections.sectionPriorityOverrides,
+        ...(parsed.homeSections?.sectionPriorityOverrides || {}),
+      },
     },
     stats: {
       showStats: parsed.stats?.showStats ?? DEFAULT_SITE_SETTINGS.stats.showStats,

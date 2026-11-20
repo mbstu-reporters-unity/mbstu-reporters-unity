@@ -72,7 +72,180 @@ export type Profile = {
   newspaper_name?: string | null
   avatar_url?: string | null
   director_visible?: boolean | null
+  moderator_permissions?: ModeratorPermissions | null
   created_at: string
+}
+
+export type ModeratorPermissionKey =
+  | "panel_all"
+  | "posts"
+  | "stories"
+  | "reels"
+  | "notices"
+  | "editorial"
+  | "polls"
+  | "events"
+  | "club_posts"
+  | "comments"
+  | "homepage"
+  | "newsroom"
+  | "send_submission"
+  | "teacher_columns"
+  | "content_hub"
+  | "resource_manager"
+  | "feedback_newsletter"
+  | "polls_podcast"
+  | "membership_apps"
+  | "backup_export"
+  | "council_archive"
+  | "alumni_opportunities"
+  | "community_pages"
+  | "clubs"
+  | "students"
+  | "social_sites"
+  | "associations"
+  | "administration"
+  | "faculties"
+  | "leaders"
+  | "directors"
+  | "categories"
+  | "ticker"
+  | "hero"
+  | "hero_banner"
+  | "limits"
+  | "site_settings"
+  | "resource_manager"
+  | "event_manager"
+  | "feedback_newsletter"
+  | "polls_podcast"
+  | "backup_export"
+  | "newsroom"
+  | "council_archive"
+  | "alumni_opportunities"
+
+export type ModeratorPermissions = Partial<Record<ModeratorPermissionKey, boolean>>
+
+export const ALL_MODERATOR_PERMISSIONS: ModeratorPermissionKey[] = [
+  "posts",
+  "stories",
+  "reels",
+  "notices",
+  "editorial",
+  "polls",
+  "events",
+  "club_posts",
+  "comments",
+  "homepage",
+  "newsroom",
+  "send_submission",
+  "teacher_columns",
+  "content_hub",
+  "resource_manager",
+  "feedback_newsletter",
+  "polls_podcast",
+  "membership_apps",
+  "backup_export",
+  "council_archive",
+  "alumni_opportunities",
+  "community_pages",
+  "clubs",
+  "students",
+  "social_sites",
+  "associations",
+  "administration",
+  "faculties",
+  "leaders",
+  "directors",
+  "categories",
+  "ticker",
+  "hero",
+  "hero_banner",
+  "limits",
+  "site_settings",
+]
+
+export function resolveModeratorMode(perms?: ModeratorPermissions | null): "all_enabled" | "all_disabled" | "custom" {
+  if (!perms) return "all_disabled"
+  const keys = ALL_MODERATOR_PERMISSIONS
+  const allTrue = keys.every((k) => perms[k] === true)
+  const allFalse = keys.every((k) => perms[k] !== true)
+  if (allTrue) return "all_enabled"
+  if (allFalse) return "all_disabled"
+  return "custom"
+}
+
+export function buildModeratorPermissions(mode: "all_enabled" | "all_disabled" | "custom", custom?: ModeratorPermissions): ModeratorPermissions {
+  if (mode === "all_enabled") {
+    const out: ModeratorPermissions = {}
+    for (const k of ALL_MODERATOR_PERMISSIONS) out[k] = true
+    return out
+  }
+  if (mode === "all_disabled") {
+    return {}
+  }
+  return custom ? { ...custom } : {}
+}
+
+export async function getModeratorPermissions(token: string, id: string): Promise<ModeratorPermissions | null> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/profiles?select=moderator_permissions&id=eq.${encodeURIComponent(id)}`,
+      { headers: hdr(token), cache: "no-store" }
+    )
+    if (!res.ok) return null
+    const rows = await res.json()
+    return rows[0]?.moderator_permissions || null
+  } catch {
+    return null
+  }
+}
+
+export async function saveModeratorPermissions(
+  token: string,
+  id: string,
+  perms: ModeratorPermissions
+) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { ...hdr(token, true), Prefer: "return=minimal" },
+      body: JSON.stringify({ moderator_permissions: perms }),
+    })
+  )
+}
+
+export async function setModeratorPanelMode(
+  token: string,
+  id: string,
+  mode: "all_enabled" | "all_disabled" | "custom",
+  custom?: ModeratorPermissions
+) {
+  await saveModeratorPermissions(token, id, buildModeratorPermissions(mode, custom))
+}
+
+export async function getGlobalModeratorPanelEnabled(): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/app_config?select=value&key=eq.moderator_panel_enabled`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) return true
+    const rows: { value: string }[] = await res.json()
+    const v = rows[0]?.value
+    return v === undefined ? true : v === "true"
+  } catch {
+    return true
+  }
+}
+
+export async function saveGlobalModeratorPanelEnabled(token: string, enabled: boolean) {
+  await ok(
+    await fetch(`${SB_URL}/rest/v1/app_config`, {
+      method: "POST",
+      headers: { ...hdr(token, true), Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ key: "moderator_panel_enabled", value: String(enabled) }),
+    })
+  )
 }
 
 export type SignupInfo = {
