@@ -1,4 +1,5 @@
 import { SB_URL, SB_KEY } from "./sb"
+import type { AntiSpamPayload } from "./anti-spam"
 
 export interface CampusEvent {
   id: string
@@ -139,7 +140,7 @@ export async function getEventRegistrations(token?: string): Promise<EventRegist
 }
 
 export async function registerForEvent(
-  data: Omit<EventRegistration, 'id' | 'created_at' | 'certificate_code'>
+  data: Omit<EventRegistration, 'id' | 'created_at' | 'certificate_code'> & AntiSpamPayload
 ): Promise<{ code: string }> {
   const res = await fetch('/api/event-register', {
     method: 'POST',

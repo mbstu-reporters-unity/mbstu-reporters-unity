@@ -18,6 +18,7 @@ import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
+import { HumanVerification, useHumanVerification } from '@/components/portal/human-verification'
 import { INTEREST_AREAS } from '@/lib/membership'
 
 async function compressAvatarToDataUrl(file: File): Promise<string> {
@@ -36,6 +37,7 @@ const inp =
   'w-full rounded-xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-white/45 focus:outline-none focus:border-cyan-400 transition'
 
 export default function MembershipApplyPage() {
+  const humanCheck = useHumanVerification()
   const [fullName, setFullName] = useState('')
   const [department, setDepartment] = useState('')
   const [batch, setBatch] = useState('')
@@ -100,6 +102,7 @@ export default function MembershipApplyPage() {
           interests,
           sample_writing: sampleWriting,
           photo_data_url: photoDataUrl || '',
+          ...humanCheck.payload,
         }),
       })
       const j = await res.json().catch(() => ({}))
@@ -107,6 +110,7 @@ export default function MembershipApplyPage() {
         throw new Error(j.error || 'আবেদন জমা দেওয়া যায়নি')
       }
       setSubmitted(true)
+      humanCheck.reset()
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err: any) {
       setErrMsg('❌ ' + (err?.message || 'কিছু ভুল হয়েছে, পুনরায় চেষ্টা করুন'))
@@ -380,6 +384,16 @@ export default function MembershipApplyPage() {
                   সম্পূর্ণরূপে মেনে চলতে অঙ্গীকারবদ্ধ।
                 </span>
               </label>
+
+              <HumanVerification
+                idPrefix="membership-application"
+                challenge={humanCheck.challenge}
+                answer={humanCheck.answer}
+                onAnswerChange={humanCheck.setAnswer}
+                website={humanCheck.website}
+                onWebsiteChange={humanCheck.setWebsite}
+                onRefresh={humanCheck.refresh}
+              />
 
               <button
                 type="submit"

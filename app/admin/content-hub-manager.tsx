@@ -91,6 +91,7 @@ export default function ContentHubManager({
   const [pubIssue, setPubIssue] = useState("")
   const [pubDesc, setPubDesc] = useState("")
   const [pubPdfUrl, setPubPdfUrl] = useState("")
+  const [pubDownloadUrl, setPubDownloadUrl] = useState("")
   const [pubDate, setPubDate] = useState("")
   const [pubPages, setPubPages] = useState("")
   const [pubEditor, setPubEditor] = useState("সম্পাদনা পর্ষদ, MBSTURU")
@@ -359,6 +360,7 @@ export default function ContentHubManager({
     setPubIssue("")
     setPubDesc("")
     setPubPdfUrl("")
+    setPubDownloadUrl("")
     setPubDate("")
     setPubPages("")
     setPubEditor("সম্পাদনা পর্ষদ, MBSTURU")
@@ -373,6 +375,7 @@ export default function ContentHubManager({
     setPubIssue(item.issue_label || "")
     setPubDesc(item.description || "")
     setPubPdfUrl(item.pdf_url || "")
+    setPubDownloadUrl(item.download_url || "")
     setPubDate(item.published_date)
     setPubPages(item.pages_count || "")
     setPubEditor(item.editor_name || "")
@@ -388,7 +391,12 @@ export default function ContentHubManager({
     }
     const cleanPdf = pubPdfUrl.trim()
     if (cleanPdf && !/^https?:\/\//i.test(cleanPdf)) {
-      setMsg("❌ PDF লিংক অবশ্যই https:// দিয়ে শুরু হতে হবে")
+      setMsg("❌ PDF দেখার লিংক http:// অথবা https:// দিয়ে শুরু হতে হবে")
+      return
+    }
+    const cleanDownload = pubDownloadUrl.trim()
+    if (cleanDownload && !/^https?:\/\//i.test(cleanDownload)) {
+      setMsg("❌ PDF ডাউনলোড লিংক http:// অথবা https:// দিয়ে শুরু হতে হবে")
       return
     }
     setBusy(true)
@@ -408,6 +416,7 @@ export default function ContentHubManager({
         description: pubDesc.trim() || null,
         cover_url: finalCover,
         pdf_url: cleanPdf,
+        download_url: cleanDownload || null,
         published_date:
           pubDate.trim() ||
           new Date().toLocaleDateString("bn-BD", {
@@ -873,7 +882,7 @@ export default function ContentHubManager({
           <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 space-y-3">
             <div className="flex items-center justify-between border-b pb-2">
               <h2 className="font-bold text-sm sm:text-base text-slate-900">
-                {pubEditId ? "✏️ প্রকাশনা এডিট করুন" : "➕ নতুন ম্যাগাজিন / বুলেটিন / PDF যুক্ত করুন"}
+                {pubEditId ? "✏️ প্রকাশনা এডিট করুন" : "➕ নতুন প্রকাশনা / PDF যুক্ত করুন"}
               </h2>
               <div className="flex items-center gap-2">
                 <a
@@ -930,10 +939,19 @@ export default function ContentHubManager({
             />
             <input
               className={inp}
-              placeholder="PDF ডাউনলোড লিংক (Google Drive / সরাসরি PDF URL: https://...)"
+              placeholder="PDF দেখার লিংক (Google Drive preview / সরাসরি PDF URL: https://...)"
               value={pubPdfUrl}
               onChange={(e) => setPubPdfUrl(e.target.value)}
             />
+            <input
+              className={inp}
+              placeholder="আলাদা PDF ডাউনলোড লিংক (ঐচ্ছিক; Google Drive direct download URL)"
+              value={pubDownloadUrl}
+              onChange={(e) => setPubDownloadUrl(e.target.value)}
+            />
+            <p className="text-[11px] leading-relaxed text-slate-600">
+              বড় PDF Supabase-এ না দিয়ে Google Drive বা অন্য HTTPS লিংক দিন। Drive ফাইলের access “Anyone with the link” করে দিন।
+            </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <input

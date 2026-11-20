@@ -157,8 +157,9 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
   const parsedVideo = parseVideoUrl(videoUrl)
   const imageUrl = currentSlide.media_items?.[0]?.url || ''
   const layers = currentSlide.text_layers || []
-  const hasButton = Boolean(currentSlide.button_text && currentSlide.button_text.trim())
-  const isExternalButton = currentSlide.link_url?.startsWith('http')
+  const buttonHref = currentSlide.link_url?.trim() || ''
+  const hasButton = Boolean(currentSlide.button_text?.trim() && buttonHref && buttonHref !== '#')
+  const isExternalButton = /^https?:\/\//i.test(buttonHref)
 
   const badgeLayer = layers.find((l: any) => l.enabled !== false && (l.id === 'txt_badge' || l.bg_color))
   const titleLayer =
@@ -268,7 +269,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
             <div className="pt-0.5 pointer-events-auto">
               {isExternalButton ? (
                 <a
-                  href={currentSlide.link_url || '#'}
+                  href={buttonHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white text-red-700 font-bold text-xs shadow-lg active:scale-95"
@@ -278,7 +279,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
                 </a>
               ) : (
                 <Link
-                  href={currentSlide.link_url || '/'}
+                  href={buttonHref}
                   className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white text-red-700 font-bold text-xs shadow-lg active:scale-95"
                 >
                   <span>{currentSlide.button_text}</span>
@@ -361,7 +362,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
             <div className="z-30 shrink-0 self-center pointer-events-auto">
               {isExternalButton ? (
                 <a
-                  href={currentSlide.link_url || '#'}
+                  href={buttonHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-slate-100 text-red-700 font-bold text-xs transition-all shadow-xl active:scale-95 cursor-pointer"
@@ -371,7 +372,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
                 </a>
               ) : (
                 <Link
-                  href={currentSlide.link_url || '/'}
+                  href={buttonHref}
                   className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-slate-100 text-red-700 font-bold text-xs transition-all shadow-xl active:scale-95 cursor-pointer"
                 >
                   <span>{currentSlide.button_text}</span>

@@ -14,6 +14,7 @@ import {
   GraduationCap,
   Newspaper,
 } from 'lucide-react'
+import { QrCodeImage } from './qr-code-image'
 
 export interface DigitalMemberInfo {
   id: string
@@ -42,9 +43,8 @@ export function DigitalIdCard({
   orgLogoUrl?: string
 }) {
   const [viewMode, setViewMode] = useState<'id_card' | 'certificate'>('id_card')
-  const [origin, setOrigin] = useState('https://mbsturu.vercel.app')
+  const [origin, setOrigin] = useState('')
   const [copied, setCopied] = useState(false)
-  const [qrFallback, setQrFallback] = useState(false)
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.origin) {
@@ -53,7 +53,7 @@ export function DigitalIdCard({
   }, [])
 
   const verifyPath = `/verify-member/${encodeURIComponent(member.id)}`
-  const verifyFullUrl = `${origin}${verifyPath}`
+  const verifyFullUrl = origin ? `${origin}${verifyPath}` : ''
 
   const serialCode = `MBSTURU-${member.id.replace(/-/g, '').slice(0, 6).toUpperCase()}`
 
@@ -79,16 +79,9 @@ export function DigitalIdCard({
       })
     : '২০২৬'
 
-  const qrPrimarySrc = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=${encodeURIComponent(
-    verifyFullUrl
-  )}`
-  const qrBackupSrc = `https://quickchart.io/qr?size=220&margin=1&text=${encodeURIComponent(
-    verifyFullUrl
-  )}`
-
   async function copyVerifyLink() {
     try {
-      await navigator.clipboard.writeText(verifyFullUrl)
+      await navigator.clipboard.writeText(`${window.location.origin}${verifyPath}`)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {}
@@ -128,31 +121,31 @@ export function DigitalIdCard({
 
       {/* মোড সুইচার (ডিজিটাল প্রেস কার্ড বনাম সদস্য সনদ) */}
       <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
-        <div className="flex bg-slate-900/80 border border-white/15 rounded-2xl p-1 gap-1 text-xs font-bold">
+        <div className="flex w-full sm:w-auto bg-slate-900/80 border border-white/15 rounded-2xl p-1 gap-1 text-xs font-bold">
           <button
             type="button"
             onClick={() => setViewMode('id_card')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl cursor-pointer transition ${
+            className={`inline-flex min-w-0 flex-1 items-center justify-center gap-1 px-2 py-2 rounded-xl cursor-pointer transition sm:gap-1.5 sm:px-3.5 ${
               viewMode === 'id_card'
                 ? 'bg-cyan-500 text-slate-950 shadow'
                 : 'text-slate-300 hover:text-white'
             }`}
           >
             <CreditCard className="size-3.5" />
-            <span>ডিজিটাল প্রেস কার্ড</span>
+            <span className="text-center text-[10px] leading-tight sm:whitespace-nowrap sm:text-xs">ডিজিটাল প্রেস কার্ড</span>
           </button>
 
           <button
             type="button"
             onClick={() => setViewMode('certificate')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl cursor-pointer transition ${
+            className={`inline-flex min-w-0 flex-1 items-center justify-center gap-1 px-2 py-2 rounded-xl cursor-pointer transition sm:gap-1.5 sm:px-3.5 ${
               viewMode === 'certificate'
                 ? 'bg-amber-400 text-slate-950 shadow'
                 : 'text-slate-300 hover:text-white'
             }`}
           >
             <Award className="size-3.5" />
-            <span>সদস্য সনদপত্র</span>
+            <span className="text-center text-[10px] leading-tight sm:whitespace-nowrap sm:text-xs">সদস্য সনদপত্র</span>
           </button>
         </div>
 
@@ -276,16 +269,14 @@ export function DigitalIdCard({
 
               {/* QR কোড ভেরিফিকেশন বক্স */}
               <div className="flex items-center gap-3 rounded-2xl bg-white p-3 text-slate-900 shadow-inner">
-                <div className="size-20 shrink-0 rounded-xl overflow-hidden border border-slate-200 bg-white flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={qrFallback ? qrBackupSrc : qrPrimarySrc}
-                    alt="Verification QR Code"
-                    onError={() => {
-                      if (!qrFallback) setQrFallback(true)
-                    }}
-                    className="size-full object-contain"
-                  />
+                <div className="size-28 shrink-0 rounded-xl overflow-hidden border border-slate-200 bg-white flex items-center justify-center">
+                  {verifyFullUrl && (
+                    <QrCodeImage
+                      value={verifyFullUrl}
+                      alt="সদস্য যাচাইয়ের QR কোড"
+                      className="size-full object-contain"
+                    />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="text-xs font-extrabold text-slate-900 flex items-center gap-1">
@@ -322,7 +313,7 @@ export function DigitalIdCard({
           </div>
         ) : (
           /* ==================== ২. অফিশিয়াল সদস্য সনদপত্র (Certificate) ==================== */
-          <div className="w-full max-w-2xl rounded-3xl border-4 border-amber-400/70 bg-gradient-to-br from-[#081235] via-[#0c1e4a] to-[#0f172a] p-5 sm:p-8 text-white shadow-2xl relative overflow-hidden">
+          <div className="w-full min-w-0 max-w-2xl rounded-3xl border-4 border-amber-400/70 bg-gradient-to-br from-[#081235] via-[#0c1e4a] to-[#0f172a] p-3 sm:p-8 text-white shadow-2xl relative overflow-hidden">
             <div className="rounded-2xl border border-amber-300/35 p-5 sm:p-7 space-y-5 text-center relative z-10">
               <div className="flex flex-col items-center space-y-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -372,15 +363,13 @@ export function DigitalIdCard({
                 </div>
 
                 <div className="flex items-center gap-2.5 bg-white rounded-xl p-2 text-slate-900 shadow">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={qrFallback ? qrBackupSrc : qrPrimarySrc}
-                    alt="Certificate QR"
-                    onError={() => {
-                      if (!qrFallback) setQrFallback(true)
-                    }}
-                    className="size-16 object-contain"
-                  />
+                  {verifyFullUrl && (
+                    <QrCodeImage
+                      value={verifyFullUrl}
+                      alt="সদস্য সনদ যাচাইয়ের QR কোড"
+                      className="size-20 object-contain"
+                    />
+                  )}
                   <div className="text-left text-[10px] leading-tight pr-1">
                     <p className="font-bold text-slate-900">QR যাচাই</p>
                     <p className="text-slate-600">স্ক্যান করে সনদের</p>

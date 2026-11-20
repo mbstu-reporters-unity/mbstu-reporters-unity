@@ -18,6 +18,7 @@ import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
+import { HumanVerification, useHumanVerification } from '@/components/portal/human-verification'
 import { NewsletterBox } from '@/components/portal/newsletter-box'
 import { useSiteSettings } from '@/components/portal/site-settings-context'
 
@@ -60,6 +61,7 @@ const TAB_INFO: Record<
 }
 
 export default function ContactAndFeedbackPage() {
+  const humanCheck = useHumanVerification()
   const settings = useSiteSettings()
   const f = settings.footer
 
@@ -105,6 +107,7 @@ export default function ContactAndFeedbackPage() {
           subject,
           message,
           post_url: kind === 'correction' ? postUrl : '',
+          ...humanCheck.payload,
         }),
       })
       const j = await res.json().catch(() => ({}))
@@ -119,6 +122,7 @@ export default function ContactAndFeedbackPage() {
       setSubject('')
       setMessage('')
       setPostUrl('')
+      humanCheck.reset()
     } catch (err: any) {
       setErrMsg('❌ ' + (err?.message || 'বার্তা পাঠাতে সমস্যা হয়েছে'))
     }
@@ -409,6 +413,16 @@ export default function ContactAndFeedbackPage() {
                     onChange={(e) => setMessage(e.target.value)}
                   />
                 </div>
+
+                <HumanVerification
+                  idPrefix="contact-feedback"
+                  challenge={humanCheck.challenge}
+                  answer={humanCheck.answer}
+                  onAnswerChange={humanCheck.setAnswer}
+                  website={humanCheck.website}
+                  onWebsiteChange={humanCheck.setWebsite}
+                  onRefresh={humanCheck.refresh}
+                />
 
                 <button
                   type="submit"

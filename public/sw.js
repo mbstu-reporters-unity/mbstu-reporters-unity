@@ -213,6 +213,16 @@ self.addEventListener('fetch', (event) => {
   }
 
   // ২. Next.js স্ট্যাটিক JS/CSS ও লোগো (Cache-First)
+  // Development chunks can change in place during hot reloads, so do not serve stale cached files locally.
+  if (
+    url.origin === self.location.origin &&
+    url.pathname.startsWith('/_next/static/') &&
+    ['localhost', '127.0.0.1', '[::1]'].includes(self.location.hostname)
+  ) {
+    event.respondWith(fetch(request))
+    return
+  }
+
   if (
     url.origin === self.location.origin &&
     (url.pathname.startsWith('/_next/static/') ||

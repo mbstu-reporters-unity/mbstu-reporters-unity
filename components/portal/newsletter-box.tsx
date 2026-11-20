@@ -3,8 +3,10 @@
 import React, { useState } from 'react'
 import { Mail, Send, CheckCircle2 } from 'lucide-react'
 import { useLang } from '@/lib/i18n'
+import { HumanVerification, useHumanVerification } from './human-verification'
 
 export function NewsletterBox() {
+  const humanCheck = useHumanVerification()
   const { pick } = useLang()
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
@@ -25,7 +27,7 @@ export function NewsletterBox() {
       const res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: clean }),
+        body: JSON.stringify({ email: clean, ...humanCheck.payload }),
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -33,6 +35,7 @@ export function NewsletterBox() {
       }
       setDone(true)
       setEmail('')
+      humanCheck.reset()
     } catch (e: any) {
       setErr(e?.message || pick('সমস্যা হয়েছে, পরে চেষ্টা করুন', 'Failed to subscribe'))
     }
@@ -69,23 +72,35 @@ export function NewsletterBox() {
           </span>
         </div>
       ) : (
-        <form onSubmit={handleSubscribe} className="flex gap-2">
-          <input
-            type="email"
-            required
-            placeholder={pick('আপনার ইমেইল লিখুন...', 'Enter your email...')}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="min-w-0 flex-1 rounded-xl border border-white/20 bg-black/30 px-3 py-2 text-xs text-white placeholder-white/45 focus:outline-none focus:border-cyan-400"
+        <form onSubmit={handleSubscribe} className="space-y-2">
+          <div className="flex gap-2">
+            <input
+              type="email"
+              required
+              placeholder={pick('আপনার ইমেইল লিখুন...', 'Enter your email...')}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="min-w-0 flex-1 rounded-xl border border-white/20 bg-black/30 px-3 py-2 text-xs text-white placeholder-white/45 focus:outline-none focus:border-cyan-400"
+            />
+            <button
+              type="submit"
+              disabled={busy}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-3.5 py-2 text-xs font-bold shadow cursor-pointer disabled:opacity-50 transition"
+            >
+              <Send className="size-3.5" />
+              <span>{busy ? '...' : pick('সাবস্ক্রাইব', 'Subscribe')}</span>
+            </button>
+          </div>
+          <HumanVerification
+            idPrefix="newsletter"
+            challenge={humanCheck.challenge}
+            answer={humanCheck.answer}
+            onAnswerChange={humanCheck.setAnswer}
+            website={humanCheck.website}
+            onWebsiteChange={humanCheck.setWebsite}
+            onRefresh={humanCheck.refresh}
+            compact
           />
-          <button
-            type="submit"
-            disabled={busy}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-3.5 py-2 text-xs font-bold shadow cursor-pointer disabled:opacity-50 transition"
-          >
-            <Send className="size-3.5" />
-            <span>{busy ? '...' : pick('সাবস্ক্রাইব', 'Subscribe')}</span>
-          </button>
         </form>
       )}
 

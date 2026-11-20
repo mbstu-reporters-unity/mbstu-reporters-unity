@@ -12,6 +12,13 @@ export function SiteFooter() {
   const settings = useSiteSettings()
   const { pick } = useLang()
   const f = settings.footer
+  const hashRoutes: Record<string, string> = {
+    '#home': '/',
+    '#about': '/about',
+    '#leadership': '/committee',
+    '#general-news': '/search',
+    '#contact': '/contact',
+  }
 
   const visibleLinks = f.quickLinks.filter((l) => l.visible && l.href.trim())
 
@@ -36,7 +43,10 @@ export function SiteFooter() {
           <h2 className="font-serif text-base font-bold text-white"><Tx bn="দ্রুত লিংক" en="Quick Links" /></h2>
           <ul className="mt-4 grid grid-cols-2 gap-2 text-xs sm:text-sm sm:grid-cols-1">
             {visibleLinks.map((link) => {
-              const targetHref = link.href.startsWith('#') ? `/${link.href}` : link.href
+              const hash = link.href.startsWith('/#') ? link.href.slice(1) : link.href
+              const targetHref = hash.startsWith('#')
+                ? hashRoutes[hash] || `/${hash}`
+                : link.href
               const isExternal = /^https?:\/\//i.test(targetHref)
               return (
                 <li key={link.id}>
@@ -99,10 +109,19 @@ export function SiteFooter() {
       <div className="border-t border-white/10 bg-[#040918] py-4 px-4 text-xs text-white/50">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <p>{pick(f.copyrightBn, f.copyrightEn)}</p>
-          <div className="flex items-center gap-4 text-slate-400">
-            <Link href="/privacy" className="hover:text-cyan-300 underline">গোপনীয়তা নীতি</Link>
-            <Link href="/terms" className="hover:text-cyan-300 underline">ব্যবহারের শর্তাবলি</Link>
-            <Link href="/constitution" className="hover:text-cyan-300 underline">গঠনতন্ত্র</Link>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-slate-400">
+            <Link href="/privacy" className="hover:text-cyan-300 underline">
+              {pick('গোপনীয়তা নীতি', 'Privacy Policy')}
+            </Link>
+            <Link href="/terms" className="hover:text-cyan-300 underline">
+              {pick('ব্যবহারের শর্তাবলি', 'Terms of Use')}
+            </Link>
+            <Link href="/constitution" className="hover:text-cyan-300 underline">
+              {pick('গঠনতন্ত্র', 'Constitution')}
+            </Link>
+            <Link href="/policies" className="hover:text-cyan-300 underline">
+              {pick('নীতি ও স্বচ্ছতা', 'Policies & Transparency')}
+            </Link>
           </div>
         </div>
       </div>

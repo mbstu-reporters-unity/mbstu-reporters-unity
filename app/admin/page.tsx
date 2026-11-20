@@ -45,6 +45,7 @@ import PollsPodcastManager from "./polls-podcast-manager"
 import BackupExportManager from "./backup-export-manager"
 import NewsroomWorkflow from "./newsroom-workflow"
 import CouncilArchiveManager from "./council-archive-manager"
+import AlumniOpportunityManager from "./alumni-opportunity-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
@@ -74,6 +75,7 @@ type Tab =
   | "submissions_inbox" | "teacher_columns" | "content_hub" | "membership_apps"
   | "resource_manager" | "event_manager" | "feedback_newsletter" | "polls_podcast" | "backup_export"
   | "newsroom" | "council_archive"
+  | "alumni_opportunities"
   | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
 
 type NavItem = {
@@ -963,6 +965,7 @@ export default function AdminPage() {
         { id: "faculties", label: "অনুষদ ও বিভাগসমূহ", icon: GraduationCap, adminOnly: true },
         { id: "leaders", label: "কার্যনির্বাহী পরিষদ", icon: Users, adminOnly: true },
         { id: "council_archive", label: "উপদেষ্টা ও প্রাক্তন কমিটি", icon: History, adminOnly: true },
+        { id: "alumni_opportunities", label: "অ্যালামনাই ও সুযোগ", icon: Briefcase, adminOnly: true },
         { id: "directors", label: "ডিরেক্টর প্যানেল", icon: UserCheck, adminOnly: true },
       ],
     },
@@ -1704,6 +1707,9 @@ export default function AdminPage() {
         )}
         {tab === "leaders" && isAdmin && <LeadershipManager token={token} members={active} shrink={shrink} />}
         {tab === "council_archive" && isAdmin && <CouncilArchiveManager token={token} shrink={shrink} />}
+        {tab === "alumni_opportunities" && isAdmin && (
+          <AlumniOpportunityManager token={token} shrink={shrink} />
+        )}
 
         {(tab === "users_teacher" ||
           tab === "users_student" ||

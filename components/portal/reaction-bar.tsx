@@ -18,6 +18,7 @@ import {
   type PublicComment,
 } from '@/lib/sb'
 import { useSiteSettings } from './site-settings-context'
+import { HumanVerification, useHumanVerification } from './human-verification'
 
 const REACTIONS = [
   { key: 'like', icon: '👍', label: 'লাইক' },
@@ -188,12 +189,15 @@ export function ReactionBar({
   const [cBusy, setCBusy] = useState(false)
   const [cStatus, setCStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [cErr, setCErr] = useState('')
+  const commentCheck = useHumanVerification(commentsOpen)
 
   const [replyTo, setReplyTo] = useState<string | null>(null)
   const [rName, setRName] = useState('')
   const [rText, setRText] = useState('')
   const [rBusy, setRBusy] = useState(false)
   const [rStatus, setRStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [rErr, setRErr] = useState('')
+  const replyCheck = useHumanVerification(commentsOpen && Boolean(replyTo))
 
   async function loadSingle() {
     try {
@@ -363,12 +367,18 @@ export function ReactionBar({
       setCErr('মন্তব্য কমপক্ষে ৩ অক্ষরের হতে হবে।')
       return
     }
+    if (!commentCheck.answer.trim()) {
+      setCStatus('error')
+      setCErr('মন্তব্য পাঠানোর আগে সহজ যাচাইয়ের উত্তর দিন।')
+      return
+    }
     setCBusy(true)
     setCStatus('idle')
     setCErr('')
     try {
-      await addComment(postId, cName.trim() || 'নামহীন পাঠক', trimmed)
+      await addComment(postId, cName.trim() || 'নামহীন পাঠক', trimmed, null, commentCheck.payload)
       setCText('')
+      commentCheck.reset()
       setCStatus('success')
     } catch (e) {
       setCStatus('error')
@@ -380,18 +390,26 @@ export function ReactionBar({
   async function submitReply(parentId: string) {
     const trimmed = rText.trim()
     if (trimmed.length < 2) return
+    if (!replyCheck.answer.trim()) {
+      setRStatus('error')
+      setRErr('রিপ্লাই পাঠানোর আগে সহজ যাচাইয়ের উত্তর দিন।')
+      return
+    }
     setRBusy(true)
     setRStatus('idle')
+    setRErr('')
     try {
-      await addComment(postId, rName.trim() || 'নামহীন পাঠক', trimmed, parentId)
+      await addComment(postId, rName.trim() || 'নামহীন পাঠক', trimmed, parentId, replyCheck.payload)
       setRText('')
+      replyCheck.reset()
       setRStatus('success')
       setTimeout(() => {
         setReplyTo(null)
         setRStatus('idle')
       }, 3000)
-    } catch {
+    } catch (e) {
       setRStatus('error')
+      setRErr(e instanceof Error ? e.message : 'রিপ্লাই পাঠানো যায়নি।')
     }
     setRBusy(false)
   }
@@ -593,6 +611,19 @@ export function ReactionBar({
                             <CornerDownRight className="size-3.5" />
                           </button>
                         </div>
+                        <HumanVerification
+                          idPrefix={`inline-reply-${postId}`}
+                          challenge={replyCheck.challenge}
+                          answer={replyCheck.answer}
+                          onAnswerChange={replyCheck.setAnswer}
+                          website={replyCheck.website}
+                          onWebsiteChange={replyCheck.setWebsite}
+                          onRefresh={replyCheck.refresh}
+                          compact
+                        />
+                        {rStatus === 'error' && (
+                          <p className="text-[11px] text-rose-300">{rErr}</p>
+                        )}
                         {rStatus === 'success' && (
                           <p className="text-[11px] text-cyan-300">✓ অনুমোদনের পর দেখা যাবে</p>
                         )}
@@ -629,6 +660,16 @@ export function ReactionBar({
               maxLength={60}
               value={cName}
               onChange={(e) => setCName(e.target.value)}
+            />
+            <HumanVerification
+              idPrefix={`inline-comment-${postId}`}
+              challenge={commentCheck.challenge}
+              answer={commentCheck.answer}
+              onAnswerChange={commentCheck.setAnswer}
+              website={commentCheck.website}
+              onWebsiteChange={commentCheck.setWebsite}
+              onRefresh={commentCheck.refresh}
+              compact
             />
             <div className="flex items-center gap-2">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-white/80">

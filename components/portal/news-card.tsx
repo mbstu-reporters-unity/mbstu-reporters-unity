@@ -66,7 +66,7 @@ export function NewsCard({ p }: { p: Post }) {
   return (
     <article
       ref={articleRef}
-      className="scroll-mt-20 group flex flex-col bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card rounded-2xl border border-white/10"
+      className="scroll-mt-20 group flex h-full flex-col bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card rounded-2xl border border-white/10"
     >
       <div className="flex items-center justify-between gap-2.5 px-3.5 pt-3.5 pb-2.5 sm:px-5">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -222,7 +222,7 @@ export function NewsCard({ p }: { p: Post }) {
 
 export function NewsGrid({ posts }: { posts: Post[] }) {
   return (
-    <div className="flex flex-col divide-y divide-white/20 border-y border-white/15 md:border-y-0 md:divide-y-0 md:grid md:items-start md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="flex flex-col divide-y divide-white/20 border-y border-white/15 md:border-y-0 md:divide-y-0 md:grid md:items-stretch md:gap-6 md:grid-cols-2 lg:grid-cols-3">
       {posts.map((p) => (
         <NewsCard key={p.id} p={p} />
       ))}

@@ -10,6 +10,7 @@ import {
 import {
   DEFAULT_SITE_SETTINGS,
   getSiteSettings,
+  normalizeUniversityLogoUrl,
   type SiteSettings,
 } from '@/lib/site-settings'
 import { useLang } from '@/lib/i18n'
@@ -30,7 +31,13 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
       if (raw) {
         const parsed = JSON.parse(raw) as SiteSettings
         if (parsed?.branding && parsed?.footer) {
-          setSettings(parsed)
+          setSettings({
+            ...parsed,
+            branding: {
+              ...parsed.branding,
+              univLogoUrl: normalizeUniversityLogoUrl(parsed.branding.univLogoUrl),
+            },
+          })
         }
       }
     } catch {}

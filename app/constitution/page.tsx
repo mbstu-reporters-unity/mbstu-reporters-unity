@@ -20,6 +20,7 @@ import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
 import { useSiteSettings } from '@/components/portal/site-settings-context'
+import { Tx } from '@/lib/i18n'
 
 interface ArticleItem {
   id: string
@@ -359,6 +360,26 @@ export default function ConstitutionPage() {
                 </div>
               </div>
               <ArrowRight className="size-4 text-cyan-300 group-hover:translate-x-1 transition-transform" />
+            </Link>
+
+            <Link
+              href="/policies#annual-reports"
+              className="glass-card p-4 rounded-2xl flex items-center justify-between hover:border-cyan-400 transition group text-white"
+            >
+              <div className="flex items-center gap-3">
+                <span className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                  <BookOpen className="size-4" />
+                </span>
+                <div>
+                  <p className="font-bold text-xs sm:text-sm">
+                    <Tx bn="বার্ষিক প্রতিবেদন ও স্বচ্ছতা" en="Annual Reports & Transparency" />
+                  </p>
+                  <p className="text-[10px] text-slate-300">
+                    <Tx bn="প্রকাশিত নথি ও আর্থিক প্রতিবেদন" en="Published records and financial reports" />
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="size-4 text-emerald-300 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 

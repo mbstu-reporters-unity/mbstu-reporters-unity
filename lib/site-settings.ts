@@ -162,7 +162,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     orgNameEn: "MBSTU Reporters' Unity",
     orgNameBn: "মাভাবিপ্রবি রিপোর্টার্স ইউনিটি",
     orgShortEn: "MBSTURU",
-    univLogoUrl: "https://mbstu.ac.bd/images/logo.png",
+    univLogoUrl: "https://mbstu.ac.bd/apple-touch-icon.png",
     univLinkUrl: "https://mbstu.ac.bd",
     univText: "",
   },
@@ -349,15 +349,15 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     copyrightBn: "© ২০২৬ মাভাবিপ্রবি রিপোর্টার্স ইউনিটি (MBSTURU)। সর্বস্বত্ব সংরক্ষিত।",
     copyrightEn: "© 2026 MBSTU Reporters' Unity (MBSTURU). All Rights Reserved.",
     quickLinks: [
-      { id: "ql-1", labelBn: "হোম", labelEn: "Home", href: "#home", visible: true },
-      { id: "ql-2", labelBn: "পরিচিতি", labelEn: "About", href: "#about", visible: true },
-      { id: "ql-3", labelBn: "কার্যনির্বাহী পরিষদ", labelEn: "Executive Council", href: "#leadership", visible: true },
+      { id: "ql-1", labelBn: "হোম", labelEn: "Home", href: "/", visible: true },
+      { id: "ql-2", labelBn: "পরিচিতি", labelEn: "About", href: "/about", visible: true },
+      { id: "ql-3", labelBn: "কার্যনির্বাহী পরিষদ", labelEn: "Executive Council", href: "/committee", visible: true },
       { id: "ql-4", labelBn: "ডিরেক্টর প্যানেল", labelEn: "Director Panel", href: "/council", visible: true },
-      { id: "ql-5", labelBn: "ক্যাম্পাস সংবাদ", labelEn: "Campus News", href: "#general-news", visible: true },
+      { id: "ql-5", labelBn: "ক্যাম্পাস সংবাদ", labelEn: "Campus News", href: "/search", visible: true },
       { id: "ql-6", labelBn: "ক্যাম্পাস ক্লাবসমূহ", labelEn: "Campus Clubs", href: "#club-news", visible: true },
       { id: "ql-7", labelBn: "স্টুডেন্ট কর্নার", labelEn: "Student Corner", href: "/student-corner", visible: true },
       { id: "ql-8", labelBn: "নোটিশ", labelEn: "Notices", href: "/notices", visible: true },
-      { id: "ql-9", labelBn: "যোগাযোগ", labelEn: "Contact", href: "#contact", visible: true },
+      { id: "ql-9", labelBn: "যোগাযোগ", labelEn: "Contact", href: "/contact", visible: true },
     ],
     socialLinks: [
       { slug: "facebook", name: "Facebook", href: "https://www.facebook.com/share/19jdL8Wtk5/", visible: true },
@@ -417,6 +417,15 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   },
 }
 
+const LEGACY_UNIV_LOGO_URL = "https://mbstu.ac.bd/images/logo.png"
+
+export function normalizeUniversityLogoUrl(url: string | undefined): string {
+  if (!url || url === LEGACY_UNIV_LOGO_URL) {
+    return DEFAULT_SITE_SETTINGS.branding.univLogoUrl
+  }
+  return url
+}
+
 function mergeSiteSettings(
   rawJson?: string | null,
   legacy?: {
@@ -444,15 +453,17 @@ function mergeSiteSettings(
     ...(parsed.homeSections?.sections || []),
     ...DEFAULT_SITE_SETTINGS.homeSections.sections.filter((d) => !existingSectionKeys.has(d.key)),
   ]
+  const branding = {
+    ...DEFAULT_SITE_SETTINGS.branding,
+    ...(legacy?.univLogo ? { univLogoUrl: legacy.univLogo } : {}),
+    ...(legacy?.univLink ? { univLinkUrl: legacy.univLink } : {}),
+    ...(legacy?.univText !== undefined ? { univText: legacy.univText } : {}),
+    ...(parsed.branding || {}),
+  }
+  branding.univLogoUrl = normalizeUniversityLogoUrl(branding.univLogoUrl)
 
   return {
-    branding: {
-      ...DEFAULT_SITE_SETTINGS.branding,
-      ...(legacy?.univLogo ? { univLogoUrl: legacy.univLogo } : {}),
-      ...(legacy?.univLink ? { univLinkUrl: legacy.univLink } : {}),
-      ...(legacy?.univText !== undefined ? { univText: legacy.univText } : {}),
-      ...(parsed.branding || {}),
-    },
+    branding,
     topBar: {
       ...DEFAULT_SITE_SETTINGS.topBar,
       ...(parsed.topBar || {}),

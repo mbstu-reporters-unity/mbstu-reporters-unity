@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { SB_URL, SB_KEY } from "@/lib/sb"
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
+import { validateAntiSpamPayload } from "@/lib/anti-spam"
 
 export const runtime = "nodejs"
 
@@ -17,6 +18,10 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => ({}))
+    const antiSpamError = validateAntiSpamPayload(body)
+    if (antiSpamError) {
+      return NextResponse.json({ error: antiSpamError }, { status: 400 })
+    }
     const email =
       typeof body.email === "string" ? body.email.trim().toLowerCase() : ""
     const name = typeof body.name === "string" ? body.name.trim() : ""

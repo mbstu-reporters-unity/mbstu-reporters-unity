@@ -30,6 +30,7 @@ import {
   type PublicationItem,
 } from '@/lib/content-hub'
 import { getVisiblePosts, type Post } from '@/lib/sb'
+import { Tx } from '@/lib/i18n'
 
 function formatBnDate(iso?: string | null): string {
   if (!iso) return ''
@@ -52,6 +53,11 @@ function formatBnMonthYear(iso?: string | null): string {
     year: 'numeric',
     timeZone: 'Asia/Dhaka',
   })
+}
+
+function safeHttpUrl(value?: string | null): string | null {
+  const url = value?.trim()
+  return url && /^https?:\/\//i.test(url) ? url : null
 }
 
 export default function PublicationsAndArchivePage() {
@@ -82,7 +88,10 @@ export default function PublicationsAndArchivePage() {
   }
 
   useEffect(() => {
-    loadAll()
+    const requestedType = new URLSearchParams(window.location.search).get('type')
+    const matchingType = PUBLICATION_TYPES.find((type) => type === requestedType)
+    if (matchingType) setPubTypeFilter(matchingType)
+    void loadAll()
   }, [])
 
   const pubTypes = useMemo(() => {
@@ -244,10 +253,10 @@ export default function PublicationsAndArchivePage() {
               ) : filteredPubs.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredPubs.map((pub) => {
-                    const safePdf =
-                      pub.pdf_url && /^https?:\/\//i.test(pub.pdf_url.trim())
-                        ? pub.pdf_url.trim()
-                        : null
+                    const safePdf = safeHttpUrl(pub.pdf_url)
+                    const safeDownload = safeHttpUrl(pub.download_url)
+                    const separateDownloadUrl =
+                      safeDownload && safeDownload !== safePdf ? safeDownload : null
 
                     return (
                       <article
@@ -326,21 +335,59 @@ export default function PublicationsAndArchivePage() {
                         </div>
 
                         <div className="p-4 pt-0">
-                          {safePdf ? (
+                          {safePdf && separateDownloadUrl ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <a
+                                href={safePdf}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 hover:bg-white/20 text-white py-2.5 px-2 text-xs font-bold transition border border-white/20"
+                              >
+                                <BookOpen className="size-4 shrink-0" />
+                                <span><Tx bn="অনলাইনে পড়ুন" en="Read online" /></span>
+                                <ExternalLink className="size-3.5 shrink-0" />
+                              </a>
+                              <a
+                                href={separateDownloadUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white py-2.5 px-2 text-xs font-bold shadow-md transition active:scale-95 border border-white/20"
+                              >
+                                <Download className="size-4 shrink-0" />
+                                <span><Tx bn="PDF ডাউনলোড" en="Download PDF" /></span>
+                                <ExternalLink className="size-3.5 shrink-0" />
+                              </a>
+                            </div>
+                          ) : safePdf ? (
                             <a
                               href={safePdf}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white py-2.5 text-xs font-bold shadow-md transition active:scale-95 border border-white/20"
                             >
+                              {safeDownload ? (
+                                <Download className="size-4" />
+                              ) : (
+                                <BookOpen className="size-4" />
+                              )}
+                              <span><Tx bn="পড়ুন ও ডাউনলোড করুন (PDF)" en="Read or download (PDF)" /></span>
+                              <ExternalLink className="size-3.5" />
+                            </a>
+                          ) : safeDownload ? (
+                            <a
+                              href={safeDownload}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white py-2.5 text-xs font-bold shadow-md transition active:scale-95 border border-white/20"
+                            >
                               <Download className="size-4" />
-                              <span>পড়ুন ও ডাউনলোড করুন (PDF)</span>
+                              <span><Tx bn="PDF ডাউনলোড" en="Download PDF" /></span>
                               <ExternalLink className="size-3.5" />
                             </a>
                           ) : (
                             <span className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-white/10 border border-white/15 text-slate-300 py-2.5 text-xs font-semibold">
                               <FileText className="size-3.5 text-cyan-300" />
-                              <span>PDF লিংক শীঘ্রই যুক্ত হবে</span>
+                              <span><Tx bn="PDF লিংক শীঘ্রই যুক্ত হবে" en="PDF link coming soon" /></span>
                             </span>
                           )}
                         </div>

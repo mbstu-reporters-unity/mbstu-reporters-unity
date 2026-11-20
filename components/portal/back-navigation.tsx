@@ -3,9 +3,11 @@
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Home, ChevronRight } from 'lucide-react'
+import { Tx } from '@/lib/i18n'
+import type { ReactNode } from 'react'
 
 export interface BreadcrumbItem {
-  label: string
+  label: ReactNode
   href?: string
 }
 
@@ -38,16 +40,19 @@ export function BackNavigation({
         className="inline-flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 px-3.5 py-1.5 text-xs font-bold text-cyan-300 hover:text-white transition-all cursor-pointer shadow-sm"
       >
         <ArrowLeft className="size-3.5" />
-        <span>এক ধাপ পেছনে</span>
+        <span><Tx bn="এক ধাপ পেছনে" en="Go back one step" /></span>
       </button>
 
       {/* ২. ধাপে ধাপে পথ (Breadcrumb) */}
       <div className="flex items-center gap-1.5 text-xs text-white/70">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-[11px] sm:text-xs">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-1 text-[11px] sm:text-xs"
+        >
           {showHome && (
             <Link href="/" className="hover:text-cyan-300 flex items-center gap-1 text-slate-300">
               <Home className="size-3 text-cyan-400" />
-              <span>হোম</span>
+              <span><Tx bn="হোম" en="Home" /></span>
             </Link>
           )}
 

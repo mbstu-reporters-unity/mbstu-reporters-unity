@@ -43,7 +43,7 @@ async function fetchMemberVerification(id: string): Promise<DigitalMemberInfo | 
         { headers: { apikey: SB_KEY }, cache: 'no-store' }
       ),
       fetch(
-        `${SB_URL}/rest/v1/leaders?select=position,is_visible&profile_id=eq.${encodeURIComponent(
+        `${SB_URL}/rest/v1/leaders?select=position&is_visible=eq.true&profile_id=eq.${encodeURIComponent(
           cleanId
         )}&limit=1`,
         { headers: { apikey: SB_KEY }, cache: 'no-store' }
@@ -57,7 +57,7 @@ async function fetchMemberVerification(id: string): Promise<DigitalMemberInfo | 
 
     let execPosBn: string | null = null
     if (leadRes.ok) {
-      const leaders: Array<{ position: string; is_visible?: boolean }> = await leadRes.json()
+      const leaders: Array<{ position: string }> = await leadRes.json()
       if (leaders[0]?.position) {
         const found = POSITIONS.find((p) => p.key === leaders[0].position)
         execPosBn = found?.bn || leaders[0].position
@@ -79,7 +79,7 @@ export default async function VerifyMemberPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const cleanId = decodeURIComponent(id)
+  const cleanId = id
 
   const [member, settings] = await Promise.all([
     fetchMemberVerification(cleanId),

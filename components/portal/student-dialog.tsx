@@ -19,6 +19,7 @@ import { UniversalMediaEmbed } from './universal-media-embed'
 import { FormattedText } from './formatted-text'
 import RichGallery, { type GalleryItem } from './rich-gallery'
 import { PostMetaBadges } from './post-meta-badges'
+import { HumanVerification, useHumanVerification } from './human-verification'
 
 type StudentCommentRow = {
   id: string
@@ -60,6 +61,7 @@ export function StudentDialog({
   const [cText, setCText] = useState('')
   const [cBusy, setCBusy] = useState(false)
   const [cErr, setCErr] = useState('')
+  const humanCheck = useHumanVerification()
 
   const loadComments = useCallback(async (studentId: string) => {
     try {
@@ -135,25 +137,36 @@ export function StudentDialog({
     if (!item) return
     const text = cText.trim()
     if (!text) return
+    if (!humanCheck.answer.trim()) {
+      setCErr('মন্তব্য পাঠানোর আগে সহজ যাচাইয়ের উত্তর দিন।')
+      return
+    }
     setCBusy(true)
     setCErr('')
     try {
-      const res = await fetch(`${SB_URL}/rest/v1/student_comments`, {
+      const res = await fetch('/api/student-comment', {
         method: 'POST',
-        headers: {
-          apikey: SB_KEY,
-          Authorization: `Bearer ${SB_KEY}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=minimal',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           student_id: item.id,
           name: cName.trim() || null,
           message: text,
+          ...humanCheck.payload,
         }),
       })
-      if (!res.ok) throw new Error('কমেন্ট পাঠানো যায়নি')
+      const result: unknown = await res.json().catch(() => null)
+      if (!res.ok) {
+        const error =
+          typeof result === 'object' &&
+          result !== null &&
+          'error' in result &&
+          typeof result.error === 'string'
+            ? result.error
+            : 'কমেন্ট পাঠানো যায়নি'
+        throw new Error(error)
+      }
       setCText('')
+      humanCheck.reset()
       await loadComments(item.id)
     } catch (e) {
       setCErr('❌ ' + (e instanceof Error ? e.message : 'মন্তব্য পাঠানো যায়নি'))
@@ -305,6 +318,16 @@ export function StudentDialog({
                 placeholder="এই লেখার ওপর আপনার মন্তব্য লিখুন..."
                 value={cText}
                 onChange={(e) => setCText(e.target.value)}
+              />
+              <HumanVerification
+                idPrefix={`student-comment-${item.id}`}
+                challenge={humanCheck.challenge}
+                answer={humanCheck.answer}
+                onAnswerChange={humanCheck.setAnswer}
+                website={humanCheck.website}
+                onWebsiteChange={humanCheck.setWebsite}
+                onRefresh={humanCheck.refresh}
+                compact
               />
               <button
                 type="button"

@@ -63,6 +63,7 @@ import { Logo } from './logo'
 import { useLang } from '@/lib/i18n'
 import { DrillDownMenu, type MenuItem } from './drill-down-menu'
 import { useSiteSettings } from './site-settings-context'
+import { DEFAULT_SITE_SETTINGS, normalizeUniversityLogoUrl } from '@/lib/site-settings'
 
 const HEADER_CACHE_KEY = 'mbstu_header_cache_v2'
 const HEADER_CACHE_TTL = 3 * 60 * 1000
@@ -89,7 +90,7 @@ async function fetchHeaderData(): Promise<HeaderCachePayload> {
   if (memHeaderPromise) return memHeaderPromise
 
   memHeaderPromise = (async () => {
-    let univLogo = 'https://mbstu.ac.bd/images/logo.png'
+    let univLogo = DEFAULT_SITE_SETTINGS.branding.univLogoUrl
     let univLink = 'https://mbstu.ac.bd'
     let univText = ''
 
@@ -111,7 +112,7 @@ async function fetchHeaderData(): Promise<HeaderCachePayload> {
 
     if (Array.isArray(cfgRows)) {
       cfgRows.forEach((r: { key?: string; value?: string }) => {
-        if (r.key === 'univ_logo_url' && r.value) univLogo = r.value
+        if (r.key === 'univ_logo_url' && r.value) univLogo = normalizeUniversityLogoUrl(r.value)
         if (r.key === 'univ_link_url' && r.value) univLink = r.value
         if (r.key === 'univ_text') univText = r.value || ''
       })
@@ -155,7 +156,7 @@ export function SiteHeader() {
 
   const { pick } = useLang()
 
-  const [univLogo, setUnivLogo] = useState('https://mbstu.ac.bd/images/logo.png')
+  const [univLogo, setUnivLogo] = useState(DEFAULT_SITE_SETTINGS.branding.univLogoUrl)
   const [univLink, setUnivLink] = useState('https://mbstu.ac.bd')
   const [univText, setUnivText] = useState('')
 
@@ -166,7 +167,7 @@ export function SiteHeader() {
 
     const applyHeaderData = (d: HeaderCachePayload) => {
       if (!alive) return
-      setUnivLogo(d.univLogo)
+      setUnivLogo(normalizeUniversityLogoUrl(d.univLogo))
       setUnivLink(d.univLink)
       setUnivText(d.univText)
       setClubsList(d.clubsList)
@@ -291,8 +292,8 @@ export function SiteHeader() {
     const adminChildren: MenuItem[] = [
       {
         id: 'admin-all',
-        label: 'সকল প্রশাসনিক কর্মকর্তা',
-        sublabel: 'সম্পূর্ণ তালিকা দেখুন',
+        label: pick('সকল প্রশাসনিক কর্মকর্তা', 'All University Officers'),
+        sublabel: pick('সম্পূর্ণ তালিকা দেখুন', 'View the complete directory'),
         icon: UserCheck,
         iconClass: 'bg-cyan-600/80 text-white',
         href: '/administration',
@@ -305,7 +306,7 @@ export function SiteHeader() {
         children: [
           {
             id: `admin-cat-view-${idx}`,
-            label: 'এই স্তরের কর্মকর্তাবৃন্দ',
+            label: pick('এই স্তরের কর্মকর্তাবৃন্দ', 'Officers in this category'),
             icon: Users,
             iconClass: 'bg-cyan-600/70 text-white',
             href: '/administration',
@@ -342,7 +343,7 @@ export function SiteHeader() {
     const socialSiteChildren: MenuItem[] = [
       {
         id: 'social-all',
-        label: 'সকল সোশ্যাল সাইট ও গ্রুপ',
+        label: pick('সকল সোশ্যাল সাইট ও গ্রুপ', 'All Social Sites & Groups'),
         icon: Globe,
         iconClass: 'bg-emerald-600/80 text-white',
         href: '/social-sites',
@@ -372,7 +373,7 @@ export function SiteHeader() {
     const clubChildren: MenuItem[] = [
       {
         id: 'clubs-section',
-        label: 'ক্লাব সেকশনে যান',
+        label: pick('ক্লাব সেকশনে যান', 'Go to Clubs'),
         icon: Sparkles,
         iconClass: 'bg-orange-500 text-white',
         onSelect: () => scrollToSection('club-news'),
@@ -390,7 +391,7 @@ export function SiteHeader() {
     const pageChildren: MenuItem[] = [
       {
         id: 'pages-section',
-        label: 'সকল পেজ শোকেস দেখুন',
+        label: pick('সকল পেজ শোকেস দেখুন', 'View All Community Pages'),
         icon: LayoutGrid,
         iconClass: 'bg-violet-600 text-white',
         onSelect: () => scrollToSection('community-pages'),
@@ -409,7 +410,7 @@ export function SiteHeader() {
     const associationChildren: MenuItem[] = [
       {
         id: 'assoc-all',
-        label: 'সকল সাংবাদিক সমিতি দেখুন',
+        label: pick('সকল সাংবাদিক সমিতি দেখুন', 'View All Reporter Associations'),
         icon: Newspaper,
         iconClass: 'bg-indigo-600 text-white',
         href: '/associations',
@@ -495,7 +496,7 @@ export function SiteHeader() {
             {
               id: 'news-gallery',
               label: getLabel('news-gallery', 'ফটো ও ভিডিও গ্যালারি', 'Photo & Video Gallery'),
-              sublabel: 'ক্যাম্পাসের সকল ছবি ও ভিডিও',
+              sublabel: pick('ক্যাম্পাসের সকল ছবি ও ভিডিও', 'Campus photo and video archive'),
               icon: Camera,
               iconClass: 'bg-cyan-600 text-white',
               href: '/gallery',
@@ -507,7 +508,7 @@ export function SiteHeader() {
             {
               id: 'news-timeline',
               label: getLabel('news-timeline', 'ক্যাম্পাস টাইমলাইন', 'Campus Timeline'),
-              sublabel: 'ঘটনাবলির ধারাবাহিক দলিল',
+              sublabel: pick('ঘটনাবলির ধারাবাহিক দলিল', 'A chronological campus record'),
               icon: Clock,
               iconClass: 'bg-purple-600 text-white',
               href: '/timeline',
@@ -519,7 +520,7 @@ export function SiteHeader() {
             {
               id: 'news-factcheck',
               label: getLabel('news-factcheck', 'ফ্যাক্ট-চেক ডেস্ক', 'Fact-Check Desk'),
-              sublabel: 'গুজব ও তথ্যের সত্যতা যাচাই',
+              sublabel: pick('গুজব ও তথ্যের সত্যতা যাচাই', 'Check claims and campus rumors'),
               icon: ShieldAlert,
               iconClass: 'bg-rose-600 text-white',
               href: '/fact-check',
@@ -531,7 +532,7 @@ export function SiteHeader() {
             {
               id: 'news-publications',
               label: getLabel('news-publications', 'প্রকাশনা ও আর্কাইভ', 'Publications & Archive'),
-              sublabel: 'ম্যাগাজিন, বুলেটিন ও সংবাদ আর্কাইভ',
+              sublabel: pick('ম্যাগাজিন, বুলেটিন ও সংবাদ আর্কাইভ', 'Magazines, bulletins and news archive'),
               icon: BookOpen,
               iconClass: 'bg-indigo-600 text-white',
               href: '/publications',
@@ -553,7 +554,7 @@ export function SiteHeader() {
       {
         id: 'news-podcast',
         label: pick('পডকাস্ট ও ভিডিও সিরিজ', 'Podcast & Video Series'),
-        sublabel: 'অডিও-ভিডিও কথোপকথন ও সিরিজ',
+        sublabel: pick('অডিও-ভিডিও কথোপকথন ও সিরিজ', 'Audio-video interviews and series'),
         icon: Headphones,
         iconClass: 'bg-purple-600 text-white',
         href: '/podcast',
@@ -623,32 +624,32 @@ export function SiteHeader() {
     const educationChildren: MenuItem[] = [
       {
         id: 'res-center',
-        label: 'রিসোর্স সেন্টার',
-        sublabel: 'সাংবাদিকতা গাইড ও RTI ফরম্যাট',
+        label: pick('রিসোর্স সেন্টার', 'Resource Center'),
+        sublabel: pick('সাংবাদিকতা গাইড ও RTI ফরম্যাট', 'Journalism guides and RTI templates'),
         icon: BookOpen,
         iconClass: 'bg-cyan-600 text-white',
         href: '/resources',
       },
       {
         id: 'res-opp',
-        label: 'ওয়ার্কশপ ও ইন্টার্নশিপ',
-        sublabel: 'প্রশিক্ষণ ও চাকরির সুযোগ',
+        label: pick('ওয়ার্কশপ ও ইন্টার্নশিপ', 'Workshops & Internships'),
+        sublabel: pick('প্রশিক্ষণ ও চাকরির সুযোগ', 'Training and career opportunities'),
         icon: Briefcase,
         iconClass: 'bg-purple-600 text-white',
         href: '/opportunities',
       },
       {
         id: 'res-alumni',
-        label: 'অ্যালামনাই নেটওয়ার্ক',
-        sublabel: 'প্রাক্তন সদস্য ও মেন্টরশিপ',
+        label: pick('অ্যালামনাই নেটওয়ার্ক', 'Alumni Network'),
+        sublabel: pick('প্রাক্তন সদস্য ও মেন্টরশিপ', 'Former members and mentoring'),
         icon: Users,
         iconClass: 'bg-amber-600 text-white',
         href: '/alumni',
       },
       {
         id: 'res-events',
-        label: 'ইভেন্ট ও ক্যালেন্ডার',
-        sublabel: 'কর্মশালা ও সার্টিফিকেট ভেরিফিকেশন',
+        label: pick('ইভেন্ট ও ক্যালেন্ডার', 'Events & Calendar'),
+        sublabel: pick('কর্মশালা ও সার্টিফিকেট ভেরিফিকেশন', 'Workshops and certificate verification'),
         icon: CalendarDays,
         iconClass: 'bg-rose-600 text-white',
         href: '/events',
@@ -661,7 +662,7 @@ export function SiteHeader() {
             {
               id: 'about-unity',
               label: getLabel('about-unity', 'আমাদের সম্পর্কে', 'About Us'),
-              sublabel: 'ইতিহাস, ভিশন ও অর্জন',
+              sublabel: pick('ইতিহাস, ভিশন ও অর্জন', 'History, vision and milestones'),
               icon: Info,
               iconClass: 'bg-amber-600 text-white',
               href: '/about',
@@ -673,7 +674,7 @@ export function SiteHeader() {
             {
               id: 'about-committee',
               label: getLabel('about-committee', 'বর্তমান কমিটি', 'Executive Committee'),
-              sublabel: 'কার্যনির্বাহী পরিষদের কর্মকর্তা',
+              sublabel: pick('কার্যনির্বাহী পরিষদের কর্মকর্তা', 'Executive council members'),
               icon: Award,
               iconClass: 'bg-teal-600 text-white',
               href: '/committee',
@@ -685,7 +686,7 @@ export function SiteHeader() {
             {
               id: 'about-advisors',
               label: getLabel('about-advisors', 'উপদেষ্টা পরিষদ', 'Advisory Council'),
-              sublabel: 'প্রধান পৃষ্ঠপোষক ও উপদেষ্টাবৃন্দ',
+              sublabel: pick('প্রধান পৃষ্ঠপোষক ও উপদেষ্টাবৃন্দ', 'Patrons and advisors'),
               icon: ShieldCheck,
               iconClass: 'bg-purple-600 text-white',
               href: '/advisors',
@@ -697,7 +698,7 @@ export function SiteHeader() {
             {
               id: 'about-members',
               label: getLabel('about-members', 'সদস্য ডিরেক্টরি', 'Member Directory'),
-              sublabel: 'অনুমোদিত সাংবাদিক ও সদস্যবৃন্দ',
+              sublabel: pick('অনুমোদিত সাংবাদিক ও সদস্যবৃন্দ', 'Approved reporters and members'),
               icon: UserCheck,
               iconClass: 'bg-cyan-600 text-white',
               href: '/members',
@@ -709,7 +710,7 @@ export function SiteHeader() {
             {
               id: 'about-constitution',
               label: getLabel('about-constitution', 'গঠনতন্ত্র ও আচরণবিধি', 'Constitution & Ethics'),
-              sublabel: 'সাংগঠনিক নীতিমালা ও ধারা',
+              sublabel: pick('সাংগঠনিক নীতিমালা ও ধারা', 'Organization rules and articles'),
               icon: Scale,
               iconClass: 'bg-blue-600 text-white',
               href: '/constitution',
@@ -721,7 +722,7 @@ export function SiteHeader() {
             {
               id: 'about-archive',
               label: getLabel('about-archive', 'প্রাক্তন কমিটি আর্কাইভ', 'Past Committee Archive'),
-              sublabel: 'পূর্ববর্তী মেয়াদের নেতৃত্ব',
+              sublabel: pick('পূর্ববর্তী মেয়াদের নেতৃত্ব', 'Leadership of previous terms'),
               icon: History,
               iconClass: 'bg-rose-600 text-white',
               href: '/committee/archive',
@@ -733,7 +734,7 @@ export function SiteHeader() {
             {
               id: 'about-council',
               label: getLabel('about-council', 'ডিরেক্টর প্যানেল', 'Director Panel'),
-              sublabel: 'মডারেশন ও অ্যাডমিন কাউন্সিল',
+              sublabel: pick('মডারেশন ও অ্যাডমিন কাউন্সিল', 'Moderation and admin council'),
               icon: ShieldCheck,
               iconClass: 'bg-emerald-600 text-white',
               href: '/council',
@@ -745,7 +746,7 @@ export function SiteHeader() {
             {
               id: 'about-leadership',
               label: getLabel('about-leadership', 'কার্যনির্বাহী বাণী', 'Executive Messages'),
-              sublabel: 'হোমপেজে নেতৃত্বের বার্তা',
+              sublabel: pick('হোমপেজে নেতৃত্বের বার্তা', 'Messages from the leadership'),
               icon: Users,
               iconClass: 'bg-teal-700 text-white',
               onSelect: () => scrollToSection('leadership'),
@@ -757,7 +758,7 @@ export function SiteHeader() {
             {
               id: 'about-contact',
               label: getLabel('about-contact', 'যোগাযোগ', 'Contact'),
-              sublabel: 'অফিস ও যোগাযোগ ডেস্ক',
+              sublabel: pick('অফিস ও যোগাযোগ ডেস্ক', 'Office and contact desk'),
               icon: Phone,
               iconClass: 'bg-pink-600 text-white',
               onSelect: () => scrollToSection('contact'),
@@ -767,10 +768,18 @@ export function SiteHeader() {
       {
         id: 'about-contact-desk',
         label: pick('যোগাযোগ, ম্যাপ ও অভিযোগ ডেস্ক', 'Contact, Map & Feedback'),
-        sublabel: 'বার্তা, ম্যাপ, অভিযোগ ও সংশোধন',
+        sublabel: pick('বার্তা, ম্যাপ, অভিযোগ ও সংশোধন', 'Messages, map, feedback and corrections'),
         icon: Mail,
         iconClass: 'bg-cyan-600 text-white',
         href: '/contact',
+      },
+      {
+        id: 'about-policies',
+        label: pick('নীতি ও স্বচ্ছতা', 'Policies & Transparency'),
+        sublabel: pick('সংশোধনী, স্বীকৃতি ও নিরাপত্তা নীতি', 'Corrections, recognition and safety policies'),
+        icon: ShieldCheck,
+        iconClass: 'bg-emerald-600 text-white',
+        href: '/policies',
       },
       ...customByPlacement('council-about'),
     ]
@@ -779,7 +788,7 @@ export function SiteHeader() {
       ? [
           {
             id: 'my-profile',
-            label: 'আমার প্রোফাইল ও প্রেস কার্ড',
+            label: pick('আমার প্রোফাইল ও প্রেস কার্ড', 'My Profile & Press Card'),
             sublabel: me.full_name,
             icon: User,
             iconClass: 'bg-pink-600 text-white',
@@ -787,16 +796,16 @@ export function SiteHeader() {
           },
           {
             id: 'my-dashboard',
-            label: 'ড্যাশবোর্ড',
-            sublabel: 'পোস্ট ও সেটিংস পরিচালনা',
+            label: pick('ড্যাশবোর্ড', 'Dashboard'),
+            sublabel: pick('পোস্ট ও সেটিংস পরিচালনা', 'Manage posts and settings'),
             icon: Settings,
             iconClass: 'bg-emerald-600 text-white',
             href: '/admin',
           },
           {
             id: 'my-logout',
-            label: 'লগআউট',
-            sublabel: 'অ্যাকাউন্ট থেকে বের হন',
+            label: pick('লগআউট', 'Log Out'),
+            sublabel: pick('অ্যাকাউন্ট থেকে বের হন', 'Sign out of your account'),
             icon: LogOut,
             iconClass: 'bg-rose-600/80 text-white',
             onSelect: handleLogout,
@@ -805,8 +814,8 @@ export function SiteHeader() {
       : [
           {
             id: 'login-register',
-            label: 'লগইন / নিবন্ধন',
-            sublabel: 'অ্যাকাউন্টে প্রবেশ করুন',
+            label: pick('লগইন / নিবন্ধন', 'Log In / Register'),
+            sublabel: pick('অ্যাকাউন্টে প্রবেশ করুন', 'Sign in to your account'),
             icon: Lock,
             iconClass: 'bg-blue-600 text-white',
             href: '/admin',
@@ -828,7 +837,7 @@ export function SiteHeader() {
       {
         id: 'global-search',
         label: pick('সংবাদ অনুসন্ধান', 'Search News'),
-        sublabel: 'তারিখ, লেখক ও ক্যাটাগরি দিয়ে খুঁজুন',
+        sublabel: pick('তারিখ, লেখক ও ক্যাটাগরি দিয়ে খুঁজুন', 'Search by date, author and category'),
         icon: Search,
         iconClass: 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white',
         href: '/search',
@@ -836,7 +845,7 @@ export function SiteHeader() {
       {
         id: 'membership-apply',
         label: pick('সদস্যপদ আবেদন', 'Join as Member'),
-        sublabel: 'অনলাইন রিক্রুটমেন্ট ফর্ম',
+        sublabel: pick('অনলাইন রিক্রুটমেন্ট ফর্ম', 'Online membership application'),
         icon: UserPlus,
         iconClass: 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white',
         href: '/apply',
@@ -877,7 +886,7 @@ export function SiteHeader() {
       {
         id: 'menu-education',
         label: pick('শিক্ষা ও রিসোর্স', 'Education & Resources'),
-        sublabel: 'রিসোর্স, ইন্টার্নশিপ ও অ্যালামনাই',
+        sublabel: pick('রিসোর্স, ইন্টার্নশিপ ও অ্যালামনাই', 'Resources, internships and alumni'),
         icon: BookOpen,
         iconClass: 'bg-emerald-600 text-white',
         children: educationChildren,

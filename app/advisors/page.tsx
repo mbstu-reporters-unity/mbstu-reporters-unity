@@ -15,6 +15,7 @@ import {
   ExternalLink,
   Sparkles,
   Newspaper,
+  BookOpen,
 } from 'lucide-react'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'

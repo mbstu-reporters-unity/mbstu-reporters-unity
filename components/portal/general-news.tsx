@@ -22,7 +22,7 @@ export async function GeneralNews({
     .slice(0, limit)
 
   return (
-    <section id="general-news" className="py-14 sm:py-20 border-b border-white/10 relative">
+    <section id="general-news" className="pt-6 pb-14 sm:pt-8 sm:pb-20 border-b border-white/10 relative">
       <div className="mx-auto max-w-7xl md:px-6 lg:px-8">
         <div className="px-4 md:px-0">
           <SectionHeading

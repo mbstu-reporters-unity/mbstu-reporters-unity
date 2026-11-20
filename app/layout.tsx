@@ -1,5 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import { Noto_Sans_Bengali, Noto_Serif_Bengali } from 'next/font/google'
 import './globals.css'
 import { LangProvider } from '@/lib/i18n'
@@ -124,7 +125,11 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://pdualebabnvkoaqaqcut.supabase.co" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://pdualebabnvkoaqaqcut.supabase.co" />
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+        />
       </head>
       <body className="antialiased font-sans font-normal selection:bg-brand/20 selection:text-brand">
         <script

@@ -20,12 +20,15 @@ import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
+import { QrCodeImage } from '@/components/portal/qr-code-image'
+import { HumanVerification, useHumanVerification } from '@/components/portal/human-verification'
 import { getCampusEvents, registerForEvent, type CampusEvent } from '@/lib/events'
 
 const inp =
   'w-full rounded-xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-white/45 focus:outline-none focus:border-cyan-400 transition'
 
 export default function EventsCalendarPage() {
+  const humanCheck = useHumanVerification()
   const [events, setEvents] = useState<CampusEvent[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -68,13 +71,20 @@ export default function EventsCalendarPage() {
         student_id: studentId,
         phone,
         email,
+        ...humanCheck.payload,
       })
       setCertCode(res.code)
+      humanCheck.reset()
     } catch (e: any) {
       setErrMsg('❌ ' + (e?.message || 'রেজিস্ট্রেশন ব্যর্থ হয়েছে'))
     }
     setBusy(false)
   }
+
+  const certificateVerificationUrl =
+    certCode && typeof window !== 'undefined'
+      ? `${window.location.origin}/verify-certificate/${encodeURIComponent(certCode)}`
+      : ''
 
   return (
     <>
@@ -282,6 +292,27 @@ export default function EventsCalendarPage() {
                 <p className="text-[11px] text-slate-400">
                   অনুষ্ঠানে উপস্থিত থাকার সময় এই কোডটি প্রদর্শন করলে আপনার ডিজিটাল সার্টিফিকেট নিশ্চিত করা হবে।
                 </p>
+                {certificateVerificationUrl && (
+                  <div className="mx-auto flex max-w-sm items-center gap-3 rounded-2xl bg-white p-3 text-left text-slate-900">
+                    <QrCodeImage
+                      value={certificateVerificationUrl}
+                      alt="ইভেন্ট সার্টিফিকেট যাচাইয়ের QR কোড"
+                      className="size-24 shrink-0 object-contain"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold">সার্টিফিকেট যাচাই</p>
+                      <p className="text-[10px] leading-snug text-slate-600">
+                        QR স্ক্যান করে রেজিস্ট্রেশন যাচাই করুন।
+                      </p>
+                      <Link
+                        href={`/verify-certificate/${encodeURIComponent(certCode)}`}
+                        className="mt-1 inline-block break-all text-[10px] font-semibold text-blue-700 underline"
+                      >
+                        যাচাই পেজ খুলুন
+                      </Link>
+                    </div>
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={() => setSelectedEvent(null)}
@@ -367,6 +398,17 @@ export default function EventsCalendarPage() {
                     />
                   </div>
                 </div>
+
+                <HumanVerification
+                  idPrefix="event-registration"
+                  challenge={humanCheck.challenge}
+                  answer={humanCheck.answer}
+                  onAnswerChange={humanCheck.setAnswer}
+                  website={humanCheck.website}
+                  onWebsiteChange={humanCheck.setWebsite}
+                  onRefresh={humanCheck.refresh}
+                  compact
+                />
 
                 <button
                   type="submit"

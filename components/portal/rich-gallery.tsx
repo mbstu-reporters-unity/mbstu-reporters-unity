@@ -489,7 +489,7 @@ export default function RichGallery({
   const rInner = compact ? "rounded-none" : "rounded-xl"
   const gapCls = compact ? "gap-0.5" : "gap-2"
   const freeSingleCls = compact
-    ? "w-full h-auto max-h-[680px] md:max-h-[460px] object-contain bg-black/20 mx-auto block"
+    ? "aspect-video w-full object-cover bg-black/20 mx-auto block"
     : "w-full rounded-2xl object-cover"
 
   const fig = (i: number, cls: string, imgCls: string) => (

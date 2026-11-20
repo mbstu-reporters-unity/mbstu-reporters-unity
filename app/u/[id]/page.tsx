@@ -39,7 +39,7 @@ async function getProfileById(id: string): Promise<PublicUserProfile | null> {
         { headers: { apikey: SB_KEY }, cache: 'no-store' }
       ),
       fetch(
-        `${SB_URL}/rest/v1/leaders?select=position,is_visible&profile_id=eq.${encodeURIComponent(
+        `${SB_URL}/rest/v1/leaders?select=position&is_visible=eq.true&profile_id=eq.${encodeURIComponent(
           id
         )}&limit=1`,
         { headers: { apikey: SB_KEY }, cache: 'no-store' }

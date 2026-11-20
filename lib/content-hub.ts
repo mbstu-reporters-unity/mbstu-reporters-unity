@@ -160,6 +160,7 @@ export interface PublicationItem {
   description?: string | null
   cover_url?: string | null
   pdf_url: string
+  download_url?: string | null
   published_date: string
   pages_count?: string | null
   editor_name?: string | null

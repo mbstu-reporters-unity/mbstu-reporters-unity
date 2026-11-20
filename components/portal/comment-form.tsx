@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { addComment, type PublicComment } from '@/lib/sb'
+import { HumanVerification, useHumanVerification } from './human-verification'
 import {
   MessageSquare,
   CornerDownRight,
@@ -30,6 +31,8 @@ export function CommentForm({
   initialComments?: PublicComment[]
 }) {
   const [comments] = useState<PublicComment[]>(initialComments)
+  const commentCheck = useHumanVerification()
+  const replyCheck = useHumanVerification()
 
   // মূল মন্তব্য ফর্ম স্টেট
   const [name, setName] = useState('')
@@ -54,15 +57,21 @@ export function CommentForm({
       setErrMsg('মন্তব্য কমপক্ষে ৩ অক্ষরের হতে হবে।')
       return
     }
+    if (!commentCheck.answer.trim()) {
+      setMsgStatus('error')
+      setErrMsg('মন্তব্য পাঠানোর আগে সহজ যাচাইয়ের উত্তর দিন।')
+      return
+    }
 
     setBusy(true)
     setMsgStatus('idle')
     setErrMsg('')
 
     try {
-      await addComment(postId, name.trim() || 'নামহীন পাঠক', trimmed)
+      await addComment(postId, name.trim() || 'নামহীন পাঠক', trimmed, null, commentCheck.payload)
       setName('')
       setMessage('')
+      commentCheck.reset()
       setMsgStatus('success')
     } catch (e) {
       setMsgStatus('error')
@@ -79,15 +88,27 @@ export function CommentForm({
       setReplyErrMsg('রিপ্লাই খুব সংক্ষিপ্ত হয়েছে।')
       return
     }
+    if (!replyCheck.answer.trim()) {
+      setReplyStatus('error')
+      setReplyErrMsg('রিপ্লাই পাঠানোর আগে সহজ যাচাইয়ের উত্তর দিন।')
+      return
+    }
 
     setReplyBusy(true)
     setReplyStatus('idle')
     setReplyErrMsg('')
 
     try {
-      await addComment(postId, replyName.trim() || 'নামহীন পাঠক', trimmed, parentId)
+      await addComment(
+        postId,
+        replyName.trim() || 'নামহীন পাঠক',
+        trimmed,
+        parentId,
+        replyCheck.payload
+      )
       setReplyMessage('')
       setReplyName('')
+      replyCheck.reset()
       setReplyStatus('success')
       setTimeout(() => {
         setReplyingTo(null)
@@ -173,6 +194,16 @@ export function CommentForm({
                     placeholder="রিপ্লাই লিখুন..."
                     value={replyMessage}
                     onChange={(e) => setReplyMessage(e.target.value)}
+                  />
+                  <HumanVerification
+                    idPrefix={`comment-reply-${c.id}`}
+                    challenge={replyCheck.challenge}
+                    answer={replyCheck.answer}
+                    onAnswerChange={replyCheck.setAnswer}
+                    website={replyCheck.website}
+                    onWebsiteChange={replyCheck.setWebsite}
+                    onRefresh={replyCheck.refresh}
+                    compact
                   />
                   <div className="flex items-center gap-2">
                     <button
@@ -260,6 +291,16 @@ export function CommentForm({
           placeholder="সংবাদ সম্পর্কে আপনার মতামত লিখুন..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+        />
+
+        <HumanVerification
+          idPrefix={`comment-${postId}`}
+          challenge={commentCheck.challenge}
+          answer={commentCheck.answer}
+          onAnswerChange={commentCheck.setAnswer}
+          website={commentCheck.website}
+          onWebsiteChange={commentCheck.setWebsite}
+          onRefresh={commentCheck.refresh}
         />
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">

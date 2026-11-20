@@ -65,22 +65,22 @@ export function TopBar() {
             <div
               className={`${
                 tb.showClock ? 'pt-1.5 border-t border-white/10' : ''
-              } flex items-center justify-between gap-1.5 sm:gap-3`}
+              } flex flex-wrap items-center justify-between gap-1.5 sm:gap-3`}
             >
               <div className="shrink-0">
                 {tb.showLangSwitcher && <LangSwitcher />}
               </div>
 
               {tb.showLocation && (
-                <div className="flex justify-center flex-1 min-w-0">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-cyan-600/80 border border-cyan-400/30 px-2.5 sm:px-3 py-1 font-semibold text-white shadow-xs text-[11px] sm:text-xs whitespace-nowrap">
+                <div className="flex min-w-0 flex-1 justify-center">
+                  <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-cyan-600/80 border border-cyan-400/30 px-2.5 sm:px-3 py-1 font-semibold text-center text-white shadow-xs text-[11px] sm:text-xs">
                     <MapPin className="size-3 text-cyan-200 shrink-0" aria-hidden="true" />
                     <span>{pick(tb.locationBn, tb.locationEn)}</span>
                   </span>
                 </div>
               )}
 
-              <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">
+              <div className="min-w-0 flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
                 <FontSizeSwitcher />
                 {tb.showThemeSwitcher && <ThemeSwitcher />}
                 {tb.showSocialLinks && (

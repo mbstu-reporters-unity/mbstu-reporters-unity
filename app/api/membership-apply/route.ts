@@ -3,6 +3,7 @@ import nodemailer from "nodemailer"
 import { SB_URL, SB_KEY } from "@/lib/sb"
 import { SUBMISSION_EMAIL_KEY } from "@/lib/submissions"
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
+import { validateAntiSpamPayload } from "@/lib/anti-spam"
 
 export const runtime = "nodejs"
 
@@ -29,6 +30,10 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => ({}))
+    const antiSpamError = validateAntiSpamPayload(body)
+    if (antiSpamError) {
+      return NextResponse.json({ error: antiSpamError }, { status: 400 })
+    }
 
     const full_name = typeof body.full_name === "string" ? body.full_name.trim() : ""
     const department = typeof body.department === "string" ? body.department.trim() : ""

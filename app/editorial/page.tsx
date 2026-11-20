@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Feather, GraduationCap, PenTool, Sparkles } from 'lucide-react'
+import { ArrowRight, Feather, GraduationCap, PenTool, Sparkles } from 'lucide-react'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
@@ -10,6 +10,7 @@ import { SectionHeading } from '@/components/portal/section-heading'
 import { BackNavigation } from '@/components/portal/back-navigation'
 import { getVisiblePosts, type Post } from '@/lib/sb'
 import { getSiteSettings } from '@/lib/site-settings'
+import { Tx } from '@/lib/i18n'
 
 export const dynamic = 'force-dynamic'
 
@@ -139,6 +140,28 @@ export default async function EditorialPage({
               </div>
             </div>
           )}
+
+          <section className="px-4 md:px-0 pt-5 border-t border-white/15">
+            <div className="glass-card rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-white">
+              <div>
+                <h2 className="font-bold text-sm">
+                  <Tx bn="সম্পাদনা, সংশোধনী ও স্পন্সরড কনটেন্ট" en="Editing, Corrections & Sponsored Content" />
+                </h2>
+                <p className="mt-1 text-xs leading-relaxed text-slate-300">
+                  <Tx
+                    bn="ভুল সংশোধন, কপিরাইট ও বিজ্ঞাপন/স্পন্সরশিপ বিষয়ে আমাদের প্রকাশ্য নীতি দেখুন।"
+                    en="Read our public policies on corrections, copyright, advertising and sponsorship."
+                  />
+                </p>
+              </div>
+              <Link
+                href="/policies#corrections"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-4 py-2 text-xs font-bold text-cyan-200 hover:bg-cyan-400/20"
+              >
+                <Tx bn="নীতিমালা দেখুন" en="View policies" /> <ArrowRight className="size-3.5" />
+              </Link>
+            </div>
+          </section>
 
           <div className="px-4 md:px-0 pt-6 border-t border-white/15">
             <BackNavigation fallbackHref="/" />

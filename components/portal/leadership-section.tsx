@@ -63,7 +63,7 @@ export function LeadershipSection() {
                 <Quote className="absolute right-6 top-6 size-12 text-white/10 pointer-events-none" aria-hidden="true" />
 
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-4">
-                  <div className="relative shrink-0">
+                  <div className="relative min-w-0 max-w-full">
                     <PhotoFrame
                       src={leader.photo_url}
                       alt={leader.display_name}

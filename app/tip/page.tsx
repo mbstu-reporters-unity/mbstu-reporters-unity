@@ -8,8 +8,10 @@ import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
+import { HumanVerification, useHumanVerification } from '@/components/portal/human-verification'
 
 export default function AnonymousTipPage() {
+  const humanCheck = useHumanVerification()
   const [isAnonymous, setIsAnonymous] = useState(true)
   const [name, setName] = useState('')
   const [contact, setContact] = useState('')
@@ -48,6 +50,7 @@ export default function AnonymousTipPage() {
           phone: !isAnonymous && !isEmail ? cleanContact : '',
           subject: `[গোপন টিপস] ${title.trim()}`,
           message: `${details.trim()}\n\n[প্রাথমিক তথ্য যাচাইয়ের অনুরোধসহ গোপন টিপস ফর্ম থেকে প্রেরিত]`,
+          ...humanCheck.payload,
         }),
       })
 
@@ -57,6 +60,7 @@ export default function AnonymousTipPage() {
       }
 
       setSubmitted(true)
+      humanCheck.reset()
     } catch (err: any) {
       setErrMsg('❌ ' + (err?.message || 'তথ্য পাঠাতে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন।'))
     }
@@ -175,6 +179,16 @@ export default function AnonymousTipPage() {
                     onChange={(e) => setDetails(e.target.value)}
                   />
                 </div>
+
+                <HumanVerification
+                  idPrefix="anonymous-tip"
+                  challenge={humanCheck.challenge}
+                  answer={humanCheck.answer}
+                  onAnswerChange={humanCheck.setAnswer}
+                  website={humanCheck.website}
+                  onWebsiteChange={humanCheck.setWebsite}
+                  onRefresh={humanCheck.refresh}
+                />
 
                 <button
                   type="submit"

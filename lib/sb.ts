@@ -1,3 +1,5 @@
+import type { AntiSpamPayload } from "./anti-spam"
+
 export const SB_URL = "https://pdualebabnvkoaqaqcut.supabase.co"
 export const SB_KEY = "sb_publishable_7SMqtPPUqsWVCPIXDqgPTw_Jrctzkwm"
 const BUCKET = "post-images"
@@ -701,19 +703,33 @@ export async function getApprovedComments(postId: string): Promise<PublicComment
   }
 }
 
-export async function addComment(postId: string, name: string, message: string, parentId?: string | null) {
-  await ok(
-    await fetch(`${SB_URL}/rest/v1/comments`, {
-      method: "POST",
-      headers: { ...hdr(undefined, true), Prefer: "return=minimal" },
-      body: JSON.stringify({
-        post_id: postId,
-        name: name || null,
-        message,
-        parent_id: parentId || null,
-      }),
-    })
-  )
+export async function addComment(
+  postId: string,
+  name: string,
+  message: string,
+  parentId: string | null | undefined,
+  antiSpam: AntiSpamPayload
+) {
+  const res = await fetch('/api/comment', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      post_id: postId,
+      name: name || null,
+      message,
+      parent_id: parentId || null,
+      ...antiSpam,
+    }),
+  })
+
+  if (!res.ok) {
+    const body: unknown = await res.json().catch(() => null)
+    const message =
+      typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string'
+        ? body.error
+        : 'মন্তব্য জমা দেওয়া যায়নি'
+    throw new Error(message)
+  }
 }
 
 export async function getPendingComments(token: string): Promise<PendingComment[]> {
