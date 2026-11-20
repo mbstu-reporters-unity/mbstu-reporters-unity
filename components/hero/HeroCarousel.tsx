@@ -115,7 +115,7 @@ export function HeroCarousel() {
   const effect2 = visibleSlides[2]?.transition_effect || 'slide-left'
 
   return (
-    <div id="home" className="w-full flex flex-col bg-slate-950 text-white relative">
+    <div id="home" className="hero-daylight-dark-surface w-full flex flex-col bg-slate-950 text-white relative">
       {/* হিরো ব্যানার */}
       <HeroBreakingBanner settings={settings} />
 

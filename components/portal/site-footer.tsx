@@ -23,7 +23,7 @@ export function SiteFooter() {
   const visibleLinks = f.quickLinks.filter((l) => l.visible && l.href.trim())
 
   return (
-    <footer id="contact" className="bg-[#060e24] text-white/80 border-t border-white/10 relative z-10 w-full overflow-hidden">
+    <footer id="contact" className="site-footer bg-[#060e24] text-white/80 border-t border-white/10 relative z-10 w-full overflow-hidden">
       <div className="h-1 bg-gradient-to-r from-cyan-400 via-amber-400 to-rose-500" aria-hidden="true" />
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div className="lg:col-span-2 space-y-4">

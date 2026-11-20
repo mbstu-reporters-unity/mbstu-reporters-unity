@@ -174,7 +174,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="relative w-full overflow-hidden select-none border-b border-indigo-950/60 shadow-xl transition-all duration-300"
+      className="hero-daylight-dark-surface relative w-full overflow-hidden select-none border-b border-indigo-950/60 shadow-xl transition-all duration-300"
       style={{
         background: slideType === 'color' ? getBannerBg(currentSlide) : '#000000',
       }}

@@ -173,7 +173,7 @@ export function HeroMediaRenderer({
   const reporterLayer = layers.find((l: any) => l.enabled && (l.id === 'txt_reporter' || l.label?.includes('সাংবাদিক')))
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center overflow-hidden select-none bg-slate-950">
+    <div className="hero-daylight-dark-surface relative w-full h-full flex items-center justify-center overflow-hidden select-none bg-slate-950">
       
       {/* ৩৫টি অ্যানিমেশন সিএসএস ইঞ্জিন */}
       <style>{`

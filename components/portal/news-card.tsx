@@ -10,6 +10,39 @@ import { PostMetaBadges } from './post-meta-badges'
 import { FormattedText } from './formatted-text'
 import { useSiteSettings } from './site-settings-context'
 
+const CATEGORY_BADGE_PALETTES = [
+  'sky',
+  'amber',
+  'indigo',
+  'violet',
+  'emerald',
+  'rose',
+  'teal',
+  'slate',
+] as const
+
+const CATEGORY_BADGE_PALETTE_BY_NAME: Record<string, (typeof CATEGORY_BADGE_PALETTES)[number]> = {
+  'ক্যাম্পাস সংবাদ': 'sky',
+  ক্লাব: 'amber',
+  'স্টুডেন্ট কর্নার': 'slate',
+  একাডেমিক: 'indigo',
+  গবেষণা: 'violet',
+  খেলাধুলা: 'emerald',
+  সংস্কৃতি: 'rose',
+  পরিবেশ: 'teal',
+}
+
+function getCategoryBadgePalette(category: string): (typeof CATEGORY_BADGE_PALETTES)[number] {
+  const knownPalette = CATEGORY_BADGE_PALETTE_BY_NAME[category]
+  if (knownPalette) return knownPalette
+
+  let hash = 0
+  for (const character of category) {
+    hash = (hash * 31 + character.charCodeAt(0)) >>> 0
+  }
+  return CATEGORY_BADGE_PALETTES[hash % CATEGORY_BADGE_PALETTES.length]
+}
+
 function formatBanglaDate(val?: string | null): string {
   if (!val) return ''
   if (/জানুয়ারি|ফেব্রুয়ারি|মার্চ|এপ্রিল|মে|জুন|জুলাই|আগস্ট|সেপ্টেম্বর|অক্টোবর|নভেম্বর|ডিসেম্বর/.test(val)) {
@@ -66,7 +99,7 @@ export function NewsCard({ p }: { p: Post }) {
   return (
     <article
       ref={articleRef}
-      className="scroll-mt-20 group flex h-full flex-col bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card rounded-2xl border border-white/10"
+      className="news-card scroll-mt-20 group flex h-full flex-col bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card rounded-2xl border border-white/10"
     >
       <div className="flex items-center justify-between gap-2.5 px-3.5 pt-3.5 pb-2.5 sm:px-5">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -103,12 +136,12 @@ export function NewsCard({ p }: { p: Post }) {
               {primaryHref ? (
                 <Link
                   href={primaryHref}
-                  className="text-sm font-bold text-white hover:text-cyan-300 truncate leading-tight transition-colors"
+                  className="news-card-author-name text-sm font-bold text-white hover:text-cyan-300 truncate leading-tight transition-colors"
                 >
                   {primaryName}
                 </Link>
               ) : (
-                <p className="text-sm font-bold text-white truncate leading-tight">
+                <p className="news-card-author-name text-sm font-bold text-white truncate leading-tight">
                   {primaryName}
                 </p>
               )}
@@ -117,7 +150,7 @@ export function NewsCard({ p }: { p: Post }) {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-cyan-200/85 mt-0.5">
+            <div className="news-card-meta flex flex-wrap items-center gap-1.5 text-[11px] text-cyan-200/85 mt-0.5">
               {pageInfo && (
                 <>
                   {p.user_id ? (
@@ -142,7 +175,8 @@ export function NewsCard({ p }: { p: Post }) {
 
         <Link
           href={pageInfo ? `/p/${pageInfo.slug}` : `/category/${encodeURIComponent(categoryName)}`}
-          className="shrink-0 rounded-full bg-white/15 hover:bg-white/25 px-3 py-1 text-[11px] font-bold text-cyan-200 border border-white/20 backdrop-blur-md transition max-w-[120px] truncate"
+          data-category-palette={!pageInfo ? getCategoryBadgePalette(categoryName) : undefined}
+          className="news-card-category shrink-0 rounded-full px-3 py-1 text-[11px] font-bold border backdrop-blur-md transition max-w-[120px] truncate"
         >
           {pageInfo ? 'পেজ' : categoryName}
         </Link>
@@ -160,7 +194,7 @@ export function NewsCard({ p }: { p: Post }) {
       <div className="flex flex-1 flex-col px-3.5 pt-3 pb-3 sm:px-5 sm:pb-4 space-y-2">
         <h3
           onClick={toggleExpand}
-          className="font-serif text-lg sm:text-xl font-bold leading-snug text-white hover:text-cyan-200 transition-colors drop-shadow-sm cursor-pointer select-none"
+          className="news-card-title font-serif text-lg sm:text-xl font-bold leading-snug text-white hover:text-cyan-200 transition-colors drop-shadow-sm cursor-pointer select-none"
         >
           {p.title}
         </h3>
@@ -168,7 +202,7 @@ export function NewsCard({ p }: { p: Post }) {
         {p.heading && p.heading.trim() !== p.title.trim() && (
           <p
             onClick={toggleExpand}
-            className="text-xs sm:text-sm font-medium text-cyan-100/90 leading-snug border-l-2 border-cyan-400/70 pl-2.5 cursor-pointer"
+            className="news-card-body text-xs sm:text-sm font-medium text-cyan-100/90 leading-snug border-l-2 border-cyan-400/70 pl-2.5 cursor-pointer"
           >
             {p.heading}
           </p>
@@ -179,7 +213,7 @@ export function NewsCard({ p }: { p: Post }) {
         {p.body && (
           <div
             onClick={toggleExpand}
-            className="text-xs sm:text-sm leading-relaxed text-slate-200 opacity-95 cursor-pointer"
+            className="news-card-body text-xs sm:text-sm leading-relaxed text-slate-200 opacity-95 cursor-pointer"
           >
             {expanded ? (
               <div className="space-y-2">
