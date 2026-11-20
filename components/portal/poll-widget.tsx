@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { BarChart3, CheckCircle2, Vote } from 'lucide-react'
 import {
   getCampusPolls,
@@ -26,7 +27,7 @@ function getDeviceId(): string {
 
 const bn = (n: number) => n.toLocaleString('bn-BD')
 
-export function PollWidget() {
+export function PollWidget({ standalone = false }: { standalone?: boolean }) {
   const [polls, setPolls] = useState<CampusPoll[]>([])
   const [votes, setVotes] = useState<PollVoteRow[]>([])
   const [devId, setDevId] = useState('')
@@ -66,7 +67,26 @@ export function PollWidget() {
     setBusyPoll(null)
   }
 
-  if (!loaded || polls.length === 0) return null
+  if (!loaded || polls.length === 0) {
+    if (!standalone) return null
+    return (
+      <section id="polls" className="py-12 sm:py-16 border-b border-white/10 relative">
+        <div className="mx-auto max-w-5xl px-4 space-y-6">
+          <SectionHeading
+            inverted
+            eyebrow="Campus Opinion Poll"
+            title="ক্যাম্পাস জরিপ ও পাঠকের মতামত"
+            titleEn="Campus Opinion Polls"
+            subtitle="সমসাময়িক ক্যাম্পাস বিষয়ে আপনার মতামত দিন ও লাইভ ফলাফল দেখুন।"
+            subtitleEn="Share your opinion and view live results."
+          />
+          <div className="glass-card p-8 text-center text-sm text-slate-300" aria-live="polite">
+            {loaded ? 'এখনো কোনো সক্রিয় জরিপ নেই।' : 'জরিপ লোড হচ্ছে...'}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section id="polls" className="py-12 sm:py-16 border-b border-white/10 relative">
@@ -78,6 +98,16 @@ export function PollWidget() {
           titleEn="Campus Opinion Polls"
           subtitle="সমসাময়িক ক্যাম্পাস বিষয়ে আপনার মতামত দিন ও লাইভ ফলাফল দেখুন।"
           subtitleEn="Share your opinion and view live results."
+          action={
+            !standalone ? (
+              <Link
+                href="/polls"
+                className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
+              >
+                সব জরিপ
+              </Link>
+            ) : undefined
+          }
         />
 
         <div className="grid gap-5 md:grid-cols-2">

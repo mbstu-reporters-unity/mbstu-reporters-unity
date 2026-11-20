@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { Briefcase, GraduationCap, Newspaper, Sparkles, User, Users } from 'lucide-react'
 import { SB_URL, SB_KEY, attachProfileAvatars, type Post, type UserType } from '@/lib/sb'
 import { SectionHeading } from './section-heading'
@@ -41,7 +42,7 @@ async function getCommunityPageFeedPosts(limit = 100): Promise<Post[]> {
   }
 }
 
-export function CommunityFeed() {
+export function CommunityFeed({ standalone = false }: { standalone?: boolean }) {
   const settings = useSiteSettings()
   const [posts, setPosts] = useState<Post[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -77,9 +78,28 @@ export function CommunityFeed() {
     return posts.filter((p) => (p.author_user_type || 'student') === filter)
   }, [posts, filter])
 
-  if (!loaded || posts.length === 0) return null
-
   const sec = settings.homeSections.sections.find((s) => s.key === 'community_feed')
+  if (!loaded || posts.length === 0) {
+    if (!standalone) return null
+    return (
+      <section id="community-feed" className="py-14 sm:py-20 border-b border-white/10 relative">
+        <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
+          <SectionHeading
+            inverted
+            eyebrow={sec?.eyebrow ?? 'Campus Community Feed'}
+            title={sec?.titleBn || 'সবার পোস্ট ও পেজ টাইমলাইন'}
+            titleEn={sec?.titleEn || 'Campus Community Feed'}
+            subtitle={sec?.subtitleBn || 'ক্যাম্পাস কমিউনিটির পেজে প্রকাশিত সাম্প্রতিক পোস্টসমূহ।'}
+            subtitleEn={sec?.subtitleEn || 'Recent posts from campus community pages.'}
+          />
+          <div className="glass-card p-8 text-center text-sm text-slate-300" aria-live="polite">
+            {loaded ? 'এখনো কোনো কমিউনিটি পোস্ট নেই।' : 'কমিউনিটি পোস্ট লোড হচ্ছে...'}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   const visiblePosts = filtered.slice(0, shownCount)
   const remaining = Math.max(0, filtered.length - visiblePosts.length)
 
@@ -97,6 +117,16 @@ export function CommunityFeed() {
               'শিক্ষক, শিক্ষার্থী, কর্মকর্তা ও সাংবাদিকদের নিজস্ব পেজে প্রকাশিত সর্বশেষ লেখা, ছবি ও পোস্টসমূহ।'
             }
             subtitleEn={sec?.subtitleEn || 'Latest posts from teachers, students, staff and campus pages.'}
+            action={
+              !standalone ? (
+                <Link
+                  href="/community"
+                  className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
+                >
+                  কমিউনিটি পেজ
+                </Link>
+              ) : undefined
+            }
           />
 
           <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none">

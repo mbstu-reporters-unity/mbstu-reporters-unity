@@ -16,7 +16,16 @@ export function SiteFooter() {
     '#home': '/',
     '#about': '/about',
     '#leadership': '/committee',
-    '#general-news': '/search',
+    '#general-news': '/news',
+    '#club-news': '/clubs',
+    '#club-latest': '/clubs',
+    '#reels-hub': '/reels',
+    '#community-pages': '/community',
+    '#community-feed': '/community',
+    '#stories': '/stories',
+    '#polls': '/polls',
+    '#notices': '/notices',
+    '#student-corner': '/student-corner',
     '#contact': '/contact',
   }
 

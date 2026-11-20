@@ -1,5 +1,6 @@
 import { getVisiblePosts, getLimits, CAT_CLUB, CAT_STUDENT, type Post } from '@/lib/sb'
 import type { HomeSectionConfig } from '@/lib/site-settings'
+import Link from 'next/link'
 import { SectionHeading } from './section-heading'
 import { NewsGrid } from './news-card'
 
@@ -32,6 +33,14 @@ export async function GeneralNews({
             titleEn={sectionConfig?.titleEn || 'Latest Campus Reports'}
             subtitle={sectionConfig?.subtitleBn || 'মাভাবিপ্রবির সর্বত্র থেকে যাচাইকৃত নির্ভরযোগ্য প্রতিবেদন।'}
             subtitleEn={sectionConfig?.subtitleEn || 'Verified reports from across MBSTU.'}
+            action={
+              <Link
+                href="/news"
+                className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
+              >
+                সব সংবাদ দেখুন
+              </Link>
+            }
           />
         </div>
         {posts.length ? (

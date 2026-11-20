@@ -579,6 +579,7 @@ export function DrillDownMenu({
                   {panel.items.map((item) => {
                     const Icon = item.icon
                     const hasChildren = Boolean(item.children && item.children.length > 0)
+                    const targetHref = item.href
                     const active = !hasChildren && isHrefActive(item.href)
 
                     const rowClass = `group flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition-all active:scale-[0.98] cursor-pointer ${
@@ -673,19 +674,34 @@ export function DrillDownMenu({
                       )
                     }
 
-                    const targetHref = item.href || '/'
+                    if (targetHref) {
+                      return (
+                        <li key={item.id}>
+                          <Link
+                            href={targetHref}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              runAfterClearingGuards(() => router.push(targetHref))
+                            }}
+                            className={rowClass}
+                          >
+                            {content}
+                          </Link>
+                        </li>
+                      )
+                    }
+
                     return (
                       <li key={item.id}>
-                        <Link
-                          href={targetHref}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            runAfterClearingGuards(() => router.push(targetHref))
-                          }}
-                          className={rowClass}
+                        <div
+                          aria-disabled="true"
+                          className={`${rowClass} cursor-not-allowed opacity-60`}
                         >
                           {content}
-                        </Link>
+                          <span className="shrink-0 text-[10px] font-semibold text-amber-300">
+                            গন্তব্য নির্ধারিত নয়
+                          </span>
+                        </div>
                       </li>
                     )
                   })}

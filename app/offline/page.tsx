@@ -1,10 +1,14 @@
 'use client'
 
 import { WifiOff, RefreshCw, Home, Bell, Building2 } from 'lucide-react'
+import { BackNavigation } from '@/components/portal/back-navigation'
 
 export default function OfflinePage() {
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 text-white">
+    <main className="min-h-screen flex flex-col items-center justify-center gap-4 p-4 text-white">
+      <div className="w-full max-w-md">
+        <BackNavigation items={[{ label: 'অফলাইন পেজ' }]} />
+      </div>
       <div className="glass-card max-w-md w-full p-6 sm:p-8 text-center space-y-4">
         <div className="size-16 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 flex items-center justify-center mx-auto">
           <WifiOff className="size-8" />

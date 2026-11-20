@@ -50,6 +50,7 @@ import ImageSection, { useImageSection } from "../../components/portal/image-sec
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
 import { DigitalIdCard } from "../../components/portal/digital-id-card"
+import { BackNavigation } from "../../components/portal/back-navigation"
 import {
   Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
@@ -736,7 +737,10 @@ export default function AdminPage() {
 
   if (!token) {
     return (
-      <main className="min-h-dvh bg-[#071030] text-white flex items-center justify-center p-4">
+      <main className="relative min-h-dvh bg-[#071030] text-white flex items-center justify-center p-4">
+        <div className="absolute inset-x-4 top-4">
+          <BackNavigation items={[{ label: mode === "login" ? "ক্যাম্পাস লগইন" : "নতুন একাউন্ট" }]} />
+        </div>
         <div className="w-full max-w-md rounded-3xl border border-white/20 bg-slate-900/90 shadow-2xl p-6 sm:p-7 space-y-4 backdrop-blur-xl">
           <div className="text-center space-y-1 border-b border-white/10 pb-3">
             <h1 className="text-xl font-serif font-bold text-cyan-300">
@@ -890,7 +894,10 @@ export default function AdminPage() {
 
   if (me && !me.approved) {
     return (
-      <main className="min-h-dvh bg-[#071030] text-white flex items-center justify-center p-4">
+      <main className="relative min-h-dvh bg-[#071030] text-white flex items-center justify-center p-4">
+        <div className="absolute inset-x-4 top-4">
+          <BackNavigation items={[{ label: "অনুমোদনের অপেক্ষায়" }]} />
+        </div>
         <div className="w-full max-w-sm rounded-3xl border border-white/20 bg-slate-900/90 shadow-2xl p-6 space-y-3 text-center backdrop-blur">
           <h1 className="text-xl font-bold text-amber-300">অনুমোদনের অপেক্ষায়</h1>
           <p className="text-xs text-slate-300 leading-relaxed">
@@ -1137,6 +1144,7 @@ export default function AdminPage() {
       )}
 
       <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-5xl mx-auto w-full space-y-4">
+        <BackNavigation items={[{ label: "ড্যাশবোর্ড" }]} />
         {msg && (
           <div className="p-3 bg-emerald-50 text-emerald-900 border border-emerald-300 rounded-2xl text-xs sm:text-sm font-bold text-center shadow-xs">
             {msg}

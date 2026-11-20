@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
+import Link from "next/link"
 import { Play, Film, Share2, ExternalLink, ChevronUp, ChevronDown } from "lucide-react"
 import { getLiveReels, type ReelItem } from "@/lib/reels"
 import { useLang } from "@/lib/i18n"
@@ -13,17 +14,21 @@ function extractYouTubeId(url: string): string | null {
   return match ? match[1] : null
 }
 
-export function FbReelsSection() {
+export function FbReelsSection({ standalone = false }: { standalone?: boolean }) {
   const settings = useSiteSettings()
   const { pick } = useLang()
   const [reels, setReels] = useState<ReelItem[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [currentIndex, setCurrentIndex] = useState<number | null>(null)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const itemRefs = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
-    getLiveReels().then(setReels)
+    getLiveReels().then((items) => {
+      setReels(items)
+      setLoaded(true)
+    })
   }, [])
 
   useEffect(() => {
@@ -88,7 +93,16 @@ export function FbReelsSection() {
     }
   }
 
-  if (reels.length === 0) return null
+  if (reels.length === 0) {
+    if (!standalone) return null
+    return (
+      <section id="reels-hub" className="mx-auto w-full max-w-7xl px-4 py-8">
+        <div className="glass-card p-8 text-center text-sm text-slate-300" aria-live="polite">
+          {loaded ? "এখনো কোনো সক্রিয় রিলস নেই।" : "রিলস লোড হচ্ছে..."}
+        </div>
+      </section>
+    )
+  }
 
   const sec = settings.homeSections.sections.find((s) => s.key === "reels")
   const headingText = pick(sec?.titleBn || "Reels ও ভিডিও গ্যালারি", sec?.titleEn || "Reels & Video Gallery")
@@ -108,7 +122,14 @@ export function FbReelsSection() {
             )}
           </h3>
         </div>
-        <span className="text-xs text-cyan-300 font-semibold">{reels.length}টি ভিডিও</span>
+        <div className="flex items-center gap-3">
+          {!standalone && (
+            <Link href="/reels" className="text-xs font-bold text-cyan-300 hover:underline">
+              সব রিলস
+            </Link>
+          )}
+          <span className="text-xs text-cyan-300 font-semibold">{reels.length}টি ভিডিও</span>
+        </div>
       </div>
 
       <div className="flex gap-2.5 overflow-x-auto px-4 pb-2 scrollbar-none select-none">

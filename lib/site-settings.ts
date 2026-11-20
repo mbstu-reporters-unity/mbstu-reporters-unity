@@ -190,6 +190,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       { id: "news-campus", defaultLabel: "ক্যাম্পাস সংবাদ", labelBn: "ক্যাম্পাস সংবাদ", labelEn: "Campus News", visible: true },
       { id: "news-notices", defaultLabel: "ডিজিটাল নোটিশ", labelBn: "ডিজিটাল নোটিশ", labelEn: "Digital Notices", visible: true },
       { id: "news-reels", defaultLabel: "রিলস ও ভিডিও হাব", labelBn: "রিলস ও ভিডিও হাব", labelEn: "Reels & Video Hub", visible: true },
+      { id: "news-stories", defaultLabel: "ক্যাম্পাস স্টোরিজ", labelBn: "ক্যাম্পাস স্টোরিজ", labelEn: "Campus Stories", visible: true },
+      { id: "news-polls", defaultLabel: "ক্যাম্পাস জরিপ", labelBn: "ক্যাম্পাস জরিপ", labelEn: "Campus Polls", visible: true },
       { id: "community-clubs", defaultLabel: "কমিউনিটি ও ক্লাব", labelBn: "কমিউনিটি ও ক্লাব", labelEn: "Community & Clubs", visible: true },
       { id: "comm-clubs", defaultLabel: "ক্যাম্পাস ক্লাবসমূহ", labelBn: "ক্যাম্পাস ক্লাবসমূহ", labelEn: "Campus Clubs", visible: true },
       { id: "comm-pages", defaultLabel: "ক্যাম্পাস পেজসমূহ", labelBn: "ক্যাম্পাস পেজসমূহ", labelEn: "Campus Pages", visible: true },
@@ -353,8 +355,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       { id: "ql-2", labelBn: "পরিচিতি", labelEn: "About", href: "/about", visible: true },
       { id: "ql-3", labelBn: "কার্যনির্বাহী পরিষদ", labelEn: "Executive Council", href: "/committee", visible: true },
       { id: "ql-4", labelBn: "ডিরেক্টর প্যানেল", labelEn: "Director Panel", href: "/council", visible: true },
-      { id: "ql-5", labelBn: "ক্যাম্পাস সংবাদ", labelEn: "Campus News", href: "/search", visible: true },
-      { id: "ql-6", labelBn: "ক্যাম্পাস ক্লাবসমূহ", labelEn: "Campus Clubs", href: "#club-news", visible: true },
+      { id: "ql-5", labelBn: "ক্যাম্পাস সংবাদ", labelEn: "Campus News", href: "/news", visible: true },
+      { id: "ql-6", labelBn: "ক্যাম্পাস ক্লাবসমূহ", labelEn: "Campus Clubs", href: "/clubs", visible: true },
       { id: "ql-7", labelBn: "স্টুডেন্ট কর্নার", labelEn: "Student Corner", href: "/student-corner", visible: true },
       { id: "ql-8", labelBn: "নোটিশ", labelEn: "Notices", href: "/notices", visible: true },
       { id: "ql-9", labelBn: "যোগাযোগ", labelEn: "Contact", href: "/contact", visible: true },
@@ -461,6 +463,15 @@ function mergeSiteSettings(
     ...(parsed.branding || {}),
   }
   branding.univLogoUrl = normalizeUniversityLogoUrl(branding.univLogoUrl)
+  const quickLinks = (parsed.footer?.quickLinks || DEFAULT_SITE_SETTINGS.footer.quickLinks).map((link) => {
+    if (link.id === "ql-5" && link.href === "/search") {
+      return { ...link, href: "/news" }
+    }
+    if (link.id === "ql-6" && link.href === "#club-news") {
+      return { ...link, href: "/clubs" }
+    }
+    return link
+  })
 
   return {
     branding,
@@ -487,7 +498,7 @@ function mergeSiteSettings(
     footer: {
       ...DEFAULT_SITE_SETTINGS.footer,
       ...(parsed.footer || {}),
-      quickLinks: parsed.footer?.quickLinks || DEFAULT_SITE_SETTINGS.footer.quickLinks,
+      quickLinks,
       socialLinks: parsed.footer?.socialLinks || DEFAULT_SITE_SETTINGS.footer.socialLinks,
     },
     behaviorAndPages: {

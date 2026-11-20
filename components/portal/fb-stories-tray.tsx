@@ -8,10 +8,11 @@ import { getMe, type Profile } from "@/lib/sb"
 import { useLang } from "@/lib/i18n"
 import { useSiteSettings } from "./site-settings-context"
 
-export function FbStoriesTray() {
+export function FbStoriesTray({ standalone = false }: { standalone?: boolean }) {
   const settings = useSiteSettings()
   const { pick } = useLang()
   const [stories, setStories] = useState<StoryItem[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [activeStoryIdx, setActiveStoryIdx] = useState<number | null>(null)
   const [progress, setProgress] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
@@ -23,7 +24,10 @@ export function FbStoriesTray() {
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    getActiveStories().then(setStories)
+    getActiveStories().then((items) => {
+      setStories(items)
+      setLoaded(true)
+    })
 
     const t = typeof window !== "undefined" ? localStorage.getItem("mbstu_admin_token") : null
     if (t) {
@@ -150,14 +154,24 @@ export function FbStoriesTray() {
     }
   }
 
-  if (stories.length === 0 && !me) return null
+  if (stories.length === 0 && !me && !standalone) return null
 
   const sec = settings.homeSections.sections.find((s) => s.key === "stories")
   const addStoryLabel = pick(sec?.subtitleBn || "স্টোরি দিন", sec?.subtitleEn || "Add Story")
   const currentActiveStory = activeStoryIdx !== null ? stories[activeStoryIdx] : null
 
   return (
-    <div className="w-full my-4">
+    <div id="stories" className="w-full my-4">
+      {!standalone && (
+        <div className="mx-auto mb-2 flex max-w-7xl items-center justify-between gap-3 px-4">
+          <h2 className="font-serif text-base font-bold text-white">
+            {pick(sec?.titleBn || 'স্টোরিজ', sec?.titleEn || 'Stories')}
+          </h2>
+          <Link href="/stories" className="text-xs font-bold text-cyan-300 hover:underline">
+            সব স্টোরি
+          </Link>
+        </div>
+      )}
       <div className="w-full overflow-x-auto py-1 px-3 sm:px-4 scrollbar-none select-none">
         <div className="flex gap-2 sm:gap-2.5 min-w-max items-center">
           <Link
@@ -231,6 +245,16 @@ export function FbStoriesTray() {
           ))}
         </div>
       </div>
+
+      {standalone && (
+        <p className="mx-4 mt-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-center text-xs text-slate-300" aria-live="polite">
+          {!loaded
+            ? 'স্টোরি লোড হচ্ছে...'
+            : stories.length === 0
+              ? 'এখনো কোনো সক্রিয় স্টোরি নেই।'
+              : `${stories.length.toLocaleString('bn-BD')}টি স্টোরি`}
+        </p>
+      )}
 
       {currentActiveStory && (
         <div

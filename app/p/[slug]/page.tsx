@@ -93,7 +93,7 @@ export default async function PublicCommunityPage({
           <div className="max-w-5xl mx-auto px-4 pt-4 pb-2">
             <BackNavigation
               items={[
-                { label: 'কমিউনিটি পেজসমূহ', href: '/#community-pages' },
+                { label: 'কমিউনিটি পেজসমূহ', href: '/community' },
                 { label: page.name },
               ]}
             />

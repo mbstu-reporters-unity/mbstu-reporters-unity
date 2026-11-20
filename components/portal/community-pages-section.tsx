@@ -25,9 +25,14 @@ function safeHttpUrl(u?: string | null): string | null {
   return /^https?:\/\//i.test(t) ? t : null
 }
 
-export function CommunityPagesSection() {
+export function CommunityPagesSection({
+  mode = 'carousel',
+}: {
+  mode?: 'carousel' | 'directory'
+}) {
   const settings = useSiteSettings()
   const [pages, setPages] = useState<CommunityPage[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [filter, setFilter] = useState('All')
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
@@ -41,6 +46,7 @@ export function CommunityPagesSection() {
     getCommunityPages().then((data) => {
       const activeOnly = (data || []).filter((p) => p.is_active !== false)
       setPages(activeOnly)
+      setLoaded(true)
     })
   }, [])
 
@@ -70,10 +76,10 @@ export function CommunityPagesSection() {
   }, [total])
 
   useEffect(() => {
-    if (total <= 1 || isPaused) return
+    if (mode === 'directory' || total <= 1 || isPaused) return
     const timer = setInterval(() => { nextSlide() }, 4500)
     return () => clearInterval(timer)
-  }, [total, isPaused, nextSlide])
+  }, [mode, total, isPaused, nextSlide])
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsPaused(true)
@@ -118,12 +124,32 @@ export function CommunityPagesSection() {
     } catch {}
   }
 
-  if (pages.length === 0) return null
-
   const sec = settings.homeSections.sections.find((s) => s.key === 'community_pages')
+  if (pages.length === 0) {
+    if (mode !== 'directory') return null
+    return (
+      <section id="community-pages" className="py-14 sm:py-20 border-b border-white/10 relative">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            inverted
+            eyebrow={sec?.eyebrow ?? 'Community & Organizations'}
+            title={sec?.titleBn || 'ক্যাম্পাস পেজ ও কমিউনিটি'}
+            titleEn={sec?.titleEn || 'Campus Pages & Community'}
+            subtitle={sec?.subtitleBn || 'মাভাবিপ্রবির বিভিন্ন ক্যাম্পাস সংগঠনের সক্রিয় পেজ ও কার্যক্রম।'}
+            subtitleEn={sec?.subtitleEn || 'Active pages and activities from campus organizations.'}
+          />
+          <div className="glass-card p-8 text-center text-sm text-slate-300" aria-live="polite">
+            {loaded ? 'এখনো কোনো সক্রিয় কমিউনিটি পেজ নেই।' : 'কমিউনিটি পেজ লোড হচ্ছে...'}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  const isDirectory = mode === 'directory'
   const displayedPages: CommunityPage[] = []
   if (total > 0) {
-    for (let i = 0; i < Math.min(cardsCount, total); i++) {
+    for (let i = 0; i < (isDirectory ? total : Math.min(cardsCount, total)); i++) {
       displayedPages.push(filteredPages[(currentIndex + i) % total])
     }
   }
@@ -141,6 +167,16 @@ export function CommunityPagesSection() {
             'মাভাবিপ্রবির বিভিন্ন সমিতি, হল সংসদ ও ক্যাম্পাস সংগঠনসমূহের অফিসিয়াল পেজ ও সাম্প্রতিক কার্যক্রম।'
           }
           subtitleEn={sec?.subtitleEn || 'Official campus pages and recent updates.'}
+          action={
+            !isDirectory ? (
+              <Link
+                href="/community"
+                className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
+              >
+                সব কমিউনিটি পেজ
+              </Link>
+            ) : undefined
+          }
         />
 
         {categories.length > 2 && (
@@ -287,7 +323,7 @@ export function CommunityPagesSection() {
             })}
           </div>
 
-          {total > 1 && (
+          {!isDirectory && total > 1 && (
             <div className="mt-6 flex items-center justify-between gap-4 border-t border-white/10 pt-4">
               <div className="flex items-center gap-1.5">
                 {filteredPages.map((_, i) => (

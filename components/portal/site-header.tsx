@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   Award,
   Bell,
@@ -43,6 +44,7 @@ import {
   UserCheck,
   UserPlus,
   Users,
+  Vote,
 } from 'lucide-react'
 import { getCampusClubs, type ClubItem } from '@/lib/clubs'
 import { getVisibleCategoryNames } from '@/lib/categories'
@@ -145,6 +147,7 @@ async function fetchHeaderData(): Promise<HeaderCachePayload> {
 
 export function SiteHeader() {
   const settings = useSiteSettings()
+  const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
 
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
@@ -237,34 +240,16 @@ export function SiteHeader() {
     setMe(null)
   }, [])
 
-  const scrollToSection = useCallback((sectionId: string) => {
-    if (typeof window === 'undefined') return
-    const isHome = window.location.pathname === '/' || window.location.pathname === ''
-    if (isHome) {
-      const el = document.getElementById(sectionId)
-      if (el) {
-        const offsetPosition = el.getBoundingClientRect().top + window.pageYOffset - 70
-        window.scrollTo({ top: offsetPosition, behavior: 'smooth' })
-        return
-      }
-    }
-    window.location.href = `/#${sectionId}`
-  }, [])
-
   const openClubWindow = useCallback((clubId: string) => {
-    if (typeof window === 'undefined') return
-    const isHome = window.location.pathname === '/' || window.location.pathname === ''
-    if (isHome) {
+    if (typeof window !== 'undefined' && window.location.pathname === '/clubs') {
       const url = new URL(window.location.href)
       url.searchParams.set('club', clubId)
       window.history.pushState({}, '', url.toString())
       window.dispatchEvent(new CustomEvent('open-club-modal', { detail: clubId }))
-      const el = document.getElementById(`club-${clubId}`) || document.getElementById('club-news')
-      if (el) el.scrollIntoView({ behavior: 'smooth' })
-    } else {
-      window.location.href = `/?club=${clubId}#club-news`
+      return
     }
-  }, [])
+    router.push(`/clubs?club=${encodeURIComponent(clubId)}`)
+  }, [router])
 
   const menuItems = useMemo<MenuItem[]>(() => {
     const ctrlMap = new Map(settings.menu.items.map((c) => [c.id, c]))
@@ -376,7 +361,7 @@ export function SiteHeader() {
         label: pick('ক্লাব সেকশনে যান', 'Go to Clubs'),
         icon: Sparkles,
         iconClass: 'bg-orange-500 text-white',
-        onSelect: () => scrollToSection('club-news'),
+        href: '/clubs',
       },
       ...clubsList.map((club) => ({
         id: `club-${club.id}`,
@@ -394,7 +379,7 @@ export function SiteHeader() {
         label: pick('সকল পেজ শোকেস দেখুন', 'View All Community Pages'),
         icon: LayoutGrid,
         iconClass: 'bg-violet-600 text-white',
-        onSelect: () => scrollToSection('community-pages'),
+        href: '/community',
       },
       ...communityPagesList.map((cp) => ({
         id: `page-${cp.id}`,
@@ -476,7 +461,7 @@ export function SiteHeader() {
               label: getLabel('news-campus', 'ক্যাম্পাস সংবাদ', 'Campus News'),
               icon: Newspaper,
               iconClass: 'bg-amber-500/80 text-white',
-              onSelect: () => scrollToSection('general-news'),
+              href: '/news',
             },
           ]
         : []),
@@ -547,7 +532,31 @@ export function SiteHeader() {
               badge: 'LIVE',
               icon: Film,
               iconClass: 'bg-rose-600 text-white',
-              onSelect: () => scrollToSection('reels-hub'),
+              href: '/reels',
+            },
+          ]
+        : []),
+      ...(isVisible('news-stories')
+        ? [
+            {
+              id: 'news-stories',
+              label: getLabel('news-stories', 'ক্যাম্পাস স্টোরিজ', 'Campus Stories'),
+              sublabel: pick('সাম্প্রতিক স্টোরি দেখুন', 'Browse recent stories'),
+              icon: Sparkles,
+              iconClass: 'bg-fuchsia-600 text-white',
+              href: '/stories',
+            },
+          ]
+        : []),
+      ...(isVisible('news-polls')
+        ? [
+            {
+              id: 'news-polls',
+              label: getLabel('news-polls', 'ক্যাম্পাস জরিপ', 'Campus Polls'),
+              sublabel: pick('জরিপে অংশ নিন ও ফলাফল দেখুন', 'Vote and view poll results'),
+              icon: Vote,
+              iconClass: 'bg-cyan-600 text-white',
+              href: '/polls',
             },
           ]
         : []),
@@ -745,11 +754,11 @@ export function SiteHeader() {
         ? [
             {
               id: 'about-leadership',
-              label: getLabel('about-leadership', 'কার্যনির্বাহী বাণী', 'Executive Messages'),
-              sublabel: pick('হোমপেজে নেতৃত্বের বার্তা', 'Messages from the leadership'),
+              label: getLabel('about-leadership', 'কার্যনির্বাহী পরিষদ', 'Executive Council'),
+              sublabel: pick('কার্যনির্বাহী পরিষদের সদস্য তালিকা', 'Executive council directory'),
               icon: Users,
               iconClass: 'bg-teal-700 text-white',
-              onSelect: () => scrollToSection('leadership'),
+              href: '/committee',
             },
           ]
         : []),
@@ -761,7 +770,7 @@ export function SiteHeader() {
               sublabel: pick('অফিস ও যোগাযোগ ডেস্ক', 'Office and contact desk'),
               icon: Phone,
               iconClass: 'bg-pink-600 text-white',
-              onSelect: () => scrollToSection('contact'),
+              href: '/contact',
             },
           ]
         : []),
@@ -926,7 +935,6 @@ export function SiteHeader() {
     clubsList,
     communityPagesList,
     associationsList,
-    scrollToSection,
     openClubWindow,
     handleLogout,
   ])

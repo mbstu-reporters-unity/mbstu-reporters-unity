@@ -69,7 +69,14 @@ export default async function ReelPlayerPage({
       
       {/* ১. টপ ব্যাক বার: স্মার্ট ব্যাক নেভিগেশন */}
       <header className="sticky top-0 z-50 flex items-center justify-between p-3 sm:p-4 bg-gradient-to-b from-black/90 via-black/50 to-transparent">
-        <BackNavigation showHome={false} />
+        <BackNavigation
+          items={[
+            { label: 'রিলস', href: '/reels' },
+            { label: post.title },
+          ]}
+          showHome={false}
+          showForward
+        />
 
         <span className="text-xs font-bold bg-red-600/90 text-white px-3 py-1 rounded-full flex items-center gap-1 shadow">
           <Film className="size-3.5" /> Reels

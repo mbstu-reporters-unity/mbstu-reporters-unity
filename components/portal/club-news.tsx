@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import {
   ArrowRight,
   Baby,
@@ -82,7 +83,7 @@ function formatClub(c: ClubItem): Club {
 
 const bn = (n: number | string) => String(n).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)])
 
-export function ClubNews() {
+export function ClubNews({ standalone = false }: { standalone?: boolean }) {
   const settings = useSiteSettings()
   const [list, setList] = useState<Club[]>(fallbackClubs)
   const [dbMap, setDbMap] = useState<Record<string, ClubItem>>({})
@@ -407,6 +408,16 @@ export function ClubNews() {
             'মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের সাম্প্রতিক অর্জন, কার্যক্রম এবং পূর্ণাঙ্গ পরিচিতি।'
           }
           subtitleEn={sec?.subtitleEn || 'Latest activities and profiles of MBSTU campus clubs and organizations.'}
+          action={
+            !standalone ? (
+              <Link
+                href="/clubs"
+                className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
+              >
+                সব ক্লাব দেখুন
+              </Link>
+            ) : undefined
+          }
         />
 
         <div className="-mx-4 px-4 sm:mx-0 sm:px-0 mb-6 flex gap-2.5 overflow-x-auto pb-2.5 pt-1 scrollbar-none" role="group">
