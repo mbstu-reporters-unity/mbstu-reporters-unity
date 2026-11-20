@@ -6,6 +6,7 @@ import { Play, Film, Share2, ExternalLink, ChevronUp, ChevronDown } from "lucide
 import { getLiveReels, type ReelItem } from "@/lib/reels"
 import { useLang } from "@/lib/i18n"
 import { useSiteSettings } from "./site-settings-context"
+import { HomepageCompactCarousel } from "./homepage-transition-sections"
 
 function extractYouTubeId(url: string): string | null {
   const match = url.match(
@@ -14,7 +15,13 @@ function extractYouTubeId(url: string): string | null {
   return match ? match[1] : null
 }
 
-export function FbReelsSection({ standalone = false }: { standalone?: boolean }) {
+export function FbReelsSection({
+  standalone = false,
+  compact = false,
+}: {
+  standalone?: boolean
+  compact?: boolean
+}) {
   const settings = useSiteSettings()
   const { pick } = useLang()
   const [reels, setReels] = useState<ReelItem[]>([])
@@ -108,8 +115,92 @@ export function FbReelsSection({ standalone = false }: { standalone?: boolean })
   const headingText = pick(sec?.titleBn || "Reels ও ভিডিও গ্যালারি", sec?.titleEn || "Reels & Video Gallery")
   const badgeText = sec?.eyebrow || "LIVE"
 
+  const compactContent = (
+      <section className="my-8 border-b border-white/10 py-8 sm:py-10">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <Film className="size-5 shrink-0 text-rose-500" aria-hidden="true" />
+              <h2 className="font-serif text-lg font-bold text-white sm:text-xl">
+                {headingText}
+                {badgeText && (
+                  <span className="ml-2 rounded-full bg-red-600 px-2 py-0.5 align-middle text-[10px] font-bold text-white">
+                    {badgeText}
+                  </span>
+                )}
+              </h2>
+            </div>
+            <Link href="/reels" className="shrink-0 text-xs font-bold text-cyan-300 hover:underline">
+              সব দেখুন
+            </Link>
+          </div>
+          <HomepageCompactCarousel
+            title={headingText}
+            interval={7500}
+            className="max-w-none"
+            slides={reels.map((reel, idx) => {
+              const ytId = extractYouTubeId(reel.video_url)
+              const thumb =
+                reel.thumbnail_url ||
+                (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null)
+
+              return (
+                <button
+                  key={reel.id}
+                  type="button"
+                  onClick={() => openReelAt(idx)}
+                  aria-label={`রিলস চালান: ${reel.title}`}
+                  className="glass-card group grid w-full overflow-hidden text-left text-white sm:grid-cols-[minmax(0,0.9fr)_1fr]"
+                >
+                  <div className="relative aspect-video min-h-40 bg-slate-950 sm:aspect-auto sm:min-h-56">
+                    {thumb ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={thumb} alt="" className="size-full object-cover" />
+                    ) : (
+                      <div className="flex size-full min-h-40 items-center justify-center">
+                        <Film className="size-10 text-white/40" aria-hidden="true" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <span className="absolute inset-0 m-auto flex size-12 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white">
+                      <Play className="ml-0.5 size-5 fill-current text-cyan-300" aria-hidden="true" />
+                    </span>
+                  </div>
+                  <div className="flex flex-col justify-center gap-3 p-4 sm:p-6">
+                    <span className="text-xs font-bold uppercase tracking-wide text-cyan-300">
+                      {badgeText}
+                    </span>
+                    <h3 className="font-serif text-base font-bold leading-snug sm:text-xl">
+                      {reel.title}
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs text-slate-300">
+                      {reel.author_avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={reel.author_avatar}
+                          alt=""
+                          className="size-7 rounded-full border border-white/30 object-cover"
+                        />
+                      ) : (
+                        <span className="flex size-7 items-center justify-center rounded-full bg-cyan-700 font-bold text-white">
+                          {reel.author_name.charAt(0)}
+                        </span>
+                      )}
+                      <span>{reel.author_name}</span>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+          />
+        </div>
+      </section>
+  )
+
   return (
-    <div id="reels-hub" className="w-full my-6 space-y-3">
+    <div id="reels-hub" className={`w-full my-6 ${compact ? '' : 'space-y-3'}`}>
+      {compact ? compactContent : (
+        <>
       <div className="flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Film className="size-5 text-rose-500" />
@@ -125,7 +216,7 @@ export function FbReelsSection({ standalone = false }: { standalone?: boolean })
         <div className="flex items-center gap-3">
           {!standalone && (
             <Link href="/reels" className="text-xs font-bold text-cyan-300 hover:underline">
-              সব রিলস
+              {compact ? "সব দেখুন" : "সব রিলস"}
             </Link>
           )}
           <span className="text-xs text-cyan-300 font-semibold">{reels.length}টি ভিডিও</span>
@@ -185,6 +276,8 @@ export function FbReelsSection({ standalone = false }: { standalone?: boolean })
           )
         })}
       </div>
+        </>
+      )}
 
       {currentIndex !== null && (
         <div className="fixed inset-0 z-[999999] bg-black text-white select-none">

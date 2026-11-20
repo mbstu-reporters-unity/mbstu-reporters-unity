@@ -121,7 +121,13 @@ export default function SiteSettingsManager({
   function moveSection(index: number, dir: -1 | 1) {
     const target = index + dir
     const arr = [...cfg.homeSections.sections]
-    if (target < 0 || target >= arr.length) return
+    const fixedKeys = new Set(["hero", "leadership"])
+    if (
+      target < 0 ||
+      target >= arr.length ||
+      fixedKeys.has(arr[index]?.key) ||
+      fixedKeys.has(arr[target]?.key)
+    ) return
     ;[arr[index], arr[target]] = [arr[target], arr[index]]
     setCfg({ ...cfg, homeSections: { ...cfg.homeSections, sections: arr } })
   }
@@ -674,7 +680,7 @@ export default function SiteSettingsManager({
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      disabled={idx === 0}
+                      disabled={idx === 0 || sec.key === "hero" || cfg.homeSections.sections[idx - 1]?.key === "hero" || sec.key === "leadership"}
                       onClick={() => moveSection(idx, -1)}
                       className="p-1.5 rounded-lg border bg-slate-50 disabled:opacity-30 cursor-pointer"
                       title="উপরে নিন"
@@ -683,7 +689,7 @@ export default function SiteSettingsManager({
                     </button>
                     <button
                       type="button"
-                      disabled={idx === cfg.homeSections.sections.length - 1}
+                      disabled={idx === cfg.homeSections.sections.length - 1 || sec.key === "leadership" || cfg.homeSections.sections[idx + 1]?.key === "leadership" || sec.key === "hero"}
                       onClick={() => moveSection(idx, 1)}
                       className="p-1.5 rounded-lg border bg-slate-50 disabled:opacity-30 cursor-pointer"
                       title="নিচে নিন"

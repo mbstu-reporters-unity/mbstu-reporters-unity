@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowUpRight, ArrowRight, Award, BookOpen, Feather, GraduationCap, MessageSquareQuote } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, ArrowRight, Award, BookOpen, Feather, GraduationCap, MessageSquareQuote } from 'lucide-react'
 import { getStudentItems, type StudentItem } from '@/lib/sb'
 import { SectionHeading } from './section-heading'
 import { StudentDialog } from './student-dialog'
 import { useSiteSettings } from './site-settings-context'
+import { useHomepageAutoplay } from './use-homepage-autoplay'
 
 const typeIcon: Record<string, any> = {
   Opinion: MessageSquareQuote,
@@ -19,6 +20,7 @@ export function StudentCorner() {
   const settings = useSiteSettings()
   const [items, setItems] = useState<StudentItem[]>([])
   const [selected, setSelected] = useState<StudentItem | null>(null)
+  const autoplay = useHomepageAutoplay(items.length, 8000)
 
   useEffect(() => {
     getStudentItems(false).then(setItems)
@@ -27,12 +29,18 @@ export function StudentCorner() {
   if (!items.length) return null
 
   const sec = settings.homeSections.sections.find((s) => s.key === 'student_corner')
-  const featured = items.find((i) => i.featured) || items[0]
-  const rest = items.filter((i) => i.id !== featured.id).slice(0, 4)
+  const orderedItems = [...items].sort((a, b) => Number(!!b.featured) - Number(!!a.featured))
+  const featured = orderedItems[autoplay.index]
+  const rest = orderedItems.filter((i) => i.id !== featured.id).slice(0, 4)
   const FeaturedIcon = typeIcon[featured.kind] || MessageSquareQuote
 
   return (
-    <section id="student-corner" className="py-16 sm:py-20 relative">
+    <section
+      id="student-corner"
+      ref={autoplay.containerRef}
+      {...autoplay.interactionProps}
+      className="py-16 sm:py-20 relative"
+    >
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeading
           inverted
@@ -45,8 +53,11 @@ export function StudentCorner() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           <article
+            key={featured.id}
             onClick={() => setSelected(featured)}
-            className="glass-card group relative overflow-hidden text-white shadow-xl cursor-pointer"
+            className={`glass-card hero-daylight-dark-surface group relative overflow-hidden text-white shadow-xl cursor-pointer ${
+              autoplay.reducedMotion ? '' : 'animate-in fade-in slide-in-from-right-4 duration-500'
+            } motion-reduce:animate-none`}
           >
             <div className="relative aspect-[4/3] sm:aspect-[16/11]">
               {featured.image_url ? (
@@ -132,6 +143,27 @@ export function StudentCorner() {
             })}
           </ul>
         </div>
+
+        {orderedItems.length > 1 && (
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={autoplay.previous}
+              aria-label="আগের স্টুডেন্ট কর্নার পোস্ট"
+              className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20"
+            >
+              <ArrowLeft className="size-4" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={autoplay.next}
+              aria-label="পরের স্টুডেন্ট কর্নার পোস্ট"
+              className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20"
+            >
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </button>
+          </div>
+        )}
 
         <div className="mt-8 text-center">
           <Link

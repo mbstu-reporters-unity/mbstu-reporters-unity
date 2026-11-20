@@ -1,4 +1,5 @@
 import type { AntiSpamPayload } from "./anti-spam"
+import { hasEnoughHomepageHistory } from "./homepage-feed"
 
 export const SB_URL = "https://pdualebabnvkoaqaqcut.supabase.co"
 export const SB_KEY = "sb_publishable_7SMqtPPUqsWVCPIXDqgPTw_Jrctzkwm"
@@ -871,6 +872,41 @@ export async function getVisiblePosts(limit = 50): Promise<Post[]> {
     return await attachProfileAvatars(rows)
   } catch {
     return []
+  }
+}
+
+export async function getHomepagePostHistory(): Promise<Post[]> {
+  const pageSize = 200
+  const rows: Post[] = []
+  const now = Date.now()
+  let offset = 0
+
+  try {
+    while (true) {
+      const res = await fetch(
+        `${SB_URL}/rest/v1/posts?select=*&or=(hidden.is.null,hidden.eq.false)&order=created_at.desc&limit=${pageSize}&offset=${offset}`,
+        { headers: hdr(), cache: "no-store" }
+      )
+      if (!res.ok) {
+        console.error(`Homepage post history query failed (${res.status})`)
+        break
+      }
+
+      const page: Post[] = await res.json()
+      rows.push(...page)
+      if (
+        page.length < pageSize ||
+        hasEnoughHomepageHistory(rows, (post) => post.created_at, now)
+      ) {
+        break
+      }
+      offset += page.length
+    }
+
+    return await attachProfileAvatars(rows)
+  } catch (error) {
+    console.error("Homepage post history query failed", error)
+    return await attachProfileAvatars(rows)
   }
 }
 

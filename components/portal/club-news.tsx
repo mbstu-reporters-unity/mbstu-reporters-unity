@@ -38,6 +38,7 @@ import { cn } from '@/lib/utils'
 import { SectionHeading } from './section-heading'
 import { ClubReportsDialog } from './club-reports-dialog'
 import { useSiteSettings } from './site-settings-context'
+import { HomepageCompactCarousel } from './homepage-transition-sections'
 
 export const clubIcons: Record<string, LucideIcon> = {
   megaphone: Megaphone,
@@ -83,7 +84,13 @@ function formatClub(c: ClubItem): Club {
 
 const bn = (n: number | string) => String(n).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)])
 
-export function ClubNews({ standalone = false }: { standalone?: boolean }) {
+export function ClubNews({
+  standalone = false,
+  compact = false,
+}: {
+  standalone?: boolean
+  compact?: boolean
+}) {
   const settings = useSiteSettings()
   const [list, setList] = useState<Club[]>(fallbackClubs)
   const [dbMap, setDbMap] = useState<Record<string, ClubItem>>({})
@@ -212,7 +219,7 @@ export function ClubNews({ standalone = false }: { standalone?: boolean }) {
   const isContinuous = config.enabled && config.effect === 'continuous' && total > itemsPerView
 
   useEffect(() => {
-    if (!config.enabled || isContinuous || isPaused || total <= itemsPerView) return
+    if (compact || !config.enabled || isContinuous || isPaused || total <= itemsPerView) return
     const intervalMs = Math.max(2, config.duration_sec || 4) * 1000
     const isReverse = config.direction === 'left-to-right' || config.direction === 'top-to-bottom'
     const timer = setInterval(() => {
@@ -220,7 +227,7 @@ export function ClubNews({ standalone = false }: { standalone?: boolean }) {
       else nextSlide()
     }, intervalMs)
     return () => clearInterval(timer)
-  }, [config.enabled, config.direction, config.duration_sec, isContinuous, isPaused, total, itemsPerView, nextSlide, prevSlide])
+  }, [compact, config.enabled, config.direction, config.duration_sec, isContinuous, isPaused, total, itemsPerView, nextSlide, prevSlide])
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (config.pause_on_hover) setIsPaused(true)
@@ -250,7 +257,7 @@ export function ClubNews({ standalone = false }: { standalone?: boolean }) {
     const activityMediaList = parseActivityMedia(raw?.embed_media_url)
 
     return (
-      <div className="glass-card flex flex-col justify-between p-4 sm:p-5 select-none text-white h-full min-h-[300px] w-full transition-all">
+      <div className={`glass-card flex flex-col justify-between p-4 sm:p-5 select-none text-white h-full ${compact ? 'min-h-[240px] sm:min-h-[280px]' : 'min-h-[300px]'} w-full transition-all`}>
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-2 border-b border-white/15 pb-2.5">
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -395,6 +402,83 @@ export function ClubNews({ standalone = false }: { standalone?: boolean }) {
   const marqueeDurationSec = Math.max(10, total * Math.max(2.5, config.duration_sec || 4))
   const marqueeClass = config.direction === 'left-to-right' ? 'club-marquee-ltr' : 'club-marquee-rtl'
 
+  if (compact) {
+    return (
+      <section id="club-news" className="relative border-b border-white/10 py-8 sm:py-10">
+        <div
+          className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={(event) => setIsPaused(event.currentTarget.contains(document.activeElement))}
+          onFocusCapture={() => setIsPaused(true)}
+          onBlurCapture={(event) => {
+            const target = event.relatedTarget
+            if (target instanceof Node && event.currentTarget.contains(target)) return
+            setIsPaused(false)
+          }}
+          onTouchStart={() => setIsPaused(true)}
+          onTouchEnd={(event) => setIsPaused(event.currentTarget.contains(document.activeElement))}
+        >
+          <SectionHeading
+            eyebrow={sec?.eyebrow ?? 'Campus Organizations & Clubs'}
+            title={sec?.titleBn || 'ক্যাম্পাস ক্লাব ও সংগঠনসমূহ'}
+            titleEn={sec?.titleEn || 'Campus Organizations & Clubs'}
+            subtitle={sec?.subtitleBn || 'ক্যাম্পাস ক্লাব ও সংগঠনসমূহের সাম্প্রতিক কার্যক্রম।'}
+            subtitleEn={sec?.subtitleEn || 'Latest activities of MBSTU campus clubs and organizations.'}
+            action={
+              !standalone ? (
+                <Link
+                  href="/clubs"
+                  className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
+                >
+                  সব দেখুন
+                </Link>
+              ) : undefined
+            }
+          />
+
+          <div className="mb-5 flex gap-2.5 overflow-x-auto py-1 scrollbar-none" role="group" aria-label="ক্লাব ক্যাটাগরি">
+            {tags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => {
+                  setFilter(tag)
+                  setCurrentIndex(0)
+                  setIsPaused(true)
+                }}
+                aria-pressed={filter === tag}
+                className={cn(
+                  'shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap',
+                  filter === tag
+                    ? 'border-cyan-300/60 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
+                    : 'border-white/20 bg-white/10 text-white/80 hover:bg-white/20',
+                )}
+              >
+                {tag === 'All' ? 'সব ক্লাব' : tag}
+                <span className="ml-1.5 text-[10px] opacity-80">
+                  ({tag === 'All' ? list.length : list.filter((club) => club.tag === tag).length})
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <HomepageCompactCarousel
+            slides={visible.map((club) => <div key={club.id}>{renderCard(club)}</div>)}
+            title="ক্যাম্পাস ক্লাব ও সংগঠনসমূহ"
+            interval={Math.max(2, config.duration_sec || 4) * 1000}
+            paused={!config.enabled || isPaused || selected !== null}
+            className="max-w-none"
+          />
+          <ClubReportsDialog
+            club={selected}
+            rawClub={selected ? dbMap[selected.id] : undefined}
+            onClose={handleCloseDialog}
+          />
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section id="club-news" className="relative py-14 sm:py-20 border-b border-white/10 overflow-hidden">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -414,7 +498,7 @@ export function ClubNews({ standalone = false }: { standalone?: boolean }) {
                 href="/clubs"
                 className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
               >
-                সব ক্লাব দেখুন
+                {compact ? 'সব দেখুন' : 'সব ক্লাব দেখুন'}
               </Link>
             ) : undefined
           }

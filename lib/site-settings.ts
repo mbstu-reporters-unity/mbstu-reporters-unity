@@ -1,6 +1,18 @@
 import { SB_URL, SB_KEY } from "./sb"
 
 export const SITE_SETTINGS_KEY = "site_settings_v1"
+const HOME_LAYOUT_VERSION = 4
+const HIDDEN_ON_HOME_MIGRATION = new Set<HomeSectionKey>([
+  "stories",
+  "category_sections",
+  "club_posts",
+])
+const VISIBLE_ON_HOME_MIGRATION = new Set<HomeSectionKey>([
+  "reels",
+  "events_popular",
+  "polls",
+  "club_news",
+])
 
 export type DefaultThemeId =
   | "ocean-glass"
@@ -21,6 +33,8 @@ export type HomeSectionKey =
   | "stories"
   | "reels"
   | "general_news"
+  | "events_popular"
+  | "polls"
   | "community_feed"
   | "leadership"
   | "category_sections"
@@ -29,6 +43,11 @@ export type HomeSectionKey =
   | "club_posts"
   | "community_pages"
   | "notice_board"
+  | "departments"
+  | "social_sites"
+  | "timeline"
+  | "fact_check"
+  | "publications"
 
 export interface SiteMenuControlItem {
   id: string
@@ -117,6 +136,7 @@ export interface SiteSettings {
   homeSections: {
     sections: HomeSectionConfig[]
     homeNoticesLimit: number
+    layoutVersion: number
   }
   stats: {
     showStats: boolean
@@ -206,6 +226,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     customLinks: [],
   },
   homeSections: {
+    layoutVersion: HOME_LAYOUT_VERSION,
     sections: [
       {
         key: "hero",
@@ -218,18 +239,28 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
         subtitleEn: "",
       },
       {
-        key: "stories",
-        name: "২. ফেসবুক স্টোরিজ ট্রে",
+        key: "general_news",
+        name: "২. সর্বশেষ সংবাদ, কর্নার, ফিচার ও মতামত",
         visible: true,
-        eyebrow: "",
-        titleBn: "স্টোরিজ",
-        titleEn: "Stories",
-        subtitleBn: "স্টোরি দিন",
-        subtitleEn: "Add Story",
+        eyebrow: "Campus News",
+        titleBn: "সর্বশেষ সংবাদ",
+        titleEn: "Latest Campus Reports",
+        subtitleBn: "সংবাদ, কর্নার, ফিচার, সম্পাদকীয় ও মতামত এক জায়গায়।",
+        subtitleEn: "Latest news, features, editorials and student voices.",
+      },
+      {
+        key: "departments",
+        name: "৩. বিভাগ ও অনুষদ",
+        visible: true,
+        eyebrow: "Faculties & Departments",
+        titleBn: "বিভাগ ও অনুষদ",
+        titleEn: "Faculties & Departments",
+        subtitleBn: "মাভাবিপ্রবির অনুষদ ও বিভাগসমূহ।",
+        subtitleEn: "Explore MBSTU faculties and departments.",
       },
       {
         key: "reels",
-        name: "৩. রিলস ও ভিডিও গ্যালারি",
+        name: "৪. রিলস ও ভিডিও গ্যালারি",
         visible: true,
         eyebrow: "LIVE",
         titleBn: "Reels ও ভিডিও গ্যালারি",
@@ -238,44 +269,34 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
         subtitleEn: "",
       },
       {
-        key: "general_news",
-        name: "৪. ক্যাম্পাস সংবাদ",
+        key: "events_popular",
+        name: "৫. ইভেন্ট ও জনপ্রিয় সংবাদ",
         visible: true,
-        eyebrow: "Campus News",
-        titleBn: "ক্যাম্পাস সংবাদ",
-        titleEn: "Latest Campus Reports",
-        subtitleBn: "মাভাবিপ্রবির সর্বত্র থেকে যাচাইকৃত নির্ভরযোগ্য প্রতিবেদন।",
-        subtitleEn: "Verified reports from across MBSTU.",
+        eyebrow: "Events & Most Read",
+        titleBn: "ইভেন্ট ও জনপ্রিয় সংবাদ",
+        titleEn: "Events & Most Read",
+        subtitleBn: "",
+        subtitleEn: "",
+      },
+      {
+        key: "stories",
+        name: "৬. ফেসবুক স্টোরিজ ট্রে",
+        visible: false,
+        eyebrow: "",
+        titleBn: "স্টোরিজ",
+        titleEn: "Stories",
+        subtitleBn: "স্টোরি দিন",
+        subtitleEn: "Add Story",
       },
       {
         key: "community_feed",
-        name: "৫. সবার পোস্ট ও পেজ টাইমলাইন",
+        name: "৭. সবার পোস্ট ও পেজ টাইমলাইন",
         visible: true,
         eyebrow: "Campus Community Feed",
         titleBn: "সবার পোস্ট ও পেজ টাইমলাইন",
         titleEn: "Campus Community Feed",
         subtitleBn: "শিক্ষক, শিক্ষার্থী, কর্মকর্তা ও সাংবাদিকদের নিজস্ব পেজে প্রকাশিত সর্বশেষ লেখা, ছবি ও পোস্টসমূহ।",
         subtitleEn: "Latest posts from teachers, students, staff and campus pages.",
-      },
-      {
-        key: "leadership",
-        name: "৬. কার্যনির্বাহী পরিষদ",
-        visible: true,
-        eyebrow: "Executive Council & At a Glance",
-        titleBn: "কার্যনির্বাহী পরিষদ",
-        titleEn: "Executive Council",
-        subtitleBn: "মাভাবিপ্রবি রিপোর্টার্স ইউনিটির কার্যনির্বাহী পরিষদ — নির্ভীক, নিরপেক্ষ ও তথ্যনির্ভর ক্যাম্পাস সাংবাদিকতায় অঙ্গীকারবদ্ধ।",
-        subtitleEn: "Executive Council of MBSTU Reporters' Unity — committed to fearless and factual campus journalism.",
-      },
-      {
-        key: "category_sections",
-        name: "৭. সংবাদের ক্যাটাগরিভিত্তিক সেকশন",
-        visible: true,
-        eyebrow: "News",
-        titleBn: "ক্যাটাগরি সংবাদ",
-        titleEn: "Category News",
-        subtitleBn: "বিভাগের সর্বশেষ সংবাদ ও প্রতিবেদন",
-        subtitleEn: "Latest news and reports",
       },
       {
         key: "student_corner",
@@ -294,13 +315,13 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
         eyebrow: "Campus Organizations & Clubs",
         titleBn: "ক্যাম্পাস ক্লাব ও সংগঠনসমূহ",
         titleEn: "Campus Organizations & Clubs",
-        subtitleBn: "মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের সাম্প্রতিক অর্জন, কার্যক্রম এবং পূর্ণাঙ্গ পরিচিতি।",
-        subtitleEn: "Latest activities and profiles of MBSTU campus clubs and organizations.",
+        subtitleBn: "ক্যাম্পাস ক্লাব ও সংগঠনসমূহের সাম্প্রতিক কার্যক্রম।",
+        subtitleEn: "Latest activities of MBSTU clubs and organizations.",
       },
       {
         key: "club_posts",
         name: "১০. সর্বশেষ ক্লাব সংবাদ",
-        visible: true,
+        visible: false,
         eyebrow: "Club Reports",
         titleBn: "সর্বশেষ ক্লাব সংবাদ",
         titleEn: "Latest Club News",
@@ -308,8 +329,68 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
         subtitleEn: "Latest news posted by our campus club reporters.",
       },
       {
+        key: "social_sites",
+        name: "১১. সোশ্যাল সাইট ও গ্রুপ",
+        visible: true,
+        eyebrow: "Social Sites & Groups",
+        titleBn: "সোশ্যাল সাইট ও গ্রুপ",
+        titleEn: "Social Sites & Groups",
+        subtitleBn: "বিশ্ববিদ্যালয়ের গুরুত্বপূর্ণ অনলাইন কমিউনিটি ও তথ্যসূত্র।",
+        subtitleEn: "Useful university social sites and groups.",
+      },
+      {
+        key: "timeline",
+        name: "১২. ক্যাম্পাস টাইমলাইন",
+        visible: true,
+        eyebrow: "Campus Timeline",
+        titleBn: "ক্যাম্পাস টাইমলাইন",
+        titleEn: "Campus Timeline",
+        subtitleBn: "বিশ্ববিদ্যালয়ের উল্লেখযোগ্য ঘটনা ও মাইলফলক।",
+        subtitleEn: "Milestones and events from the university.",
+      },
+      {
+        key: "polls",
+        name: "১৩. ক্যাম্পাস জরিপ",
+        visible: true,
+        eyebrow: "Campus Polls",
+        titleBn: "ক্যাম্পাস জরিপ",
+        titleEn: "Campus Polls",
+        subtitleBn: "",
+        subtitleEn: "",
+      },
+      {
+        key: "category_sections",
+        name: "১৪. ক্যাটাগরি-ভিত্তিক সংবাদ",
+        visible: false,
+        eyebrow: "News",
+        titleBn: "ক্যাটাগরি সংবাদ",
+        titleEn: "Category News",
+        subtitleBn: "বিভাগের সর্বশেষ সংবাদ ও প্রতিবেদন",
+        subtitleEn: "Latest news and reports",
+      },
+      {
+        key: "fact_check",
+        name: "১৫. ফ্যাক্ট চেক",
+        visible: true,
+        eyebrow: "Fact Check",
+        titleBn: "ফ্যাক্ট চেক",
+        titleEn: "Fact Check",
+        subtitleBn: "যাচাইকৃত তথ্য ও বিভ্রান্তি-নিরসন।",
+        subtitleEn: "Verified facts and context.",
+      },
+      {
+        key: "publications",
+        name: "১৬. প্রকাশনা",
+        visible: true,
+        eyebrow: "Publications",
+        titleBn: "প্রকাশনা",
+        titleEn: "Publications",
+        subtitleBn: "রিপোর্টার্স ইউনিটির প্রকাশনা ও বিশেষ সংখ্যা।",
+        subtitleEn: "Publications and special editions.",
+      },
+      {
         key: "community_pages",
-        name: "১১. ক্যাম্পাস পেজ ও কমিউনিটি",
+        name: "১৭. ক্যাম্পাস পেজ ও কমিউনিটি",
         visible: true,
         eyebrow: "Community & Organizations",
         titleBn: "ক্যাম্পাস পেজ ও কমিউনিটি",
@@ -319,13 +400,23 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       },
       {
         key: "notice_board",
-        name: "১২. ডিজিটাল নোটিশ বোর্ড",
+        name: "১৮. ডিজিটাল নোটিশ বোর্ড",
         visible: true,
         eyebrow: "Digital Notice Board",
         titleBn: "ডিজিটাল নোটিশ বোর্ড",
         titleEn: "Digital Notice Board",
         subtitleBn: "বিশ্ববিদ্যালয়, বিভিন্ন হল, বিভাগ ও মাভাবিপ্রবি রিপোর্টার্স ইউনিটির সর্বশেষ নোটিশসমূহ।",
         subtitleEn: "Latest notices from the university, halls, departments and MBSTURU.",
+      },
+      {
+        key: "leadership",
+        name: "১৯. কার্যনির্বাহী পরিষদ ও পরিসংখ্যান",
+        visible: true,
+        eyebrow: "Executive Council & At a Glance",
+        titleBn: "কার্যনির্বাহী পরিষদ",
+        titleEn: "Executive Council",
+        subtitleBn: "মাভাবিপ্রবি রিপোর্টার্স ইউনিটির কার্যনির্বাহী পরিষদ — নির্ভীক, নিরপেক্ষ ও তথ্যনির্ভর ক্যাম্পাস সাংবাদিকতায় অঙ্গীকারবদ্ধ।",
+        subtitleEn: "Executive Council of MBSTU Reporters' Unity — committed to fearless and factual campus journalism.",
       },
     ],
     homeNoticesLimit: 5,
@@ -450,11 +541,39 @@ function mergeSiteSettings(
     ...DEFAULT_SITE_SETTINGS.menu.items.filter((d) => !existingMenuIds.has(d.id)),
   ]
 
-  const existingSectionKeys = new Set((parsed.homeSections?.sections || []).map((s) => s.key))
-  const mergedSections = [
-    ...(parsed.homeSections?.sections || []),
-    ...DEFAULT_SITE_SETTINGS.homeSections.sections.filter((d) => !existingSectionKeys.has(d.key)),
-  ]
+  const storedSections = parsed.homeSections?.sections || []
+  const storedSectionMap = new Map(storedSections.map((section) => [section.key, section]))
+  const existingSectionKeys = new Set(storedSections.map((section) => section.key))
+  const mergedSections =
+    (parsed.homeSections?.layoutVersion ?? 0) < HOME_LAYOUT_VERSION
+      ? [
+          ...DEFAULT_SITE_SETTINGS.homeSections.sections.map((defaults) => {
+            const stored = storedSectionMap.get(defaults.key)
+            const shouldStartHidden = HIDDEN_ON_HOME_MIGRATION.has(defaults.key)
+            return {
+              ...defaults,
+              ...stored,
+              name: stored?.name ?? defaults.name,
+              visible: VISIBLE_ON_HOME_MIGRATION.has(defaults.key)
+                ? true
+                : shouldStartHidden
+                  ? false
+                  : stored?.visible ?? defaults.visible,
+              eyebrow: stored?.eyebrow ?? defaults.eyebrow,
+              titleBn: stored?.titleBn ?? defaults.titleBn,
+              titleEn: stored?.titleEn ?? defaults.titleEn,
+              subtitleBn: stored?.subtitleBn ?? defaults.subtitleBn,
+              subtitleEn: stored?.subtitleEn ?? defaults.subtitleEn,
+            }
+          }),
+          ...storedSections.filter(
+            (section) => !DEFAULT_SITE_SETTINGS.homeSections.sections.some((defaults) => defaults.key === section.key)
+          ),
+        ]
+      : [
+          ...storedSections,
+          ...DEFAULT_SITE_SETTINGS.homeSections.sections.filter((section) => !existingSectionKeys.has(section.key)),
+        ]
   const branding = {
     ...DEFAULT_SITE_SETTINGS.branding,
     ...(legacy?.univLogo ? { univLogoUrl: legacy.univLogo } : {}),
@@ -485,6 +604,7 @@ function mergeSiteSettings(
     },
     homeSections: {
       sections: mergedSections,
+      layoutVersion: HOME_LAYOUT_VERSION,
       homeNoticesLimit:
         parsed.homeSections?.homeNoticesLimit || DEFAULT_SITE_SETTINGS.homeSections.homeNoticesLimit,
     },

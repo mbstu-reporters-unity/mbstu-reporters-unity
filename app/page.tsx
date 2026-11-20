@@ -1,5 +1,6 @@
 import { HomeEventsAndPopular } from '@/components/portal/home-events-popular'
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
+import { connection } from 'next/server'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
 import { NewsTicker } from '@/components/portal/news-ticker'
@@ -19,41 +20,64 @@ import { PollWidget } from '@/components/portal/poll-widget'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { getSiteSettings, type HomeSectionConfig } from '@/lib/site-settings'
-import { getVisiblePosts, getLimits, getCategoryNames } from '@/lib/sb'
+import { getHomepagePostHistory, getLimits, CAT_CLUB, CAT_STUDENT } from '@/lib/sb'
+import { getVisibleCategoryNames } from '@/lib/categories'
+import { getHomepageNotices } from '@/lib/notices'
+import { selectHomepageItems } from '@/lib/homepage-feed'
+import { HomepageFeedRotator } from '@/components/portal/homepage-feed-rotator'
+import { HomepageTransitionSection } from '@/components/portal/homepage-transition-sections'
 
 export const revalidate = 60
 
 export default async function Page() {
-  const [settings, homePosts, limits, categoryNames] = await Promise.all([
+  await connection()
+  const [settings, postHistory, limits, categoryNames, noticeHistory] = await Promise.all([
     getSiteSettings(),
-    getVisiblePosts(200),
+    getHomepagePostHistory(),
     getLimits(),
-    getCategoryNames(),
+    getVisibleCategoryNames(),
+    getHomepageNotices(),
   ])
   const sections = settings.homeSections.sections
+  const now = Date.now()
+  const visibleCategories = new Set(categoryNames)
+  const homePosts = selectHomepageItems(postHistory, (post) => post.created_at, now).filter(
+    (post) => !post.category || visibleCategories.has(post.category)
+  )
+  const homeNotices = selectHomepageItems(
+    noticeHistory.filter((notice) => !notice.expires_at || Date.parse(notice.expires_at) > now),
+    (notice) => notice.updated_at || notice.created_at,
+    now
+  )
+  const noticeSection = sections.find((section) => section.key === 'notice_board')
+  const feedNotices = noticeSection?.visible ? homeNotices : []
+  const newsPosts = homePosts.filter(
+    (post) => !post.page_id && post.category !== CAT_CLUB && post.category !== CAT_STUDENT
+  )
+  const heroSection = sections.find((section) => section.key === 'hero')
+  const topAreaSection = sections.find((section) => section.key === 'general_news')
+  const leadershipSection = sections.find((section) => section.key === 'leadership')
+  const middleSections = sections.filter(
+    (section) =>
+      section.visible &&
+      section.key !== 'hero' &&
+      section.key !== 'general_news' &&
+      section.key !== 'leadership'
+  )
 
   const renderSection = (sec: HomeSectionConfig): ReactNode => {
     if (!sec.visible) return null
     switch (sec.key) {
       case 'hero':
-        return <HeroCarousel key={sec.key} />
+      case 'general_news':
+      case 'leadership':
+        return null
       case 'stories':
         return <FbStoriesTray key={sec.key} />
       case 'reels':
-        return <FbReelsSection key={sec.key} />
-      case 'general_news':
-        return (
-          <GeneralNews
-            key={sec.key}
-            sectionConfig={sec}
-            prefetchedPosts={homePosts}
-            prefetchedLimits={limits}
-          />
-        )
+        return <FbReelsSection key={sec.key} compact />
       case 'community_feed':
         return <CommunityFeed key={sec.key} />
-      case 'leadership':
-        return <LeadershipSection key={sec.key} />
       case 'category_sections':
         return (
           <CategorySections
@@ -67,7 +91,7 @@ export default async function Page() {
       case 'student_corner':
         return <StudentCorner key={sec.key} />
       case 'club_news':
-        return <ClubNews key={sec.key} />
+        return <ClubNews key={sec.key} compact />
       case 'club_posts':
         return (
           <ClubPosts
@@ -80,7 +104,17 @@ export default async function Page() {
       case 'community_pages':
         return <CommunityPagesSection key={sec.key} />
       case 'notice_board':
-        return <NoticeBoard key={sec.key} />
+        return <NoticeBoard key={sec.key} prefetchedNotices={homeNotices} initialNow={now} />
+      case 'events_popular':
+        return <HomeEventsAndPopular key={sec.key} compact prefetchedPosts={newsPosts} />
+      case 'polls':
+        return <PollWidget key={sec.key} compact />
+      case 'departments':
+      case 'social_sites':
+      case 'timeline':
+      case 'fact_check':
+      case 'publications':
+        return <HomepageTransitionSection key={sec.key} kind={sec.key} sectionConfig={sec} />
       default:
         return null
     }
@@ -99,9 +133,29 @@ export default async function Page() {
           <p>{settings.footer.descriptionBn}</p>
         </section>
 
-        {sections.map(renderSection)}
-        <HomeEventsAndPopular />
-        <PollWidget />
+        {heroSection?.visible && <HeroCarousel key={heroSection.key} />}
+        {topAreaSection?.visible && (
+          <GeneralNews
+            sectionConfig={topAreaSection}
+            prefetchedPosts={homePosts}
+            prefetchedLimits={limits}
+            prefetchedCategories={categoryNames}
+            initialNow={now}
+          />
+        )}
+        {middleSections.map((section, index) => (
+          <Fragment key={section.key}>
+            {renderSection(section)}
+            <HomepageFeedRotator
+              posts={newsPosts}
+              notices={feedNotices}
+              title="সর্বশেষ সংবাদ ও হালনাগাদ নোটিশ"
+              initialIndex={index}
+              initialNow={now}
+            />
+          </Fragment>
+        ))}
+        {leadershipSection?.visible && <LeadershipSection key={leadershipSection.key} />}
       </main>
       <SiteFooter />
       <BackToTop />

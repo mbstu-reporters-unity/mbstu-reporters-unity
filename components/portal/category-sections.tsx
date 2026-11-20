@@ -1,12 +1,12 @@
 import {
   getVisiblePosts,
   getLimits,
-  getCategoryNames,
   CAT_CAMPUS,
   CAT_CLUB,
   CAT_STUDENT,
   type Post,
 } from '@/lib/sb'
+import { getVisibleCategoryNames } from '@/lib/categories'
 import type { HomeSectionConfig } from '@/lib/site-settings'
 import { SectionHeading } from './section-heading'
 import { NewsGrid } from './news-card'
@@ -25,12 +25,12 @@ export async function CategorySections({
   const [all, limits, names] = await Promise.all([
     prefetchedPosts ? Promise.resolve(prefetchedPosts) : getVisiblePosts(200),
     prefetchedLimits ? Promise.resolve(prefetchedLimits) : getLimits(),
-    prefetchedCategories ? Promise.resolve(prefetchedCategories) : getCategoryNames(),
+    prefetchedCategories ? Promise.resolve(prefetchedCategories) : getVisibleCategoryNames(),
   ])
   const skip = [CAT_CAMPUS, CAT_CLUB, CAT_STUDENT]
-  const newsOnly = all.filter((p) => !p.page_id)
-  const used = Array.from(new Set(newsOnly.map((p) => p.category).filter((c): c is string => !!c)))
-  const cats = [...names, ...used.filter((c) => !names.includes(c))].filter((c) => !skip.includes(c))
+  const visible = new Set(names)
+  const newsOnly = all.filter((p) => !p.page_id && !!p.category && visible.has(p.category))
+  const cats = names.filter((category) => !skip.includes(category))
 
   const eyebrowText = sectionConfig?.eyebrow ?? 'News'
   const subSuffixBn = sectionConfig?.subtitleBn || 'বিভাগের সর্বশেষ সংবাদ ও প্রতিবেদন'

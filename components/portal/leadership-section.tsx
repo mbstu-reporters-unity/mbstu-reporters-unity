@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Award, CalendarCheck, Globe2, Newspaper, Quote, Star, Users } from "lucide-react"
+import { ArrowLeft, ArrowRight, Award, CalendarCheck, Globe2, Newspaper, Quote, Star, Users } from "lucide-react"
 import { getLeaders, POSITIONS } from "@/lib/sb"
 import { DEFAULT_STYLE, getGlobalStyle, styleFor } from "@/lib/photo-style"
 import type { LeaderWithStyle, PhotoStyle } from "@/lib/photo-style"
 import { SectionHeading } from "./section-heading"
 import { PhotoFrame } from "./photo-frame"
 import { useSiteSettings } from "./site-settings-context"
+import { useHomepageAutoplay } from "./use-homepage-autoplay"
 
 const statIcons = {
   calendar: CalendarCheck,
@@ -25,6 +26,7 @@ export function LeadershipSection() {
   const settings = useSiteSettings()
   const [leaders, setLeaders] = useState<LeaderWithStyle[]>([])
   const [globalStyle, setGlobalStyle] = useState<PhotoStyle>(DEFAULT_STYLE)
+  const autoplay = useHomepageAutoplay(leaders.length, 8500)
 
   useEffect(() => {
     getLeaders().then((rows) => setLeaders((rows as LeaderWithStyle[]).filter((l) => l.is_visible)))
@@ -51,15 +53,27 @@ export function LeadershipSection() {
           subtitleEn={sec?.subtitleEn || "Executive Council of MBSTU Reporters' Unity."}
         />
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {leaders.map((leader) => {
-            const pos = POSITIONS.find((p) => p.key === leader.position)
-            const ps = styleFor(leader, globalStyle)
-            return (
-              <article
-                key={leader.id}
-                className="glass-card relative p-6 sm:p-8"
-              >
+        {leaders.length > 0 && (
+          <div
+            ref={autoplay.containerRef}
+            {...autoplay.interactionProps}
+            className="mx-auto max-w-4xl"
+            aria-label="কার্যনির্বাহী পরিষদের সদস্য"
+          >
+            <div className="grid">
+              {leaders.map((leader, index) => {
+                const active = autoplay.index === index
+                const pos = POSITIONS.find((p) => p.key === leader.position)
+                const ps = styleFor(leader, globalStyle)
+                return (
+                  <article
+                    key={leader.id}
+                    aria-hidden={!active}
+                    inert={!active}
+                    className={`[grid-area:1/1] glass-card relative p-6 transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none sm:p-8 ${
+                      active ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-4 opacity-0"
+                    }`}
+                  >
                 <Quote className="absolute right-6 top-6 size-12 text-white/10 pointer-events-none" aria-hidden="true" />
 
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-4">
@@ -86,7 +100,7 @@ export function LeadershipSection() {
                     <span className="inline-block rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-cyan-200 border border-white/20 mb-1">
                       {pos?.en}
                     </span>
-                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white drop-shadow-sm">
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white">
                       {leader.display_name}
                     </h3>
                     {leader.department && (
@@ -111,10 +125,37 @@ export function LeadershipSection() {
                     </p>
                   </div>
                 </div>
-              </article>
-            )
-          })}
-        </div>
+                  </article>
+                )
+              })}
+            </div>
+            {leaders.length > 1 && (
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <span className="text-xs font-medium text-slate-300">
+                  {autoplay.index + 1} / {leaders.length}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={autoplay.previous}
+                    aria-label="আগের কার্যনির্বাহী সদস্য"
+                    className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20"
+                  >
+                    <ArrowLeft className="size-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={autoplay.next}
+                    aria-label="পরের কার্যনির্বাহী সদস্য"
+                    className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20"
+                  >
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {statsConfig.showStats && statsConfig.items.length > 0 && (
           <ul className="mt-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -129,7 +170,7 @@ export function LeadershipSection() {
                     <Icon className="size-5" aria-hidden="true" />
                   </span>
 
-                  <p className="mt-4 font-serif text-3xl sm:text-4xl font-extrabold text-white drop-shadow-md">
+                  <p className="mt-4 font-serif text-3xl sm:text-4xl font-extrabold text-white">
                     {stat.value}
                   </p>
                   <p className="mt-1 text-sm font-bold text-white">{stat.labelEn}</p>

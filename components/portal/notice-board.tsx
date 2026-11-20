@@ -1,34 +1,55 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Download, ExternalLink, FileText, Megaphone, Pin } from "lucide-react"
 import { BRANCHES, getNotices, downloadUrl, timeAgo } from "@/lib/notices"
 import type { Notice } from "@/lib/notices"
 import { SectionHeading } from "./section-heading"
 import { useSiteSettings } from "./site-settings-context"
+import { selectHomepageItems } from "@/lib/homepage-feed"
+import { useHomepageAging } from "./use-homepage-aging"
 
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", timeZone: "Asia/Dhaka" })
 const month = (iso: string) =>
   new Date(iso).toLocaleDateString("en-GB", { month: "short", timeZone: "Asia/Dhaka" }).toUpperCase()
 const safeUrl = (u: string | null) => !!u && /^https?:\/\//i.test(u)
+const noticeActivityAt = (notice: Notice) => notice.updated_at || notice.created_at
 
-export function NoticeBoard() {
+export function NoticeBoard({
+  prefetchedNotices,
+  initialNow,
+}: {
+  prefetchedNotices?: Notice[]
+  initialNow: number
+}) {
   const settings = useSiteSettings()
-  const [allRows, setAllRows] = useState<Notice[]>([])
-  const [loading, setLoading] = useState(true)
+  const [allRows, setAllRows] = useState<Notice[]>(prefetchedNotices || [])
+  const [loading, setLoading] = useState(!prefetchedNotices)
 
   useEffect(() => {
+    if (prefetchedNotices) {
+      setAllRows(prefetchedNotices)
+      setLoading(false)
+      return
+    }
+
     getNotices().then((rows) => {
       setAllRows(rows)
       setLoading(false)
     })
-  }, [])
+  }, [prefetchedNotices])
 
   const sec = settings.homeSections.sections.find((s) => s.key === "notice_board")
   const limit = Math.max(1, settings.homeSections.homeNoticesLimit || 5)
-  const list = allRows.slice(0, limit)
+  const timestamps = useMemo(() => allRows.map(noticeActivityAt), [allRows])
+  const now = useHomepageAging(timestamps, initialNow)
+  const currentRows = useMemo(
+    () => selectHomepageItems(allRows, noticeActivityAt, now),
+    [allRows, now]
+  )
+  const list = currentRows.slice(0, limit)
 
   return (
     <section id="notices" className="py-16 sm:py-20">
@@ -96,7 +117,10 @@ export function NoticeBoard() {
                     </Link>
 
                     {n.heading && <p className="text-xs text-slate-300 mt-0.5">{n.heading}</p>}
-                    <p className="text-[11px] text-cyan-200/80 mt-1">{timeAgo(n.created_at)}</p>
+                    <p className="text-[11px] text-cyan-200/80 mt-1">
+                      {n.updated_at && n.updated_at !== n.created_at ? "হালনাগাদ " : ""}
+                      {timeAgo(noticeActivityAt(n))}
+                    </p>
                   </div>
 
                   {n.file_url ? (

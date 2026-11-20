@@ -83,6 +83,34 @@ export async function getNotices(token?: string, includeExpired = false): Promis
   }
 }
 
+export async function getHomepageNotices(): Promise<Notice[]> {
+  const pageSize = 200
+  const rows: Notice[] = []
+  const now = new Date().toISOString()
+  let offset = 0
+
+  try {
+    while (true) {
+      const url = `${SB_URL}/rest/v1/board_notices?select=*&or=(expires_at.is.null,expires_at.gt.${encodeURIComponent(now)})&order=created_at.desc&limit=${pageSize}&offset=${offset}`
+      const res = await fetch(url, { headers: hdr(), cache: "no-store" })
+      if (!res.ok) {
+        console.error(`Homepage notice history query failed (${res.status})`)
+        break
+      }
+
+      const page: Notice[] = await res.json()
+      rows.push(...page)
+      if (page.length < pageSize) break
+      offset += page.length
+    }
+
+    return rows
+  } catch (error) {
+    console.error("Homepage notice history query failed", error)
+    return rows
+  }
+}
+
 export async function getNoticeOwners(token: string): Promise<NoticeOwner[]> {
   try {
     const res = await fetch(
@@ -108,11 +136,13 @@ export async function createNotice(token: string, data: NoticeInput) {
 }
 
 export async function updateNotice(token: string, id: string, data: Partial<NoticeInput>) {
+  const contentChanged = Object.keys(data).some((key) => key !== "is_pinned")
+  const payload = contentChanged ? { ...data, updated_at: new Date().toISOString() } : data
   await ok(
     await fetch(`${SB_URL}/rest/v1/board_notices?id=eq.${encodeURIComponent(id)}`, {
       method: "PATCH",
       headers: { ...hdr(token, true), Prefer: "return=minimal" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     })
   )
 }

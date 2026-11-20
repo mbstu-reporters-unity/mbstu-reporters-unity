@@ -1,14 +1,22 @@
 import Link from 'next/link'
 import { CalendarDays, MapPin, TrendingUp, ArrowRight, Ticket, Eye } from 'lucide-react'
 import { getCampusEvents } from '@/lib/events'
-import { getVisiblePosts } from '@/lib/sb'
+import { getVisiblePosts, type Post } from '@/lib/sb'
+import { SectionHeading } from './section-heading'
+import { HomepageCompactCarousel } from './homepage-transition-sections'
 
 const bn = (n: number | string) => String(n).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)])
 
-export async function HomeEventsAndPopular() {
+export async function HomeEventsAndPopular({
+  prefetchedPosts,
+  compact = false,
+}: {
+  prefetchedPosts?: Post[]
+  compact?: boolean
+} = {}) {
   const [events, posts] = await Promise.all([
     getCampusEvents(),
-    getVisiblePosts(100),
+    prefetchedPosts ? Promise.resolve(prefetchedPosts) : getVisiblePosts(100),
   ])
 
   const upcomingEvents = events.filter((e) => e.is_upcoming !== false).slice(0, 2)
@@ -17,6 +25,99 @@ export async function HomeEventsAndPopular() {
     .slice(0, 4)
 
   if (upcomingEvents.length === 0 && popularPosts.length === 0) return null
+
+  if (compact) {
+    const slides = [
+      ...upcomingEvents.map((event) => (
+        <article key={`event-${event.id}`} className="glass-card space-y-4 p-4 text-white sm:p-6">
+          <div className="flex items-center justify-between gap-3 border-b border-white/15 pb-3">
+            <span className="inline-flex items-center gap-2 text-xs font-bold text-amber-300">
+              <CalendarDays className="size-4" aria-hidden="true" />
+              {event.event_date}
+            </span>
+            <span className="rounded-full border border-cyan-400/30 bg-cyan-400/20 px-2.5 py-1 text-[10px] font-bold text-cyan-100">
+              {event.is_upcoming ? 'নিবন্ধন চলছে' : 'ইভেন্ট'}
+            </span>
+          </div>
+          <div className="space-y-2">
+            <h3 className="font-serif text-lg font-bold leading-snug sm:text-xl">{event.title}</h3>
+            <p className="text-sm leading-relaxed text-slate-200 line-clamp-3">{event.description}</p>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs text-slate-300">
+            <span className="flex min-w-0 items-center gap-1.5">
+              <MapPin className="size-3.5 shrink-0 text-cyan-300" aria-hidden="true" />
+              <span className="truncate">{event.venue}</span>
+            </span>
+            <Link
+              href="/events"
+              className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500 px-3 py-1.5 text-xs font-bold text-slate-950 transition hover:bg-cyan-400"
+            >
+              <Ticket className="size-3.5" aria-hidden="true" />
+              ইভেন্ট দেখুন
+            </Link>
+          </div>
+        </article>
+      )),
+      ...popularPosts.map((post, index) => (
+        <article key={`popular-${post.id}`} className="glass-card space-y-4 p-4 text-white sm:p-6">
+          <div className="flex items-center justify-between gap-3 border-b border-white/15 pb-3">
+            <span className="inline-flex items-center gap-2 text-xs font-bold text-amber-300">
+              <TrendingUp className="size-4" aria-hidden="true" />
+              সর্বাধিক পঠিত সংবাদ · {bn(index + 1)}
+            </span>
+            <Link
+              href="/search?q=&sort=popular"
+              className="text-xs font-bold text-cyan-300 hover:underline"
+            >
+              আর্কাইভ
+            </Link>
+          </div>
+          <Link href={`/post/${post.id}`} className="group block space-y-2">
+            <span className="text-xs font-bold uppercase text-cyan-300">{post.category || 'সংবাদ'}</span>
+            <h3 className="font-serif text-lg font-bold leading-snug transition-colors group-hover:text-cyan-200 sm:text-xl">
+              {post.title}
+            </h3>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
+              <span>{post.author || 'প্রতিবেদক'}</span>
+              {post.view_count ? (
+                <span className="inline-flex items-center gap-1 text-cyan-200">
+                  <Eye className="size-3.5" aria-hidden="true" />
+                  {bn(post.view_count)} বার পঠিত
+                </span>
+              ) : null}
+            </div>
+          </Link>
+        </article>
+      )),
+    ]
+
+    return (
+      <section className="relative border-b border-white/10 py-8 sm:py-10">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            inverted
+            eyebrow="Events & Most Read"
+            title="ইভেন্ট ও জনপ্রিয় সংবাদ"
+            titleEn="Events & Most Read"
+            action={
+              <Link
+                href="/events"
+                className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
+              >
+                সব দেখুন
+              </Link>
+            }
+          />
+          <HomepageCompactCarousel
+            slides={slides}
+            title="ইভেন্ট ও জনপ্রিয় সংবাদ"
+            interval={8500}
+            className="max-w-none"
+          />
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="py-12 sm:py-16 border-b border-white/10 relative">
