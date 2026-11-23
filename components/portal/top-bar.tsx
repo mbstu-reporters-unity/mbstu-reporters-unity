@@ -23,7 +23,7 @@ export function TopBar() {
   if (!tb.showTopBar && !showAnnouncement) return null
 
   return (
-    <div className="site-top-bar bg-[#071030]/95 text-white border-b border-white/10 backdrop-blur-xl relative z-50">
+    <div className="site-top-bar bg-[#071030]/95 text-white border-b border-white/10 backdrop-blur-xl relative z-[60]">
       {showAnnouncement && (
         <div className="site-announcement bg-gradient-to-r from-amber-500/25 via-cyan-500/20 to-amber-500/25 border-b border-amber-400/30 px-3 py-1.5 text-center text-xs font-bold text-amber-200">
           <div className="mx-auto max-w-7xl flex items-center justify-center gap-2 flex-wrap">
