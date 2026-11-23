@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import {
   Award,
   Bell,
+  Bookmark,
   BookOpen,
   Briefcase,
   Building2,
@@ -34,6 +35,7 @@ import {
   Phone,
   Scale,
   Search,
+  Send,
   Settings,
   ShieldAlert,
   ShieldCheck,
@@ -66,6 +68,9 @@ import { useLang } from '@/lib/i18n'
 import { DrillDownMenu, type MenuItem } from './drill-down-menu'
 import { useSiteSettings } from './site-settings-context'
 import { DEFAULT_SITE_SETTINGS, normalizeUniversityLogoUrl } from '@/lib/site-settings'
+import { BookmarksDialog } from './bookmarks-dialog'
+import { TipSubmissionDialog } from './tip-submission-dialog'
+import { useBookmarks } from '@/lib/bookmarks'
 
 const HEADER_CACHE_KEY = 'mbstu_header_cache_v2'
 const HEADER_CACHE_TTL = 3 * 60 * 1000
@@ -149,6 +154,9 @@ export function SiteHeader() {
   const settings = useSiteSettings()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [bookmarksOpen, setBookmarksOpen] = useState(false)
+  const [tipOpen, setTipOpen] = useState(false)
+  const { count: bookmarkCount } = useBookmarks()
 
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
   const [categoriesList, setCategoriesList] = useState<string[]>([])
@@ -852,6 +860,22 @@ export function SiteHeader() {
         href: '/search',
       },
       {
+        id: 'saved-bookmarks',
+        label: pick('সংরক্ষিত সংবাদ', 'Saved Articles'),
+        sublabel: pick('আপনার বুকমার্ক করা সংবাদের তালিকা', 'View your bookmarked articles'),
+        icon: Bookmark,
+        iconClass: 'bg-gradient-to-r from-amber-500 to-amber-600 text-white',
+        onSelect: () => setBookmarksOpen(true),
+      },
+      {
+        id: 'submit-campus-tip',
+        label: pick('সংবাদ বা টিপ পাঠান', 'Submit Campus Tip'),
+        sublabel: pick('গোপন তথ্য বা সংবাদের ক্লু জানান', 'Send confidential or verified news tips'),
+        icon: Send,
+        iconClass: 'bg-gradient-to-r from-rose-500 to-amber-500 text-white',
+        onSelect: () => setTipOpen(true),
+      },
+      {
         id: 'membership-apply',
         label: pick('সদস্যপদ আবেদন', 'Join as Member'),
         sublabel: pick('অনলাইন রিক্রুটমেন্ট ফর্ম', 'Online membership application'),
@@ -971,6 +995,22 @@ export function SiteHeader() {
               <Search className="size-4 sm:size-4.5" />
             </Link>
 
+            {/* বুকমার্ক সংরক্ষিত সংবাদ বাটন */}
+            <button
+              type="button"
+              onClick={() => setBookmarksOpen(true)}
+              aria-label={pick('সংরক্ষিত সংবাদ', 'Saved Articles')}
+              title={pick('সংরক্ষিত সংবাদ দেখুন', 'View saved articles')}
+              className="relative flex size-9 sm:size-10 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-cyan-300 hover:text-white border border-white/20 transition cursor-pointer active:scale-95"
+            >
+              <Bookmark className={`size-4 sm:size-4.5 ${bookmarkCount > 0 ? 'fill-amber-400 text-amber-400' : ''}`} />
+              {bookmarkCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-slate-950 shadow-xs">
+                  {bookmarkCount}
+                </span>
+              )}
+            </button>
+
             {/* ২. বিশ্ববিদ্যালয়ের অফিশিয়াল লিংক */}
             <a
               href={activeUnivLink}
@@ -1020,6 +1060,10 @@ export function SiteHeader() {
         rootTitle={pick('প্রধান মেনু', 'Main Menu')}
         userBanner={userBanner}
       />
+
+      {/* সংরক্ষিত সংবাদ ও টিপস সাবমিশন ডায়ালগ */}
+      <BookmarksDialog open={bookmarksOpen} onClose={() => setBookmarksOpen(false)} />
+      <TipSubmissionDialog open={tipOpen} onClose={() => setTipOpen(false)} />
     </>
   )
 }

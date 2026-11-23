@@ -9,6 +9,7 @@ import CardGallery from './card-gallery'
 import { PostMetaBadges } from './post-meta-badges'
 import { FormattedText } from './formatted-text'
 import { useSiteSettings } from './site-settings-context'
+import { BookmarkButton } from './bookmark-button'
 
 const CATEGORY_BADGE_PALETTES = [
   'sky',
@@ -173,13 +174,24 @@ export function NewsCard({ p }: { p: Post }) {
           </div>
         </div>
 
-        <Link
-          href={pageInfo ? `/p/${pageInfo.slug}` : `/category/${encodeURIComponent(categoryName)}`}
-          data-category-palette={!pageInfo ? getCategoryBadgePalette(categoryName) : undefined}
-          className="news-card-category shrink-0 rounded-full px-3 py-1 text-[11px] font-bold border backdrop-blur-md transition max-w-[120px] truncate"
-        >
-          {pageInfo ? 'পেজ' : categoryName}
-        </Link>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <BookmarkButton
+            postId={p.id}
+            title={p.title}
+            imageUrl={p.image_url}
+            category={categoryName}
+            author={authorName}
+            createdAt={p.created_at}
+            size="sm"
+          />
+          <Link
+            href={pageInfo ? `/p/${pageInfo.slug}` : `/category/${encodeURIComponent(categoryName)}`}
+            data-category-palette={!pageInfo ? getCategoryBadgePalette(categoryName) : undefined}
+            className="news-card-category shrink-0 rounded-full px-3 py-1 text-[11px] font-bold border backdrop-blur-md transition max-w-[120px] truncate"
+          >
+            {pageInfo ? 'পেজ' : categoryName}
+          </Link>
+        </div>
       </div>
 
       <CardGallery
