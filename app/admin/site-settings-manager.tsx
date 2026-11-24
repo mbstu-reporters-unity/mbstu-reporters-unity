@@ -5,8 +5,10 @@ import {
   ArrowDown,
   ArrowUp,
   BarChart3,
+  BookOpen,
   FileText,
   Globe,
+  Info,
   LayoutGrid,
   Menu,
   Palette,
@@ -14,6 +16,8 @@ import {
   Plus,
   RotateCcw,
   Save,
+  Scale,
+  ShieldCheck,
   Trash2,
   Upload,
 } from "lucide-react"
@@ -1433,6 +1437,293 @@ export default function SiteSettingsManager({
               )
             })}
           </div>
+
+          {/* ৩. আমাদের সম্পর্কে (/about) পৃষ্ঠা সম্পাদনা */}
+          <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 space-y-3">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <Info className="size-4 text-amber-600" />
+              <h3 className="font-bold text-sm text-slate-900">
+                ৩. আমাদের সম্পর্কে (/about) পৃষ্ঠা কন্টেন্ট সম্পাদনা
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500">
+              ফাঁকা রাখলে ওয়েবসাইটের ডিফল্ট কন্টেন্ট প্রদর্শিত হবে। কোনো কিছু পরিবর্তন করতে চাইলে এখানে লিখুন।
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  প্রতিষ্ঠার পটভূমি ও ইতিহাস (বাংলা):
+                </label>
+                <textarea
+                  rows={4}
+                  className={inp}
+                  placeholder="মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের মুক্তচিন্তা..."
+                  value={cfg.behaviorAndPages.aboutPage?.historyBn || ""}
+                  onChange={(e) =>
+                    setCfg({
+                      ...cfg,
+                      behaviorAndPages: {
+                        ...cfg.behaviorAndPages,
+                        aboutPage: {
+                          ...cfg.behaviorAndPages.aboutPage,
+                          historyBn: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  History & Background (English - ঐচ্ছিক):
+                </label>
+                <textarea
+                  rows={3}
+                  className={inp}
+                  placeholder="History of MBSTU Reporters' Unity..."
+                  value={cfg.behaviorAndPages.aboutPage?.historyEn || ""}
+                  onChange={(e) =>
+                    setCfg({
+                      ...cfg,
+                      behaviorAndPages: {
+                        ...cfg.behaviorAndPages,
+                        aboutPage: {
+                          ...cfg.behaviorAndPages.aboutPage,
+                          historyEn: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    আমাদের ভিশন (Vision - বাংলা):
+                  </label>
+                  <textarea
+                    rows={3}
+                    className={inp}
+                    placeholder="একটি নির্ভীক, নৈতিক ও দায়িত্বশীল সাংবাদিক সমাজ গড়ে তোলা..."
+                    value={cfg.behaviorAndPages.aboutPage?.visionBn || ""}
+                    onChange={(e) =>
+                      setCfg({
+                        ...cfg,
+                        behaviorAndPages: {
+                          ...cfg.behaviorAndPages,
+                          aboutPage: {
+                            ...cfg.behaviorAndPages.aboutPage,
+                            visionBn: e.target.value,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    আমাদের মিশন (Mission - বাংলা):
+                  </label>
+                  <textarea
+                    rows={3}
+                    className={inp}
+                    placeholder="ক্যাম্পাস সংবাদ সংগ্রহ ও প্রকাশের ক্ষেত্রে শতভাগ নিরপেক্ষতা ও সত্যতা বজায় রাখা..."
+                    value={cfg.behaviorAndPages.aboutPage?.missionBn || ""}
+                    onChange={(e) =>
+                      setCfg({
+                        ...cfg,
+                        behaviorAndPages: {
+                          ...cfg.behaviorAndPages,
+                          aboutPage: {
+                            ...cfg.behaviorAndPages.aboutPage,
+                            missionBn: e.target.value,
+                          },
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ৪. গঠনতন্ত্র ও আচরণবিধি (/constitution) পৃষ্ঠা সম্পাদনা */}
+          <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 space-y-3">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <Scale className="size-4 text-blue-600" />
+              <h3 className="font-bold text-sm text-slate-900">
+                ৪. গঠনতন্ত্র ও আচরণবিধি (/constitution) পৃষ্ঠা বার্তা ও নিয়মাবলী
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500">
+              মূল ধারাগুলোর পাশাপাশি বিশেষ সাংগঠনিক ঘোষণা বা সংশোধিত ধারা যোগ করতে পারবেন। (PDF ডাউনলোডের লিংক উপরের ১নং বক্সে রয়েছে)।
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  প্রস্তাবনা ও মূল ভূমিকা বক্তব্য (বাংলা):
+                </label>
+                <textarea
+                  rows={2}
+                  className={inp}
+                  placeholder="মাভাবিপ্রবি রিপোর্টার্স ইউনিটি পরিচালনাকারী সংবিধিবদ্ধ নীতিমালা..."
+                  value={cfg.behaviorAndPages.constitutionPage?.preambleBn || ""}
+                  onChange={(e) =>
+                    setCfg({
+                      ...cfg,
+                      behaviorAndPages: {
+                        ...cfg.behaviorAndPages,
+                        constitutionPage: {
+                          ...cfg.behaviorAndPages.constitutionPage,
+                          preambleBn: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  অতিরিক্ত ধারা বা বিশেষ আচরণবিধি নির্দেশনা (বাংলা):
+                </label>
+                <textarea
+                  rows={3}
+                  className={inp}
+                  placeholder="যদি নতুন কোনো সংশোধিত নিয়ম বা বিশেষ বিজ্ঞপ্তি যুক্ত করতে চান..."
+                  value={cfg.behaviorAndPages.constitutionPage?.extraRulesBn || ""}
+                  onChange={(e) =>
+                    setCfg({
+                      ...cfg,
+                      behaviorAndPages: {
+                        ...cfg.behaviorAndPages,
+                        constitutionPage: {
+                          ...cfg.behaviorAndPages.constitutionPage,
+                          extraRulesBn: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ৫. নীতি, স্বচ্ছতা ও নিরাপত্তা (/policies) পৃষ্ঠা সম্পাদনা */}
+          <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-4 space-y-3">
+            <div className="flex items-center gap-2 border-b pb-2">
+              <ShieldCheck className="size-4 text-emerald-600" />
+              <h3 className="font-bold text-sm text-slate-900">
+                ৫. নীতি, স্বচ্ছতা ও নিরাপত্তা (/policies) পৃষ্ঠা সম্পাদনা
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500">
+              ফাঁকা রাখলে ওয়েবসাইটের স্ট্যান্ডার্ড নীতি প্রদর্শিত হবে। কাস্টম নীতি যুক্ত করতে নিচে লিখুন।
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ১. সংশোধনী ও ভুল স্বীকার নীতি (বাংলা):
+                </label>
+                <textarea
+                  rows={2}
+                  className={inp}
+                  placeholder="প্রকাশিত প্রতিবেদনে ভুলের নির্ভরযোগ্য তথ্য পেলে আমরা তা যাচাই করে..."
+                  value={cfg.behaviorAndPages.policiesPage?.correctionsBn || ""}
+                  onChange={(e) =>
+                    setCfg({
+                      ...cfg,
+                      behaviorAndPages: {
+                        ...cfg.behaviorAndPages,
+                        policiesPage: {
+                          ...cfg.behaviorAndPages.policiesPage,
+                          correctionsBn: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ২. কপিরাইট ও মিডিয়া ব্যবহার নীতি (বাংলা):
+                </label>
+                <textarea
+                  rows={2}
+                  className={inp}
+                  placeholder="ওয়েবসাইটের প্রতিটি লেখা, ছবি বা ভিডিওর স্বত্ব..."
+                  value={cfg.behaviorAndPages.policiesPage?.copyrightBn || ""}
+                  onChange={(e) =>
+                    setCfg({
+                      ...cfg,
+                      behaviorAndPages: {
+                        ...cfg.behaviorAndPages,
+                        policiesPage: {
+                          ...cfg.behaviorAndPages.policiesPage,
+                          copyrightBn: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ৩. বিশ্ববিদ্যালয় কর্তৃপক্ষের স্বীকৃতি ও অনুমোদন বার্তা (বাংলা):
+                </label>
+                <textarea
+                  rows={2}
+                  className={inp}
+                  placeholder="বিশ্ববিদ্যালয় কর্তৃপক্ষের স্বীকৃতি সংক্রান্ত বর্তমান স্ট্যাটাস..."
+                  value={cfg.behaviorAndPages.policiesPage?.recognitionBn || ""}
+                  onChange={(e) =>
+                    setCfg({
+                      ...cfg,
+                      behaviorAndPages: {
+                        ...cfg.behaviorAndPages,
+                        policiesPage: {
+                          ...cfg.behaviorAndPages.policiesPage,
+                          recognitionBn: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  ৪. সাংবাদিকদের নিরাপত্তা ও আইনি সুরক্ষা নীতি (বাংলা):
+                </label>
+                <textarea
+                  rows={2}
+                  className={inp}
+                  placeholder="ক্যাম্পাস সাংবাদিকদের পেশাগত নিরাপত্তা ও সুরক্ষা নীতি..."
+                  value={cfg.behaviorAndPages.policiesPage?.safetyBn || ""}
+                  onChange={(e) =>
+                    setCfg({
+                      ...cfg,
+                      behaviorAndPages: {
+                        ...cfg.behaviorAndPages,
+                        policiesPage: {
+                          ...cfg.behaviorAndPages.policiesPage,
+                          safetyBn: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1446,3 +1737,4 @@ export default function SiteSettingsManager({
     </div>
   )
 }
+

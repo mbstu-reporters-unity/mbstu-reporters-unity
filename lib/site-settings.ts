@@ -109,6 +109,37 @@ export interface SubPageBannerConfig {
   subtitle: string
 }
 
+export interface AboutPageCustomConfig {
+  historyBn?: string
+  historyEn?: string
+  visionBn?: string
+  visionEn?: string
+  missionBn?: string
+  missionEn?: string
+}
+
+export interface ConstitutionPageCustomConfig {
+  preambleBn?: string
+  preambleEn?: string
+  extraRulesBn?: string
+  extraRulesEn?: string
+}
+
+export interface PoliciesPageCustomConfig {
+  correctionsBn?: string
+  correctionsEn?: string
+  copyrightBn?: string
+  copyrightEn?: string
+  advertisingBn?: string
+  advertisingEn?: string
+  recognitionBn?: string
+  recognitionEn?: string
+  annualReportsBn?: string
+  annualReportsEn?: string
+  safetyBn?: string
+  safetyEn?: string
+}
+
 export type FeedRotationMode = "time" | "scroll"
 
 export interface FeedRotationConfig {
@@ -180,6 +211,9 @@ export interface SiteSettings {
     announcementText: string
     announcementLink: string
     constitutionPdfUrl?: string
+    aboutPage?: AboutPageCustomConfig
+    constitutionPage?: ConstitutionPageCustomConfig
+    policiesPage?: PoliciesPageCustomConfig
     subPages: {
       editorial: SubPageBannerConfig
       administration: SubPageBannerConfig
@@ -237,10 +271,15 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       { id: "comm-student", defaultLabel: "স্টুডেন্ট কর্নার", labelBn: "স্টুডেন্ট কর্নার", labelEn: "Student Corner", visible: true },
       { id: "comm-associations", defaultLabel: "অন্যান্য সাংবাদিক সমিতি", labelBn: "অন্যান্য সাংবাদিক সমিতি", labelEn: "Associations", visible: true },
       { id: "council-about", defaultLabel: "পরিষদ ও পরিচিতি", labelBn: "পরিষদ ও পরিচিতি", labelEn: "Council & About", visible: true },
+      { id: "about-unity", defaultLabel: "আমাদের সম্পর্কে", labelBn: "আমাদের সম্পর্কে", labelEn: "About Us", visible: true },
       { id: "about-leadership", defaultLabel: "কার্যনির্বাহী পরিষদ", labelBn: "কার্যনির্বাহী পরিষদ", labelEn: "Executive Council", visible: true },
+      { id: "about-advisors", defaultLabel: "উপদেষ্টা পরিষদ", labelBn: "উপদেষ্টা পরিষদ", labelEn: "Advisory Council", visible: true },
+      { id: "about-members", defaultLabel: "সদস্য ডিরেক্টরি", labelBn: "সদস্য ডিরেক্টরি", labelEn: "Member Directory", visible: true },
+      { id: "about-constitution", defaultLabel: "গঠনতন্ত্র ও আচরণবিধি", labelBn: "গঠনতন্ত্র ও আচরণবিধি", labelEn: "Constitution & Ethics", visible: true },
+      { id: "about-archive", defaultLabel: "প্রাক্তন কমিটি আর্কাইভ", labelBn: "প্রাক্তন কমিটি আর্কাইভ", labelEn: "Past Committee Archive", visible: true },
       { id: "about-council", defaultLabel: "ডিরেক্টর প্যানেল", labelBn: "ডিরেক্টর প্যানেল", labelEn: "Director Panel", visible: true },
-      { id: "about-unity", defaultLabel: "ইউনিটি পরিচিতি", labelBn: "ইউনিটি পরিচিতি", labelEn: "About Unity", visible: true },
-      { id: "about-contact", defaultLabel: "যোগাযোগ", labelBn: "যোগাযোগ", labelEn: "Contact", visible: true },
+      { id: "about-contact", defaultLabel: "যোগাযোগ ও অভিযোগ ডেস্ক", labelBn: "যোগাযোগ ও অভিযোগ ডেস্ক", labelEn: "Contact & Grievance Desk", visible: true },
+      { id: "about-policies", defaultLabel: "নীতি ও স্বচ্ছতা", labelBn: "নীতি ও স্বচ্ছতা", labelEn: "Policies & Transparency", visible: true },
     ],
     customLinks: [],
   },
@@ -496,6 +535,9 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     announcementText: "",
     announcementLink: "",
     constitutionPdfUrl: "",
+    aboutPage: {},
+    constitutionPage: {},
+    policiesPage: {},
     subPages: {
       editorial: {
         eyebrow: "Editorial & Opinion Column",
@@ -561,9 +603,11 @@ function mergeSiteSettings(
     } catch {}
   }
 
-  const existingMenuIds = new Set((parsed.menu?.items || []).map((i) => i.id))
+  const obsoleteIds = new Set(["about-committee", "about-contact-desk"])
+  const cleanStoredMenuItems = (parsed.menu?.items || []).filter((i) => !obsoleteIds.has(i.id))
+  const existingMenuIds = new Set(cleanStoredMenuItems.map((i) => i.id))
   const mergedMenuItems = [
-    ...(parsed.menu?.items || []),
+    ...cleanStoredMenuItems,
     ...DEFAULT_SITE_SETTINGS.menu.items.filter((d) => !existingMenuIds.has(d.id)),
   ]
 
@@ -669,6 +713,18 @@ moderatorPanel: {
         parsed.behaviorAndPages?.constitutionPdfUrl ??
         (parsed.behaviorAndPages?.subPages as any)?.constitutionPdfUrl ??
         DEFAULT_SITE_SETTINGS.behaviorAndPages.constitutionPdfUrl,
+      aboutPage: {
+        ...DEFAULT_SITE_SETTINGS.behaviorAndPages.aboutPage,
+        ...(parsed.behaviorAndPages?.aboutPage || {}),
+      },
+      constitutionPage: {
+        ...DEFAULT_SITE_SETTINGS.behaviorAndPages.constitutionPage,
+        ...(parsed.behaviorAndPages?.constitutionPage || {}),
+      },
+      policiesPage: {
+        ...DEFAULT_SITE_SETTINGS.behaviorAndPages.policiesPage,
+        ...(parsed.behaviorAndPages?.policiesPage || {}),
+      },
       subPages: {
         ...DEFAULT_SITE_SETTINGS.behaviorAndPages.subPages,
         ...(parsed.behaviorAndPages?.subPages || {}),

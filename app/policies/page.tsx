@@ -15,6 +15,7 @@ import { SiteHeader } from '@/components/portal/site-header'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
+import { getSiteSettings } from '@/lib/site-settings'
 import { Tx } from '@/lib/i18n'
 
 export const metadata: Metadata = {
@@ -145,7 +146,16 @@ const policies: {
   },
 ]
 
-export default function PoliciesPage() {
+export default async function PoliciesPage() {
+  const settings = await getSiteSettings()
+  const policiesCustom = settings.behaviorAndPages?.policiesPage
+  const customOverrides: Record<string, string | undefined> = {
+    corrections: policiesCustom?.correctionsBn,
+    copyright: policiesCustom?.copyrightBn,
+    recognition: policiesCustom?.recognitionBn,
+    'journalist-safety': policiesCustom?.safetyBn,
+  }
+
   return (
     <>
       <TopBar />
@@ -190,6 +200,7 @@ export default function PoliciesPage() {
 
           {policies.map((policy) => {
             const Icon = policy.icon
+            const customText = customOverrides[policy.id]?.trim()
             return (
               <section
                 key={policy.id}
@@ -205,11 +216,15 @@ export default function PoliciesPage() {
                   </h2>
                 </div>
                 <div className="space-y-3 text-sm leading-relaxed text-slate-200">
-                  {policy.paragraphs.map((paragraph, index) => (
-                    <p key={index}>
-                      <Tx bn={paragraph.bn} en={paragraph.en} />
-                    </p>
-                  ))}
+                  {customText ? (
+                    <p className="whitespace-pre-line">{customText}</p>
+                  ) : (
+                    policy.paragraphs.map((paragraph, index) => (
+                      <p key={index}>
+                        <Tx bn={paragraph.bn} en={paragraph.en} />
+                      </p>
+                    ))
+                  )}
                 </div>
                 {policy.points && (
                   <ul className="space-y-2 border-t border-white/10 pt-4 text-sm text-cyan-100">

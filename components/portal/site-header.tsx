@@ -686,14 +686,14 @@ export function SiteHeader() {
             },
           ]
         : []),
-      ...(isVisible('about-committee')
+      ...(isVisible('about-leadership')
         ? [
             {
-              id: 'about-committee',
-              label: getLabel('about-committee', 'বর্তমান কমিটি', 'Executive Committee'),
-              sublabel: pick('কার্যনির্বাহী পরিষদের কর্মকর্তা', 'Executive council members'),
-              icon: Award,
-              iconClass: 'bg-teal-600 text-white',
+              id: 'about-leadership',
+              label: getLabel('about-leadership', 'কার্যনির্বাহী পরিষদ', 'Executive Council'),
+              sublabel: pick('কার্যনির্বাহী পরিষদের সদস্য তালিকা', 'Executive council directory'),
+              icon: Users,
+              iconClass: 'bg-teal-700 text-white',
               href: '/committee',
             },
           ]
@@ -758,46 +758,30 @@ export function SiteHeader() {
             },
           ]
         : []),
-      ...(isVisible('about-leadership')
-        ? [
-            {
-              id: 'about-leadership',
-              label: getLabel('about-leadership', 'কার্যনির্বাহী পরিষদ', 'Executive Council'),
-              sublabel: pick('কার্যনির্বাহী পরিষদের সদস্য তালিকা', 'Executive council directory'),
-              icon: Users,
-              iconClass: 'bg-teal-700 text-white',
-              href: '/committee',
-            },
-          ]
-        : []),
       ...(isVisible('about-contact')
         ? [
             {
               id: 'about-contact',
-              label: getLabel('about-contact', 'যোগাযোগ', 'Contact'),
-              sublabel: pick('অফিস ও যোগাযোগ ডেস্ক', 'Office and contact desk'),
-              icon: Phone,
+              label: getLabel('about-contact', 'যোগাযোগ ও অভিযোগ ডেস্ক', 'Contact & Grievance Desk'),
+              sublabel: pick('অফিস, ম্যাপ ও সরাসরি বার্তা', 'Office, map and grievance desk'),
+              icon: Mail,
               iconClass: 'bg-pink-600 text-white',
               href: '/contact',
             },
           ]
         : []),
-      {
-        id: 'about-contact-desk',
-        label: pick('যোগাযোগ, ম্যাপ ও অভিযোগ ডেস্ক', 'Contact, Map & Feedback'),
-        sublabel: pick('বার্তা, ম্যাপ, অভিযোগ ও সংশোধন', 'Messages, map, feedback and corrections'),
-        icon: Mail,
-        iconClass: 'bg-cyan-600 text-white',
-        href: '/contact',
-      },
-      {
-        id: 'about-policies',
-        label: pick('নীতি ও স্বচ্ছতা', 'Policies & Transparency'),
-        sublabel: pick('সংশোধনী, স্বীকৃতি ও নিরাপত্তা নীতি', 'Corrections, recognition and safety policies'),
-        icon: ShieldCheck,
-        iconClass: 'bg-emerald-600 text-white',
-        href: '/policies',
-      },
+      ...(isVisible('about-policies')
+        ? [
+            {
+              id: 'about-policies',
+              label: getLabel('about-policies', 'নীতি ও স্বচ্ছতা', 'Policies & Transparency'),
+              sublabel: pick('সংশোধনী, স্বীকৃতি ও নিরাপত্তা নীতি', 'Corrections, recognition and safety policies'),
+              icon: ShieldCheck,
+              iconClass: 'bg-emerald-600 text-white',
+              href: '/policies',
+            },
+          ]
+        : []),
       ...customByPlacement('council-about'),
     ]
 

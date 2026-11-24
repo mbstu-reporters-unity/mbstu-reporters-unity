@@ -32,6 +32,7 @@ export const metadata: Metadata = {
 export default async function AboutPage() {
   const settings = await getSiteSettings()
   const b = settings.branding
+  const aboutCustom = settings.behaviorAndPages?.aboutPage
 
   return (
     <>
@@ -81,12 +82,18 @@ export default async function AboutPage() {
             </div>
 
             <div className="space-y-3.5 text-xs sm:text-sm text-slate-200 leading-relaxed text-justify">
-              <p>
-                মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের মুক্তচিন্তা, বুদ্ধিবৃত্তিক বিকাশ এবং ক্যাম্পাসের সকল সত্য ও গঠনমূলক সংবাদ শিক্ষার্থীদের সামনে উন্মোচন করার প্রত্যয়ে যাত্রা শুরু করে <strong className="text-white">মাভাবিপ্রবি রিপোর্টার্স ইউনিটি (MBSTURU)</strong>। জাতীয় ও স্থানীয় বিভিন্ন গণমাধ্যমে কর্মরত বিশ্ববিদ্যালয় প্রতিনিধিদের ঐক্যবদ্ধ করে ক্যাম্পাসে দায়িত্বশীল সাংবাদিকতা চর্চা গড়ে তোলাই এ সংগঠনের মূল উদ্দেশ্য।
-              </p>
-              <p>
-                বিশ্ববিদ্যালয়ের শিক্ষার্থী, শিক্ষক, কর্মকর্তা-কর্মচারী ও প্রশাসনের মধ্যে একটি ইতিবাচক ও স্বচ্ছ সেতুবন্ধন তৈরিতে কাজ করে যাচ্ছে এই সংগঠন। তথ্যের অবাধ প্রবাহ নিশ্চিত করা, ক্যাম্পাসের সংকট ও সম্ভাবনাসমূহ জাতীয় পরিমণ্ডলে তুলে ধরা এবং উদীয়মান তরুণ ক্যাম্পাস সাংবাদিকদের সঠিক প্রশিক্ষণ প্রদান আমাদের অন্যতম অঙ্গীকার।
-              </p>
+              {aboutCustom?.historyBn ? (
+                <div className="whitespace-pre-line">{aboutCustom.historyBn}</div>
+              ) : (
+                <>
+                  <p>
+                    মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের মুক্তচিন্তা, বুদ্ধিবৃত্তিক বিকাশ এবং ক্যাম্পাসের সকল সত্য ও গঠনমূলক সংবাদ শিক্ষার্থীদের সামনে উন্মোচন করার প্রত্যয়ে যাত্রা শুরু করে <strong className="text-white">মাভাবিপ্রবি রিপোর্টার্স ইউনিটি (MBSTURU)</strong>। জাতীয় ও স্থানীয় বিভিন্ন গণমাধ্যমে কর্মরত বিশ্ববিদ্যালয় প্রতিনিধিদের ঐক্যবদ্ধ করে ক্যাম্পাসে দায়িত্বশীল সাংবাদিকতা চর্চা গড়ে তোলাই এ সংগঠনের মূল উদ্দেশ্য।
+                  </p>
+                  <p>
+                    বিশ্ববিদ্যালয়ের শিক্ষার্থী, শিক্ষক, কর্মকর্তা-কর্মচারী ও প্রশাসনের মধ্যে একটি ইতিবাচক ও স্বচ্ছ সেতুবন্ধন তৈরিতে কাজ করে যাচ্ছে এই সংগঠন। তথ্যের অবাধ প্রবাহ নিশ্চিত করা, ক্যাম্পাসের সংকট ও সম্ভাবনাসমূহ জাতীয় পরিমণ্ডলে তুলে ধরা এবং উদীয়মান তরুণ ক্যাম্পাস সাংবাদিকদের সঠিক প্রশিক্ষণ প্রদান আমাদের অন্যতম অঙ্গীকার।
+                  </p>
+                </>
+              )}
             </div>
           </section>
 
@@ -101,8 +108,9 @@ export default async function AboutPage() {
                 </span>
                 <h3 className="font-serif text-lg sm:text-xl font-bold text-white">আমাদের ভিশন (Vision)</h3>
               </div>
-              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed text-justify">
-                একটি নির্ভীক, নৈতিক ও দায়িত্বশীল সাংবাদিক সমাজ গড়ে তোলা—যা বিশ্ববিদ্যালয়ের প্রশাসনিক জবাবদিহিতা নিশ্চিত করবে, সাধারণ শিক্ষার্থীদের অধিকার ও দাবিকে উচ্চকণ্ঠে ধারণ করবে এবং জাতীয় গণমাধ্যমে বিশ্ববিদ্যালয়কে ইতিবাচকভাবে উপস্থাপন করবে।
+              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed text-justify whitespace-pre-line">
+                {aboutCustom?.visionBn ||
+                  'একটি নির্ভীক, নৈতিক ও দায়িত্বশীল সাংবাদিক সমাজ গড়ে তোলা—যা বিশ্ববিদ্যালয়ের প্রশাসনিক জবাবদিহিতা নিশ্চিত করবে, সাধারণ শিক্ষার্থীদের অধিকার ও দাবিকে উচ্চকণ্ঠে ধারণ করবে এবং জাতীয় গণমাধ্যমে বিশ্ববিদ্যালয়কে ইতিবাচকভাবে উপস্থাপন করবে।'}
               </p>
             </div>
 
@@ -114,20 +122,26 @@ export default async function AboutPage() {
                 </span>
                 <h3 className="font-serif text-lg sm:text-xl font-bold text-white">আমাদের মিশন (Mission)</h3>
               </div>
-              <ul className="space-y-2 text-xs sm:text-sm text-slate-200">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>ক্যাম্পাস সংবাদ সংগ্রহ ও প্রকাশের ক্ষেত্রে শতভাগ নিরপেক্ষতা ও সত্যতা বজায় রাখা।</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>শিক্ষার্থীদের গবেষণা, উদ্ভাবন ও সাহিত্যকর্মকে জাতীয় পর্যায়ে তুলে ধরা।</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>নিয়মিত সাংবাদিকতা কর্মশালা, সেমিনার ও ফ্যাক্ট-চেকিং প্রশিক্ষণের আয়োজন করা।</span>
-                </li>
-              </ul>
+              {aboutCustom?.missionBn ? (
+                <div className="text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre-line">
+                  {aboutCustom.missionBn}
+                </div>
+              ) : (
+                <ul className="space-y-2 text-xs sm:text-sm text-slate-200">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span>ক্যাম্পাস সংবাদ সংগ্রহ ও প্রকাশের ক্ষেত্রে শতভাগ নিরপেক্ষতা ও সত্যতা বজায় রাখা।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span>শিক্ষার্থীদের গবেষণা, উদ্ভাবন ও সাহিত্যকর্মকে জাতীয় পর্যায়ে তুলে ধরা।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span>নিয়মিত সাংবাদিকতা কর্মশালা, সেমিনার ও ফ্যাক্ট-চেকিং প্রশিক্ষণের আয়োজন করা।</span>
+                  </li>
+                </ul>
+              )}
             </div>
           </div>
 

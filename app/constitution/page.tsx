@@ -132,6 +132,9 @@ export default function ConstitutionPage() {
     (settings?.behaviorAndPages?.subPages as Record<string, unknown> | undefined)?.constitutionPdfUrl
   const constitutionPdfUrl = typeof rawPdfUrl === 'string' ? rawPdfUrl.trim() : ''
 
+  // অ্যাডমিন প্যানেল থেকে কাস্টম গঠনতন্ত্র তথ্য
+  const constitutionCustom = settings?.behaviorAndPages?.constitutionPage
+
   const toggleArticle = (id: string) => {
     setOpenArticle((prev) => (prev === id ? null : id))
   }
@@ -242,9 +245,18 @@ export default function ConstitutionPage() {
               <BookOpen className="size-5" />
               <span>প্রস্তাবনা (Preamble)</span>
             </h2>
-            <p className="text-xs sm:text-sm text-slate-100 leading-relaxed text-justify">
-              "আমরা, মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের ক্যাম্পাসে সক্রিয় গণমাধ্যম প্রতিনিধিবৃন্দ—ক্যাম্পাসে মুক্ত ও নিরপেক্ষ সাংবাদিকতা চর্চা, তথ্যের অবাধ প্রবাহ নিশ্চিতকরণ, সাধারণ শিক্ষার্থীদের ন্যায্য অধিকার ও সমস্যা তুলে ধরা এবং বিশ্ববিদ্যালয়ের ইতিবাচক ভাবমূর্তি সমুন্নত রাখার দৃঢ় প্রত্যয়ে ঐক্যবদ্ধ হয়ে এই গঠনতন্ত্র প্রণয়ন ও গ্রহণ করছি।"
+            <p className="text-xs sm:text-sm text-slate-100 leading-relaxed text-justify whitespace-pre-line">
+              {constitutionCustom?.preambleBn ||
+                '"আমরা, মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের ক্যাম্পাসে সক্রিয় গণমাধ্যম প্রতিনিধিবৃন্দ—ক্যাম্পাসে মুক্ত ও নিরপেক্ষ সাংবাদিকতা চর্চা, তথ্যের অবাধ প্রবাহ নিশ্চিতকরণ, সাধারণ শিক্ষার্থীদের ন্যায্য অধিকার ও সমস্যা তুলে ধরা এবং বিশ্ববিদ্যালয়ের ইতিবাচক ভাবমূর্তি সমুন্নত রাখার দৃঢ় প্রত্যয়ে ঐক্যবদ্ধ হয়ে এই গঠনতন্ত্র প্রণয়ন ও গ্রহণ করছি।"'}
             </p>
+            {constitutionCustom?.extraRulesBn && (
+              <div className="mt-3 pt-3 border-t border-white/15">
+                <p className="text-xs font-bold text-amber-300 mb-2">📋 সংশোধিত ধারা / বিশেষ বিজ্ঞপ্তি:</p>
+                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre-line">
+                  {constitutionCustom.extraRulesBn}
+                </p>
+              </div>
+            )}
           </section>
 
           {/* আচরণবিধি সেকশন (Code of Ethics) */}
