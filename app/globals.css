@@ -624,3 +624,132 @@ html[data-theme='daylight-light'] .news-card-category[data-category-palette='sla
     animation: none !important;
   }
 }
+
+/* ========================================================
+   পেজ ট্রানজিশন অ্যানিমেশন — Next.js App Router View Transition
+   ======================================================== */
+
+/* প্রতিটি পেজ প্রথম রেন্ডারে এই কীফ্রেমে প্রবেশ করবে */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* পেজ বের হওয়ার অ্যানিমেশন */
+@keyframes pageExit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.99);
+  }
+}
+
+/* Next.js পেজ ট্রানজিশন সমর্থিত ব্রাউজারে এই CSS ব্যবহার হয় */
+@supports (view-transition-name: none) {
+  ::view-transition-old(root) {
+    animation: pageExit 220ms ease forwards;
+  }
+  ::view-transition-new(root) {
+    animation: pageEnter 320ms ease forwards;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none !important;
+    }
+  }
+}
+
+/* ফলব্যাক: Next.js main কন্টেন্টে এন্টার অ্যানিমেশন */
+main {
+  animation: pageEnter 300ms ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main {
+    animation: none !important;
+  }
+}
+
+/* ========================================================
+   স্মুথ ফোকাস রিং — সব ইন্টারেক্টিভ এলিমেন্টে
+   ======================================================== */
+:focus-visible {
+  outline: 2px solid var(--theme-brand, #00d2ff);
+  outline-offset: 3px;
+  border-radius: 0.375rem;
+}
+
+/* ========================================================
+   টাচ টার্গেট সাইজ — মোবাইলে সহজ নেভিগেশনের জন্য
+   ======================================================== */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* ফিড রোটেটর সেকশনে টাচ সোয়াইপ কাজ করতে দেওয়া */
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+/* ========================================================
+   ক্যাটাগরি ব্যাজ — হোম পেজে সেকশন হেডার রং
+   ======================================================== */
+
+/* সব ক্যাটাগরি ব্যাজের বেজ স্টাইল — উচ্চ কনট্রাস্ট নিশ্চিত */
+[data-cat-badge] {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* Daylight Light থিমে ক্যাটাগরি সেকশন ব্যাজের রং সমন্বয় */
+html[data-theme='daylight-light'] .category-section-badge-sky {
+  background-color: #0369a1;
+  color: #ffffff;
+  border-color: #0284c7;
+}
+html[data-theme='daylight-light'] .category-section-badge-amber {
+  background-color: #b45309;
+  color: #ffffff;
+  border-color: #d97706;
+}
+html[data-theme='daylight-light'] .category-section-badge-indigo {
+  background-color: #4338ca;
+  color: #ffffff;
+  border-color: #4f46e5;
+}
+html[data-theme='daylight-light'] .category-section-badge-violet {
+  background-color: #7c3aed;
+  color: #ffffff;
+  border-color: #8b5cf6;
+}
+html[data-theme='daylight-light'] .category-section-badge-emerald {
+  background-color: #15803d;
+  color: #ffffff;
+  border-color: #16a34a;
+}
+html[data-theme='daylight-light'] .category-section-badge-rose {
+  background-color: #be123c;
+  color: #ffffff;
+  border-color: #e11d48;
+}
+html[data-theme='daylight-light'] .category-section-badge-teal {
+  background-color: #0f766e;
+  color: #ffffff;
+  border-color: #0d9488;
+}
+html[data-theme='daylight-light'] .category-section-badge-slate {
+  background-color: #334155;
+  color: #ffffff;
+  border-color: #475569;
+}

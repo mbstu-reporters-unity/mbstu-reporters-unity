@@ -167,18 +167,35 @@ export function HomepageFeedRotator({
   )
   const autoplay = useHomepageAutoplay(rotation.length, 8500, initialIndex)
   const current = rotation[autoplay.index]
+  const totalUniq = rotation.length
 
   if (!current) return null
+
+  // স্বতন্ত্র (unique) entry ইনডেক্স বের করি (ডট নেভিগেটর)
+  const uniqIds = Array.from(new Set(rotation.map((e) => e.id)))
+  const dotIndex = uniqIds.indexOf(current.id)
 
   return (
     <section
       ref={autoplay.containerRef}
       {...autoplay.interactionProps}
-      className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+      className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 touch-pan-y"
       role="region"
       aria-label={title || "সর্বশেষ সংবাদ ও হালনাগাদ নোটিশ"}
+      aria-live="polite"
+      aria-atomic="false"
     >
-      {title && <h2 className="mb-3 font-serif text-lg font-bold text-white">{title}</h2>}
+      {/* শিরোনাম ও কাউন্টার */}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        {title && <h2 className="font-serif text-lg font-bold text-white">{title}</h2>}
+        {totalUniq > 1 && (
+          <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-bold text-slate-200">
+            {autoplay.index + 1} / {totalUniq}
+          </span>
+        )}
+      </div>
+
+      {/* মূল কার্ড — ট্রানজিশন অ্যানিমেশন সহ */}
       <div
         key={current.id}
         className={`${
@@ -191,17 +208,41 @@ export function HomepageFeedRotator({
           <NoticeFeedCard notice={current.notice} />
         )}
       </div>
-      {rotation.length > 1 && (
+
+      {/* নেভিগেশন বার — ডট + বাটন */}
+      {totalUniq > 1 && (
         <div className="mt-3 flex items-center justify-between gap-3">
+          {/* ক্যাটাগরি / ধরন লেবেল */}
           <span className="text-xs font-medium text-slate-300">
             {current.kind === "post" ? "ক্যাম্পাস সংবাদ" : "হালনাগাদ নোটিশ"}
           </span>
-          <div className="flex gap-2">
+
+          {/* ডট নেভিগেটর + Arrow বাটন */}
+          <div className="flex items-center gap-2">
+            {/* ডট ইন্ডিকেটর (সর্বোচ্চ ৭টি দেখাবে) */}
+            {uniqIds.length <= 7 && (
+              <div className="hidden sm:flex items-center gap-1" aria-hidden="true">
+                {uniqIds.map((id, i) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => autoplay.setIndex(rotation.findIndex((e) => e.id === id))}
+                    aria-label={`${i + 1} নম্বর সংবাদে যান`}
+                    className={`rounded-full transition-all duration-300 ${
+                      i === dotIndex
+                        ? "w-5 h-2 bg-cyan-400"
+                        : "w-2 h-2 bg-white/30 hover:bg-white/60"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+
             <button
               type="button"
               onClick={autoplay.previous}
               aria-label="আগের সংবাদ বা নোটিশ"
-              className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20"
+              className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20 active:scale-95"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
             </button>
@@ -209,12 +250,19 @@ export function HomepageFeedRotator({
               type="button"
               onClick={autoplay.next}
               aria-label="পরের সংবাদ বা নোটিশ"
-              className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20"
+              className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20 active:scale-95"
             >
               <ArrowRight className="size-4" aria-hidden="true" />
             </button>
           </div>
         </div>
+      )}
+
+      {/* মোবাইলে সোয়াইপ ইন্ডিকেটর (প্রথম দেখায়) */}
+      {totalUniq > 1 && (
+        <p className="mt-2 text-center text-[10px] text-white/30 sm:hidden select-none" aria-hidden="true">
+          ← আঙুল দিয়ে সোয়াইপ করুন →
+        </p>
       )}
     </section>
   )

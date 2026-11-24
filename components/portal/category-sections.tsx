@@ -8,8 +8,12 @@ import {
 } from '@/lib/sb'
 import { getVisibleCategoryNames } from '@/lib/categories'
 import type { HomeSectionConfig } from '@/lib/site-settings'
+import { selectHomepageItems } from '@/lib/homepage-feed'
 import { SectionHeading } from './section-heading'
-import { NewsGrid } from './news-card'
+import { CategoryFeedBlock } from './category-feed-block'
+
+// হোম পেজের জন্য প্রতি ক্যাটাগরিতে সর্বোচ্চ প্রিভিউ পোস্ট সংখ্যা
+const HOME_PREVIEW_LIMIT = 3
 
 export async function CategorySections({
   sectionConfig,
@@ -35,27 +39,35 @@ export async function CategorySections({
   const eyebrowText = sectionConfig?.eyebrow ?? 'News'
   const subSuffixBn = sectionConfig?.subtitleBn || 'বিভাগের সর্বশেষ সংবাদ ও প্রতিবেদন'
   const subPrefixEn = sectionConfig?.subtitleEn || 'Latest news in'
+  const now = Date.now()
 
   return (
     <>
       {cats.map((cat, i) => {
-        const posts = newsOnly.filter((p) => p.category === cat).slice(0, limits[`limit:${cat}`] || 12)
-        if (!posts.length) return null
+        const allCatPosts = newsOnly.filter((p) => p.category === cat)
+        if (!allCatPosts.length) return null
+
+        // ৩ দিনের মধ্যে হোম পেজে দেখানোর যোগ্য পোস্ট বের করো
+        const homePosts = selectHomepageItems(allCatPosts, (p) => p.created_at, now)
+          .slice(0, HOME_PREVIEW_LIMIT)
+
+        // হোমে দেখানোর মতো পোস্ট না থাকলে এই ক্যাটাগরির ব্লক হোম পেজে দেখাবে না
+        if (!homePosts.length) return null
+
+        const archiveLimit = limits[`limit:${cat}`] || 12
+
         return (
-          <section key={cat} id={`cat-${i}`} className="py-14 sm:py-20 border-b border-white/10 relative">
-            <div className="mx-auto max-w-7xl md:px-6 lg:px-8">
-              <div className="px-4 md:px-0">
-                <SectionHeading
-                  inverted
-                  eyebrow={eyebrowText}
-                  title={cat}
-                  subtitle={`${cat} ${subSuffixBn}`}
-                  subtitleEn={`${subPrefixEn} ${cat}`}
-                />
-              </div>
-              <NewsGrid posts={posts} />
-            </div>
-          </section>
+          <CategoryFeedBlock
+            key={cat}
+            cat={cat}
+            index={i}
+            posts={homePosts}
+            archiveLimit={archiveLimit}
+            eyebrow={eyebrowText}
+            subSuffixBn={subSuffixBn}
+            subPrefixEn={subPrefixEn}
+            initialNow={now}
+          />
         )
       })}
     </>
