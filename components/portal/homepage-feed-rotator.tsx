@@ -29,7 +29,7 @@ function NoticeFeedCard({ notice }: { notice: Notice }) {
   const imageUrls = (notice.image_urls || []).slice(0, 3)
 
   return (
-    <article className="overflow-hidden border-y border-white/15 bg-transparent p-5 text-white sm:p-7">
+    <article className="overflow-hidden border-y border-white/15 bg-transparent p-6 text-white sm:p-7">
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full border border-cyan-400/30 bg-cyan-500/15 px-3 py-1 text-[11px] font-bold text-cyan-200">
           {branch}
@@ -50,12 +50,12 @@ function NoticeFeedCard({ notice }: { notice: Notice }) {
 
       <Link
         href={`/notices?n=${encodeURIComponent(notice.id)}`}
-        className="mt-4 block font-serif text-xl font-bold text-white transition-colors hover:text-cyan-200 sm:text-2xl"
+        className="mt-4 block break-words font-serif text-xl font-bold text-white transition-colors hover:text-cyan-200 sm:text-2xl"
       >
         {notice.title}
       </Link>
-      {notice.heading && <p className="mt-1 text-sm font-semibold text-cyan-100">{notice.heading}</p>}
-      {notice.body && <p className="mt-3 line-clamp-4 whitespace-pre-line text-sm leading-relaxed text-slate-200">{notice.body}</p>}
+      {notice.heading && <p className="mt-1 break-words text-sm font-semibold text-cyan-100">{notice.heading}</p>}
+      {notice.body && <p className="mt-3 break-words line-clamp-4 whitespace-pre-line text-sm leading-relaxed text-slate-200">{notice.body}</p>}
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/15 pt-3 text-xs text-slate-300">
         <time dateTime={notice.created_at}>
           প্রকাশিত: {new Date(notice.created_at).toLocaleDateString("bn-BD", { timeZone: "Asia/Dhaka" })}
@@ -72,7 +72,7 @@ function NoticeFeedCard({ notice }: { notice: Notice }) {
       </div>
 
       {(imageUrls.length > 0 || notice.file_url) && (
-        <div className="-mx-5 mt-4 sm:-mx-7">
+        <div className="-mx-6 mt-4 sm:-mx-7">
           <NoticeMediaPreview
             title={notice.title}
             imageUrls={imageUrls}

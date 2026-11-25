@@ -102,7 +102,7 @@ export function NewsCard({ p }: { p: Post }) {
       ref={articleRef}
       className="news-card scroll-mt-20 group flex h-full flex-col border-0 bg-transparent transition-all"
     >
-      <div className="flex items-center justify-between gap-2.5 px-3.5 pt-3.5 pb-2.5 sm:px-5">
+      <div className="flex items-center justify-between gap-2.5 px-6 pt-3.5 pb-2.5 sm:px-7">
         <div className="flex items-center gap-2.5 min-w-0">
           {primaryHref ? (
             <Link href={primaryHref} className="shrink-0">
@@ -203,10 +203,10 @@ export function NewsCard({ p }: { p: Post }) {
         postDate={p.created_at}
       />
 
-      <div className="flex flex-1 flex-col px-3.5 pt-3 pb-3 sm:px-5 sm:pb-4 space-y-2">
+      <div className="flex min-w-0 flex-1 flex-col px-6 pt-3 pb-3 sm:px-7 sm:pb-4 space-y-2">
         <h3
           onClick={toggleExpand}
-          className="news-card-title font-serif text-lg sm:text-xl font-bold leading-snug text-white hover:text-cyan-200 transition-colors drop-shadow-sm cursor-pointer select-none"
+          className="news-card-title break-words font-serif text-lg sm:text-xl font-bold leading-snug text-white hover:text-cyan-200 transition-colors drop-shadow-sm cursor-pointer select-none"
         >
           {p.title}
         </h3>
@@ -214,7 +214,7 @@ export function NewsCard({ p }: { p: Post }) {
         {p.heading && p.heading.trim() !== p.title.trim() && (
           <p
             onClick={toggleExpand}
-            className="news-card-body text-xs sm:text-sm font-medium text-cyan-100/90 leading-snug border-l-2 border-cyan-400/70 pl-2.5 cursor-pointer"
+            className="news-card-body break-words text-xs sm:text-sm font-medium text-cyan-100/90 leading-snug border-l-2 border-cyan-400/70 pl-2.5 cursor-pointer"
           >
             {p.heading}
           </p>
@@ -225,7 +225,7 @@ export function NewsCard({ p }: { p: Post }) {
         {p.body && (
           <div
             onClick={toggleExpand}
-            className="news-card-body text-xs sm:text-sm leading-relaxed text-slate-200 opacity-95 cursor-pointer"
+            className="news-card-body min-w-0 break-words text-xs sm:text-sm leading-relaxed text-slate-200 opacity-95 cursor-pointer"
           >
             {expanded ? (
               <div className="space-y-2">
