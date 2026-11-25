@@ -788,5 +788,6 @@ body blockquote,
 .formatted-text,
 .formatted-text * {
   text-align: justify !important;
+  text-align-last: start !important;
   text-justify: inter-word;
 }

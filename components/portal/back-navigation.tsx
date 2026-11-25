@@ -30,7 +30,8 @@ export function BackNavigation({
     if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back()
     } else {
-      router.push(fallbackHref)
+      const breadcrumbHref = [...items].reverse().find((item) => item.href)?.href
+      router.push(breadcrumbHref ?? fallbackHref)
     }
   }
 

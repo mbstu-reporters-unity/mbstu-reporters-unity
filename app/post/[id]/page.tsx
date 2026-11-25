@@ -113,10 +113,10 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     <>
       <TopBar />
       <SiteHeader />
-      <main className="min-h-screen py-6 sm:py-10 px-4 pb-20">
+      <main className="min-h-screen py-6 sm:py-10 px-0 pb-20">
         <PostViewTracker postId={id} />
 
-        <article className="glass-card mx-auto max-w-3xl space-y-6 p-5 sm:p-9 text-white">
+        <article className="mx-auto max-w-3xl space-y-6 px-4 py-5 sm:px-9 sm:py-9 text-white">
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 pb-4">
             <BackNavigation
@@ -219,15 +219,19 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
             <PostMetaBadges data={post} />
           </div>
 
-          <RichGallery
-            items={items}
-            layout={layout}
-            postTitle={post.title}
-            postDate={post.created_at}
-          />
+          <div className="-mx-4 sm:-mx-9">
+            <RichGallery
+              items={items}
+              layout={layout}
+              postTitle={post.title}
+              postDate={post.created_at}
+            />
+          </div>
 
           {post.video_url && (
-            <video src={post.video_url} controls playsInline className="w-full rounded-2xl bg-black border border-white/20 shadow-lg" />
+            <div className="-mx-4 sm:-mx-9">
+              <video src={post.video_url} controls playsInline className="w-full bg-black" />
+            </div>
           )}
 
           <div className="py-2 text-slate-100 text-base sm:text-lg leading-relaxed">
@@ -249,7 +253,9 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           )}
 
           {post.embed_media_url && (
-            <UniversalMediaEmbed url={post.embed_media_url} title={post.title} />
+            <div className="-mx-4 sm:-mx-9">
+              <UniversalMediaEmbed url={post.embed_media_url} title={post.title} />
+            </div>
           )}
 
           <div className="pt-3 border-t border-white/15">

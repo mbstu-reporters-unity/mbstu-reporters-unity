@@ -5,6 +5,7 @@ import './globals.css'
 import { LangProvider } from '@/lib/i18n'
 import { SiteSettingsProvider } from '@/components/portal/site-settings-context'
 import { OfflinePwaManager } from '@/components/portal/offline-pwa-manager'
+import { ScrollPositionRestoration } from '@/components/portal/scroll-position-restoration'
 
 const notoSans = Noto_Sans_Bengali({
   subsets: ['bengali', 'latin'],
@@ -144,6 +145,7 @@ export default function RootLayout({
           <SiteSettingsProvider>
             {children}
             <OfflinePwaManager />
+            <ScrollPositionRestoration />
           </SiteSettingsProvider>
         </LangProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
