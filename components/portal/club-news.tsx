@@ -259,7 +259,7 @@ export function ClubNews({
     const activityMediaList = parseActivityMedia(raw?.embed_media_url)
 
     return (
-      <div className={`glass-card flex flex-col justify-between p-4 sm:p-5 select-none text-white h-full ${compact ? 'min-h-[240px] sm:min-h-[280px]' : 'min-h-[300px]'} w-full transition-all`}>
+      <div className={`flex flex-col justify-between p-4 sm:p-5 select-none text-white h-full ${compact ? 'min-h-[240px] sm:min-h-[280px]' : 'min-h-[300px]'} w-full border-b border-white/15 transition-all`}>
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-2 border-b border-white/15 pb-2.5">
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -300,11 +300,11 @@ export function ClubNews({
             </p>
 
             {activityMediaList.length > 0 && (
-              <div className="relative h-24 w-full rounded-2xl overflow-hidden bg-black/40 border border-white/15 mt-2">
+              <div className="-mx-4 sm:-mx-5 relative mt-2 w-auto overflow-hidden bg-black/40">
                 {activityMediaList[0].url.includes('youtube') ||
                 activityMediaList[0].url.includes('facebook') ||
                 activityMediaList[0].url.includes('.mp4') ? (
-                  <div className="size-full flex items-center justify-center bg-black/60 text-white gap-1 text-[11px] font-semibold">
+                  <div className="flex min-h-24 w-full items-center justify-center bg-black/60 text-white gap-1 text-[11px] font-semibold">
                     <Play className="size-4 fill-current text-cyan-400" />
                     <span>{pick('ভিডিও', 'Video')}</span>
                   </div>
@@ -314,7 +314,7 @@ export function ClubNews({
                     src={activityMediaList[0].url}
                     alt=""
                     loading="lazy"
-                    className="size-full object-cover"
+                    className="block h-auto w-full object-contain"
                     onError={(e) => { (e.target as HTMLElement).style.display = 'none' }}
                   />
                 )}

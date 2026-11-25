@@ -5,8 +5,9 @@ import Link from "next/link"
 import { ArrowDownToLine, ArrowLeft, ArrowRight, ExternalLink, FileText, Pin } from "lucide-react"
 import type { Post } from "@/lib/sb"
 import { buildHomepageRotation, selectHomepageItems } from "@/lib/homepage-feed"
-import { BRANCHES, downloadUrl, type Notice } from "@/lib/notices"
+import { BRANCHES, downloadUrl, isImageType, type Notice } from "@/lib/notices"
 import { NewsGrid } from "./news-card"
+import NoticeMediaPreview from "./notice-media-preview"
 import { useHomepageAutoplay } from "./use-homepage-autoplay"
 import { useHomepageAging } from "./use-homepage-aging"
 
@@ -25,9 +26,10 @@ function noticeActivityAt(notice: Notice): string {
 function NoticeFeedCard({ notice }: { notice: Notice }) {
   const updated = !!notice.updated_at && notice.updated_at !== notice.created_at
   const branch = BRANCHES.find((entry) => entry.key === notice.branch)?.bn || notice.branch
+  const imageUrls = (notice.image_urls || []).slice(0, 3)
 
   return (
-    <article className="glass-card overflow-hidden p-5 text-white sm:p-7">
+    <article className="overflow-hidden border-y border-white/15 bg-transparent p-5 text-white sm:p-7">
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full border border-cyan-400/30 bg-cyan-500/15 px-3 py-1 text-[11px] font-bold text-cyan-200">
           {branch}
@@ -69,12 +71,17 @@ function NoticeFeedCard({ notice }: { notice: Notice }) {
         )}
       </div>
 
-      {!!notice.image_urls?.length && (
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {notice.image_urls.slice(0, 3).map((src) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={src} src={src} alt="" loading="lazy" className="h-28 w-full rounded-xl object-cover sm:h-36" />
-          ))}
+      {(imageUrls.length > 0 || notice.file_url) && (
+        <div className="-mx-5 mt-4 sm:-mx-7">
+          <NoticeMediaPreview
+            title={notice.title}
+            imageUrls={imageUrls}
+            layout="stack"
+            fileUrl={notice.file_url}
+            fileName={notice.file_name}
+            fileType={notice.file_type}
+            postDate={notice.created_at}
+          />
         </div>
       )}
 
@@ -202,11 +209,13 @@ export function HomepageFeedRotator({
           autoplay.reducedMotion ? "" : "animate-in fade-in slide-in-from-right-4 duration-500"
         } motion-reduce:animate-none`}
       >
-        {current.kind === "post" ? (
-          <NewsGrid posts={[current.post]} />
-        ) : (
-          <NoticeFeedCard notice={current.notice} />
-        )}
+        <div className="-mx-8 sm:mx-0">
+          {current.kind === "post" ? (
+            <NewsGrid posts={[current.post]} />
+          ) : (
+            <NoticeFeedCard notice={current.notice} />
+          )}
+        </div>
       </div>
 
       {/* নেভিগেশন বার — ডট + বাটন */}

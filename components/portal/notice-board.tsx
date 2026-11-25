@@ -10,6 +10,7 @@ import { useSiteSettings } from "./site-settings-context"
 import { selectHomepageItems } from "@/lib/homepage-feed"
 import { useHomepageAging } from "./use-homepage-aging"
 import { useLang } from "@/lib/i18n"
+import NoticeMediaPreview from "./notice-media-preview"
 
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", timeZone: "Asia/Dhaka" })
@@ -68,7 +69,7 @@ export function NoticeBoard({
           subtitleEn={sec?.subtitleEn || "Latest notices from MBSTU & MBSTURU."}
         />
 
-        <div className="glass-card overflow-hidden">
+        <div className="glass-card">
           <div className="flex items-center gap-2 bg-gradient-to-r from-blue-700/80 to-indigo-800/80 px-5 py-3 text-sm font-bold text-white border-b border-white/20 backdrop-blur">
             <Megaphone className="size-4 text-cyan-300" aria-hidden="true" />
             <span>{pick('সাম্প্রতিক নোটিশ', 'Recent Notices')}</span>
@@ -85,65 +86,80 @@ export function NoticeBoard({
               return (
                 <li
                   key={n.id}
-                  className="flex flex-col gap-4 p-5 transition-colors hover:bg-white/10 sm:flex-row sm:items-center"
+                  className="flex flex-col gap-4 p-5 transition-colors hover:bg-white/10"
                 >
-                  <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-2xl border border-white/30 bg-white/15 text-white shadow-md">
-                    <span className="font-serif text-lg font-bold leading-none">{day(n.created_at)}</span>
-                    <span className="text-[10px] font-bold uppercase text-cyan-300">{month(n.created_at)}</span>
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {n.is_pinned && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 border border-amber-400/40 px-2 py-0.5 text-[11px] font-bold text-amber-300">
-                          <Pin className="size-3" aria-hidden="true" />
-                          {pick('গুরুত্বপূর্ণ', 'Pinned')}
-                        </span>
-                      )}
-                      <span className="rounded-full bg-white/15 border border-white/25 px-2.5 py-0.5 text-[11px] font-bold text-cyan-200">
-                        {branch}
-                      </span>
-                      {n.ref_number && (
-                        <p className="inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2.5 py-0.5 font-mono text-[11px] text-slate-300">
-                          <FileText className="size-3" aria-hidden="true" />
-                          {pick('স্মারক নম্বর:', 'Reference:')} {n.ref_number}
-                        </p>
-                      )}
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-2xl border border-white/30 bg-white/15 text-white shadow-md">
+                      <span className="font-serif text-lg font-bold leading-none">{day(n.created_at)}</span>
+                      <span className="text-[10px] font-bold uppercase text-cyan-300">{month(n.created_at)}</span>
                     </div>
 
-                    <Link
-                      href={`/notices?n=${n.id}`}
-                      className="mt-1.5 block font-serif font-bold text-base text-white hover:text-cyan-300 transition-colors"
-                    >
-                      {n.title}
-                    </Link>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {n.is_pinned && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 border border-amber-400/40 px-2 py-0.5 text-[11px] font-bold text-amber-300">
+                            <Pin className="size-3" aria-hidden="true" />
+                            {pick('গুরুত্বপূর্ণ', 'Pinned')}
+                          </span>
+                        )}
+                        <span className="rounded-full bg-white/15 border border-white/25 px-2.5 py-0.5 text-[11px] font-bold text-cyan-200">
+                          {branch}
+                        </span>
+                        {n.ref_number && (
+                          <p className="inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2.5 py-0.5 font-mono text-[11px] text-slate-300">
+                            <FileText className="size-3" aria-hidden="true" />
+                            {pick('স্মারক নম্বর:', 'Reference:')} {n.ref_number}
+                          </p>
+                        )}
+                      </div>
 
-                    {n.heading && <p className="text-xs text-slate-300 mt-0.5">{n.heading}</p>}
-                    <p className="text-[11px] text-cyan-200/80 mt-1">
-                      {n.updated_at && n.updated_at !== n.created_at ? `${pick('হালনাগাদ: ', 'Updated: ')}` : ""}
-                      {timeAgo(noticeActivityAt(n))}
-                    </p>
+                      <Link
+                        href={`/notices?n=${n.id}`}
+                        className="mt-1.5 block font-serif font-bold text-base text-white hover:text-cyan-300 transition-colors"
+                      >
+                        {n.title}
+                      </Link>
+
+                      {n.heading && <p className="text-xs text-slate-300 mt-0.5">{n.heading}</p>}
+                      <p className="text-[11px] text-cyan-200/80 mt-1">
+                        {n.updated_at && n.updated_at !== n.created_at ? `${pick('হালনাগাদ: ', 'Updated: ')}` : ""}
+                        {timeAgo(noticeActivityAt(n))}
+                      </p>
+                    </div>
+
+                    {n.file_url ? (
+                      <a
+                        href={downloadUrl(n.file_url, n.file_name)}
+                        className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white border border-white/30 px-4 py-2 text-xs font-bold transition-all shadow-md active:scale-95"
+                      >
+                        <Download className="size-3.5" aria-hidden="true" />
+                        <span>{pick('ফাইল ডাউনলোড', 'Download file')}</span>
+                      </a>
+                    ) : safeUrl(n.link_url) ? (
+                      <a
+                        href={n.link_url!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white border border-white/30 px-4 py-2 text-xs font-bold transition-all shadow-md active:scale-95 backdrop-blur"
+                      >
+                        <ExternalLink className="size-3.5" aria-hidden="true" />
+                        <span>{pick('লিংক খুলুন', 'Open link')}</span>
+                      </a>
+                    ) : null}
                   </div>
 
-                  {n.file_url ? (
-                    <a
-                      href={downloadUrl(n.file_url, n.file_name)}
-                      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white border border-white/30 px-4 py-2 text-xs font-bold transition-all shadow-md active:scale-95"
-                    >
-                      <Download className="size-3.5" aria-hidden="true" />
-                      <span>{pick('ফাইল ডাউনলোড', 'Download file')}</span>
-                    </a>
-                  ) : safeUrl(n.link_url) ? (
-                    <a
-                      href={n.link_url!}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white border border-white/30 px-4 py-2 text-xs font-bold transition-all shadow-md active:scale-95 backdrop-blur"
-                    >
-                      <ExternalLink className="size-3.5" aria-hidden="true" />
-                      <span>{pick('লিংক খুলুন', 'Open link')}</span>
-                    </a>
-                  ) : null}
+                  {(n.image_urls?.length || n.file_url) && (
+                    <div className="-mx-9 sm:-mx-5">
+                      <NoticeMediaPreview
+                        title={n.title}
+                        imageUrls={n.image_urls}
+                        fileUrl={n.file_url}
+                        fileName={n.file_name}
+                        fileType={n.file_type}
+                        postDate={n.created_at}
+                      />
+                    </div>
+                  )}
                 </li>
               )
             })}

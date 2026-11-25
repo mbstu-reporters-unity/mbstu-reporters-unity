@@ -12,7 +12,7 @@ export default function ImageGallery({
     return (
       <div className="relative">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={list[0]} alt="" className="w-full object-cover rounded-xl" />
+        <img src={list[0]} alt="" className="block h-auto w-full rounded-xl object-contain" />
         {list.length > 1 && (
           <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs rounded-full px-2 py-1">
             +{list.length - 1}
@@ -24,20 +24,18 @@ export default function ImageGallery({
 
   if (list.length === 1) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={list[0]} alt="" className="w-full rounded-xl" />
+    return <img src={list[0]} alt="" className="block h-auto w-full rounded-xl object-contain" />
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="space-y-2">
       {list.map((u, i) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           key={u + i}
           src={u}
           alt=""
-          className={`w-full object-cover rounded-xl ${
-            list.length % 2 === 1 && i === 0 ? "col-span-2 max-h-80" : "h-44"
-          }`}
+          className="block h-auto w-full rounded-xl object-contain"
         />
       ))}
     </div>

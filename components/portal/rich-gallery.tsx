@@ -401,7 +401,7 @@ function VerticalAlbumModal({
                   src={item.url}
                   alt={cardTitle || ""}
                   loading="lazy"
-                  className="w-full max-h-[70vh] object-contain mx-auto transition-transform duration-300 group-hover:scale-[1.01]"
+                  className="block h-auto max-h-[70vh] w-auto max-w-full object-contain mx-auto"
                 />
                 <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-black/70 backdrop-blur-md px-3 py-1.5 text-xs font-bold text-white border border-white/25 shadow-lg">
                   <ZoomIn className="size-3.5 text-cyan-400" />
@@ -470,7 +470,8 @@ export default function RichGallery({
 
   if (list.length === 0) return null
 
-  const { base: activeLayout, frameColor, viewerMode } = parseLayoutValue(layout)
+  const { frameColor, viewerMode } = parseLayoutValue(layout)
+  const activeLayout: string = "stack"
   const effectiveViewer: "lightbox" | "album" =
     viewerMode === "default" ? globalMode : viewerMode
 
@@ -489,8 +490,8 @@ export default function RichGallery({
   const rInner = compact ? "rounded-none" : "rounded-xl"
   const gapCls = compact ? "gap-0.5" : "gap-2"
   const freeSingleCls = compact
-    ? "aspect-video w-full object-cover bg-black/20 mx-auto block"
-    : "w-full rounded-2xl object-cover"
+    ? "h-auto w-full object-contain bg-black/20 mx-auto block"
+    : "h-auto w-full rounded-2xl object-contain"
 
   const fig = (i: number, cls: string, imgCls: string) => (
     <Fig
@@ -656,7 +657,7 @@ export default function RichGallery({
   } else if (activeLayout === "stack") {
     body = (
       <div className={compact ? "space-y-0.5" : "space-y-3"}>
-        {list.map((_, i) => fig(i, "", `w-full ${rOuter} object-cover`))}
+        {list.map((_, i) => fig(i, "", `block h-auto w-full ${rOuter} object-contain`))}
       </div>
     )
   } else if (activeLayout === "slider") {

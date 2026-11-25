@@ -7,7 +7,6 @@ import {
 } from "../../lib/sb"
 import type { ImageMeta, ParentType, NewImage } from "../../lib/sb"
 import {
-  LAYOUTS,
   parseLayoutValue,
   buildLayoutValue,
   type ViewerMode,
@@ -138,15 +137,10 @@ export default function ImageSection({ s }: { s: ImageSectionState }) {
   const [emojiFor, setEmojiFor] = useState<string | null>(null)
   const total = s.visible.length + s.fresh.length
   const parsed = parseLayoutValue(s.layout)
-  const activeBase = parsed.base
   const viewerMode = parsed.viewerMode
 
-  function updateBase(base: string) {
-    s.setLayout(buildLayoutValue(base, parsed.frameColor, viewerMode))
-  }
-
   function updateViewer(mode: ViewerMode) {
-    s.setLayout(buildLayoutValue(activeBase, parsed.frameColor, mode))
+    s.setLayout(buildLayoutValue("stack", parsed.frameColor, mode))
   }
 
   return (
@@ -174,7 +168,7 @@ export default function ImageSection({ s }: { s: ImageSectionState }) {
         return (
           <div key={img.id} className="flex gap-2 rounded-xl border p-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={img.url} alt="" className="h-20 w-20 shrink-0 rounded-lg object-cover" />
+            <img src={img.url} alt="" className="h-auto max-h-36 w-28 shrink-0 rounded-lg object-contain" />
             <div className="min-w-0 flex-1 space-y-1">
               <input className={small} maxLength={300} placeholder="ক্যাপশন / লেবেল (ঐচ্ছিক)" value={m.caption} onChange={(e) => s.setExistingMeta(img.id, "caption", e.target.value)} />
               <input className={small} maxLength={100} placeholder="ফটো ক্রেডিট (ঐচ্ছিক)" value={m.credit} onChange={(e) => s.setExistingMeta(img.id, "credit", e.target.value)} />
@@ -193,7 +187,7 @@ export default function ImageSection({ s }: { s: ImageSectionState }) {
         return (
           <div key={f.preview} className="flex gap-2 rounded-xl border border-green-600 p-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={f.preview} alt="" className="h-20 w-20 shrink-0 rounded-lg object-cover" />
+            <img src={f.preview} alt="" className="h-auto max-h-36 w-28 shrink-0 rounded-lg object-contain" />
             <div className="min-w-0 flex-1 space-y-1">
               <input className={small} maxLength={300} placeholder="ক্যাপশন / লেবেল (ঐচ্ছিক)" value={f.caption} onChange={(e) => s.setNewMeta(i, "caption", e.target.value)} />
               <input className={small} maxLength={100} placeholder="ফটো ক্রেডিট (ঐচ্ছিক)" value={f.credit} onChange={(e) => s.setNewMeta(i, "credit", e.target.value)} />
@@ -206,24 +200,6 @@ export default function ImageSection({ s }: { s: ImageSectionState }) {
           </div>
         )
       })}
-
-      {total > 1 && (
-        <div className="space-y-1">
-          <p className="text-sm text-gray-600">ছবিগুলো কীভাবে সাজানো হবে</p>
-          <div className="grid grid-cols-2 gap-2">
-            {LAYOUTS.map((l) => (
-              <button
-                key={l.key}
-                type="button"
-                onClick={() => updateBase(l.key)}
-                className={`rounded-lg border px-2 py-2 text-sm ${activeBase === l.key ? "bg-green-700 text-white" : "bg-white"}`}
-              >
-                {l.bn}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {total > 0 && (
         <div className="space-y-1.5 rounded-xl border bg-gray-50 p-2.5">

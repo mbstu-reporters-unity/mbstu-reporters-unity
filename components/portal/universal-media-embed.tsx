@@ -130,7 +130,7 @@ function SingleMediaCard({
                 <img
                   src={media.src}
                   alt={displayTitle}
-                  className="w-full max-h-[500px] object-contain mx-auto select-none transition-transform duration-300 group-hover/img:scale-[1.01]"
+                  className="h-auto w-full object-contain mx-auto select-none transition-transform duration-300 group-hover/img:scale-[1.01]"
                   onError={(e) => {
                     ;(e.target as HTMLElement).style.display = 'none'
                   }}

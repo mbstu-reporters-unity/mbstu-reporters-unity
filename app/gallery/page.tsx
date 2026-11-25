@@ -480,14 +480,14 @@ export default function GalleryPage() {
                   className="glass-card overflow-hidden flex flex-col justify-between text-white cursor-pointer group hover:border-cyan-400/70 transition"
                 >
                   <div>
-                    <div className="relative aspect-[16/10] w-full bg-black/60 overflow-hidden">
+                    <div className="relative w-full bg-black/60 overflow-hidden">
                       {item.thumbnailUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={item.thumbnailUrl}
                           alt={item.caption || item.title}
                           loading="lazy"
-                          className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="block h-auto w-full object-contain"
                         />
                       ) : (
                         <div className="size-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-indigo-950 text-white/60 gap-2">

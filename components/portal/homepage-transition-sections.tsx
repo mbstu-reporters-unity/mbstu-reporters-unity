@@ -37,6 +37,8 @@ const headings: Record<TransitionKind, { eyebrow: string; title: string; titleEn
   publications: { eyebrow: "Publications", title: "প্রকাশনা", titleEn: "Publications" },
 }
 
+const transitionSlideClass = "-mx-4 border-b border-white/15 text-white sm:-mx-6 lg:-mx-8"
+
 function isSafeUrl(value: string | null | undefined): value is string {
   return !!value && /^https?:\/\//i.test(value)
 }
@@ -112,24 +114,31 @@ export function HomepageCompactCarousel({
 
 function DepartmentSlide({ faculty }: { faculty: FacultyWithDepartments }) {
   return (
-    <article className="glass-card overflow-hidden p-5 text-white sm:p-7">
+    <article className={`${transitionSlideClass} overflow-hidden`}>
       {faculty.image_url && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={faculty.image_url} alt="" loading="lazy" className="mb-4 h-40 w-full rounded-2xl object-cover" />
+        <img
+          src={faculty.image_url}
+          alt=""
+          loading="lazy"
+          className="block h-auto w-full object-contain"
+        />
       )}
-      <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">{faculty.name_en || "Faculty"}</p>
-      <h3 className="mt-1 font-serif text-xl font-bold text-white sm:text-2xl">{faculty.name}</h3>
-      {faculty.description && <p className="mt-2 text-sm leading-relaxed text-slate-200">{faculty.description}</p>}
-      <div className="mt-4 flex flex-wrap gap-2">
-        {faculty.departments.map((department) => (
-          <Link
-            key={department.id}
-            href={`/department/${department.id}`}
-            className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
-          >
-            {department.name}
-          </Link>
-        ))}
+      <div className="space-y-2 p-6 sm:p-8">
+        <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">{faculty.name_en || "Faculty"}</p>
+        <h3 className="font-serif text-xl font-bold text-white sm:text-2xl">{faculty.name}</h3>
+        {faculty.description && <p className="text-sm leading-relaxed text-slate-200">{faculty.description}</p>}
+        <div className="mt-4 flex flex-wrap gap-2">
+          {faculty.departments.map((department) => (
+            <Link
+              key={department.id}
+              href={`/department/${department.id}`}
+              className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
+            >
+              {department.name}
+            </Link>
+          ))}
+        </div>
       </div>
     </article>
   )
@@ -142,26 +151,32 @@ function SocialSiteSlide({ site }: { site: SocialSite }) {
     { label: "YouTube", href: site.yt_url },
   ].filter((link): link is { label: string; href: string } => isSafeUrl(link.href))
   return (
-    <article className="glass-card flex min-h-48 flex-col p-5 text-white sm:p-7">
-      <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">{site.category || "Community"}</p>
-      <h3 className="mt-2 font-serif text-xl font-bold text-white sm:text-2xl">{site.name}</h3>
-      {site.name_en && <p className="text-sm font-semibold text-cyan-100">{site.name_en}</p>}
-      {site.description && <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-200">{site.description}</p>}
-      {site.contact_info && <p className="mt-2 text-xs text-slate-300">{site.contact_info}</p>}
-      <div className="mt-4 flex flex-wrap gap-2">
-        {links.map((link) => (
-          <a
-            key={`${site.id}:${link.href}`}
-            href={link.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`${site.name} ${link.label}`}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-700 to-blue-800 px-4 py-2 text-xs font-bold text-white transition hover:from-cyan-600 hover:to-blue-700"
-          >
-            <ExternalLink className="size-3.5" aria-hidden="true" />
-            {link.label}
-          </a>
-        ))}
+    <article className={`${transitionSlideClass} overflow-hidden`}>
+      {site.logo_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={site.logo_url} alt="" loading="lazy" className="block h-auto w-full object-contain" />
+      )}
+      <div className="space-y-3 p-6 sm:p-8">
+        <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">{site.category || "Community"}</p>
+        <h3 className="font-serif text-xl font-bold text-white sm:text-2xl">{site.name}</h3>
+        {site.name_en && <p className="text-sm font-semibold text-cyan-100">{site.name_en}</p>}
+        {site.description && <p className="text-sm leading-relaxed text-slate-200">{site.description}</p>}
+        {site.contact_info && <p className="text-xs text-slate-300">{site.contact_info}</p>}
+        <div className="flex flex-wrap gap-2 pt-1">
+          {links.map((link) => (
+            <a
+              key={`${site.id}:${link.href}`}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${site.name} ${link.label}`}
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-700 to-blue-800 px-4 py-2 text-xs font-bold text-white transition hover:from-cyan-600 hover:to-blue-700"
+            >
+              <ExternalLink className="size-3.5" aria-hidden="true" />
+              {link.label}
+            </a>
+          ))}
+        </div>
       </div>
     </article>
   )
@@ -169,29 +184,33 @@ function SocialSiteSlide({ site }: { site: SocialSite }) {
 
 function TimelineSlide({ item }: { item: TimelineItem }) {
   return (
-    <article className="glass-card p-5 text-white sm:p-7">
-      <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-cyan-200">
-        <span>{item.date_label}</span>
-        <span aria-hidden="true">·</span>
-        <span>{item.category}</span>
-        {item.status && <span className="rounded-full bg-white/15 px-2 py-1">{item.status}</span>}
+    <article className={`${transitionSlideClass} overflow-hidden`}>
+      <div className="space-y-3 p-6 sm:p-8">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-cyan-200">
+          <span>{item.date_label}</span>
+          <span aria-hidden="true">·</span>
+          <span>{item.category}</span>
+          {item.status && <span className="rounded-full bg-white/15 px-2 py-1">{item.status}</span>}
+        </div>
+        <h3 className="font-serif text-xl font-bold text-white sm:text-2xl">{item.title}</h3>
+        <p className="text-sm leading-relaxed text-slate-200">{item.summary}</p>
       </div>
-      <h3 className="mt-3 font-serif text-xl font-bold text-white sm:text-2xl">{item.title}</h3>
-      <p className="mt-3 text-sm leading-relaxed text-slate-200">{item.summary}</p>
       {item.image_url && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.image_url} alt="" loading="lazy" className="mt-4 max-h-64 w-full rounded-2xl object-cover" />
+        <img src={item.image_url} alt="" loading="lazy" className="block h-auto w-full object-contain" />
       )}
       {isSafeUrl(item.post_url) && (
-        <a
-          href={item.post_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-cyan-300 hover:underline"
-        >
-          বিস্তারিত
-          <ExternalLink className="size-3.5" aria-hidden="true" />
-        </a>
+        <div className="px-6 py-5 sm:px-8">
+          <a
+            href={item.post_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-xs font-bold text-cyan-300 hover:underline"
+          >
+            বিস্তারিত
+            <ExternalLink className="size-3.5" aria-hidden="true" />
+          </a>
+        </div>
       )}
     </article>
   )
@@ -215,19 +234,21 @@ function FactCheckSlide({ item }: { item: FactCheckItem }) {
           ? "সত্য"
           : "মিথ্যা"
   return (
-    <article className="glass-card p-5 text-white sm:p-7">
-      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold text-white ${verdictClass}`}>
-        {verdictLabel}
-      </span>
-      <p className="mt-4 text-sm font-semibold text-slate-200">দাবি: {item.claim}</p>
-      {item.claim_source && <p className="mt-1 text-xs text-slate-300">উৎস: {item.claim_source}</p>}
-      <h3 className="mt-2 font-serif text-xl font-bold text-white sm:text-2xl">{item.title}</h3>
-      <p className="mt-3 text-sm leading-relaxed text-slate-200">{item.explanation}</p>
+    <article className={`${transitionSlideClass} overflow-hidden`}>
+      <div className="space-y-3 p-6 sm:p-8">
+        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold text-white ${verdictClass}`}>
+          {verdictLabel}
+        </span>
+        <p className="text-sm font-semibold text-slate-200">দাবি: {item.claim}</p>
+        {item.claim_source && <p className="text-xs text-slate-300">উৎস: {item.claim_source}</p>}
+        <h3 className="font-serif text-xl font-bold text-white sm:text-2xl">{item.title}</h3>
+        <p className="text-sm leading-relaxed text-slate-200">{item.explanation}</p>
+      </div>
       {item.image_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.image_url} alt="" loading="lazy" className="mt-4 max-h-64 w-full rounded-2xl object-cover" />
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={item.image_url} alt="" loading="lazy" className="block h-auto w-full object-contain" />
       )}
-      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/15 pt-3 text-xs text-slate-300">
+      <div className="flex flex-wrap items-center gap-3 px-6 py-5 text-xs text-slate-300 sm:px-8">
         {item.checker_name && <span>{item.checker_name}</span>}
         <time dateTime={item.created_at}>{item.checked_date}</time>
         {isSafeUrl(item.evidence_url) && (
@@ -244,21 +265,21 @@ function FactCheckSlide({ item }: { item: FactCheckItem }) {
 function PublicationSlide({ item }: { item: PublicationItem }) {
   const href = isSafeUrl(item.download_url) ? item.download_url : item.pdf_url
   return (
-    <article className="glass-card grid gap-5 p-5 text-white sm:grid-cols-[180px_1fr] sm:p-7">
+    <article className={`${transitionSlideClass} overflow-hidden`}>
       {item.cover_url ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.cover_url} alt="" loading="lazy" className="h-56 w-full rounded-2xl object-cover sm:h-full" />
+        <img src={item.cover_url} alt="" loading="lazy" className="block h-auto w-full object-contain" />
       ) : (
-        <div className="flex min-h-48 items-center justify-center rounded-2xl bg-white/10 text-cyan-200">
+        <div className="flex min-h-48 items-center justify-center bg-white/10 text-cyan-200">
           <FileText className="size-12" aria-hidden="true" />
         </div>
       )}
-      <div className="flex flex-col">
+      <div className="space-y-3 p-6 sm:p-8">
         <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">{item.pub_type}</p>
-        <h3 className="mt-2 font-serif text-xl font-bold text-white sm:text-2xl">{item.title}</h3>
-        {item.issue_label && <p className="mt-1 text-sm font-semibold text-cyan-100">{item.issue_label}</p>}
-        {item.description && <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-200">{item.description}</p>}
-        <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-300">
+        <h3 className="font-serif text-xl font-bold text-white sm:text-2xl">{item.title}</h3>
+        {item.issue_label && <p className="text-sm font-semibold text-cyan-100">{item.issue_label}</p>}
+        {item.description && <p className="text-sm leading-relaxed text-slate-200">{item.description}</p>}
+        <div className="flex flex-wrap gap-3 text-xs text-slate-300">
           <time dateTime={item.published_date}>{item.published_date}</time>
           {item.pages_count && <span>{item.pages_count} পৃষ্ঠা</span>}
           {item.editor_name && <span>সম্পাদক: {item.editor_name}</span>}
@@ -268,7 +289,7 @@ function PublicationSlide({ item }: { item: PublicationItem }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-gradient-to-r from-cyan-700 to-blue-800 px-4 py-2 text-xs font-bold text-white hover:from-cyan-600 hover:to-blue-700"
+            className="inline-flex w-fit items-center gap-2 rounded-full bg-gradient-to-r from-cyan-700 to-blue-800 px-4 py-2 text-xs font-bold text-white hover:from-cyan-600 hover:to-blue-700"
           >
             <FileText className="size-3.5" aria-hidden="true" />
             প্রকাশনা দেখুন
@@ -345,14 +366,16 @@ export function HomepageTransitionSection({
 
   return (
     <section className="relative py-12 sm:py-16">
-      <SectionHeading
-        inverted
-        eyebrow={sectionConfig.eyebrow || heading.eyebrow}
-        title={sectionConfig.titleBn || heading.title}
-        titleEn={sectionConfig.titleEn || heading.titleEn}
-        subtitle={sectionConfig.subtitleBn}
-        subtitleEn={sectionConfig.subtitleEn}
-      />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionHeading
+          inverted
+          eyebrow={sectionConfig.eyebrow || heading.eyebrow}
+          title={sectionConfig.titleBn || heading.title}
+          titleEn={sectionConfig.titleEn || heading.titleEn}
+          subtitle={sectionConfig.subtitleBn}
+          subtitleEn={sectionConfig.subtitleEn}
+        />
+      </div>
       {slides.length ? (
         <HomepageCompactCarousel slides={slides} title={heading.title} interval={7500} />
       ) : (

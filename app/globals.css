@@ -753,3 +753,38 @@ html[data-theme='daylight-light'] .category-section-badge-slate {
   color: #ffffff;
   border-color: #475569;
 }
+
+body :not(form *)[class*="grid-cols-"],
+body :not(form *)[style*="grid-template-columns"],
+body form [class*="grid-cols-"]:has(img, video, iframe),
+body form [style*="grid-template-columns"]:has(img, video, iframe) {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+body :not(form *)[class*="col-span-"],
+body :not(form *)[class*="col-start-"],
+body :not(form *)[class*="col-end-"] {
+  grid-column: auto !important;
+}
+
+body :not(form *)[class*="row-span-"],
+body :not(form *)[class*="row-start-"],
+body :not(form *)[class*="row-end-"] {
+  grid-row: auto !important;
+}
+
+body form [class*="grid-cols-"]:has(img, video, iframe) [class*="col-span-"],
+body form [style*="grid-template-columns"]:has(img, video, iframe) [class*="col-span-"] {
+  grid-column: auto !important;
+}
+
+body :not(form *)[class*="columns-"] {
+  columns: 1 !important;
+}
+
+body p,
+body li,
+body blockquote {
+  text-align: justify;
+  text-justify: inter-word;
+}

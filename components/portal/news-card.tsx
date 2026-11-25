@@ -100,7 +100,7 @@ export function NewsCard({ p }: { p: Post }) {
   return (
     <article
       ref={articleRef}
-      className="news-card scroll-mt-20 group flex h-full flex-col bg-[var(--theme-card-bg,rgba(14,34,78,0.65))] backdrop-blur-xl transition-all md:glass-card rounded-2xl border border-white/10"
+      className="news-card scroll-mt-20 group flex h-full flex-col border-0 bg-transparent transition-all"
     >
       <div className="flex items-center justify-between gap-2.5 px-3.5 pt-3.5 pb-2.5 sm:px-5">
         <div className="flex items-center gap-2.5 min-w-0">

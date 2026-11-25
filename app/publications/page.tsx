@@ -268,14 +268,14 @@ export default function PublicationsAndArchivePage() {
                       >
                         <div>
                           {/* কভার ছবি অথবা প্রিমিয়াম বুক-কভার */}
-                          <div className="relative h-52 w-full overflow-hidden border-b border-white/15 bg-gradient-to-br from-indigo-900 via-slate-900 to-blue-950">
+                          <div className="relative w-full overflow-hidden border-b border-white/15 bg-gradient-to-br from-indigo-900 via-slate-900 to-blue-950">
                             {pub.cover_url ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={pub.cover_url}
                                 alt={pub.title}
                                 loading="lazy"
-                                className="size-full object-cover"
+                                className="h-auto w-full object-contain"
                               />
                             ) : (
                               <div className="size-full flex flex-col items-center justify-center p-5 text-center space-y-2">

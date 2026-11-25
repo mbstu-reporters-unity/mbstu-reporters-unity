@@ -10,8 +10,8 @@ import {
 import type { Notice, NoticeComment } from "../../lib/notices"
 import { getDepartments, type Department } from "../../lib/faculties"
 import { getImagesMetaForMany, getLayoutsForMany } from "../../lib/sb"
-import RichGallery from "../../components/portal/rich-gallery"
 import type { GalleryItem } from "../../components/portal/rich-gallery"
+import NoticeMediaPreview from "../../components/portal/notice-media-preview"
 import { FormattedText } from "../../components/portal/formatted-text"
 import { UniversalMediaEmbed } from "../../components/portal/universal-media-embed"
 import { PostMetaBadges } from "../../components/portal/post-meta-badges"
@@ -129,8 +129,6 @@ function NoticeCard({
     } catch {}
   }
 
-  const allImages = items.length > 0 ? items : (n.image_urls || []).map((u) => ({ url: u }))
-
   return (
     <div
       ref={ref}
@@ -184,13 +182,19 @@ function NoticeCard({
         <UniversalMediaEmbed url={n.embed_media_url} title={n.title} />
       )}
 
-      <RichGallery items={allImages} layout={layout} />
-
-      {n.file_url && isImageType(n.file_type) && (
-        <a href={n.file_url} target="_blank" rel="noopener noreferrer">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={n.file_url} alt={n.title} className="w-full max-h-96 object-contain rounded-2xl bg-black/40 border border-white/15" />
-        </a>
+      {(items.length > 0 || n.image_urls?.length || n.file_url) && (
+        <div className="-mx-5">
+          <NoticeMediaPreview
+            title={n.title}
+            imageUrls={n.image_urls}
+            images={items}
+            layout={layout}
+            fileUrl={n.file_url}
+            fileName={n.file_name}
+            fileType={n.file_type}
+            postDate={n.created_at}
+          />
+        </div>
       )}
 
       {(n.file_url || safeUrl(n.link_url)) && (
