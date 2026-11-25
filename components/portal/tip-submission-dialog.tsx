@@ -26,6 +26,16 @@ const TIP_BEATS = [
   'অন্যান্য',
 ]
 
+const TIP_BEATS_EN: Record<string, string> = {
+  'ক্যাম্পাস ও সুশাসন': 'Campus and governance',
+  'হল ও ছাত্রজীবন': 'Halls and student life',
+  'একাডেমিক ও পরীক্ষা': 'Academics and examinations',
+  'গবেষণা ও উদ্ভাবন': 'Research and innovation',
+  'খেলাধুলা ও সংস্কৃতি': 'Sports and culture',
+  'ক্যাম্পাস সমস্যা বা অনিয়ম': 'Campus issues or irregularities',
+  অন্যান্য: 'Other',
+}
+
 export function TipSubmissionDialog({
   open,
   onClose,
@@ -64,19 +74,19 @@ export function TipSubmissionDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (title.trim().length < 3) {
-      setErrMsg(pick('❌ সংবাদের বিষয় কমপক্ষে ৩ অক্ষরের হতে হবে', '❌ Title must be at least 3 characters'))
+      setErrMsg(pick('❌ বিষয় বা শিরোনামে অন্তত ৩টি অক্ষর থাকতে হবে।', '❌ The subject or headline must contain at least 3 characters.'))
       return
     }
     if (details.trim().length < 10) {
-      setErrMsg(pick('❌ বিস্তারিত বিবরণ কমপক্ষে ১০ অক্ষরের হতে হবে', '❌ Details must be at least 10 characters'))
+      setErrMsg(pick('❌ বিস্তারিত বিবরণে অন্তত ১০টি অক্ষর থাকতে হবে।', '❌ The description must contain at least 10 characters.'))
       return
     }
     if (!isAnonymous && name.trim().length < 2) {
-      setErrMsg(pick('❌ আপনার নাম লিখুন অথবা গোপন রাখুন অপশন চালু রাখুন', '❌ Please enter your name or keep anonymous'))
+      setErrMsg(pick('❌ আপনার নাম লিখুন অথবা পরিচয় গোপন রাখার বিকল্পটি নির্বাচন করুন।', '❌ Enter your name or select the option to remain anonymous.'))
       return
     }
     if (!humanCheck.answer.trim()) {
-      setErrMsg(pick('❌ অনুগ্রহ করে মানব যাচাইয়ের উত্তর দিন', '❌ Please solve the math verification'))
+      setErrMsg(pick('❌ অনুগ্রহ করে যাচাইয়ের প্রশ্নটির উত্তর দিন।', '❌ Please answer the verification question.'))
       return
     }
 
@@ -105,13 +115,13 @@ export function TipSubmissionDialog({
 
       const j = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error(j.error || pick('তথ্যটি পাঠানো যায়নি', 'Failed to submit tip'))
+        throw new Error(j.error || pick('তথ্য জমা দেওয়া সম্ভব হয়নি।', 'The information could not be submitted.'))
       }
 
       setSubmitted(true)
       humanCheck.reset()
     } catch (err: any) {
-      setErrMsg('❌ ' + (err?.message || pick('তথ্য পাঠাতে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন।', 'Error submitting, please try again.')))
+      setErrMsg('❌ ' + (err?.message || pick('তথ্য জমা দিতে সমস্যা হয়েছে। অনুগ্রহ করে পরে আবার চেষ্টা করুন।', 'An error occurred while submitting the information. Please try again later.')))
     }
     setBusy(false)
   }
@@ -152,14 +162,14 @@ export function TipSubmissionDialog({
             </div>
             <div>
               <h2 id="tip-modal-title" className="font-serif text-base sm:text-lg font-bold leading-tight flex items-center gap-1.5">
-                <span>{pick('সংবাদ বা টিপ পাঠান', 'Submit a Campus Tip')}</span>
+                <span>{pick('সংবাদ-তথ্য পাঠান', 'Submit a News Tip')}</span>
                 <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
                   <Lock className="size-2.5" />
-                  <span>{pick('১০০% গোপন', 'Confidential')}</span>
+                  <span>{pick('গোপনীয়', 'Confidential')}</span>
                 </span>
               </h2>
               <p className="text-[11px] text-slate-300">
-                {pick('ক্যাম্পাসের যেকোনো খবর বা তথ্যের ক্লু সরাসরি রিপোর্টারদের কাছে পাঠান', 'Directly alert campus reporters with news clues')}
+                {pick('ক্যাম্পাস-সম্পর্কিত সংবাদ বা তথ্য সম্পাদকীয় ডেস্কে পাঠান।', 'Send campus-related news or information to the editorial desk.')}
               </p>
             </div>
           </div>
@@ -183,12 +193,12 @@ export function TipSubmissionDialog({
               </div>
               <div className="space-y-1.5">
                 <h3 className="text-lg font-bold text-emerald-300">
-                  {pick('আপনার টিপসটি সফলভাবে পৌঁছেছে!', 'Tip successfully submitted!')}
+                  {pick('আপনার পাঠানো তথ্য গ্রহণ করা হয়েছে।', 'Your information has been received.')}
                 </h3>
                 <p className="text-xs text-slate-200 max-w-sm mx-auto leading-relaxed">
                   {pick(
-                    'মাভাবিপ্রবি রিপোর্টার্স ইউনিটির ডেস্ক আপনার পাঠানো তথ্যটি যাচাই করে প্রয়োজনীয় অনুসন্ধান ও প্রতিবেদন তৈরি করবে। সত্যানুসন্ধানে সহযোগিতার জন্য ধন্যবাদ।',
-                    'The MBSTU Reporters\' Unity editorial desk will review the information for verification. Thank you for supporting campus journalism.'
+                    'মাভাবিপ্রবি রিপোর্টার্স ইউনিটির সম্পাদকীয় ডেস্ক তথ্যটি যাচাই করে প্রয়োজনীয় অনুসন্ধান ও প্রতিবেদন তৈরির উদ্যোগ নেবে। দায়িত্বশীল সাংবাদিকতায় সহযোগিতার জন্য ধন্যবাদ।',
+                    'The editorial desk of MBSTU Reporters’ Unity will assess the information and undertake any necessary verification and reporting. Thank you for supporting responsible journalism.'
                   )}
                 </p>
               </div>
@@ -197,7 +207,7 @@ export function TipSubmissionDialog({
                 onClick={handleReset}
                 className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg transition active:scale-95 cursor-pointer mt-2"
               >
-                <span>{pick('ঠিক আছে / বন্ধ করুন', 'Done / Close')}</span>
+                <span>{pick('বন্ধ করুন', 'Close')}</span>
               </button>
             </div>
           ) : (
@@ -210,12 +220,12 @@ export function TipSubmissionDialog({
                   </div>
                   <div>
                     <p className="text-xs font-bold leading-tight text-white">
-                      {pick('পরিচয় সম্পূর্ণ গোপন রাখুন', 'Keep identity fully anonymous')}
+                      {pick('পরিচয় গোপন রাখুন', 'Remain anonymous')}
                     </p>
                     <p className="text-[10px] text-slate-300">
                       {isAnonymous
-                        ? pick('আপনার নাম বা পরিচয় কাউকে জানানো হবে না', 'Your name will not be shared')
-                        : pick('রিপোর্টার আপনার সাথে যোগাযোগ করতে পারবে', 'Reporters can contact you')}
+                        ? pick('আপনার পরিচয় প্রকাশ করা হবে না।', 'Your identity will not be disclosed.')
+                        : pick('প্রয়োজনে প্রতিবেদক আপনার সঙ্গে যোগাযোগ করতে পারবেন।', 'A reporter may contact you if necessary.')}
                     </p>
                   </div>
                 </div>
@@ -243,7 +253,7 @@ export function TipSubmissionDialog({
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="উদা: আরিফুল ইসলাম"
+                        placeholder={pick('উদাহরণ: আরিফুল ইসলাম', 'For example: Ariful Islam')}
                         className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-xs text-white placeholder-slate-400 focus:outline-hidden focus:border-cyan-400"
                       />
                     </div>
@@ -255,7 +265,7 @@ export function TipSubmissionDialog({
                         type="text"
                         value={dept}
                         onChange={(e) => setDept(e.target.value)}
-                        placeholder="উদা: CSE, ১৮তম ব্যাচ"
+                        placeholder={pick('উদাহরণ: সিএসই, ১৮তম ব্যাচ', 'For example: CSE, 18th batch')}
                         className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-xs text-white placeholder-slate-400 focus:outline-hidden focus:border-cyan-400"
                       />
                     </div>
@@ -268,7 +278,7 @@ export function TipSubmissionDialog({
                       type="text"
                       value={contact}
                       onChange={(e) => setContact(e.target.value)}
-                      placeholder="উদা: 017XXXXXXXX বা user@example.com"
+                      placeholder={pick('উদাহরণ: 017XXXXXXXX অথবা user@example.com', 'For example: 017XXXXXXXX or user@example.com')}
                       className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-xs text-white placeholder-slate-400 focus:outline-hidden focus:border-cyan-400"
                     />
                   </div>
@@ -278,7 +288,7 @@ export function TipSubmissionDialog({
               {/* ক্যাটাগরি / ডেস্ক নির্বাচন */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-300 mb-1.5">
-                  {pick('তথ্যের ধরন / ক্যাটাগরি *', 'Topic / Category *')}
+                  {pick('তথ্যের ধরন *', 'Information category *')}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {TIP_BEATS.map((b) => (
@@ -292,7 +302,7 @@ export function TipSubmissionDialog({
                           : 'bg-white/5 border-white/15 text-white/70 hover:bg-white/10'
                       }`}
                     >
-                      {b}
+                      {pick(b, TIP_BEATS_EN[b] || b)}
                     </button>
                   ))}
                 </div>
@@ -301,14 +311,14 @@ export function TipSubmissionDialog({
               {/* সংবাদের সংক্ষিপ্ত শিরোনাম */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                  {pick('সংবাদের বিষয় বা শিরোনাম *', 'Subject or Headline *')}
+                  {pick('বিষয় বা শিরোনাম *', 'Subject or headline *')}
                 </label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder={pick('উদা: বঙ্গবন্ধু হলের পানির ফিল্টার সমস্যা', 'e.g. Issue regarding dormitory facilities')}
+                  placeholder={pick('উদাহরণ: বঙ্গবন্ধু হলের পানির ফিল্টার-সংক্রান্ত সমস্যা', 'For example: A water-filter issue at Bangabandhu Hall')}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/15 text-xs text-white placeholder-slate-400 focus:outline-hidden focus:border-cyan-400"
                 />
               </div>
@@ -316,7 +326,7 @@ export function TipSubmissionDialog({
               {/* বিস্তারিত বিবরণ */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                  {pick('বিস্তারিত তথ্য বা ক্লু *', 'Detailed Info or Clues *')}
+                  {pick('বিস্তারিত তথ্য *', 'Detailed information *')}
                 </label>
                 <textarea
                   required
@@ -324,8 +334,8 @@ export function TipSubmissionDialog({
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
                   placeholder={pick(
-                    'কী ঘটেছে, কখন ও কোথায় ঘটেছে এবং কী ধরনের প্রমাণ বা সূত্র আছে বিস্তারিত লিখুন...',
-                    'Describe what happened, where, when, and any evidence or leads available...'
+                    'কী ঘটেছে, কখন ও কোথায় ঘটেছে এবং এ বিষয়ে কী প্রমাণ বা সূত্র রয়েছে—বিস্তারিত লিখুন।',
+                    'Describe what happened, when and where it occurred, and any available evidence or sources.'
                   )}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/15 text-xs text-white placeholder-slate-400 focus:outline-hidden focus:border-cyan-400 leading-relaxed resize-none"
                 />
@@ -334,7 +344,7 @@ export function TipSubmissionDialog({
               {/* সহজ মানব যাচাই (Captcha) */}
               <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
                 <label className="block text-[11px] font-bold text-slate-300">
-                  {pick('স্প্যাম রোধে সহজ যাচাই *', 'Quick human verification *')}
+                  {pick('স্বয়ংক্রিয় জমা প্রতিরোধে যাচাই *', 'Verification to prevent automated submissions *')}
                 </label>
                 <HumanVerification
                   idPrefix="tip-dialog"
@@ -364,7 +374,7 @@ export function TipSubmissionDialog({
                   className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-cyan-500 hover:from-amber-400 hover:to-cyan-400 text-slate-950 font-bold text-xs sm:text-sm shadow-xl transition active:scale-[0.98] cursor-pointer disabled:opacity-50"
                 >
                   <Send className="size-4" />
-                  <span>{busy ? pick('পাঠানো হচ্ছে...', 'Submitting...') : pick('টিপস জমা দিন', 'Submit Campus Tip')}</span>
+                  <span>{busy ? pick('জমা দেওয়া হচ্ছে…', 'Submitting…') : pick('তথ্য জমা দিন', 'Submit information')}</span>
                 </button>
               </div>
             </form>

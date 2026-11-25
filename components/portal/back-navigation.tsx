@@ -43,7 +43,7 @@ export function BackNavigation({
           className="inline-flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 px-3 py-1.5 text-xs font-bold text-cyan-100 transition-all duration-200 cursor-pointer"
         >
           <ArrowLeft className="size-3.5" />
-          <span><Tx bn="এক ধাপ পেছনে" en="Go back one step" /></span>
+          <span><Tx bn="পূর্ববর্তী পৃষ্ঠায় ফিরুন" en="Go to the previous page" /></span>
         </button>
         {canShowForward && (
           <button
@@ -51,7 +51,7 @@ export function BackNavigation({
             onClick={() => router.forward()}
             className="inline-flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 px-3 py-1.5 text-xs font-bold text-cyan-100 transition-all duration-200 cursor-pointer"
           >
-            <span><Tx bn="এক ধাপ সামনে" en="Go forward one step" /></span>
+            <span><Tx bn="পরবর্তী পৃষ্ঠায় যান" en="Go to the next page" /></span>
             <ArrowRight className="size-3.5" />
           </button>
         )}
@@ -59,7 +59,7 @@ export function BackNavigation({
 
       <div className="flex items-center gap-1.5 text-xs text-white/70">
         <nav
-          aria-label="Breadcrumb"
+          aria-label="Breadcrumb navigation"
           className="flex items-center gap-1 overflow-x-auto text-[11px] sm:text-xs"
         >
           {showHome && (

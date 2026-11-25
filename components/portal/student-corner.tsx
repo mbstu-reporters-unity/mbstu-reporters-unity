@@ -8,6 +8,7 @@ import { SectionHeading } from './section-heading'
 import { StudentDialog } from './student-dialog'
 import { useSiteSettings } from './site-settings-context'
 import { useHomepageAutoplay } from './use-homepage-autoplay'
+import { useLang } from '@/lib/i18n'
 
 const typeIcon: Record<string, any> = {
   Opinion: MessageSquareQuote,
@@ -17,6 +18,7 @@ const typeIcon: Record<string, any> = {
 }
 
 export function StudentCorner() {
+  const { pick } = useLang()
   const settings = useSiteSettings()
   const [items, setItems] = useState<StudentItem[]>([])
   const [selected, setSelected] = useState<StudentItem | null>(null)
@@ -44,11 +46,11 @@ export function StudentCorner() {
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeading
           inverted
-          eyebrow={sec?.eyebrow ?? 'Student Corner'}
-          title={sec?.titleBn || 'স্টুডেন্ট কর্নার'}
-          titleEn={sec?.titleEn || 'Student Corner'}
-          subtitle={sec?.subtitleBn || 'মাভাবিপ্রবি শিক্ষার্থীদের মতামত, সাহিত্য, গবেষণা ও অর্জনের উন্মুক্ত মঞ্চ।'}
-          subtitleEn={sec?.subtitleEn || 'Opinions, creative writing and achievements by MBSTU students.'}
+          eyebrow={sec?.eyebrow ?? 'Student Contributions'}
+          title={sec?.titleBn || 'শিক্ষার্থীদের লেখা ও অর্জন'}
+          titleEn={sec?.titleEn || 'Student Contributions and Achievements'}
+          subtitle={sec?.subtitleBn || 'মাভাবিপ্রবি শিক্ষার্থীদের মতামত, সৃজনশীল লেখা, গবেষণা ও অর্জন প্রকাশের মঞ্চ।'}
+          subtitleEn={sec?.subtitleEn || 'A platform for MBSTU students to share opinions, creative writing, research, and achievements.'}
         />
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -95,7 +97,7 @@ export function StudentCorner() {
                   </span>
                 )}
                 <span className="ml-auto text-xs font-bold text-cyan-300 flex items-center gap-1">
-                  পড়ুন →
+                  {pick('লেখাটি পড়ুন →', 'Read article →')}
                 </span>
               </div>
             </div>
@@ -134,7 +136,7 @@ export function StudentCorner() {
                         {item.dept && <p className="text-[11px] text-cyan-200/90">{item.dept}</p>}
                       </div>
                       <span className="text-[11px] font-bold text-cyan-300 group-hover:underline">
-                        বিস্তারিত →
+                        {pick('আরও জানুন →', 'Read more →')}
                       </span>
                     </div>
                   </div>
@@ -149,7 +151,7 @@ export function StudentCorner() {
             <button
               type="button"
               onClick={autoplay.previous}
-              aria-label="আগের স্টুডেন্ট কর্নার পোস্ট"
+              aria-label={pick('পূর্ববর্তী লেখা', 'Previous contribution')}
               className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
@@ -157,7 +159,7 @@ export function StudentCorner() {
             <button
               type="button"
               onClick={autoplay.next}
-              aria-label="পরের স্টুডেন্ট কর্নার পোস্ট"
+              aria-label={pick('পরবর্তী লেখা', 'Next contribution')}
               className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20"
             >
               <ArrowRight className="size-4" aria-hidden="true" />
@@ -170,7 +172,7 @@ export function StudentCorner() {
             href="/student-corner"
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white border border-white/30 px-6 py-3 text-xs sm:text-sm font-bold shadow-lg transition-all active:scale-95 cursor-pointer"
           >
-            <span>স্টুডেন্ট কর্নারের সব লেখা দেখুন</span>
+            <span>{pick('শিক্ষার্থীদের সব লেখা দেখুন', 'View all student contributions')}</span>
             <ArrowRight className="size-4" />
           </Link>
         </div>

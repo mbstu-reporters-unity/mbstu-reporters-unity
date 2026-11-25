@@ -27,8 +27,10 @@ import {
   TIMELINE_CATEGORIES,
   type TimelineItem,
 } from '@/lib/content-hub'
+import { useLang } from '@/lib/i18n'
 
 export default function CampusTimelinePage() {
+  const { lang, pick } = useLang()
   const [items, setItems] = useState<TimelineItem[]>([])
   const [loading, setLoading] = useState(true)
   const [yearFilter, setYearFilter] = useState('সব')
@@ -101,8 +103,8 @@ export default function CampusTimelinePage() {
         <div className="mx-auto max-w-5xl px-4 space-y-6">
           <BackNavigation
             items={[
-              { label: 'সংবাদ ও মিডিয়া' },
-              { label: 'ক্যাম্পাস টাইমলাইন' },
+              { label: pick('সংবাদ ও গণমাধ্যম', 'News and Media') },
+              { label: pick('ক্যাম্পাসের ঘটনাপঞ্জি', 'Campus Timeline') },
             ]}
           />
 
@@ -110,14 +112,14 @@ export default function CampusTimelinePage() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow">
               <Clock className="size-3.5" />
-              <span>Campus Events Timeline • ঘটনাক্রম</span>
+              <span>{pick('ক্যাম্পাসের ঘটনাপঞ্জি', 'Campus Events Timeline')}</span>
             </span>
 
             <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
-              ক্যাম্পাসের ঘটনাবলির টাইমলাইন
+              {pick('ক্যাম্পাসের ঘটনাপঞ্জি', 'Campus Timeline')}
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed">
-              মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের উল্লেখযোগ্য ঘটনা, শিক্ষার্থীদের দাবি-দাওয়া, একাডেমিক সিদ্ধান্ত ও ঐতিহাসিক মাইলফলকের সময়ানুক্রমিক দলিল।
+              {pick('মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের উল্লেখযোগ্য ঘটনা, শিক্ষার্থীদের দাবি, একাডেমিক সিদ্ধান্ত ও ঐতিহাসিক মাইলফলকের সময়ানুক্রমিক বিবরণ।', 'A chronological record of significant events, student concerns, academic decisions, and historic milestones at Mawlana Bhashani Science and Technology University.')}
             </p>
           </div>
 
@@ -128,7 +130,7 @@ export default function CampusTimelinePage() {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/50" />
                 <input
                   type="text"
-                  placeholder="ঘটনার শিরোনাম, তারিখ বা বিবরণ দিয়ে খুঁজুন..."
+                  placeholder={pick('ঘটনার শিরোনাম, তারিখ বা বিবরণ দিয়ে খুঁজুন', 'Search by event title, date, or description')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full rounded-2xl border border-white/20 bg-white/10 pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 transition"
@@ -148,7 +150,7 @@ export default function CampusTimelinePage() {
                           : 'border-white/20 bg-white/10 text-white/85 hover:bg-white/20'
                       }`}
                     >
-                      {yr === 'সব' ? 'সব বছর' : yr}
+                      {yr === 'সব' ? pick('সব বছর', 'All years') : yr}
                     </button>
                   ))}
                 </div>
@@ -158,7 +160,7 @@ export default function CampusTimelinePage() {
                   onClick={loadData}
                   disabled={loading}
                   className="p-2.5 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 text-white cursor-pointer shrink-0"
-                  title="রিফ্রেশ"
+                  title={pick('তথ্য হালনাগাদ করুন', 'Refresh')}
                 >
                   <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
                 </button>
@@ -177,7 +179,7 @@ export default function CampusTimelinePage() {
                       : 'border-white/15 bg-white/5 text-slate-300 hover:bg-white/15'
                   }`}
                 >
-                  {cat}
+                  {cat === 'সব' ? pick('সব বিভাগ', 'All categories') : cat}
                 </button>
               ))}
             </div>
@@ -186,7 +188,7 @@ export default function CampusTimelinePage() {
           {/* ভার্টিকাল টাইমলাইন */}
           {loading ? (
             <div className="glass-card p-12 text-center text-sm text-slate-300">
-              টাইমলাইন লোড হচ্ছে...
+              {pick('ঘটনাপঞ্জি লোড হচ্ছে…', 'Loading timeline…')}
             </div>
           ) : filtered.length > 0 ? (
             <section className="relative border-l-2 border-cyan-400/45 ml-3 sm:ml-6 pl-5 sm:pl-8 space-y-6 py-2">
@@ -221,7 +223,7 @@ export default function CampusTimelinePage() {
                         </span>
                         {item.is_highlight && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2.5 py-0.5 text-[10px] font-bold">
-                            <Sparkles className="size-3" /> প্রধান ঘটনা
+                            <Sparkles className="size-3" /> {pick('উল্লেখযোগ্য ঘটনা', 'Key event')}
                           </span>
                         )}
                       </div>
@@ -269,7 +271,7 @@ export default function CampusTimelinePage() {
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition"
                           >
-                            <span>বিস্তারিত প্রতিবেদন পড়ুন</span>
+                            <span>{pick('বিস্তারিত প্রতিবেদন পড়ুন', 'Read the full report')}</span>
                             <ExternalLink className="size-3.5" />
                           </a>
                         ) : (
@@ -277,7 +279,7 @@ export default function CampusTimelinePage() {
                             href={item.post_url.trim()}
                             className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-white transition"
                           >
-                            <span>বিস্তারিত প্রতিবেদন পড়ুন</span>
+                            <span>{pick('বিস্তারিত প্রতিবেদন পড়ুন', 'Read the full report')}</span>
                             <ArrowRight className="size-3.5" />
                           </Link>
                         )}
@@ -290,7 +292,7 @@ export default function CampusTimelinePage() {
           ) : (
             <div className="glass-card p-12 text-center text-slate-300 space-y-2">
               <Clock className="size-10 text-white/40 mx-auto" />
-              <p className="text-base font-bold text-white">এই ফিল্টারে কোনো ঘটনা পাওয়া যায়নি।</p>
+              <p className="text-base font-bold text-white">{pick('এই ফিল্টারে কোনো ঘটনা পাওয়া যায়নি।', 'No events match these filters.')}</p>
             </div>
           )}
 
@@ -305,8 +307,8 @@ export default function CampusTimelinePage() {
                   <Camera className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">ফটো ও ভিডিও গ্যালারি</p>
-                  <p className="text-[10px] text-slate-300">সকল ছবি ও ভিডিও আর্কাইভ</p>
+                  <p className="font-bold text-xs sm:text-sm">{pick('ছবি ও ভিডিও গ্যালারি', 'Photo and Video Gallery')}</p>
+                  <p className="text-[10px] text-slate-300">{pick('ছবি ও ভিডিওর সংরক্ষণাগার', 'Archive of photographs and videos')}</p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-cyan-300 group-hover:translate-x-1 transition-transform" />
@@ -321,8 +323,8 @@ export default function CampusTimelinePage() {
                   <ShieldAlert className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">ফ্যাক্ট-চেক ডেস্ক</p>
-                  <p className="text-[10px] text-slate-300">গুজব ও তথ্যের সত্যতা যাচাই</p>
+                  <p className="font-bold text-xs sm:text-sm">{pick('তথ্য-যাচাই ডেস্ক', 'Fact-check Desk')}</p>
+                  <p className="text-[10px] text-slate-300">{pick('গুজব ও তথ্য যাচাই', 'Verification of claims and information')}</p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-rose-300 group-hover:translate-x-1 transition-transform" />
@@ -337,8 +339,8 @@ export default function CampusTimelinePage() {
                   <BookOpen className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">প্রকাশনা আর্কাইভ</p>
-                  <p className="text-[10px] text-slate-300">ম্যাগাজিন, বুলেটিন ও PDF</p>
+                  <p className="font-bold text-xs sm:text-sm">{pick('প্রকাশনা সংরক্ষণাগার', 'Publication Archive')}</p>
+                  <p className="text-[10px] text-slate-300">{pick('সাময়িকী, বুলেটিন ও পিডিএফ', 'Periodicals, bulletins, and PDFs')}</p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-amber-300 group-hover:translate-x-1 transition-transform" />

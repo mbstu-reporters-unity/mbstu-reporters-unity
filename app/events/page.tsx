@@ -23,11 +23,13 @@ import { BackNavigation } from '@/components/portal/back-navigation'
 import { QrCodeImage } from '@/components/portal/qr-code-image'
 import { HumanVerification, useHumanVerification } from '@/components/portal/human-verification'
 import { getCampusEvents, registerForEvent, type CampusEvent } from '@/lib/events'
+import { useLang } from '@/lib/i18n'
 
 const inp =
   'w-full rounded-xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-white/45 focus:outline-none focus:border-cyan-400 transition'
 
 export default function EventsCalendarPage() {
+  const { pick } = useLang()
   const humanCheck = useHumanVerification()
   const [events, setEvents] = useState<CampusEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -76,7 +78,7 @@ export default function EventsCalendarPage() {
       setCertCode(res.code)
       humanCheck.reset()
     } catch (e: any) {
-      setErrMsg('❌ ' + (e?.message || 'রেজিস্ট্রেশন ব্যর্থ হয়েছে'))
+      setErrMsg('❌ ' + (e?.message || pick('নিবন্ধন সম্পন্ন হয়নি।', 'Registration could not be completed.')))
     }
     setBusy(false)
   }
@@ -94,8 +96,8 @@ export default function EventsCalendarPage() {
         <div className="mx-auto max-w-6xl px-4 space-y-6">
           <BackNavigation
             items={[
-              { label: 'হোম', href: '/' },
-              { label: 'ইভেন্ট ক্যালেন্ডার' },
+              { label: pick('প্রচ্ছদ', 'Home'), href: '/' },
+              { label: pick('অনুষ্ঠানসূচি', 'Events Calendar') },
             ]}
           />
 
@@ -103,14 +105,14 @@ export default function EventsCalendarPage() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow">
               <CalendarDays className="size-3.5" />
-              <span>Events & Workshops • ইভেন্ট ক্যালেন্ডার</span>
+              <span>{pick('অনুষ্ঠান ও কর্মশালা', 'Events and Workshops')}</span>
             </span>
 
             <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
-              আসন্ন ইভেন্ট ও কর্মশালা
+              {pick('আসন্ন অনুষ্ঠান ও কর্মশালা', 'Upcoming Events and Workshops')}
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed">
-              মাভাবিপ্রবি রিপোর্টার্স ইউনিটির আয়োজিত সেমিনার, কর্মশালা, বার্ষিক সাধারণ সভা ও প্রতিযোগিতাসমূহের তালিকা এবং অনলাইন রেজিস্ট্রেশন।
+              {pick('মাভাবিপ্রবি রিপোর্টার্স ইউনিটির সেমিনার, কর্মশালা, বার্ষিক সাধারণ সভা ও প্রতিযোগিতার তালিকা দেখুন এবং অনলাইনে নিবন্ধন করুন।', 'View seminars, workshops, annual general meetings, and competitions organised by MBSTU Reporters’ Unity, and register online.')}
             </p>
 
             <div className="pt-2">
@@ -120,7 +122,7 @@ export default function EventsCalendarPage() {
                 className="inline-flex items-center gap-1.5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 px-5 py-2 text-xs font-bold shadow-lg transition active:scale-95 cursor-pointer"
               >
                 <Award className="size-4" />
-                <span>অংশগ্রহণ সার্টিফিকেট ভেরিফাই করুন</span>
+                <span>{pick('অংশগ্রহণ সনদ যাচাই করুন', 'Verify a Participation Certificate')}</span>
               </button>
             </div>
           </div>
@@ -128,7 +130,7 @@ export default function EventsCalendarPage() {
           {/* ইভেন্ট তালিকা */}
           {loading ? (
             <div className="glass-card p-12 text-center text-sm text-slate-300">
-              ইভেন্ট লোড হচ্ছে...
+              {pick('অনুষ্ঠানের তথ্য লোড হচ্ছে…', 'Loading event information…')}
             </div>
           ) : events.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -141,7 +143,7 @@ export default function EventsCalendarPage() {
                     <div className="flex items-start justify-between gap-2">
                       <span className="inline-flex items-center gap-1 rounded-full bg-cyan-500/25 border border-cyan-400/40 text-cyan-200 px-3 py-0.5 text-xs font-bold">
                         <Sparkles className="size-3" />
-                        {ev.is_upcoming ? 'আসন্ন ইভেন্ট' : 'সম্পন্ন ইভেন্ট'}
+                        {ev.is_upcoming ? pick('আসন্ন অনুষ্ঠান', 'Upcoming event') : pick('অনুষ্ঠান সম্পন্ন', 'Past event')}
                       </span>
                       <span className="text-xs text-amber-300 font-semibold flex items-center gap-1">
                         <CalendarDays className="size-3.5" /> {ev.event_date}
@@ -162,19 +164,19 @@ export default function EventsCalendarPage() {
                     <div className="space-y-1 text-xs text-slate-300 pt-2 border-t border-white/10">
                       <p className="flex items-center gap-2">
                         <MapPin className="size-3.5 text-cyan-400 shrink-0" />
-                        <span>স্থান: {ev.venue}</span>
+                        <span>{pick('স্থান:', 'Venue:')} {ev.venue}</span>
                       </p>
                       {ev.event_time && (
                         <p className="flex items-center gap-2">
                           <Clock className="size-3.5 text-cyan-400 shrink-0" />
-                          <span>সময়: {ev.event_time}</span>
+                          <span>{pick('সময়:', 'Time:')} {ev.event_time}</span>
                         </p>
                       )}
                     </div>
                   </div>
 
                   <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-                    <span className="text-slate-400 text-[11px]">আয়োজক: {ev.organizer}</span>
+                    <span className="text-slate-400 text-[11px]">{pick('আয়োজক:', 'Organiser:')} {ev.organizer}</span>
 
                     <button
                       type="button"
@@ -186,7 +188,7 @@ export default function EventsCalendarPage() {
                       className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-4 py-2 font-bold shadow transition cursor-pointer active:scale-95"
                     >
                       <Ticket className="size-3.5" />
-                      <span>অনলাইন রেজিস্ট্রেশন</span>
+                      <span>{pick('অনলাইনে নিবন্ধন', 'Register online')}</span>
                     </button>
                   </div>
                 </article>
@@ -195,7 +197,7 @@ export default function EventsCalendarPage() {
           ) : (
             <div className="glass-card p-12 text-center text-slate-300 space-y-2">
               <CalendarDays className="size-10 text-white/40 mx-auto" />
-              <p className="text-base font-bold text-white">বর্তমানে কোনো আসন্ন ইভেন্ট নেই।</p>
+              <p className="text-base font-bold text-white">{pick('বর্তমানে কোনো আসন্ন অনুষ্ঠান নেই।', 'There are no upcoming events at this time.')}</p>
             </div>
           )}
 
@@ -210,8 +212,8 @@ export default function EventsCalendarPage() {
                   <CalendarDays className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">রিসোর্স সেন্টার</p>
-                  <p className="text-[10px] text-slate-300">গাইড ও টেমপ্লেট</p>
+                  <p className="font-bold text-xs sm:text-sm">{pick('তথ্য-উপকরণ', 'Resources')}</p>
+                  <p className="text-[10px] text-slate-300">{pick('নির্দেশিকা ও নমুনা', 'Guides and templates')}</p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-cyan-300 group-hover:translate-x-1 transition-transform" />
@@ -226,8 +228,8 @@ export default function EventsCalendarPage() {
                   <Users className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">সদস্যপদ আবেদন</p>
-                  <p className="text-[10px] text-slate-300">ইউনিটিতে যুক্ত হোন</p>
+                  <p className="font-bold text-xs sm:text-sm">{pick('সদস্যপদের আবেদন', 'Membership Application')}</p>
+                  <p className="text-[10px] text-slate-300">{pick('সদস্য হওয়ার আবেদন করুন', 'Apply to become a member')}</p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-emerald-300 group-hover:translate-x-1 transition-transform" />
@@ -242,8 +244,8 @@ export default function EventsCalendarPage() {
                   <Award className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">সদস্য ডিরেক্টরি</p>
-                  <p className="text-[10px] text-slate-300">সকল সাংবাদিক সদস্য</p>
+                  <p className="font-bold text-xs sm:text-sm">{pick('সদস্য তালিকা', 'Member Directory')}</p>
+                  <p className="text-[10px] text-slate-300">{pick('সাংবাদিক সদস্যদের তালিকা', 'Journalist members')}</p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-amber-300 group-hover:translate-x-1 transition-transform" />
@@ -264,7 +266,7 @@ export default function EventsCalendarPage() {
           <div className="relative w-full max-w-lg rounded-3xl border border-white/20 bg-slate-900 text-white p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto scrollbar-none">
             <div className="flex items-center justify-between border-b border-white/15 pb-3">
               <div>
-                <span className="text-[10px] font-bold text-cyan-300 uppercase">অনলাইন রেজিস্ট্রেশন</span>
+                <span className="text-[10px] font-bold text-cyan-300 uppercase">{pick('অনলাইন নিবন্ধন', 'Online Registration')}</span>
                 <h3 className="font-serif text-base font-bold text-white truncate max-w-sm">
                   {selectedEvent.title}
                 </h3>
@@ -284,31 +286,31 @@ export default function EventsCalendarPage() {
                   <CheckCircle2 className="size-9" />
                 </div>
                 <h4 className="font-serif text-lg font-bold text-emerald-300">
-                  রেজিস্ট্রেশন সফল হয়েছে!
+                  {pick('নিবন্ধন সফলভাবে সম্পন্ন হয়েছে।', 'Registration completed successfully.')}
                 </h4>
                 <p className="text-xs text-slate-200">
-                  আপনার সার্টিফিকেট ভেরিফিকেশন কোড: <b className="font-mono text-cyan-300 text-sm">{certCode}</b>
+                  {pick('আপনার সনদ যাচাইকরণ কোড:', 'Your certificate verification code:')} <b className="font-mono text-cyan-300 text-sm">{certCode}</b>
                 </p>
                 <p className="text-[11px] text-slate-400">
-                  অনুষ্ঠানে উপস্থিত থাকার সময় এই কোডটি প্রদর্শন করলে আপনার ডিজিটাল সার্টিফিকেট নিশ্চিত করা হবে।
+                  {pick('অনুষ্ঠানে উপস্থিতির সময় এই কোডটি দেখালে আপনার ডিজিটাল সনদ নিশ্চিত করা হবে।', 'Present this code at the event to confirm your digital certificate.')}
                 </p>
                 {certificateVerificationUrl && (
                   <div className="mx-auto flex max-w-sm items-center gap-3 rounded-2xl bg-white p-3 text-left text-slate-900">
                     <QrCodeImage
                       value={certificateVerificationUrl}
-                      alt="ইভেন্ট সার্টিফিকেট যাচাইয়ের QR কোড"
+                      alt={pick('অনুষ্ঠানের সনদ যাচাইয়ের কিউআর কোড', 'QR code for event certificate verification')}
                       className="size-24 shrink-0 object-contain"
                     />
                     <div className="min-w-0">
-                      <p className="text-xs font-bold">সার্টিফিকেট যাচাই</p>
+                      <p className="text-xs font-bold">{pick('সনদ যাচাই', 'Certificate verification')}</p>
                       <p className="text-[10px] leading-snug text-slate-600">
-                        QR স্ক্যান করে রেজিস্ট্রেশন যাচাই করুন।
+                        {pick('কিউআর কোড স্ক্যান করে নিবন্ধন যাচাই করুন।', 'Scan the QR code to verify the registration.')}
                       </p>
                       <Link
                         href={`/verify-certificate/${encodeURIComponent(certCode)}`}
                         className="mt-1 inline-block break-all text-[10px] font-semibold text-blue-700 underline"
                       >
-                        যাচাই পেজ খুলুন
+                        {pick('যাচাইকরণ পৃষ্ঠা খুলুন', 'Open verification page')}
                       </Link>
                     </div>
                   </div>
@@ -318,7 +320,7 @@ export default function EventsCalendarPage() {
                   onClick={() => setSelectedEvent(null)}
                   className="rounded-full bg-cyan-500 text-slate-950 px-6 py-2 text-xs font-bold cursor-pointer"
                 >
-                  বন্ধ করুন
+                  {pick('বন্ধ করুন', 'Close')}
                 </button>
               </div>
             ) : (
@@ -330,11 +332,11 @@ export default function EventsCalendarPage() {
                 )}
 
                 <div>
-                  <label className="font-bold text-cyan-200 block mb-1">পূর্ণ নাম *</label>
+                  <label className="font-bold text-cyan-200 block mb-1">{pick('পূর্ণ নাম *', 'Full name *')}</label>
                   <input
                     required
                     className={inp}
-                    placeholder="আপনার পূর্ণ নাম"
+                    placeholder={pick('আপনার পূর্ণ নাম লিখুন', 'Enter your full name')}
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                   />
@@ -342,21 +344,21 @@ export default function EventsCalendarPage() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="font-bold text-cyan-200 block mb-1">বিভাগ *</label>
+                    <label className="font-bold text-cyan-200 block mb-1">{pick('বিভাগ *', 'Department *')}</label>
                     <input
                       required
                       className={inp}
-                      placeholder="যেমন: CSE"
+                      placeholder={pick('উদাহরণ: সিএসই', 'For example: CSE')}
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-cyan-200 block mb-1">ব্যাচ / সেশন *</label>
+                    <label className="font-bold text-cyan-200 block mb-1">{pick('ব্যাচ / শিক্ষাবর্ষ *', 'Batch / Academic year *')}</label>
                     <input
                       required
                       className={inp}
-                      placeholder="যেমন: ১৮তম ব্যাচ"
+                      placeholder={pick('উদাহরণ: ১৮তম ব্যাচ', 'For example: 18th batch')}
                       value={batch}
                       onChange={(e) => setBatch(e.target.value)}
                     />
@@ -364,11 +366,11 @@ export default function EventsCalendarPage() {
                 </div>
 
                 <div>
-                  <label className="font-bold text-cyan-200 block mb-1">স্টুডেন্ট আইডি / রোল *</label>
+                  <label className="font-bold text-cyan-200 block mb-1">{pick('শিক্ষার্থী আইডি / রোল *', 'Student ID / roll *')}</label>
                   <input
                     required
                     className={inp}
-                    placeholder="স্টুডেন্ট আইডি"
+                    placeholder={pick('শিক্ষার্থী আইডি লিখুন', 'Enter your student ID')}
                     value={studentId}
                     onChange={(e) => setStudentId(e.target.value)}
                   />
@@ -376,7 +378,7 @@ export default function EventsCalendarPage() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="font-bold text-cyan-200 block mb-1">মোবাইল নম্বর *</label>
+                    <label className="font-bold text-cyan-200 block mb-1">{pick('মোবাইল নম্বর *', 'Mobile number *')}</label>
                     <input
                       required
                       type="tel"
@@ -387,7 +389,7 @@ export default function EventsCalendarPage() {
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-cyan-200 block mb-1">ইমেইল *</label>
+                    <label className="font-bold text-cyan-200 block mb-1">{pick('ইমেইল ঠিকানা *', 'Email address *')}</label>
                     <input
                       required
                       type="email"
@@ -415,7 +417,7 @@ export default function EventsCalendarPage() {
                   disabled={busy}
                   className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold py-3 shadow transition cursor-pointer disabled:opacity-50 mt-2"
                 >
-                  {busy ? 'রেজিস্ট্রেশন হচ্ছে...' : 'রেজিস্ট্রেশন নিশ্চিত করুন'}
+                  {busy ? pick('নিবন্ধন করা হচ্ছে…', 'Registering…') : pick('নিবন্ধন নিশ্চিত করুন', 'Confirm registration')}
                 </button>
               </form>
             )}
@@ -430,7 +432,7 @@ export default function EventsCalendarPage() {
             <div className="flex items-center justify-between border-b border-white/15 pb-3">
               <h3 className="font-serif text-base font-bold text-amber-300 flex items-center gap-2">
                 <Award className="size-5" />
-                <span>অংশগ্রহণ সার্টিফিকেট ভেরিফিকেশন</span>
+                <span>{pick('অংশগ্রহণ সনদ যাচাই', 'Participation Certificate Verification')}</span>
               </h3>
               <button
                 type="button"
@@ -447,12 +449,12 @@ export default function EventsCalendarPage() {
 
             <div className="space-y-3 text-xs">
               <p className="text-slate-300">
-                ইভেন্টের সার্টিফিকেট বা রেজিস্ট্রেশন কোডটি (যেমন: CERT-EV-1-XXXX) নিচে লিখে ভেরিফাই করুন:
+                {pick('অনুষ্ঠানের সনদ বা নিবন্ধন কোডটি (উদাহরণ: CERT-EV-1-XXXX) নিচে লিখে যাচাই করুন:', 'Enter the event certificate or registration code (for example, CERT-EV-1-XXXX) below to verify it:')}
               </p>
               <div className="flex gap-2">
                 <input
                   className={inp}
-                  placeholder="সার্টিফিকেট কোড লিখুন..."
+                  placeholder={pick('সনদ কোড লিখুন', 'Enter the certificate code')}
                   value={inputCertCode}
                   onChange={(e) => setInputCertCode(e.target.value)}
                 />
@@ -471,7 +473,7 @@ export default function EventsCalendarPage() {
                   }}
                   className="rounded-xl bg-cyan-500 text-slate-950 px-4 font-bold cursor-pointer"
                 >
-                  যাচাই
+                  {pick('যাচাই করুন', 'Verify')}
                 </button>
               </div>
 
@@ -485,12 +487,12 @@ export default function EventsCalendarPage() {
                 >
                   {verifyResult.valid ? (
                     <>
-                      <p className="font-bold text-sm">✓ সার্টিফিকেটটি বৈধ ও যাচাইকৃত!</p>
-                      <p className="text-white font-semibold">নাম: {verifyResult.full_name}</p>
-                      <p className="text-[11px]">বিভাগ: {verifyResult.department} ({verifyResult.batch})</p>
+                      <p className="font-bold text-sm">{pick('✓ সনদটি বৈধ ও যাচাইকৃত।', '✓ The certificate is valid and verified.')}</p>
+                      <p className="text-white font-semibold">{pick('নাম:', 'Name:')} {verifyResult.full_name}</p>
+                      <p className="text-[11px]">{pick('বিভাগ:', 'Department:')} {verifyResult.department} ({verifyResult.batch})</p>
                     </>
                   ) : (
-                    <p className="font-bold">❌ এই কোডের কোনো বৈধ সার্টিফিকেট পাওয়া যায়নি।</p>
+                    <p className="font-bold">{pick('❌ এই কোডের বিপরীতে কোনো বৈধ সনদ পাওয়া যায়নি।', '❌ No valid certificate was found for this code.')}</p>
                   )}
                 </div>
               )}

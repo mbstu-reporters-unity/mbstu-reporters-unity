@@ -9,10 +9,12 @@ import { SiteFooter } from '@/components/portal/site-footer'
 import { SiteHeader } from '@/components/portal/site-header'
 import { TopBar } from '@/components/portal/top-bar'
 import { CAT_CLUB, CAT_STUDENT, getVisiblePosts, type Post } from '@/lib/sb'
+import { useLang } from '@/lib/i18n'
 
 type SortOrder = 'newest' | 'popular' | 'oldest'
 
 export default function NewsArchivePage() {
+  const { pick } = useLang()
   const [posts, setPosts] = useState<Post[]>([])
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('সব')
@@ -65,50 +67,50 @@ export default function NewsArchivePage() {
       <SiteHeader />
       <main className="min-h-screen py-6 sm:py-10">
         <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-          <BackNavigation items={[{ label: 'ক্যাম্পাস সংবাদ' }]} />
+          <BackNavigation items={[{ label: pick('ক্যাম্পাস সংবাদ', 'Campus News') }]} />
 
           <header className="hero-daylight-dark-surface space-y-3 rounded-3xl border border-white/15 bg-gradient-to-br from-blue-950 via-slate-950 to-indigo-950 p-6 text-center text-white shadow-xl sm:p-9">
             <span className="inline-flex items-center gap-2 rounded-full bg-cyan-500 px-3 py-1 text-xs font-bold text-white">
               <Search className="size-3.5" />
-              ক্যাম্পাস সংবাদ আর্কাইভ
+              {pick('ক্যাম্পাস সংবাদ সংরক্ষণাগার', 'Campus News Archive')}
             </span>
-            <h1 className="font-serif text-2xl font-bold sm:text-4xl">সকল ক্যাম্পাস সংবাদ</h1>
+            <h1 className="font-serif text-2xl font-bold sm:text-4xl">{pick('সকল ক্যাম্পাস সংবাদ', 'All Campus News')}</h1>
             <p className="mx-auto max-w-2xl text-sm text-slate-200">
-              ক্যাটাগরি, শিরোনাম বা লেখকের নাম দিয়ে প্রতিবেদন খুঁজুন।
+              {pick('বিভাগ, শিরোনাম অথবা লেখকের নাম দিয়ে প্রতিবেদন অনুসন্ধান করুন।', 'Search reports by category, headline, or author.')}
             </p>
           </header>
 
-          <section className="glass-card grid gap-3 p-4 sm:grid-cols-2 sm:p-5" aria-label="সংবাদ ফিল্টার">
+          <section className="glass-card grid gap-3 p-4 sm:grid-cols-2 sm:p-5" aria-label={pick('সংবাদ বাছাই', 'News filters')}>
             <label className="space-y-1 text-xs font-semibold">
-              <span>শিরোনাম বা লেখক দিয়ে খুঁজুন</span>
+              <span>{pick('শিরোনাম বা লেখকের নামে অনুসন্ধান করুন', 'Search by headline or author')}</span>
               <input
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="সংবাদ খুঁজুন..."
+                placeholder={pick('সংবাদ অনুসন্ধান করুন', 'Search news')}
                 className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2.5 text-sm text-white placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none"
               />
             </label>
 
             <label className="space-y-1 text-xs font-semibold">
-              <span>ক্যাটাগরি</span>
+              <span>{pick('বিভাগ', 'Category')}</span>
               <select
                 value={category}
                 onChange={(event) => setCategory(event.target.value)}
                 className="w-full rounded-xl border border-white/20 bg-slate-900 px-3 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none"
               >
                 {categories.map((item) => (
-                  <option key={item} value={item}>{item === 'সব' ? 'সব ক্যাটাগরি' : item}</option>
+                  <option key={item} value={item}>{item === 'সব' ? pick('সকল বিভাগ', 'All categories') : item}</option>
                 ))}
               </select>
             </label>
 
             <div className="flex flex-wrap items-center gap-2 text-xs sm:col-span-2">
-              <span className="font-semibold">সাজান:</span>
+              <span className="font-semibold">{pick('ক্রম:', 'Sort:')}</span>
               {([
-                ['newest', 'সর্বশেষ'],
-                ['popular', 'সর্বাধিক পঠিত'],
-                ['oldest', 'পুরোনো'],
+                ['newest', pick('সাম্প্রতিক', 'Newest')],
+                ['popular', pick('সর্বাধিক পঠিত', 'Most read')],
+                ['oldest', pick('প্রাচীনতম', 'Oldest')],
               ] as const).map(([value, label]) => (
                 <button
                   key={value}
@@ -125,18 +127,18 @@ export default function NewsArchivePage() {
                 </button>
               ))}
               <span className="ml-auto font-semibold" aria-live="polite">
-                ফলাফল: {filteredPosts.length.toLocaleString('bn-BD')}
+                {pick('ফলাফল:', 'Results:')} {filteredPosts.length.toLocaleString('bn-BD')}
               </span>
             </div>
           </section>
 
           {loading ? (
-            <div className="glass-card p-10 text-center text-sm">সংবাদ লোড হচ্ছে...</div>
+            <div className="glass-card p-10 text-center text-sm">{pick('সংবাদ লোড হচ্ছে…', 'Loading news…')}</div>
           ) : filteredPosts.length > 0 ? (
             <NewsGrid posts={filteredPosts} />
           ) : (
             <div className="glass-card p-10 text-center text-sm">
-              কোনো সংবাদ পাওয়া যায়নি। অন্য শব্দ বা ক্যাটাগরি দিয়ে চেষ্টা করুন।
+              {pick('কোনো সংবাদ পাওয়া যায়নি। অন্য শব্দ বা বিভাগ দিয়ে অনুসন্ধান করুন।', 'No news was found. Try another term or category.')}
             </div>
           )}
         </div>

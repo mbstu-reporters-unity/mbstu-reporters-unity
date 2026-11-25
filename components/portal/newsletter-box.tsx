@@ -18,7 +18,7 @@ export function NewsletterBox() {
     setErr('')
     const clean = email.trim()
     if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
-      setErr(pick('সঠিক ইমেইল লিখুন', 'Please enter a valid email'))
+      setErr(pick('অনুগ্রহ করে বৈধ ইমেইল ঠিকানা লিখুন।', 'Please enter a valid email address.'))
       return
     }
 
@@ -31,13 +31,13 @@ export function NewsletterBox() {
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error(j.error || 'সাবস্ক্রাইব করা যায়নি')
+        throw new Error(j.error || pick('নিউজলেটারে নিবন্ধন করা যায়নি।', 'Unable to subscribe to the newsletter.'))
       }
       setDone(true)
       setEmail('')
       humanCheck.reset()
     } catch (e: any) {
-      setErr(e?.message || pick('সমস্যা হয়েছে, পরে চেষ্টা করুন', 'Failed to subscribe'))
+      setErr(e?.message || pick('নিবন্ধন সম্পন্ন হয়নি। অনুগ্রহ করে পরে আবার চেষ্টা করুন।', 'Subscription could not be completed. Please try again later.'))
     }
     setBusy(false)
   }
@@ -50,12 +50,12 @@ export function NewsletterBox() {
         </span>
         <div>
           <p className="text-xs sm:text-sm font-bold text-white">
-            {pick('নিউজলেটার সাবস্ক্রিপশন', 'Newsletter Subscription')}
+            {pick('নিউজলেটার নিবন্ধন', 'Newsletter Subscription')}
           </p>
           <p className="text-[11px] text-slate-300">
             {pick(
-              'সাপ্তাহিক সেরা ক্যাম্পাস সংবাদ ও নোটিশ সরাসরি ইমেইলে পান।',
-              'Get weekly campus news and notices directly in your inbox.'
+              'সাপ্তাহিক ক্যাম্পাস সংবাদ ও নোটিশ ইমেইলে পেতে নিবন্ধন করুন।',
+              'Subscribe to receive weekly campus news and notices by email.'
             )}
           </p>
         </div>
@@ -66,8 +66,8 @@ export function NewsletterBox() {
           <CheckCircle2 className="size-4 shrink-0" />
           <span>
             {pick(
-              'সফলভাবে নিউজলেটারে যুক্ত হয়েছেন!',
-              'Successfully subscribed to our newsletter!'
+              'নিউজলেটারে আপনার নিবন্ধন সম্পন্ন হয়েছে।',
+              'Your newsletter subscription is confirmed.'
             )}
           </span>
         </div>
@@ -77,7 +77,7 @@ export function NewsletterBox() {
             <input
               type="email"
               required
-              placeholder={pick('আপনার ইমেইল লিখুন...', 'Enter your email...')}
+              placeholder={pick('আপনার ইমেইল ঠিকানা লিখুন', 'Enter your email address')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="min-w-0 flex-1 rounded-xl border border-white/20 bg-black/30 px-3 py-2 text-xs text-white placeholder-white/45 focus:outline-none focus:border-cyan-400"
@@ -88,7 +88,7 @@ export function NewsletterBox() {
               className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-3.5 py-2 text-xs font-bold shadow cursor-pointer disabled:opacity-50 transition"
             >
               <Send className="size-3.5" />
-              <span>{busy ? '...' : pick('সাবস্ক্রাইব', 'Subscribe')}</span>
+              <span>{busy ? '...' : pick('নিবন্ধন করুন', 'Subscribe')}</span>
             </button>
           </div>
           <HumanVerification

@@ -61,7 +61,7 @@ export function BookmarksDialog({
               </h2>
               <p className="text-[11px] text-cyan-200/80">
                 {count > 0
-                  ? pick(`মোট ${count}টি সংবাদ সংরক্ষিত`, `${count} articles saved`)
+                  ? pick(`সংরক্ষিত সংবাদ: ${count}টি`, `${count} articles saved`)
                   : pick('কোনো সংবাদ সংরক্ষিত নেই', 'No articles saved')}
               </p>
             </div>
@@ -72,10 +72,10 @@ export function BookmarksDialog({
               <button
                 type="button"
                 onClick={clear}
-                title={pick('সব মুছুন', 'Clear all')}
+                title={pick('সংরক্ষিত সব সংবাদ সরান', 'Remove all saved articles')}
                 className="text-[11px] font-semibold text-rose-300 hover:text-rose-200 px-2 py-1 rounded-lg hover:bg-rose-500/15 transition cursor-pointer"
               >
-                {pick('সব মুছুন', 'Clear all')}
+                {pick('সব সংবাদ সরান', 'Remove all')}
               </button>
             )}
             <button
@@ -97,12 +97,12 @@ export function BookmarksDialog({
                 <BookOpen className="size-7" />
               </div>
               <h3 className="font-bold text-sm text-white/90">
-                {pick('এখনো কোনো সংবাদ সংরক্ষণ করা হয়নি', 'No bookmarks yet')}
+                {pick('এখনো কোনো সংবাদ সংরক্ষিত হয়নি', 'No articles have been saved yet')}
               </h3>
               <p className="text-xs text-slate-300 max-w-xs mx-auto leading-relaxed">
                 {pick(
-                  'যেকোনো সংবাদের কার্ডে থাকা বুকমার্ক আইকনে ক্লিক করে পরবর্তীতে পড়ার জন্য এখানে জমা রাখতে পারবেন।',
-                  'Click the bookmark icon on any news card to save articles for later reading.'
+                  'পরে পড়ার জন্য যেকোনো সংবাদের পাশে থাকা সংরক্ষণ আইকনটি নির্বাচন করুন।',
+                  'Select the save icon beside an article to keep it for later reading.'
                 )}
               </p>
             </div>
@@ -160,7 +160,7 @@ export function BookmarksDialog({
 
         {/* ফুটার */}
         <div className="px-5 py-3 border-t border-white/10 bg-black/20 flex items-center justify-between text-[11px] text-slate-300 shrink-0">
-          <span>{pick('আপনার ব্রাউজারে সংরক্ষিত থাকে', 'Saved locally in your browser')}</span>
+          <span>{pick('তথ্য আপনার ব্রাউজারেই সংরক্ষিত থাকে', 'Saved in your browser')}</span>
           <button
             type="button"
             onClick={onClose}

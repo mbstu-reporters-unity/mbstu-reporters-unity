@@ -114,7 +114,7 @@ export function HumanVerification({
         }`}
       >
         <legend className="px-1 text-[11px] font-bold text-cyan-200">
-          <Tx bn="সহজ মানব যাচাই" en="Quick human check" />
+          <Tx bn="স্বয়ংক্রিয় যাচাই" en="Automated check" />
         </legend>
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor={answerId} className="text-xs text-slate-200">
@@ -138,7 +138,7 @@ export function HumanVerification({
             className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-cyan-200 hover:bg-white/10"
           >
             <RefreshCw className="size-3.5" />
-            <Tx bn="নতুন প্রশ্ন" en="New question" />
+            <Tx bn="নতুন প্রশ্ন দেখুন" en="Refresh question" />
           </button>
         </div>
       </fieldset>

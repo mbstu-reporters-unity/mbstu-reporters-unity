@@ -285,8 +285,8 @@ export function SiteHeader() {
     const adminChildren: MenuItem[] = [
       {
         id: 'admin-all',
-        label: pick('সকল প্রশাসনিক কর্মকর্তা', 'All University Officers'),
-        sublabel: pick('সম্পূর্ণ তালিকা দেখুন', 'View the complete directory'),
+        label: pick('বিশ্ববিদ্যালয়ের কর্মকর্তা তালিকা', 'University Personnel Directory'),
+        sublabel: pick('পূর্ণাঙ্গ তালিকা দেখুন', 'View the full directory'),
         icon: UserCheck,
         iconClass: 'bg-cyan-600/80 text-white',
         href: '/administration',
@@ -336,7 +336,7 @@ export function SiteHeader() {
     const socialSiteChildren: MenuItem[] = [
       {
         id: 'social-all',
-        label: pick('সকল সোশ্যাল সাইট ও গ্রুপ', 'All Social Sites & Groups'),
+        label: pick('সামাজিক যোগাযোগমাধ্যম ও গ্রুপসমূহ', 'Social Media and Groups'),
         icon: Globe,
         iconClass: 'bg-emerald-600/80 text-white',
         href: '/social-sites',
@@ -366,7 +366,7 @@ export function SiteHeader() {
     const clubChildren: MenuItem[] = [
       {
         id: 'clubs-section',
-        label: pick('ক্লাব সেকশনে যান', 'Go to Clubs'),
+        label: pick('ক্যাম্পাস ক্লাবসমূহ দেখুন', 'View Campus Clubs'),
         icon: Sparkles,
         iconClass: 'bg-orange-500 text-white',
         href: '/clubs',
@@ -384,7 +384,7 @@ export function SiteHeader() {
     const pageChildren: MenuItem[] = [
       {
         id: 'pages-section',
-        label: pick('সকল পেজ শোকেস দেখুন', 'View All Community Pages'),
+        label: pick('কমিউনিটি পেজসমূহ দেখুন', 'View Community Pages'),
         icon: LayoutGrid,
         iconClass: 'bg-violet-600 text-white',
         href: '/community',
@@ -403,7 +403,7 @@ export function SiteHeader() {
     const associationChildren: MenuItem[] = [
       {
         id: 'assoc-all',
-        label: pick('সকল সাংবাদিক সমিতি দেখুন', 'View All Reporter Associations'),
+        label: pick('সাংবাদিক সমিতিসমূহ দেখুন', 'View Journalists’ Associations'),
         icon: Newspaper,
         iconClass: 'bg-indigo-600 text-white',
         href: '/associations',
@@ -489,7 +489,7 @@ export function SiteHeader() {
             {
               id: 'news-gallery',
               label: getLabel('news-gallery', 'ফটো ও ভিডিও গ্যালারি', 'Photo & Video Gallery'),
-              sublabel: pick('ক্যাম্পাসের সকল ছবি ও ভিডিও', 'Campus photo and video archive'),
+              sublabel: pick('ক্যাম্পাসের ছবি ও ভিডিও সংরক্ষণাগার', 'Campus photo and video archive'),
               icon: Camera,
               iconClass: 'bg-cyan-600 text-white',
               href: '/gallery',
@@ -513,7 +513,7 @@ export function SiteHeader() {
             {
               id: 'news-factcheck',
               label: getLabel('news-factcheck', 'ফ্যাক্ট-চেক ডেস্ক', 'Fact-Check Desk'),
-              sublabel: pick('গুজব ও তথ্যের সত্যতা যাচাই', 'Check claims and campus rumors'),
+              sublabel: pick('দাবি ও তথ্যের সত্যতা যাচাই', 'Verify claims and information'),
               icon: ShieldAlert,
               iconClass: 'bg-rose-600 text-white',
               href: '/fact-check',
@@ -549,7 +549,7 @@ export function SiteHeader() {
             {
               id: 'news-stories',
               label: getLabel('news-stories', 'ক্যাম্পাস স্টোরিজ', 'Campus Stories'),
-              sublabel: pick('সাম্প্রতিক স্টোরি দেখুন', 'Browse recent stories'),
+              sublabel: pick('সাম্প্রতিক গল্পসমূহ দেখুন', 'View recent stories'),
               icon: Sparkles,
               iconClass: 'bg-fuchsia-600 text-white',
               href: '/stories',
@@ -561,7 +561,7 @@ export function SiteHeader() {
             {
               id: 'news-polls',
               label: getLabel('news-polls', 'ক্যাম্পাস জরিপ', 'Campus Polls'),
-              sublabel: pick('জরিপে অংশ নিন ও ফলাফল দেখুন', 'Vote and view poll results'),
+              sublabel: pick('জরিপে অংশ নিয়ে ফলাফল দেখুন', 'Participate in a poll and view its results'),
               icon: Vote,
               iconClass: 'bg-cyan-600 text-white',
               href: '/polls',
@@ -616,7 +616,7 @@ export function SiteHeader() {
         ? [
             {
               id: 'comm-student',
-              label: getLabel('comm-student', 'স্টুডেন্ট কর্নার', 'Student Corner'),
+              label: getLabel('comm-student', 'শিক্ষার্থী বিভাগ', 'Student Contributions'),
               icon: BookOpen,
               iconClass: 'bg-sky-500 text-white',
               href: '/student-corner',
@@ -641,16 +641,16 @@ export function SiteHeader() {
     const educationChildren: MenuItem[] = [
       {
         id: 'res-center',
-        label: pick('রিসোর্স সেন্টার', 'Resource Center'),
-        sublabel: pick('সাংবাদিকতা গাইড ও RTI ফরম্যাট', 'Journalism guides and RTI templates'),
+        label: pick('তথ্য-উপকরণ', 'Resources'),
+        sublabel: pick('সাংবাদিকতার নির্দেশিকা ও তথ্য অধিকার আবেদনপত্র', 'Journalism guides and Right to Information templates'),
         icon: BookOpen,
         iconClass: 'bg-cyan-600 text-white',
         href: '/resources',
       },
       {
         id: 'res-opp',
-        label: pick('ওয়ার্কশপ ও ইন্টার্নশিপ', 'Workshops & Internships'),
-        sublabel: pick('প্রশিক্ষণ ও চাকরির সুযোগ', 'Training and career opportunities'),
+        label: pick('কর্মশালা ও শিক্ষানবিশি', 'Workshops and Internships'),
+        sublabel: pick('প্রশিক্ষণ ও কর্মজীবনের সুযোগ', 'Training and career opportunities'),
         icon: Briefcase,
         iconClass: 'bg-purple-600 text-white',
         href: '/opportunities',
@@ -665,8 +665,8 @@ export function SiteHeader() {
       },
       {
         id: 'res-events',
-        label: pick('ইভেন্ট ও ক্যালেন্ডার', 'Events & Calendar'),
-        sublabel: pick('কর্মশালা ও সার্টিফিকেট ভেরিফিকেশন', 'Workshops and certificate verification'),
+        label: pick('অনুষ্ঠানসূচি', 'Events Calendar'),
+        sublabel: pick('কর্মশালা ও সনদ যাচাই', 'Workshops and certificate verification'),
         icon: CalendarDays,
         iconClass: 'bg-rose-600 text-white',
         href: '/events',
@@ -678,8 +678,8 @@ export function SiteHeader() {
         ? [
             {
               id: 'about-unity',
-              label: getLabel('about-unity', 'আমাদের সম্পর্কে', 'About Us'),
-              sublabel: pick('ইতিহাস, ভিশন ও অর্জন', 'History, vision and milestones'),
+              label: getLabel('about-unity', 'সংগঠন পরিচিতি', 'About the Organisation'),
+              sublabel: pick('ইতিহাস, লক্ষ্য ও অর্জন', 'History, mission, and achievements'),
               icon: Info,
               iconClass: 'bg-amber-600 text-white',
               href: '/about',
@@ -714,8 +714,8 @@ export function SiteHeader() {
         ? [
             {
               id: 'about-members',
-              label: getLabel('about-members', 'সদস্য ডিরেক্টরি', 'Member Directory'),
-              sublabel: pick('অনুমোদিত সাংবাদিক ও সদস্যবৃন্দ', 'Approved reporters and members'),
+              label: getLabel('about-members', 'সদস্য তালিকা', 'Member Directory'),
+              sublabel: pick('অনুমোদিত সাংবাদিক ও সদস্যদের তালিকা', 'Approved reporters and members'),
               icon: UserCheck,
               iconClass: 'bg-cyan-600 text-white',
               href: '/members',
@@ -750,8 +750,8 @@ export function SiteHeader() {
         ? [
             {
               id: 'about-council',
-              label: getLabel('about-council', 'ডিরেক্টর প্যানেল', 'Director Panel'),
-              sublabel: pick('মডারেশন ও অ্যাডমিন কাউন্সিল', 'Moderation and admin council'),
+              label: getLabel('about-council', 'পরিচালনা পর্ষদ', 'Council'),
+              sublabel: pick('মডারেশন ও প্রশাসনিক পরিষদ', 'Moderation and administration'),
               icon: ShieldCheck,
               iconClass: 'bg-emerald-600 text-white',
               href: '/council',
@@ -762,8 +762,8 @@ export function SiteHeader() {
         ? [
             {
               id: 'about-contact',
-              label: getLabel('about-contact', 'যোগাযোগ ও অভিযোগ ডেস্ক', 'Contact & Grievance Desk'),
-              sublabel: pick('অফিস, ম্যাপ ও সরাসরি বার্তা', 'Office, map and grievance desk'),
+              label: getLabel('about-contact', 'যোগাযোগ ও অভিযোগ বিভাগ', 'Contact and Grievances'),
+              sublabel: pick('কার্যালয়, মানচিত্র ও বার্তা', 'Office, map, and messages'),
               icon: Mail,
               iconClass: 'bg-pink-600 text-white',
               href: '/contact',
@@ -838,7 +838,7 @@ export function SiteHeader() {
       {
         id: 'global-search',
         label: pick('সংবাদ অনুসন্ধান', 'Search News'),
-        sublabel: pick('তারিখ, লেখক ও ক্যাটাগরি দিয়ে খুঁজুন', 'Search by date, author and category'),
+        sublabel: pick('তারিখ, লেখক ও বিভাগ অনুযায়ী অনুসন্ধান করুন', 'Search by date, author, and category'),
         icon: Search,
         iconClass: 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white',
         href: '/search',
@@ -846,23 +846,23 @@ export function SiteHeader() {
       {
         id: 'saved-bookmarks',
         label: pick('সংরক্ষিত সংবাদ', 'Saved Articles'),
-        sublabel: pick('আপনার বুকমার্ক করা সংবাদের তালিকা', 'View your bookmarked articles'),
+        sublabel: pick('আপনার সংরক্ষিত সংবাদের তালিকা', 'View your saved articles'),
         icon: Bookmark,
         iconClass: 'bg-gradient-to-r from-amber-500 to-amber-600 text-white',
         onSelect: () => setBookmarksOpen(true),
       },
       {
         id: 'submit-campus-tip',
-        label: pick('সংবাদ বা টিপ পাঠান', 'Submit Campus Tip'),
-        sublabel: pick('গোপন তথ্য বা সংবাদের ক্লু জানান', 'Send confidential or verified news tips'),
+        label: pick('সংবাদ-তথ্য পাঠান', 'Submit a News Tip'),
+        sublabel: pick('গোপনীয় সংবাদ বা তথ্য পাঠান', 'Submit a confidential news tip'),
         icon: Send,
         iconClass: 'bg-gradient-to-r from-rose-500 to-amber-500 text-white',
         onSelect: () => setTipOpen(true),
       },
       {
         id: 'membership-apply',
-        label: pick('সদস্যপদ আবেদন', 'Join as Member'),
-        sublabel: pick('অনলাইন রিক্রুটমেন্ট ফর্ম', 'Online membership application'),
+        label: pick('সদস্যপদের আবেদন', 'Apply for Membership'),
+        sublabel: pick('অনলাইন সদস্যপদ আবেদনপত্র', 'Online membership application'),
         icon: UserPlus,
         iconClass: 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white',
         href: '/apply',

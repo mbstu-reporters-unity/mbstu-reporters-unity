@@ -12,7 +12,7 @@ export function LangSwitcher() {
   return (
     <div
       role="group"
-      aria-label="ভাষা / Language"
+      aria-label="ভাষা নির্বাচন / Language selection"
       className="inline-flex overflow-hidden rounded-full border border-white/30 text-xs font-semibold"
     >
       {OPTIONS.map((o) => (

@@ -7,6 +7,7 @@ import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
 import { getSiteSettings } from '@/lib/site-settings'
+import { Tx } from '@/lib/i18n'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,7 +79,7 @@ async function SocialSiteCard({ site }: { site: SocialSite }) {
 
         {site.contact_info && (
           <div className="text-xs text-slate-200 bg-white/10 p-3 rounded-2xl border border-white/15 space-y-1">
-            <p className="font-bold text-cyan-300 text-[11px]">যোগাযোগের তথ্য:</p>
+            <p className="font-bold text-cyan-300 text-[11px]"><Tx bn="যোগাযোগের তথ্য:" en="Contact information:" /></p>
             <p className="whitespace-pre-line">{site.contact_info}</p>
           </div>
         )}
@@ -87,7 +88,7 @@ async function SocialSiteCard({ site }: { site: SocialSite }) {
           <div className="space-y-3 border-t border-white/15 pt-3">
             <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
               <Megaphone className="size-3.5" />
-              সাম্প্রতিক নোটিশ ও আপডেট ({notices.length})
+              <Tx bn={`সাম্প্রতিক বিজ্ঞপ্তি ও হালনাগাদ (${notices.length})`} en={`Recent notices and updates (${notices.length})`} />
             </p>
 
             <div className="space-y-2.5">
@@ -122,7 +123,7 @@ async function SocialSiteCard({ site }: { site: SocialSite }) {
 
                   <div className="flex items-center gap-2 pt-1.5 border-t border-white/10 text-[10px]">
                     <span className="text-white/60 font-medium flex items-center gap-1">
-                      <Share2 className="size-2.5" /> শেয়ার:
+                      <Share2 className="size-2.5" /> <Tx bn="শেয়ার করুন:" en="Share:" />
                     </span>
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(`${site.name}: ${n.title} - ${sharePageUrl}`)}`}
@@ -201,7 +202,7 @@ export default async function SocialSitesPage() {
       <main className="min-h-screen py-6 sm:py-10">
         <div className="mx-auto max-w-6xl px-4 space-y-6">
 
-          <BackNavigation items={[{ label: 'সোশ্যাল সাইট ও গ্রুপ' }]} />
+          <BackNavigation items={[{ label: <Tx bn="সামাজিক যোগাযোগমাধ্যমের সাইট ও গ্রুপ" en="Social Media Sites and Groups" /> }]} />
 
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center">
             {banner.eyebrow && (
@@ -210,7 +211,7 @@ export default async function SocialSitesPage() {
               </span>
             )}
             <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
-              {banner.title || 'MBSTU Social Site'}
+              {banner.title || <Tx bn="মাভাবিপ্রবির সামাজিক যোগাযোগমাধ্যমের সাইট" en="MBSTU Social Media Sites" />}
             </h1>
             {banner.subtitle && (
               <p className="text-white/80 text-xs sm:text-sm font-medium mt-1">
@@ -227,8 +228,8 @@ export default async function SocialSitesPage() {
             </div>
           ) : (
             <div className="glass-card p-12 text-center space-y-2 text-white">
-              <p className="text-base font-bold">এখনো কোনো সাইট বা গ্রুপ যুক্ত করা হয়নি।</p>
-              <p className="text-xs text-slate-300">অ্যাডমিন প্যানেল থেকে তথ্য যুক্ত করলেই এখানে সরাসরি চলে আসবে।</p>
+              <p className="text-base font-bold"><Tx bn="এখনো কোনো সাইট বা গ্রুপ যুক্ত করা হয়নি।" en="No sites or groups have been added yet." /></p>
+              <p className="text-xs text-slate-300"><Tx bn="পরিচালনা প্যানেল থেকে তথ্য যুক্ত করা হলে তা এখানে প্রদর্শিত হবে।" en="Information added through the administration panel will appear here." /></p>
             </div>
           )}
 

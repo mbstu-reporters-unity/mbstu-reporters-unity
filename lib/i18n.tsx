@@ -62,19 +62,19 @@ const PAIRS: [string, string][] = [
     'বিশ্ববিদ্যালয়, হল, বিভাগ ও মাভাবিপ্রবি রিপোর্টার্স ইউনিটির সর্বশেষ নোটিশ।',
     "Latest notices from the university, halls, departments and MBSTU Reporters' Unity.",
   ],
-  ['ক্লাব নিউজ কর্নার', 'Club Highlights'],
+  ['ক্লাব নিউজ কর্নার', 'Club News'],
   [
     'মাভাবিপ্রবির ১০টি ক্যাম্পাস ক্লাব ও সংগঠনের সর্বশেষ কার্যক্রম।',
     'Latest activities from the 10 campus clubs and organisations of MBSTU.',
   ],
-  ['ক্যাম্পাস সংবাদ', 'Latest Campus Reports'],
+  ['ক্যাম্পাস সংবাদ', 'Campus News'],
   ['মাভাবিপ্রবির সর্বত্র থেকে যাচাইকৃত প্রতিবেদন।', 'Verified reports from across MBSTU.'],
-  ['স্টুডেন্ট কর্নার', 'Voices of Students'],
+  ['স্টুডেন্ট কর্নার', 'Student Contributions'],
   [
     'মতামত, সৃজনশীল লেখা, গবেষণার আলোচিত অর্জন ও সাফল্য — মাভাবিপ্রবির শিক্ষার্থীদের লেখা।',
     'Opinions, creative writing, research highlights and achievements — written by MBSTU students.',
   ],
-  ['ক্লাব', 'Club'],
+  ['ক্লাব', 'Clubs'],
   ['সংবাদ', 'News'],
 ]
 
@@ -86,8 +86,8 @@ const EYEBROW_BN: Record<string, string> = {
   'Leadership & At a Glance': 'নেতৃত্ব ও এক নজরে',
   'Digital Notice Board': 'নোটিশ বোর্ড',
   'Club News Corner': 'ক্লাব সংবাদ',
-  'Campus News': 'সর্বশেষ',
-  'Student Corner': 'শিক্ষার্থীদের লেখা',
+  'Campus News': 'ক্যাম্পাস সংবাদ',
+  'Student Corner': 'শিক্ষার্থী বিভাগ',
   News: 'সংবাদ',
 }
 

@@ -57,8 +57,8 @@ export function BookmarkButton({
     <button
       type="button"
       onClick={handleClick}
-      aria-label={saved ? pick('বুকমার্ক মুছুন', 'Remove bookmark') : pick('বুকমার্ক করুন', 'Save bookmark')}
-      title={saved ? pick('সংরক্ষিত হয়েছে (মুছতে ক্লিক করুন)', 'Saved (click to remove)') : pick('সংরক্ষণ করুন', 'Save for later')}
+      aria-label={saved ? pick('সংরক্ষিত তালিকা থেকে সরান', 'Remove from saved articles') : pick('সংরক্ষিত তালিকায় যোগ করুন', 'Add to saved articles')}
+      title={saved ? pick('সংরক্ষিত হয়েছে; তালিকা থেকে সরাতে নির্বাচন করুন', 'Saved; select to remove from your list') : pick('পরে পড়ার জন্য সংরক্ষণ করুন', 'Save to read later')}
       className={`inline-flex items-center justify-center rounded-xl border transition-all cursor-pointer select-none active:scale-90 ${sizeClasses} ${
         saved
           ? 'bg-amber-500/25 border-amber-400/50 text-amber-300 shadow-xs'

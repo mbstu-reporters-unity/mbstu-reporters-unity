@@ -9,6 +9,7 @@ import { SectionHeading } from "./section-heading"
 import { useSiteSettings } from "./site-settings-context"
 import { selectHomepageItems } from "@/lib/homepage-feed"
 import { useHomepageAging } from "./use-homepage-aging"
+import { useLang } from "@/lib/i18n"
 
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", timeZone: "Asia/Dhaka" })
@@ -24,6 +25,7 @@ export function NoticeBoard({
   prefetchedNotices?: Notice[]
   initialNow: number
 }) {
+  const { pick } = useLang()
   const settings = useSiteSettings()
   const [allRows, setAllRows] = useState<Notice[]>(prefetchedNotices || [])
   const [loading, setLoading] = useState(!prefetchedNotices)
@@ -69,12 +71,12 @@ export function NoticeBoard({
         <div className="glass-card overflow-hidden">
           <div className="flex items-center gap-2 bg-gradient-to-r from-blue-700/80 to-indigo-800/80 px-5 py-3 text-sm font-bold text-white border-b border-white/20 backdrop-blur">
             <Megaphone className="size-4 text-cyan-300" aria-hidden="true" />
-            <span>Latest Notices / সর্বশেষ নোটিশ</span>
+            <span>{pick('সাম্প্রতিক নোটিশ', 'Recent Notices')}</span>
           </div>
 
-          {loading && <p className="p-5 text-sm text-slate-300">লোড হচ্ছে...</p>}
+          {loading && <p className="p-5 text-sm text-slate-300">{pick('লোড হচ্ছে…', 'Loading…')}</p>}
           {!loading && list.length === 0 && (
-            <p className="p-5 text-sm text-slate-300">এখনো কোনো নোটিশ দেওয়া হয়নি।</p>
+            <p className="p-5 text-sm text-slate-300">{pick('এখনো কোনো নোটিশ প্রকাশিত হয়নি।', 'No notices have been published yet.')}</p>
           )}
 
           <ul className="divide-y divide-white/10">
@@ -95,7 +97,7 @@ export function NoticeBoard({
                       {n.is_pinned && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 border border-amber-400/40 px-2 py-0.5 text-[11px] font-bold text-amber-300">
                           <Pin className="size-3" aria-hidden="true" />
-                          পিন করা
+                          {pick('গুরুত্বপূর্ণ', 'Pinned')}
                         </span>
                       )}
                       <span className="rounded-full bg-white/15 border border-white/25 px-2.5 py-0.5 text-[11px] font-bold text-cyan-200">
@@ -104,7 +106,7 @@ export function NoticeBoard({
                       {n.ref_number && (
                         <p className="inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2.5 py-0.5 font-mono text-[11px] text-slate-300">
                           <FileText className="size-3" aria-hidden="true" />
-                          Ref: {n.ref_number}
+                          {pick('স্মারক নম্বর:', 'Reference:')} {n.ref_number}
                         </p>
                       )}
                     </div>
@@ -118,7 +120,7 @@ export function NoticeBoard({
 
                     {n.heading && <p className="text-xs text-slate-300 mt-0.5">{n.heading}</p>}
                     <p className="text-[11px] text-cyan-200/80 mt-1">
-                      {n.updated_at && n.updated_at !== n.created_at ? "হালনাগাদ " : ""}
+                      {n.updated_at && n.updated_at !== n.created_at ? `${pick('হালনাগাদ: ', 'Updated: ')}` : ""}
                       {timeAgo(noticeActivityAt(n))}
                     </p>
                   </div>
@@ -129,7 +131,7 @@ export function NoticeBoard({
                       className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white border border-white/30 px-4 py-2 text-xs font-bold transition-all shadow-md active:scale-95"
                     >
                       <Download className="size-3.5" aria-hidden="true" />
-                      <span>Download</span>
+                      <span>{pick('ফাইল ডাউনলোড', 'Download file')}</span>
                     </a>
                   ) : safeUrl(n.link_url) ? (
                     <a
@@ -139,7 +141,7 @@ export function NoticeBoard({
                       className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white border border-white/30 px-4 py-2 text-xs font-bold transition-all shadow-md active:scale-95 backdrop-blur"
                     >
                       <ExternalLink className="size-3.5" aria-hidden="true" />
-                      <span>লিংক</span>
+                      <span>{pick('লিংক খুলুন', 'Open link')}</span>
                     </a>
                   ) : null}
                 </li>
@@ -151,7 +153,7 @@ export function NoticeBoard({
             href="/notices"
             className="flex items-center justify-center gap-2 border-t border-white/15 bg-white/10 px-5 py-3.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
           >
-            <span>সব নোটিশ দেখুন</span>
+            <span>{pick('সকল নোটিশ দেখুন', 'View all notices')}</span>
             <ArrowRight className="size-3.5" aria-hidden="true" />
           </Link>
         </div>

@@ -39,6 +39,7 @@ import { SectionHeading } from './section-heading'
 import { ClubReportsDialog } from './club-reports-dialog'
 import { useSiteSettings } from './site-settings-context'
 import { HomepageCompactCarousel } from './homepage-transition-sections'
+import { useLang } from '@/lib/i18n'
 
 export const clubIcons: Record<string, LucideIcon> = {
   megaphone: Megaphone,
@@ -91,6 +92,7 @@ export function ClubNews({
   standalone?: boolean
   compact?: boolean
 }) {
+  const { pick } = useLang()
   const settings = useSiteSettings()
   const [list, setList] = useState<Club[]>(fallbackClubs)
   const [dbMap, setDbMap] = useState<Record<string, ClubItem>>({})
@@ -288,7 +290,7 @@ export function ClubNews({
             <div className="flex items-center justify-between text-[11px] text-cyan-200/80 gap-1">
               <span className="font-semibold flex items-center gap-1 shrink-0">
                 <Sparkles className="size-3 text-amber-300" />
-                <span>সাম্প্রতিক কার্যক্রম</span>
+                <span>{pick('সাম্প্রতিক কার্যক্রম', 'Recent activities')}</span>
               </span>
               {club.date && <span className="font-mono text-[10px] opacity-80 shrink-0">{club.date}</span>}
             </div>
@@ -304,7 +306,7 @@ export function ClubNews({
                 activityMediaList[0].url.includes('.mp4') ? (
                   <div className="size-full flex items-center justify-center bg-black/60 text-white gap-1 text-[11px] font-semibold">
                     <Play className="size-4 fill-current text-cyan-400" />
-                    <span>ভিডিও ক্লিপ</span>
+                    <span>{pick('ভিডিও', 'Video')}</span>
                   </div>
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -350,7 +352,7 @@ export function ClubNews({
             {raw?.committee_members && raw.committee_members.length > 0 && (
               <span className="text-[11px] text-cyan-200/90 font-medium flex items-center gap-1">
                 <Users className="size-3 text-cyan-400" />
-                <span>{raw.committee_members.length} জন</span>
+                <span>{raw.committee_members.length} {pick('জন', raw.committee_members.length === 1 ? 'member' : 'members')}</span>
               </span>
             )}
           </div>
@@ -361,7 +363,7 @@ export function ClubNews({
             className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 py-2.5 text-xs font-bold text-white transition active:scale-95 cursor-pointer shadow-md border border-white/20"
           >
             <FileText className="size-3.5" />
-            <span>প্রতিবেদন ও কমিটি দেখুন</span>
+            <span>{pick('প্রতিবেদন ও কমিটির তথ্য দেখুন', 'View reports and committee information')}</span>
             <ArrowRight className="size-3" />
           </button>
         </div>
@@ -419,24 +421,24 @@ export function ClubNews({
           onTouchEnd={(event) => setIsPaused(event.currentTarget.contains(document.activeElement))}
         >
           <SectionHeading
-            eyebrow={sec?.eyebrow ?? 'Campus Organizations & Clubs'}
-            title={sec?.titleBn || 'ক্যাম্পাস ক্লাব ও সংগঠনসমূহ'}
-            titleEn={sec?.titleEn || 'Campus Organizations & Clubs'}
+            eyebrow={sec?.eyebrow ?? 'Campus Organisations and Clubs'}
+            title={sec?.titleBn || 'ক্যাম্পাসের ক্লাব ও সংগঠন'}
+            titleEn={sec?.titleEn || 'Campus Organisations and Clubs'}
             subtitle={sec?.subtitleBn || 'ক্যাম্পাস ক্লাব ও সংগঠনসমূহের সাম্প্রতিক কার্যক্রম।'}
-            subtitleEn={sec?.subtitleEn || 'Latest activities of MBSTU campus clubs and organizations.'}
+            subtitleEn={sec?.subtitleEn || 'Recent activities and profiles of MBSTU campus clubs and organisations.'}
             action={
               !standalone ? (
                 <Link
                   href="/clubs"
                   className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
                 >
-                  সব দেখুন
+                  {pick('সব দেখুন', 'View all')}
                 </Link>
               ) : undefined
             }
           />
 
-          <div className="mb-5 flex gap-2.5 overflow-x-auto py-1 scrollbar-none" role="group" aria-label="ক্লাব ক্যাটাগরি">
+          <div className="mb-5 flex gap-2.5 overflow-x-auto py-1 scrollbar-none" role="group" aria-label={pick('ক্লাবের বিভাগ', 'Club categories')}>
             {tags.map((tag) => (
               <button
                 key={tag}
@@ -454,7 +456,7 @@ export function ClubNews({
                     : 'border-white/20 bg-white/10 text-white/80 hover:bg-white/20',
                 )}
               >
-                {tag === 'All' ? 'সব ক্লাব' : tag}
+                {tag === 'All' ? pick('সকল ক্লাব', 'All clubs') : tag}
                 <span className="ml-1.5 text-[10px] opacity-80">
                   ({tag === 'All' ? list.length : list.filter((club) => club.tag === tag).length})
                 </span>
@@ -464,7 +466,7 @@ export function ClubNews({
 
           <HomepageCompactCarousel
             slides={visible.map((club) => <div key={club.id}>{renderCard(club)}</div>)}
-            title="ক্যাম্পাস ক্লাব ও সংগঠনসমূহ"
+            title={pick('ক্যাম্পাসের ক্লাব ও সংগঠন', 'Campus Organisations and Clubs')}
             interval={Math.max(2, config.duration_sec || 4) * 1000}
             paused={!config.enabled || isPaused || selected !== null}
             className="max-w-none"
@@ -484,21 +486,21 @@ export function ClubNews({
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         <SectionHeading
-          eyebrow={sec?.eyebrow ?? 'Campus Organizations & Clubs'}
-          title={sec?.titleBn || 'ক্যাম্পাস ক্লাব ও সংগঠনসমূহ'}
-          titleEn={sec?.titleEn || 'Campus Organizations & Clubs'}
+          eyebrow={sec?.eyebrow ?? 'Campus Organisations and Clubs'}
+          title={sec?.titleBn || 'ক্যাম্পাসের ক্লাব ও সংগঠন'}
+          titleEn={sec?.titleEn || 'Campus Organisations and Clubs'}
           subtitle={
             sec?.subtitleBn ||
-            'মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের সাম্প্রতিক অর্জন, কার্যক্রম এবং পূর্ণাঙ্গ পরিচিতি।'
+            'মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের বিভিন্ন ক্লাব ও সংগঠনের সাম্প্রতিক অর্জন, কার্যক্রম এবং পরিচিতি।'
           }
-          subtitleEn={sec?.subtitleEn || 'Latest activities and profiles of MBSTU campus clubs and organizations.'}
+          subtitleEn={sec?.subtitleEn || 'Recent activities, achievements, and profiles of MBSTU campus clubs and organisations.'}
           action={
             !standalone ? (
               <Link
                 href="/clubs"
                 className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
               >
-                {compact ? 'সব দেখুন' : 'সব ক্লাব দেখুন'}
+                {compact ? pick('সব দেখুন', 'View all') : pick('সকল ক্লাব দেখুন', 'View all clubs')}
               </Link>
             ) : undefined
           }
@@ -520,7 +522,7 @@ export function ClubNews({
                   : 'border-white/20 bg-white/10 text-white/80 hover:bg-white/20',
               )}
             >
-              <span>{tag === 'All' ? 'সব ক্লাব' : tag}</span>
+              <span>{tag === 'All' ? pick('সকল ক্লাব', 'All clubs') : tag}</span>
               <span className={cn('text-[10px] px-1.5 py-0.2 rounded-full', filter === tag ? 'bg-white/20 text-white font-bold' : 'bg-white/10 text-white/70')}>
                 {tag === 'All' ? list.length : list.filter((c) => c.tag === tag).length}
               </span>
@@ -542,7 +544,7 @@ export function ClubNews({
           {total === 0 ? (
             <div className="px-4">
               <p className="text-center text-xs text-white/60 py-10 glass-card">
-                কোনো ক্লাব পাওয়া যায়নি।
+                {pick('কোনো ক্লাব পাওয়া যায়নি।', 'No clubs were found.')}
               </p>
             </div>
           ) : isContinuous ? (
@@ -607,7 +609,7 @@ export function ClubNews({
                 className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 text-xs font-semibold border border-white/20 transition cursor-pointer active:scale-95"
               >
                 {isPaused ? <Play className="size-3 text-cyan-400" /> : <Pause className="size-3 text-amber-400" />}
-                <span>{isPaused ? 'চালান' : 'থামান'}</span>
+                <span>{isPaused ? pick('চালু করুন', 'Resume') : pick('বিরতি দিন', 'Pause')}</span>
               </button>
             )}
 
@@ -618,7 +620,7 @@ export function ClubNews({
                     key={idx}
                     type="button"
                     onClick={() => setCurrentIndex(idx)}
-                    aria-label={`স্লাইড ${idx + 1}`}
+                    aria-label={pick(`স্লাইড ${idx + 1}`, `Slide ${idx + 1}`)}
                     className={`h-2 rounded-full transition-all cursor-pointer ${
                       idx === safeIndex ? 'w-5 bg-cyan-400 shadow-sm' : 'w-2 bg-white/30 hover:bg-white/60'
                     }`}
@@ -629,20 +631,20 @@ export function ClubNews({
 
             {isContinuous && (
               <span className="text-xs font-bold text-cyan-300 bg-white/10 px-3 py-1 rounded-full border border-white/15">
-                মোট {bn(total)}টি ক্লাব
+                {pick(`মোট ${bn(total)}টি ক্লাব`, `${total} clubs total`)}
               </span>
             )}
 
             {config.show_arrows !== false && !isContinuous && (
               <div className="flex items-center gap-2 ml-auto">
                 <span className="text-xs font-bold text-cyan-300 bg-white/10 px-3 py-1 rounded-full border border-white/15">
-                  ক্লাব {bn(safeIndex + 1)} / {bn(total)}
+                  {pick(`ক্লাব ${bn(safeIndex + 1)} / ${bn(total)}`, `Club ${safeIndex + 1} of ${total}`)}
                 </span>
                 <button
                   type="button"
                   onClick={prevSlide}
                   className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
-                  aria-label="Previous"
+                  aria-label={pick('পূর্ববর্তী ক্লাব', 'Previous club')}
                 >
                   <ChevronLeft className="size-4" />
                 </button>
@@ -650,7 +652,7 @@ export function ClubNews({
                   type="button"
                   onClick={nextSlide}
                   className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
-                  aria-label="Next"
+                  aria-label={pick('পরবর্তী ক্লাব', 'Next club')}
                 >
                   <ChevronRight className="size-4" />
                 </button>

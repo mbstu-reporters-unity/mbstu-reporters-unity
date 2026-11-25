@@ -9,46 +9,46 @@ const KEY = 'mbstu_theme'
 export const THEMES = [
   {
     id: 'ocean-glass',
-    bn: '১. ব্লু লিকুইড গ্লাস',
-    en: 'Ocean Liquid Glass',
-    dbn: 'উজ্জ্বল নীল লিকুইড পিল বাটন গ্লাস',
-    den: 'Glossy ocean blue liquid glass',
+    bn: '১. নীল কাচের আবহ',
+    en: 'Ocean Blue',
+    dbn: 'নীলাভ স্বচ্ছতার আবহ',
+    den: 'A clear ocean-blue appearance',
     bg: '#3b82f6',
     dot: '#0284c7',
   },
   {
     id: 'sunset-peach',
-    bn: '২. সানসেট পিচ গ্লাস',
-    en: 'Sunset Beach Glass',
-    dbn: 'গোধূলি সানসেট বিচ ফ্রস্টেড উইজেট',
-    den: 'Warm peach frosted beach glass',
+    bn: '২. গোধূলি আভা',
+    en: 'Sunset Peach',
+    dbn: 'উষ্ণ পীচ রঙের আবহ',
+    den: 'A warm peach-toned appearance',
     bg: '#3d2325',
     dot: '#f97316',
   },
   {
     id: 'pure-frost',
-    bn: '৩. স্নো হোয়াইট ফ্রস্টেড',
-    en: 'Pure White Frost',
-    dbn: 'মিনিমালিস্ট সিলভার ফ্রস্টেড গ্লাস',
-    den: 'Ultra-clean frosted white glass',
+    bn: '৩. শুভ্র কাচের আবহ',
+    en: 'Pure Frost',
+    dbn: 'সরল ও স্বচ্ছ শুভ্র আবহ',
+    den: 'A clean, frosted-white appearance',
     bg: '#f1f5f9',
     dot: '#475569',
   },
   {
     id: 'midnight-neon',
-    bn: '৪. মিডনাইট নিয়ন গ্লাস',
-    en: 'Midnight Neon Glass',
-    dbn: 'কালো গ্লাসের পেছনে জ্বলজ্বলে নিয়ন আভা',
-    den: 'Dark obsidian glass with neon glow',
+    bn: '৪. মধ্যরাত্রির আভা',
+    en: 'Midnight',
+    dbn: 'গাঢ় পটভূমিতে নিয়ন আলোর আভা',
+    den: 'A dark appearance with neon accents',
     bg: '#030712',
     dot: '#22c55e',
   },
   {
     id: 'daylight-light',
-    bn: '৫. ডে-লাইট মোড (সাদা)',
-    en: 'Daylight Light Mode',
-    dbn: 'দিনের আলোতে আরামদায়ক পড়ার জন্য হালকা থিম',
-    den: 'Clean bright light mode for reading',
+    bn: '৫. দিবালোক',
+    en: 'Daylight',
+    dbn: 'পাঠের উপযোগী উজ্জ্বল আবহ',
+    den: 'A bright appearance designed for reading',
     bg: '#ffffff',
     dot: '#0284c7',
   },
@@ -117,9 +117,9 @@ export function ThemeSwitcher() {
         >
           <div className="px-3 pb-2 pt-2 border-b border-white/10 mb-1 flex items-center justify-between">
             <p className="text-[11px] font-bold uppercase tracking-wider text-white/70">
-              {pick('৫টি প্রিমিয়াম গ্লাস ও লাইট থিম', '5 Glass & Light Themes')}
+              {pick('পাঁচটি রঙের বিন্যাস', 'Five colour schemes')}
             </p>
-            <span className="text-[10px] text-cyan-400 font-bold">৫টি শৈলী</span>
+            <span className="text-[10px] text-cyan-400 font-bold">{pick('৫টি বিন্যাস', '5 schemes')}</span>
           </div>
 
           <div className="space-y-1">

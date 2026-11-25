@@ -44,7 +44,7 @@ export function TopBar() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 underline text-cyan-300 hover:text-white"
                 >
-                  <span>বিস্তারিত</span>
+                  <span>{pick('বিস্তারিত দেখুন', 'View details')}</span>
                   <ExternalLink className="size-3" />
                 </a>
               ) : (
@@ -52,7 +52,7 @@ export function TopBar() {
                   href={ann.announcementLink.trim()}
                   className="underline text-cyan-300 hover:text-white"
                 >
-                  বিস্তারিত →
+                  {pick('বিস্তারিত দেখুন →', 'View details →')}
                 </Link>
               )
             )}
@@ -107,12 +107,12 @@ export function TopBar() {
                 <button
                   type="button"
                   onClick={() => setTipOpen(true)}
-                  aria-label={pick('টিপস পাঠান', 'Submit Tip')}
-                  title={pick('গোপন সংবাদ বা টিপস পাঠান', 'Submit an anonymous or verified campus tip')}
+                  aria-label={pick('সংবাদ-তথ্য পাঠান', 'Submit a news tip')}
+                  title={pick('গোপনীয়ভাবে সংবাদ-তথ্য পাঠান', 'Submit a confidential news tip')}
                   className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/50 bg-gradient-to-r from-amber-500/20 to-cyan-500/20 hover:from-amber-500/30 hover:to-cyan-500/30 px-2.5 sm:px-3 py-1 text-xs font-bold text-amber-200 hover:text-white shadow-xs backdrop-blur-md transition-all active:scale-95 cursor-pointer"
                 >
                   <Send className="size-3.5 text-amber-300" />
-                  <span>{pick('টিপস পাঠান', 'Send Tip')}</span>
+                  <span>{pick('তথ্য পাঠান', 'Submit a tip')}</span>
                 </button>
 
                 <FontSizeSwitcher />

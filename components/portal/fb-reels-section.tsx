@@ -105,14 +105,14 @@ export function FbReelsSection({
     return (
       <section id="reels-hub" className="mx-auto w-full max-w-7xl px-4 py-8">
         <div className="glass-card p-8 text-center text-sm text-slate-300" aria-live="polite">
-          {loaded ? "এখনো কোনো সক্রিয় রিলস নেই।" : "রিলস লোড হচ্ছে..."}
+          {loaded ? pick('এখনো কোনো ভিডিও প্রকাশিত হয়নি।', 'No videos have been published yet.') : pick('ভিডিও লোড হচ্ছে…', 'Loading videos…')}
         </div>
       </section>
     )
   }
 
   const sec = settings.homeSections.sections.find((s) => s.key === "reels")
-  const headingText = pick(sec?.titleBn || "Reels ও ভিডিও গ্যালারি", sec?.titleEn || "Reels & Video Gallery")
+  const headingText = pick(sec?.titleBn || "ভিডিও গ্যালারি", sec?.titleEn || "Video Gallery")
   const badgeText = sec?.eyebrow || "LIVE"
 
   const compactContent = (
@@ -131,7 +131,7 @@ export function FbReelsSection({
               </h2>
             </div>
             <Link href="/reels" className="shrink-0 text-xs font-bold text-cyan-300 hover:underline">
-              সব দেখুন
+              {pick('সকল ভিডিও দেখুন', 'View all videos')}
             </Link>
           </div>
           <HomepageCompactCarousel
@@ -149,7 +149,7 @@ export function FbReelsSection({
                   key={reel.id}
                   type="button"
                   onClick={() => openReelAt(idx)}
-                  aria-label={`রিলস চালান: ${reel.title}`}
+                  aria-label={pick(`ভিডিও চালান: ${reel.title}`, `Play video: ${reel.title}`)}
                   className="glass-card group grid w-full overflow-hidden text-left text-white sm:grid-cols-[minmax(0,0.9fr)_1fr]"
                 >
                   <div className="relative aspect-video min-h-40 bg-slate-950 sm:aspect-auto sm:min-h-56">
@@ -216,10 +216,10 @@ export function FbReelsSection({
         <div className="flex items-center gap-3">
           {!standalone && (
             <Link href="/reels" className="text-xs font-bold text-cyan-300 hover:underline">
-              {compact ? "সব দেখুন" : "সব রিলস"}
+              {compact ? pick('সকল ভিডিও দেখুন', 'View all videos') : pick('সকল ভিডিও', 'All videos')}
             </Link>
           )}
-          <span className="text-xs text-cyan-300 font-semibold">{reels.length}টি ভিডিও</span>
+          <span className="text-xs text-cyan-300 font-semibold">{reels.length} {pick('টি ভিডিও', reels.length === 1 ? 'video' : 'videos')}</span>
         </div>
       </div>
 
@@ -287,7 +287,7 @@ export function FbReelsSection({
               onClick={closeReel}
               className="px-3.5 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/25 backdrop-blur-md cursor-pointer pointer-events-auto active:scale-95 transition"
             >
-              ✕ বন্ধ করুন
+              {pick('✕ বন্ধ করুন', '✕ Close')}
             </button>
 
             <div className="flex items-center gap-2 pointer-events-auto">
@@ -304,7 +304,7 @@ export function FbReelsSection({
               disabled={currentIndex <= 0}
               onClick={() => scrollToIndex(currentIndex - 1)}
               className="p-3 rounded-full bg-white/15 hover:bg-white/30 border border-white/20 text-white disabled:opacity-20 cursor-pointer shadow-xl transition"
-              title="আগের রিলস"
+              title={pick('পূর্ববর্তী ভিডিও', 'Previous video')}
             >
               <ChevronUp className="size-5" />
             </button>
@@ -313,7 +313,7 @@ export function FbReelsSection({
               disabled={currentIndex >= reels.length - 1}
               onClick={() => scrollToIndex(currentIndex + 1)}
               className="p-3 rounded-full bg-white/15 hover:bg-white/30 border border-white/20 text-white disabled:opacity-20 cursor-pointer shadow-xl transition"
-              title="পরবর্তী রিলস"
+              title={pick('পরবর্তী ভিডিও', 'Next video')}
             >
               <ChevronDown className="size-5" />
             </button>
@@ -400,7 +400,7 @@ export function FbReelsSection({
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-cyan-300 font-bold hover:underline"
                           >
-                            <span>সংবাদ লিংক</span>
+                            <span>{pick('সংবাদ প্রতিবেদন', 'News report')}</span>
                             <ExternalLink className="size-3" />
                           </a>
                         )}
@@ -417,7 +417,7 @@ export function FbReelsSection({
                           className="inline-flex items-center gap-1 text-white hover:text-cyan-300 cursor-pointer"
                         >
                           <Share2 className="size-3.5" />
-                          <span>শেয়ার</span>
+                          <span>{pick('শেয়ার করুন', 'Share')}</span>
                         </button>
                       </div>
                     </div>

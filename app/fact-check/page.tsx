@@ -32,6 +32,7 @@ import {
   type FactCheckItem,
   type FactVerdict,
 } from '@/lib/content-hub'
+import { useLang } from '@/lib/i18n'
 
 const VERDICT_META: Record<
   FactVerdict,
@@ -45,15 +46,15 @@ const VERDICT_META: Record<
   }
 > = {
   false: {
-    label: 'ভুয়া / গুজব (False)',
-    short: 'ভুয়া / গুজব',
+    label: 'মিথ্যা / গুজব',
+    short: 'মিথ্যা',
     badgeCls: 'bg-rose-600 text-white border-rose-400',
     cardBorder: 'border-l-4 border-l-rose-500',
     stampCls: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
     Icon: XCircle,
   },
   misleading: {
-    label: 'বিভ্রান্তিকর (Misleading)',
+    label: 'বিভ্রান্তিকর',
     short: 'বিভ্রান্তিকর',
     badgeCls: 'bg-amber-400 text-slate-950 border-amber-200',
     cardBorder: 'border-l-4 border-l-amber-400',
@@ -61,7 +62,7 @@ const VERDICT_META: Record<
     Icon: AlertTriangle,
   },
   true: {
-    label: 'সত্য প্রমাণিত (True)',
+    label: 'সত্য',
     short: 'সত্য',
     badgeCls: 'bg-emerald-600 text-white border-emerald-400',
     cardBorder: 'border-l-4 border-l-emerald-500',
@@ -69,7 +70,7 @@ const VERDICT_META: Record<
     Icon: CheckCircle2,
   },
   unverified: {
-    label: 'অযাচাইকৃত (Unverified)',
+    label: 'যাচাই অসম্পূর্ণ',
     short: 'অযাচাইকৃত',
     badgeCls: 'bg-slate-600 text-white border-slate-400',
     cardBorder: 'border-l-4 border-l-slate-400',
@@ -78,12 +79,21 @@ const VERDICT_META: Record<
   },
 }
 
+const VERDICT_LABEL_EN: Record<FactVerdict, string> = {
+  false: 'False / Rumour',
+  misleading: 'Misleading',
+  true: 'True',
+  unverified: 'Unverified',
+}
+
 export default function FactCheckPage() {
+  const { lang, pick } = useLang()
   const [items, setItems] = useState<FactCheckItem[]>([])
   const [loading, setLoading] = useState(true)
   const [verdictFilter, setVerdictFilter] = useState<'all' | FactVerdict>('all')
   const [search, setSearch] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const count = (value: number) => value.toLocaleString(lang === 'bn' ? 'bn-BD' : 'en-US')
 
   async function loadData() {
     setLoading(true)
@@ -120,7 +130,7 @@ export default function FactCheckPage() {
   async function handleShare(item: FactCheckItem) {
     const meta = VERDICT_META[item.verdict] || VERDICT_META.unverified
     const url = `${window.location.origin}/fact-check#${item.id}`
-    const shareText = `[ফ্যাক্ট-চেক: ${meta.short}] ${item.title}`
+    const shareText = `[${pick(`তথ্য-যাচাই: ${meta.short}`, `Fact-check: ${VERDICT_LABEL_EN[item.verdict]}`)}] ${item.title}`
     try {
       if (navigator.share) {
         await navigator.share({ title: item.title, text: shareText, url })
@@ -140,8 +150,8 @@ export default function FactCheckPage() {
         <div className="mx-auto max-w-5xl px-4 space-y-6">
           <BackNavigation
             items={[
-              { label: 'সংবাদ ও মিডিয়া' },
-              { label: 'ফ্যাক্ট-চেক ডেস্ক' },
+              { label: pick('সংবাদ ও গণমাধ্যম', 'News and Media') },
+              { label: pick('তথ্য-যাচাই ডেস্ক', 'Fact-check Desk') },
             ]}
           />
 
@@ -149,26 +159,26 @@ export default function FactCheckPage() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-950 via-slate-950 to-indigo-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow">
               <ShieldCheck className="size-3.5" />
-              <span>Campus Fact-Check Desk • গুজব যাচাই</span>
+              <span>{pick('তথ্য-যাচাই ডেস্ক', 'Fact-check Desk')}</span>
             </span>
 
             <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
-              ফ্যাক্ট-চেক ও গুজব যাচাই
+              {pick('তথ্য-যাচাই প্রতিবেদন', 'Fact-check Reports')}
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed">
-              বিশ্ববিদ্যালয় ক্যাম্পাস ও সামাজিক যোগাযোগমাধ্যমে ছড়ানো বিভ্রান্তিকর তথ্য, ভুয়া নোটিশ ও গুজবের দালিলিক সত্যতা যাচাই প্রতিবেদন।
+              {pick('বিশ্ববিদ্যালয় ক্যাম্পাস ও সামাজিক যোগাযোগমাধ্যমে প্রচারিত বিভ্রান্তিকর তথ্য, জাল বিজ্ঞপ্তি ও গুজবের প্রমাণভিত্তিক যাচাই প্রতিবেদন।', 'Evidence-based reviews of misleading claims, false notices, and rumours circulating on campus and social media.')}
             </p>
 
             {/* ফ্যাক্ট-চেক স্ট্যাটাস ব্যাজ ও আবেদন বাটন */}
             <div className="flex flex-wrap items-center justify-center gap-2 pt-2 text-xs font-bold">
               <span className="bg-rose-500/20 border border-rose-400/40 text-rose-200 px-3 py-1 rounded-full">
-                ভুয়া / গুজব: {counts.false.toLocaleString('bn-BD')}
+                {pick('মিথ্যা / গুজব', 'False / Rumour')}: {count(counts.false)}
               </span>
               <span className="bg-amber-500/20 border border-amber-400/40 text-amber-200 px-3 py-1 rounded-full">
-                বিভ্রান্তিকর: {counts.misleading.toLocaleString('bn-BD')}
+                {pick('বিভ্রান্তিকর', 'Misleading')}: {count(counts.misleading)}
               </span>
               <span className="bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 px-3 py-1 rounded-full">
-                সত্য প্রমাণিত: {counts.true.toLocaleString('bn-BD')}
+                {pick('সত্য', 'True')}: {count(counts.true)}
               </span>
             </div>
 
@@ -178,7 +188,7 @@ export default function FactCheckPage() {
                 className="inline-flex items-center gap-1.5 rounded-full bg-white text-slate-950 hover:bg-cyan-100 px-4 py-2 text-xs font-bold shadow-lg transition active:scale-95"
               >
                 <Send className="size-3.5 text-rose-600" />
-                <span>সন্দেহজনক তথ্য যাচাইয়ের জন্য পাঠান</span>
+                <span>{pick('সন্দেহজনক তথ্য যাচাইয়ের জন্য পাঠান', 'Submit a claim for verification')}</span>
               </Link>
             </div>
           </div>
@@ -190,7 +200,7 @@ export default function FactCheckPage() {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/50" />
                 <input
                   type="text"
-                  placeholder="ভাইরাল দাবি, গুজবের বিষয় বা ব্যাখ্যা দিয়ে খুঁজুন..."
+                  placeholder={pick('প্রচারিত দাবি, গুজব বা ব্যাখ্যার শব্দ দিয়ে খুঁজুন', 'Search by claim, rumour, or explanation')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full rounded-2xl border border-white/20 bg-white/10 pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 transition"
@@ -204,7 +214,7 @@ export default function FactCheckPage() {
                 className="inline-flex items-center gap-1.5 rounded-2xl border border-white/20 bg-white/10 hover:bg-white/20 px-4 py-2.5 text-xs font-bold transition shrink-0 cursor-pointer"
               >
                 <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
-                <span>রিফ্রেশ</span>
+                <span>{pick('তথ্য হালনাগাদ করুন', 'Refresh')}</span>
               </button>
             </div>
 
@@ -218,7 +228,7 @@ export default function FactCheckPage() {
                     : 'border-white/20 bg-white/10 text-white/85 hover:bg-white/20'
                 }`}
               >
-                সব যাচাই ({counts.all.toLocaleString('bn-BD')})
+                {pick('সব প্রতিবেদন', 'All reports')} ({count(counts.all)})
               </button>
 
               {(['false', 'misleading', 'true', 'unverified'] as FactVerdict[]).map((vk) => {
@@ -237,9 +247,7 @@ export default function FactCheckPage() {
                     }`}
                   >
                     <Icon className="size-3.5" />
-                    <span>
-                      {m.short} ({counts[vk].toLocaleString('bn-BD')})
-                    </span>
+                    <span>{pick(m.short, VERDICT_LABEL_EN[vk])} ({count(counts[vk])})</span>
                   </button>
                 )
               })}
@@ -249,7 +257,7 @@ export default function FactCheckPage() {
           {/* ফ্যাক্ট-চেক কার্ড তালিকা */}
           {loading ? (
             <div className="glass-card p-12 text-center text-sm text-slate-300">
-              ফ্যাক্ট-চেক প্রতিবেদন লোড হচ্ছে...
+              {pick('তথ্য-যাচাই প্রতিবেদন লোড হচ্ছে…', 'Loading fact-check reports…')}
             </div>
           ) : filtered.length > 0 ? (
             <div className="space-y-5">
@@ -272,7 +280,7 @@ export default function FactCheckPage() {
                         className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-bold shadow ${meta.badgeCls}`}
                       >
                         <VerdictIcon className="size-4 shrink-0" />
-                        <span>সিদ্ধান্ত: {meta.label}</span>
+                        <span>{pick('যাচাইয়ের সিদ্ধান্ত:', 'Verdict:')} {pick(meta.label, VERDICT_LABEL_EN[item.verdict])}</span>
                       </span>
 
                       <span className="inline-flex items-center gap-1 text-xs text-cyan-200/80 font-medium">
@@ -291,14 +299,14 @@ export default function FactCheckPage() {
                       <div className="rounded-2xl bg-black/35 border border-white/15 p-4 space-y-1.5">
                         <p className="text-[11px] font-bold uppercase tracking-wider text-rose-300 flex items-center gap-1.5">
                           <ShieldAlert className="size-3.5" />
-                          <span>প্রচারিত দাবি / গুজব:</span>
+                          <span>{pick('প্রচারিত দাবি / গুজব:', 'Claim / rumour:')}</span>
                         </p>
                         <p className="text-xs sm:text-sm text-slate-100 leading-relaxed italic">
                           “{item.claim}”
                         </p>
                         {item.claim_source && (
                           <p className="text-[11px] text-white/55 pt-1">
-                            উৎস: {item.claim_source}
+                            {pick('উৎস:', 'Source:')} {item.claim_source}
                           </p>
                         )}
                       </div>
@@ -306,7 +314,7 @@ export default function FactCheckPage() {
                       <div className={`rounded-2xl border p-4 space-y-1.5 ${meta.stampCls}`}>
                         <p className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5">
                           <VerdictIcon className="size-3.5" />
-                          <span>অনুসন্ধান ও প্রকৃত সত্য:</span>
+                          <span>{pick('যাচাইয়ের ফলাফল:', 'Findings:')}</span>
                         </p>
                         <p className="text-xs sm:text-sm text-white leading-relaxed whitespace-pre-line">
                           {item.explanation}
@@ -346,7 +354,7 @@ export default function FactCheckPage() {
                               className="inline-flex items-center gap-1 text-cyan-300 hover:underline font-bold"
                             >
                               <ExternalLink className="size-3.5" />
-                              <span>দালিলিক প্রমাণ দেখুন</span>
+                              <span>{pick('প্রমাণসূত্র দেখুন', 'View supporting evidence')}</span>
                             </a>
                           ) : (
                             <Link
@@ -354,7 +362,7 @@ export default function FactCheckPage() {
                               className="inline-flex items-center gap-1 text-cyan-300 hover:underline font-bold"
                             >
                               <ExternalLink className="size-3.5" />
-                              <span>দালিলিক প্রমাণ দেখুন</span>
+                              <span>{pick('প্রমাণসূত্র দেখুন', 'View supporting evidence')}</span>
                             </Link>
                           )
                         )}
@@ -369,19 +377,19 @@ export default function FactCheckPage() {
                           {copiedId === item.id ? (
                             <>
                               <Check className="size-3 text-emerald-300" />
-                              <span>কপি হয়েছে</span>
+                              <span>{pick('লিংক কপি হয়েছে', 'Link copied')}</span>
                             </>
                           ) : (
                             <>
                               <Share2 className="size-3" />
-                              <span>শেয়ার</span>
+                              <span>{pick('শেয়ার করুন', 'Share')}</span>
                             </>
                           )}
                         </button>
 
                         <a
                           href={`https://wa.me/?text=${encodeURIComponent(
-                            `[ফ্যাক্ট-চেক: ${meta.short}] ${item.title} - ${
+                            `[${pick(`তথ্য-যাচাই: ${meta.short}`, `Fact-check: ${VERDICT_LABEL_EN[item.verdict]}`)}] ${item.title} - ${
                               typeof window !== 'undefined'
                                 ? `${window.location.origin}/fact-check#${item.id}`
                                 : ''
@@ -402,7 +410,7 @@ export default function FactCheckPage() {
           ) : (
             <div className="glass-card p-12 text-center text-slate-300 space-y-2">
               <ShieldCheck className="size-10 text-white/40 mx-auto" />
-              <p className="text-base font-bold text-white">কোনো ফ্যাক্ট-চেক প্রতিবেদন পাওয়া যায়নি।</p>
+              <p className="text-base font-bold text-white">{pick('কোনো তথ্য-যাচাই প্রতিবেদন পাওয়া যায়নি।', 'No fact-check reports were found.')}</p>
             </div>
           )}
 
@@ -417,8 +425,8 @@ export default function FactCheckPage() {
                   <Clock className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">ক্যাম্পাস টাইমলাইন</p>
-                  <p className="text-[10px] text-slate-300">ঘটনাবলির ধারাবাহিক দলিল</p>
+                  <p className="font-bold text-xs sm:text-sm">{pick('ক্যাম্পাসের ঘটনাপঞ্জি', 'Campus Timeline')}</p>
+                  <p className="text-[10px] text-slate-300">{pick('ঘটনাবলির ধারাবাহিক বিবরণ', 'A chronological record of events')}</p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-cyan-300 group-hover:translate-x-1 transition-transform" />
@@ -433,8 +441,8 @@ export default function FactCheckPage() {
                   <Camera className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">ফটো ও ভিডিও গ্যালারি</p>
-                  <p className="text-[10px] text-slate-300">সকল ছবি ও ভিডিও আর্কাইভ</p>
+                  <p className="font-bold text-xs sm:text-sm">{pick('ছবি ও ভিডিও গ্যালারি', 'Photo and Video Gallery')}</p>
+                  <p className="text-[10px] text-slate-300">{pick('ছবি ও ভিডিওর আর্কাইভ', 'Archive of photographs and videos')}</p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-purple-300 group-hover:translate-x-1 transition-transform" />
@@ -449,8 +457,8 @@ export default function FactCheckPage() {
                   <BookOpen className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">প্রকাশনা আর্কাইভ</p>
-                  <p className="text-[10px] text-slate-300">ম্যাগাজিন, বুলেটিন ও PDF</p>
+                  <p className="font-bold text-xs sm:text-sm">{pick('প্রকাশনা আর্কাইভ', 'Publication Archive')}</p>
+                  <p className="text-[10px] text-slate-300">{pick('সাময়িকী, বুলেটিন ও পিডিএফ', 'Periodicals, bulletins, and PDFs')}</p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-amber-300 group-hover:translate-x-1 transition-transform" />

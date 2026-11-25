@@ -31,12 +31,13 @@ import {
 } from '@/lib/content-hub'
 import { getVisiblePosts, type Post } from '@/lib/sb'
 import { Tx } from '@/lib/i18n'
+import { useLang } from '@/lib/i18n'
 
-function formatBnDate(iso?: string | null): string {
+function formatDate(iso: string | null | undefined, lang: 'bn' | 'en'): string {
   if (!iso) return ''
   const d = new Date(iso)
   if (isNaN(d.getTime())) return iso
-  return d.toLocaleDateString('bn-BD', {
+  return d.toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -44,11 +45,11 @@ function formatBnDate(iso?: string | null): string {
   })
 }
 
-function formatBnMonthYear(iso?: string | null): string {
+function formatMonthYear(iso: string | null | undefined, lang: 'bn' | 'en'): string {
   if (!iso) return ''
   const d = new Date(iso)
   if (isNaN(d.getTime())) return ''
-  return d.toLocaleDateString('bn-BD', {
+  return d.toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB', {
     month: 'long',
     year: 'numeric',
     timeZone: 'Asia/Dhaka',
@@ -61,6 +62,7 @@ function safeHttpUrl(value?: string | null): string | null {
 }
 
 export default function PublicationsAndArchivePage() {
+  const { lang, pick } = useLang()
   const [activeTab, setActiveTab] = useState<'publications' | 'news_archive'>('publications')
 
   // প্রকাশনা স্টেট
@@ -75,6 +77,7 @@ export default function PublicationsAndArchivePage() {
   const [newsSearch, setNewsSearch] = useState('')
 
   const [loading, setLoading] = useState(true)
+  const count = (value: number) => value.toLocaleString(lang === 'bn' ? 'bn-BD' : 'en-US')
 
   async function loadAll() {
     setLoading(true)
@@ -124,17 +127,17 @@ export default function PublicationsAndArchivePage() {
   const newsMonths = useMemo(() => {
     const set = new Set<string>(['সব'])
     posts.forEach((p) => {
-      const m = formatBnMonthYear(p.created_at)
+      const m = formatMonthYear(p.created_at, lang)
       if (m) set.add(m)
     })
     return Array.from(set)
-  }, [posts])
+  }, [posts, lang])
 
   const filteredPosts = useMemo(() => {
     const q = newsSearch.trim().toLowerCase()
     return posts.filter((p) => {
       if (newsCatFilter !== 'সব' && p.category !== newsCatFilter) return false
-      if (newsMonthFilter !== 'সব' && formatBnMonthYear(p.created_at) !== newsMonthFilter) {
+      if (newsMonthFilter !== 'সব' && formatMonthYear(p.created_at, lang) !== newsMonthFilter) {
         return false
       }
       if (!q) return true
@@ -142,7 +145,7 @@ export default function PublicationsAndArchivePage() {
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q))
     })
-  }, [posts, newsCatFilter, newsMonthFilter, newsSearch])
+  }, [posts, newsCatFilter, newsMonthFilter, newsSearch, lang])
 
   return (
     <>
@@ -152,8 +155,8 @@ export default function PublicationsAndArchivePage() {
         <div className="mx-auto max-w-6xl px-4 space-y-6">
           <BackNavigation
             items={[
-              { label: 'সংবাদ ও মিডিয়া' },
-              { label: 'প্রকাশনা ও আর্কাইভ' },
+              { label: pick('সংবাদ ও গণমাধ্যম', 'News and Media') },
+              { label: pick('প্রকাশনা ও সংরক্ষণাগার', 'Publications and Archive') },
             ]}
           />
 
@@ -161,14 +164,14 @@ export default function PublicationsAndArchivePage() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow">
               <BookOpen className="size-3.5" />
-              <span>Publications & Digital Archive • প্রকাশনা ও আর্কাইভ</span>
+              <span>{pick('প্রকাশনা ও ডিজিটাল সংরক্ষণাগার', 'Publications and Digital Archive')}</span>
             </span>
 
             <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
-              প্রকাশনা ও সংবাদ আর্কাইভ
+              {pick('প্রকাশনা ও সংবাদ সংরক্ষণাগার', 'Publications and News Archive')}
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed">
-              মাভাবিপ্রবি রিপোর্টার্স ইউনিটির ম্যাগাজিন, মাসিক বুলেটিন, জার্নাল, ই-বুক, বার্ষিক প্রতিবেদন (PDF) এবং প্রকাশিত সকল সংবাদের পূর্ণাঙ্গ ডিজিটাল আর্কাইভ।
+              {pick('মাভাবিপ্রবি রিপোর্টার্স ইউনিটির সাময়িকী, মাসিক বুলেটিন, জার্নাল, ই-বুক, বার্ষিক প্রতিবেদন এবং প্রকাশিত সংবাদসমূহের ডিজিটাল সংরক্ষণাগার।', 'A digital archive of MBSTU Reporters’ Unity periodicals, monthly bulletins, journals, e-books, annual reports, and published news.')}
             </p>
 
             {/* ২ প্রধান ট্যাব বাটন */}
@@ -183,7 +186,7 @@ export default function PublicationsAndArchivePage() {
                 }`}
               >
                 <BookOpen className="size-4" />
-                <span>প্রকাশনা ও PDF ({pubs.length.toLocaleString('bn-BD')})</span>
+                <span>{pick('প্রকাশনা ও পিডিএফ', 'Publications and PDFs')} ({count(pubs.length)})</span>
               </button>
 
               <button
@@ -196,7 +199,7 @@ export default function PublicationsAndArchivePage() {
                 }`}
               >
                 <Newspaper className="size-4" />
-                <span>সংবাদ আর্কাইভ ({posts.length.toLocaleString('bn-BD')})</span>
+                <span>{pick('সংবাদ সংরক্ষণাগার', 'News Archive')} ({count(posts.length)})</span>
               </button>
             </div>
           </div>
@@ -210,7 +213,7 @@ export default function PublicationsAndArchivePage() {
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/50" />
                     <input
                       type="text"
-                      placeholder="ম্যাগাজিন, বুলেটিন, সংখ্যা বা সম্পাদকের নাম দিয়ে খুঁজুন..."
+                      placeholder={pick('সাময়িকী, বুলেটিন, সংখ্যা অথবা সম্পাদকের নাম দিয়ে খুঁজুন', 'Search by periodical, bulletin, issue, or editor')}
                       value={pubSearch}
                       onChange={(e) => setPubSearch(e.target.value)}
                       className="w-full rounded-2xl border border-white/20 bg-white/10 pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 transition"
@@ -224,7 +227,7 @@ export default function PublicationsAndArchivePage() {
                     className="inline-flex items-center gap-1.5 rounded-2xl border border-white/20 bg-white/10 hover:bg-white/20 px-4 py-2.5 text-xs font-bold transition shrink-0 cursor-pointer"
                   >
                     <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
-                    <span>রিফ্রেশ</span>
+                    <span>{pick('তথ্য হালনাগাদ করুন', 'Refresh')}</span>
                   </button>
                 </div>
 
@@ -240,7 +243,7 @@ export default function PublicationsAndArchivePage() {
                           : 'border-white/20 bg-white/10 text-white/85 hover:bg-white/20'
                       }`}
                     >
-                      {pt}
+                      {pt === 'সব' ? pick('সব ধরন', 'All types') : pt}
                     </button>
                   ))}
                 </div>
@@ -248,7 +251,7 @@ export default function PublicationsAndArchivePage() {
 
               {loading ? (
                 <div className="glass-card p-12 text-center text-sm text-slate-300">
-                  প্রকাশনা লোড হচ্ছে...
+                  {pick('প্রকাশনা লোড হচ্ছে…', 'Loading publications…')}
                 </div>
               ) : filteredPubs.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -322,7 +325,7 @@ export default function PublicationsAndArchivePage() {
                             <div className="pt-2 space-y-1 text-[11px] text-slate-300 border-t border-white/10">
                               <p className="flex items-center gap-1.5">
                                 <CalendarDays className="size-3 text-cyan-400 shrink-0" />
-                                <span>প্রকাশকাল: {pub.published_date}</span>
+                                <span>{pick('প্রকাশের তারিখ:', 'Publication date:')} {pub.published_date}</span>
                               </p>
                               {pub.editor_name && (
                                 <p className="flex items-center gap-1.5">
@@ -398,7 +401,7 @@ export default function PublicationsAndArchivePage() {
               ) : (
                 <div className="glass-card p-12 text-center text-slate-300 space-y-2">
                   <BookOpen className="size-10 text-white/40 mx-auto" />
-                  <p className="text-base font-bold text-white">কোনো প্রকাশনা পাওয়া যায়নি।</p>
+                  <p className="text-base font-bold text-white">{pick('কোনো প্রকাশনা পাওয়া যায়নি।', 'No publications were found.')}</p>
                 </div>
               )}
             </div>
@@ -413,7 +416,7 @@ export default function PublicationsAndArchivePage() {
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/50" />
                     <input
                       type="text"
-                      placeholder="সংবাদের শিরোনাম বা লেখক..."
+                      placeholder={pick('সংবাদের শিরোনাম বা লেখকের নাম দিয়ে খুঁজুন', 'Search by news headline or author')}
                       value={newsSearch}
                       onChange={(e) => setNewsSearch(e.target.value)}
                       className="w-full rounded-xl border border-white/20 bg-white/10 pl-10 pr-3 py-2 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400"
@@ -427,7 +430,7 @@ export default function PublicationsAndArchivePage() {
                   >
                     {newsCategories.map((c) => (
                       <option key={c} value={c}>
-                        {c === 'সব' ? 'সব ক্যাটাগরি' : c}
+                        {c === 'সব' ? pick('সব বিভাগ', 'All categories') : c}
                       </option>
                     ))}
                   </select>
@@ -439,7 +442,7 @@ export default function PublicationsAndArchivePage() {
                   >
                     {newsMonths.map((m) => (
                       <option key={m} value={m}>
-                        {m === 'সব' ? 'সব মাস ও বছর' : m}
+                        {m === 'সব' ? pick('সব মাস ও বছর', 'All months and years') : m}
                       </option>
                     ))}
                   </select>
@@ -447,7 +450,7 @@ export default function PublicationsAndArchivePage() {
 
                 <p className="text-xs text-cyan-200 font-semibold flex items-center gap-1.5">
                   <Layers className="size-3.5 text-cyan-400" />
-                  <span>মোট {filteredPosts.length.toLocaleString('bn-BD')}টি প্রকাশিত প্রতিবেদন</span>
+                  <span>{pick('প্রকাশিত প্রতিবেদনের সংখ্যা:', 'Published reports:')} {count(filteredPosts.length)}</span>
                 </p>
               </section>
 
@@ -476,11 +479,11 @@ export default function PublicationsAndArchivePage() {
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex flex-wrap items-center gap-2 text-[11px]">
                           <span className="rounded-full bg-white/15 border border-white/20 px-2.5 py-0.5 font-bold text-cyan-200">
-                            {post.category || 'ক্যাম্পাস সংবাদ'}
+                            {post.category || pick('ক্যাম্পাস সংবাদ', 'Campus News')}
                           </span>
                           <span className="inline-flex items-center gap-1 text-slate-300">
                             <CalendarDays className="size-3 text-cyan-400" />
-                            <span>{formatBnDate(post.created_at)}</span>
+                            <span>{formatDate(post.created_at, lang)}</span>
                           </span>
                         </div>
 
@@ -502,7 +505,7 @@ export default function PublicationsAndArchivePage() {
                 </div>
               ) : (
                 <div className="glass-card p-12 text-center text-slate-300 text-sm">
-                  এই ফিল্টারে কোনো সংবাদ পাওয়া যায়নি।
+                  {pick('এই ফিল্টারে কোনো সংবাদ পাওয়া যায়নি।', 'No news reports match these filters.')}
                 </div>
               )}
             </div>
@@ -519,8 +522,8 @@ export default function PublicationsAndArchivePage() {
                   <Camera className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">ফটো ও ভিডিও গ্যালারি</p>
-                  <p className="text-[10px] text-slate-300">সকল ছবি ও ভিডিও আর্কাইভ</p>
+                  <p className="font-bold text-xs sm:text-sm">{pick('ছবি ও ভিডিও গ্যালারি', 'Photo and Video Gallery')}</p>
+                  <p className="text-[10px] text-slate-300">{pick('ছবি ও ভিডিওর সংরক্ষণাগার', 'Archive of photographs and videos')}</p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-cyan-300 group-hover:translate-x-1 transition-transform" />
@@ -535,8 +538,8 @@ export default function PublicationsAndArchivePage() {
                   <Clock className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">ক্যাম্পাস টাইমলাইন</p>
-                  <p className="text-[10px] text-slate-300">ঘটনাবলির ধারাবাহিক দলিল</p>
+                  <p className="font-bold text-xs sm:text-sm">{pick('ক্যাম্পাসের ঘটনাপঞ্জি', 'Campus Timeline')}</p>
+                  <p className="text-[10px] text-slate-300">{pick('ঘটনাবলির ধারাবাহিক বিবরণ', 'A chronological record of events')}</p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-purple-300 group-hover:translate-x-1 transition-transform" />
@@ -551,8 +554,8 @@ export default function PublicationsAndArchivePage() {
                   <ShieldCheck className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">ফ্যাক্ট-চেক ডেস্ক</p>
-                  <p className="text-[10px] text-slate-300">গুজব ও তথ্যের সত্যতা যাচাই</p>
+                  <p className="font-bold text-xs sm:text-sm">{pick('তথ্য-যাচাই ডেস্ক', 'Fact-check Desk')}</p>
+                  <p className="text-[10px] text-slate-300">{pick('গুজব ও তথ্য যাচাই', 'Verification of claims and information')}</p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-rose-300 group-hover:translate-x-1 transition-transform" />

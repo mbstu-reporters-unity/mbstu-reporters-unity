@@ -11,16 +11,18 @@ import {
   CheckCircle2,
   Info,
 } from 'lucide-react'
+import { useLang } from '@/lib/i18n'
 
-function timeAgo(iso: string) {
+function timeAgo(iso: string, lang: 'bn' | 'en') {
   const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000)
-  const n = (x: number) => Math.floor(x).toLocaleString('bn-BD')
-  if (s < 60) return 'এইমাত্র'
-  if (s < 3600) return `${n(s / 60)} মিনিট আগে`
-  if (s < 86400) return `${n(s / 3600)} ঘণ্টা আগে`
-  if (s < 86400 * 30) return `${n(s / 86400)} দিন আগে`
-  if (s < 86400 * 365) return `${n(s / (86400 * 30))} মাস আগে`
-  return `${n(s / (86400 * 365))} বছর আগে`
+  const n = (x: number) =>
+    Math.floor(x).toLocaleString(lang === 'bn' ? 'bn-BD' : 'en-US')
+  if (s < 60) return lang === 'bn' ? 'এইমাত্র' : 'Just now'
+  if (s < 3600) return lang === 'bn' ? `${n(s / 60)} মিনিট আগে` : `${n(s / 60)} minutes ago`
+  if (s < 86400) return lang === 'bn' ? `${n(s / 3600)} ঘণ্টা আগে` : `${n(s / 3600)} hours ago`
+  if (s < 86400 * 30) return lang === 'bn' ? `${n(s / 86400)} দিন আগে` : `${n(s / 86400)} days ago`
+  if (s < 86400 * 365) return lang === 'bn' ? `${n(s / (86400 * 30))} মাস আগে` : `${n(s / (86400 * 30))} months ago`
+  return lang === 'bn' ? `${n(s / (86400 * 365))} বছর আগে` : `${n(s / (86400 * 365))} years ago`
 }
 
 export function CommentForm({
@@ -30,6 +32,7 @@ export function CommentForm({
   postId: string
   initialComments?: PublicComment[]
 }) {
+  const { lang, pick } = useLang()
   const [comments] = useState<PublicComment[]>(initialComments)
   const commentCheck = useHumanVerification()
   const replyCheck = useHumanVerification()
@@ -54,12 +57,12 @@ export function CommentForm({
     if (!trimmed) return
     if (trimmed.length < 3) {
       setMsgStatus('error')
-      setErrMsg('মন্তব্য কমপক্ষে ৩ অক্ষরের হতে হবে।')
+      setErrMsg(pick('মন্তব্যে অন্তত ৩টি অক্ষর থাকতে হবে।', 'Comments must contain at least 3 characters.'))
       return
     }
     if (!commentCheck.answer.trim()) {
       setMsgStatus('error')
-      setErrMsg('মন্তব্য পাঠানোর আগে সহজ যাচাইয়ের উত্তর দিন।')
+      setErrMsg(pick('মন্তব্য জমা দেওয়ার আগে যাচাইয়ের প্রশ্নটির উত্তর দিন।', 'Please answer the verification question before submitting your comment.'))
       return
     }
 
@@ -68,14 +71,14 @@ export function CommentForm({
     setErrMsg('')
 
     try {
-      await addComment(postId, name.trim() || 'নামহীন পাঠক', trimmed, null, commentCheck.payload)
+      await addComment(postId, name.trim() || (lang === 'bn' ? 'নামহীন পাঠক' : 'Anonymous reader'), trimmed, null, commentCheck.payload)
       setName('')
       setMessage('')
       commentCheck.reset()
       setMsgStatus('success')
     } catch (e) {
       setMsgStatus('error')
-      setErrMsg(e instanceof Error ? e.message : 'মন্তব্য জমা দেওয়া যায়নি, পুনরায় চেষ্টা করুন।')
+      setErrMsg(e instanceof Error ? e.message : pick('মন্তব্য জমা দেওয়া সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।', 'The comment could not be submitted. Please try again.'))
     }
     setBusy(false)
   }
@@ -85,12 +88,12 @@ export function CommentForm({
     if (!trimmed) return
     if (trimmed.length < 2) {
       setReplyStatus('error')
-      setReplyErrMsg('রিপ্লাই খুব সংক্ষিপ্ত হয়েছে।')
+      setReplyErrMsg(pick('উত্তরটি অত্যন্ত সংক্ষিপ্ত।', 'The reply is too short.'))
       return
     }
     if (!replyCheck.answer.trim()) {
       setReplyStatus('error')
-      setReplyErrMsg('রিপ্লাই পাঠানোর আগে সহজ যাচাইয়ের উত্তর দিন।')
+      setReplyErrMsg(pick('উত্তর জমা দেওয়ার আগে যাচাইয়ের প্রশ্নটির উত্তর দিন।', 'Please answer the verification question before submitting your reply.'))
       return
     }
 
@@ -101,7 +104,7 @@ export function CommentForm({
     try {
       await addComment(
         postId,
-        replyName.trim() || 'নামহীন পাঠক',
+        replyName.trim() || (lang === 'bn' ? 'নামহীন পাঠক' : 'Anonymous reader'),
         trimmed,
         parentId,
         replyCheck.payload
@@ -116,7 +119,7 @@ export function CommentForm({
       }, 4000)
     } catch (e) {
       setReplyStatus('error')
-      setReplyErrMsg(e instanceof Error ? e.message : 'রিপ্লাই পাঠানো যায়নি।')
+      setReplyErrMsg(e instanceof Error ? e.message : pick('উত্তর জমা দেওয়া সম্ভব হয়নি।', 'The reply could not be submitted.'))
     }
     setReplyBusy(false)
   }
@@ -131,7 +134,7 @@ export function CommentForm({
       <div className="flex items-center justify-between border-b border-white/15 pb-2.5">
         <h3 className="font-serif text-lg font-bold text-white flex items-center gap-2 drop-shadow-sm">
           <MessageSquare className="size-5 text-cyan-300" />
-          <span>মন্তব্য ও আলোচনা ({comments.length})</span>
+          <span>{pick('মন্তব্য ও আলোচনা', 'Comments and Discussion')} ({comments.length})</span>
         </h3>
       </div>
 
@@ -150,8 +153,8 @@ export function CommentForm({
                     {(c.name || 'ন').charAt(0)}
                   </div>
                   <div>
-                    <p className="font-bold text-sm text-cyan-300">{c.name || 'নামহীন পাঠক'}</p>
-                    <p className="text-[10px] text-white/50">{timeAgo(c.created_at)}</p>
+                    <p className="font-bold text-sm text-cyan-300">{c.name || pick('নামহীন পাঠক', 'Anonymous reader')}</p>
+                      <p className="text-[10px] text-white/50">{timeAgo(c.created_at, lang)}</p>
                   </div>
                 </div>
 
@@ -165,7 +168,7 @@ export function CommentForm({
                   className="inline-flex items-center gap-1 rounded-lg bg-white/15 hover:bg-white/25 px-2.5 py-1 text-xs font-semibold text-cyan-200 border border-white/20 transition-colors cursor-pointer"
                 >
                   <CornerDownRight className="size-3" />
-                  <span>{isReplying ? 'বাতিল' : 'রিপ্লাই দিন'}</span>
+                  <span>{isReplying ? pick('বাতিল করুন', 'Cancel') : pick('উত্তর দিন', 'Reply')}</span>
                 </button>
               </div>
 
@@ -178,11 +181,11 @@ export function CommentForm({
                 <div className="mt-3 rounded-2xl border border-cyan-400/40 bg-black/40 p-3.5 space-y-2.5 backdrop-blur-md animate-in fade-in">
                   <p className="text-xs font-bold text-cyan-200 flex items-center gap-1">
                     <CornerDownRight className="size-3.5 text-cyan-400" />
-                    <span>{c.name || 'পাঠক'}-এর মন্তব্যের উত্তর লিখুন:</span>
+                    <span>{pick(`${c.name || 'পাঠক'}-এর মন্তব্যের উত্তর লিখুন:`, `Reply to ${c.name || 'reader'}:`)}</span>
                   </p>
                   <input
                     className="w-full rounded-xl border border-white/20 bg-black/30 px-3 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400"
-                    placeholder="আপনার নাম (ঐচ্ছিক)"
+                    placeholder={pick('আপনার নাম (ঐচ্ছিক)', 'Your name (optional)')}
                     maxLength={60}
                     value={replyName}
                     onChange={(e) => setReplyName(e.target.value)}
@@ -191,7 +194,7 @@ export function CommentForm({
                     rows={2}
                     maxLength={1000}
                     className="w-full rounded-xl border border-white/20 bg-black/30 px-3 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400"
-                    placeholder="রিপ্লাই লিখুন..."
+                    placeholder={pick('আপনার উত্তর লিখুন', 'Write your reply')}
                     value={replyMessage}
                     onChange={(e) => setReplyMessage(e.target.value)}
                   />
@@ -213,21 +216,21 @@ export function CommentForm({
                       className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-3.5 py-1.5 text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-md"
                     >
                       <Send className="size-3" />
-                      <span>{replyBusy ? 'পাঠানো হচ্ছে...' : 'রিপ্লাই পাঠান'}</span>
+                      <span>{replyBusy ? pick('জমা দেওয়া হচ্ছে…', 'Submitting…') : pick('উত্তর জমা দিন', 'Submit reply')}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setReplyingTo(null)}
                       className="text-xs text-white/60 hover:underline px-2"
                     >
-                      বাতিল
+                      {pick('বাতিল করুন', 'Cancel')}
                     </button>
                   </div>
 
                   {replyStatus === 'success' && (
                     <div className="flex items-start gap-1.5 rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-200 p-2 text-xs font-semibold animate-in fade-in">
                       <CheckCircle2 className="size-3.5 text-cyan-400 shrink-0 mt-0.5" />
-                      <span>রিপ্লাই জমা হয়েছে! মডারেশন পর্যালোচনার পর এটি দৃশ্যমান হবে।</span>
+                      <span>{pick('আপনার উত্তর জমা হয়েছে। মডারেশন পর্যালোচনার পর এটি প্রকাশিত হবে।', 'Your reply has been submitted and will appear after moderation.')}</span>
                     </div>
                   )}
 
@@ -247,9 +250,9 @@ export function CommentForm({
                       <div className="flex items-center justify-between">
                         <p className="font-bold text-xs text-cyan-200 flex items-center gap-1">
                           <User className="size-3 text-cyan-400" />
-                          <span>{r.name || 'নামহীন পাঠক'}</span>
+                          <span>{r.name || pick('নামহীন পাঠক', 'Anonymous reader')}</span>
                         </p>
-                        <span className="text-[10px] text-white/40">{timeAgo(r.created_at)}</span>
+                        <span className="text-[10px] text-white/40">{timeAgo(r.created_at, lang)}</span>
                       </div>
                       <p className="whitespace-pre-line text-xs text-slate-200 pl-4">
                         {r.message}
@@ -265,7 +268,7 @@ export function CommentForm({
         {/* ফাঁকা অবস্থা: এখন স্পষ্ট সাদাটে টেক্সটে পড়া যাবে */}
         {rootComments.length === 0 && (
           <p className="text-center text-xs text-slate-200 py-6 bg-white/10 rounded-2xl border border-dashed border-white/20 backdrop-blur-md">
-            এখনো কোনো মন্তব্য নেই। প্রথম গঠনমূলক মন্তব্যটি আপনিই করুন!
+            {pick('এখনো কোনো মন্তব্য নেই। প্রথম গঠনমূলক মন্তব্যটি আপনিই যোগ করুন।', 'There are no comments yet. Be the first to share a constructive comment.')}
           </p>
         )}
       </div>
@@ -273,13 +276,13 @@ export function CommentForm({
       {/* নতুন মূল মন্তব্য লেখার বক্স */}
       <div className="rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md p-5 shadow-lg space-y-3.5 text-white">
         <div className="flex items-center justify-between">
-          <h4 className="font-bold text-sm text-white drop-shadow-sm">আপনার গঠনমূলক মন্তব্য লিখুন:</h4>
+          <h4 className="font-bold text-sm text-white drop-shadow-sm">{pick('আপনার গঠনমূলক মন্তব্য লিখুন:', 'Write a constructive comment:')}</h4>
           <span className="text-[11px] text-white/50">{message.length}/১০০০</span>
         </div>
 
         <input
           className="w-full rounded-xl border border-white/20 px-3.5 py-2 text-xs bg-black/30 text-white placeholder-white/40 focus:bg-black/50 focus:outline-none focus:border-cyan-400 transition-colors"
-          placeholder="আপনার নাম (ঐচ্ছিক)"
+          placeholder={pick('আপনার নাম (ঐচ্ছিক)', 'Your name (optional)')}
           maxLength={60}
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -288,7 +291,7 @@ export function CommentForm({
           className="w-full rounded-xl border border-white/20 px-3.5 py-2 text-xs bg-black/30 text-white placeholder-white/40 focus:bg-black/50 focus:outline-none focus:border-cyan-400 transition-colors"
           rows={3}
           maxLength={1000}
-          placeholder="সংবাদ সম্পর্কে আপনার মতামত লিখুন..."
+          placeholder={pick('সংবাদ সম্পর্কে আপনার মতামত লিখুন', 'Write your comment about the article')}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
@@ -311,12 +314,12 @@ export function CommentForm({
             className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-5 py-2.5 text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-md active:scale-95 border border-white/20"
           >
             <Send className="size-3.5" />
-            <span>{busy ? 'পাঠানো হচ্ছে...' : 'মন্তব্য প্রকাশ করুন'}</span>
+            <span>{busy ? pick('জমা দেওয়া হচ্ছে…', 'Submitting…') : pick('মন্তব্য জমা দিন', 'Submit comment')}</span>
           </button>
 
           <div className="flex items-center gap-1.5 text-[11px] text-white/70">
             <Info className="size-3.5 text-cyan-400 shrink-0" />
-            <span>মন্তব্য প্রকাশের পূর্বে অ্যাডমিন দ্বারা অনুমোদিত হবে।</span>
+            <span>{pick('প্রকাশের আগে মন্তব্যটি মডারেটরের পর্যালোচনার জন্য পাঠানো হবে।', 'Comments are reviewed by a moderator before publication.')}</span>
           </div>
         </div>
 
@@ -324,9 +327,9 @@ export function CommentForm({
           <div className="flex items-start gap-2.5 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 p-3.5 text-xs text-cyan-200 animate-in fade-in">
             <CheckCircle2 className="size-4 text-cyan-400 shrink-0 mt-0.5" />
             <div className="space-y-0.5">
-              <p className="font-bold">আপনার মন্তব্য সফলভাবে জমা হয়েছে!</p>
+              <p className="font-bold">{pick('আপনার মন্তব্য জমা হয়েছে।', 'Your comment has been submitted.')}</p>
               <p className="text-white/80 leading-relaxed">
-                আমাদের ক্যাম্পাস মডারেশন টিম যাচাই করার পর মন্তব্যটি এখানে প্রদর্শিত হবে।
+                {pick('মডারেশন পর্যালোচনা সম্পন্ন হলে মন্তব্যটি এখানে প্রদর্শিত হবে।', 'Your comment will appear here after moderation review.')}
               </p>
             </div>
           </div>

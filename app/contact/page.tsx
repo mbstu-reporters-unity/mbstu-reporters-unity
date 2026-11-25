@@ -21,46 +21,67 @@ import { BackNavigation } from '@/components/portal/back-navigation'
 import { HumanVerification, useHumanVerification } from '@/components/portal/human-verification'
 import { NewsletterBox } from '@/components/portal/newsletter-box'
 import { useSiteSettings } from '@/components/portal/site-settings-context'
+import { useLang } from '@/lib/i18n'
 
 type FormKind = 'contact' | 'student_feedback' | 'admin_feedback' | 'correction'
+
+type TabCopy = {
+  labelBn: string
+  labelEn: string
+  titleBn: string
+  titleEn: string
+  subtitleBn: string
+  subtitleEn: string
+  icon: typeof MessageSquare
+}
 
 const inp =
   'w-full rounded-xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-white/45 focus:outline-none focus:border-cyan-400 transition'
 
 const TAB_INFO: Record<
   FormKind,
-  { label: string; title: string; subtitle: string; icon: typeof MessageSquare }
+  TabCopy
 > = {
   contact: {
-    label: 'সাধারণ যোগাযোগ',
-    title: 'সরাসরি যোগাযোগ ফর্ম',
-    subtitle: 'যেকোনো প্রশ্ন, সাক্ষাৎকারের আমন্ত্রণ বা মতামতের জন্য বার্তা পাঠান।',
+    labelBn: 'সাধারণ যোগাযোগ',
+    labelEn: 'General Enquiries',
+    titleBn: 'যোগাযোগ ফর্ম',
+    titleEn: 'Contact Form',
+    subtitleBn: 'প্রশ্ন, সাক্ষাৎকারের আমন্ত্রণ অথবা মতামত জানাতে বার্তা পাঠান।',
+    subtitleEn: 'Send a message with an enquiry, interview invitation, or feedback.',
     icon: Mail,
   },
   student_feedback: {
-    label: 'শিক্ষার্থীর অভিযোগ / মতামত',
-    title: 'শিক্ষার্থীদের অভিযোগ ও মতামত ফর্ম',
-    subtitle:
-      'আবাসন, পরিবহন, ডাইনিং বা ক্যাম্পাসের যেকোনো সমস্যার কথা জানান (নাম গোপন রাখার সুযোগসহ)।',
+    labelBn: 'শিক্ষার্থীদের অভিযোগ ও মতামত',
+    labelEn: 'Student Feedback',
+    titleBn: 'শিক্ষার্থীদের অভিযোগ ও মতামত',
+    titleEn: 'Student Feedback Form',
+    subtitleBn: 'আবাসন, পরিবহন, খাবার বা ক্যাম্পাসের অন্যান্য সমস্যা জানান। চাইলে পরিচয় গোপন রাখতে পারেন।',
+    subtitleEn: 'Report concerns about accommodation, transport, dining, or other campus matters. You may remain anonymous.',
     icon: ShieldAlert,
   },
   admin_feedback: {
-    label: 'প্রশাসনের মতামত / প্রেস রিলিজ',
-    title: 'বিশ্ববিদ্যালয় প্রশাসনের মতামত ও বার্তা',
-    subtitle:
-      'বিশ্ববিদ্যালয় কর্তৃপক্ষ বা দপ্তরসমূহের আনুষ্ঠানিক বক্তব্য, প্রতিবাদলিপি বা মতামত পাঠান।',
+    labelBn: 'প্রশাসনের বক্তব্য ও সংবাদ বিজ্ঞপ্তি',
+    labelEn: 'University Statements',
+    titleBn: 'বিশ্ববিদ্যালয় প্রশাসনের বক্তব্য ও বার্তা',
+    titleEn: 'University Administration Statements',
+    subtitleBn: 'বিশ্ববিদ্যালয় কর্তৃপক্ষ বা দপ্তরের আনুষ্ঠানিক বক্তব্য, প্রতিবাদলিপি অথবা মতামত পাঠান।',
+    subtitleEn: 'Submit an official statement, response, or opinion from the university administration or an office.',
     icon: Building2,
   },
   correction: {
-    label: 'সংবাদ সংশোধন অনুরোধ',
-    title: 'সংবাদ সংশোধন ও ভুল ধরিয়ে দেওয়ার ফর্ম',
-    subtitle:
-      'আমাদের কোনো সংবাদে তথ্যের ভুল নজরে এলে উপযুক্ত সূত্রসহ সংশোধনের অনুরোধ জানান।',
+    labelBn: 'সংবাদ সংশোধনের অনুরোধ',
+    labelEn: 'Correction Requests',
+    titleBn: 'সংবাদ সংশোধনের অনুরোধ',
+    titleEn: 'Request a Correction',
+    subtitleBn: 'প্রকাশিত সংবাদে তথ্যগত ভুল থাকলে নির্ভরযোগ্য সূত্রসহ সংশোধনের অনুরোধ জানান।',
+    subtitleEn: 'If you identify a factual error in a published report, request a correction and provide supporting sources.',
     icon: FileWarning,
   },
 }
 
 export default function ContactAndFeedbackPage() {
+  const { pick } = useLang()
   const humanCheck = useHumanVerification()
   const settings = useSiteSettings()
   const f = settings.footer
@@ -112,7 +133,7 @@ export default function ContactAndFeedbackPage() {
       })
       const j = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error(j.error || 'বার্তা পাঠানো যায়নি')
+        throw new Error(j.error || pick('বার্তা জমা দেওয়া সম্ভব হয়নি।', 'The message could not be submitted.'))
       }
       setSent(true)
       setName('')
@@ -124,7 +145,7 @@ export default function ContactAndFeedbackPage() {
       setPostUrl('')
       humanCheck.reset()
     } catch (err: any) {
-      setErrMsg('❌ ' + (err?.message || 'বার্তা পাঠাতে সমস্যা হয়েছে'))
+      setErrMsg('❌ ' + (err?.message || pick('বার্তা পাঠাতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।', 'The message could not be sent. Please try again.')))
     }
     setBusy(false)
   }
@@ -138,20 +159,20 @@ export default function ContactAndFeedbackPage() {
       <SiteHeader />
       <main className="min-h-screen py-6 sm:py-10">
         <div className="mx-auto max-w-6xl px-4 space-y-6">
-          <BackNavigation items={[{ label: 'যোগাযোগ ও অভিযোগ ডেস্ক' }]} />
+          <BackNavigation items={[{ label: pick('যোগাযোগ ও অভিযোগ বিভাগ', 'Contact and Feedback')}]} />
 
           {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow">
               <MessageSquare className="size-3.5" />
-              <span>Contact, Map & Grievance Desk</span>
+              <span>{pick('যোগাযোগ ও অভিযোগ', 'Contact and Feedback')}</span>
             </span>
 
             <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
-              যোগাযোগ, ক্যাম্পাস ম্যাপ ও অভিযোগ/মতামত ডেস্ক
+              {pick('যোগাযোগ ও ক্যাম্পাস মানচিত্র', 'Contact and Campus Map')}
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed">
-              মাভাবিপ্রবি রিপোর্টার্স ইউনিটির দপ্তরের ঠিকানা, অবস্থান ম্যাপ এবং শিক্ষার্থী ও প্রশাসনের সরাসরি বার্তা, অভিযোগ ও সংশোধনী পাঠানোর ডিজিটাল ডেস্ক।
+              {pick('মাভাবিপ্রবি রিপোর্টার্স ইউনিটির ঠিকানা ও অবস্থান দেখুন এবং শিক্ষার্থী ও প্রশাসনের বার্তা, অভিযোগ বা সংশোধনী পাঠান।', 'Find the MBSTU Reporters’ Unity office and location, or submit a message, concern, or correction request.')}
             </p>
           </div>
 
@@ -159,7 +180,7 @@ export default function ContactAndFeedbackPage() {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <div className="lg:col-span-2 glass-card p-5 sm:p-6 space-y-4 text-white">
               <h2 className="font-serif text-lg font-bold border-b border-white/15 pb-2">
-                অফিসিয়াল যোগাযোগ তথ্য
+                {pick('প্রাতিষ্ঠানিক যোগাযোগের তথ্য', 'Official Contact Information')}
               </h2>
 
               <div className="space-y-3 text-xs sm:text-sm text-slate-200">
@@ -168,8 +189,8 @@ export default function ContactAndFeedbackPage() {
                     <MapPin className="size-4" />
                   </span>
                   <div>
-                    <p className="font-bold text-white text-xs">কার্যালয়ের ঠিকানা</p>
-                    <p className="text-slate-300 mt-0.5 leading-relaxed">{f.addressBn}</p>
+                    <p className="font-bold text-white text-xs">{pick('কার্যালয়ের ঠিকানা', 'Office address')}</p>
+                    <p className="text-slate-300 mt-0.5 leading-relaxed">{pick(f.addressBn, f.addressEn)}</p>
                   </div>
                 </div>
 
@@ -178,7 +199,7 @@ export default function ContactAndFeedbackPage() {
                     <Phone className="size-4" />
                   </span>
                   <div>
-                    <p className="font-bold text-white text-xs">ফোন / হটলাইন</p>
+                    <p className="font-bold text-white text-xs">{pick('ফোন / হটলাইন', 'Telephone / Hotline')}</p>
                     <a
                       href={`tel:${f.phone.replace(/[^+\d]/g, '')}`}
                       className="text-cyan-300 hover:underline font-semibold mt-0.5 block"
@@ -193,7 +214,7 @@ export default function ContactAndFeedbackPage() {
                     <Mail className="size-4" />
                   </span>
                   <div>
-                    <p className="font-bold text-white text-xs">ইমেইল</p>
+                    <p className="font-bold text-white text-xs">{pick('ইমেইল', 'Email')}</p>
                     <a
                       href={`mailto:${f.email}`}
                       className="text-cyan-300 hover:underline font-semibold break-all mt-0.5 block"
@@ -213,7 +234,7 @@ export default function ContactAndFeedbackPage() {
               <div className="flex items-center justify-between px-1">
                 <h2 className="font-serif text-base sm:text-lg font-bold flex items-center gap-2">
                   <MapPin className="size-4 text-cyan-400" />
-                  <span>ক্যাম্পাস লোকেশন ম্যাপ (সন্তোষ, টাঙ্গাইল)</span>
+                  <span>{pick('ক্যাম্পাসের মানচিত্র (সন্তোষ, টাঙ্গাইল)', 'Campus Map (Santosh, Tangail)')}</span>
                 </h2>
                 <a
                   href="https://maps.google.com/?q=Mawlana+Bhashani+Science+and+Technology+University"
@@ -221,12 +242,12 @@ export default function ContactAndFeedbackPage() {
                   rel="noopener noreferrer"
                   className="text-xs font-bold text-cyan-300 hover:underline"
                 >
-                  Google Maps-এ খুলুন →
+                  {pick('Google Maps-এ দেখুন →', 'View on Google Maps →')}
                 </a>
               </div>
               <div className="flex-1 min-h-[260px] sm:min-h-[320px] rounded-2xl overflow-hidden border border-white/15 bg-slate-900">
                 <iframe
-                  title="MBSTU Campus Map"
+                  title={pick('মাভাবিপ্রবি ক্যাম্পাসের মানচিত্র', 'MBSTU Campus Map')}
                   src="https://maps.google.com/maps?q=Mawlana+Bhashani+Science+and+Technology+University,+Santosh,+Tangail&t=&z=15&ie=UTF8&iwloc=&output=embed"
                   className="w-full h-full min-h-[260px] sm:min-h-[320px] border-0"
                   loading="lazy"
@@ -255,7 +276,7 @@ export default function ContactAndFeedbackPage() {
                     }`}
                   >
                     <TIcon className="size-3.5" />
-                    <span>{TAB_INFO[k].label}</span>
+                    <span>{pick(TAB_INFO[k].labelBn, TAB_INFO[k].labelEn)}</span>
                   </button>
                 )
               })}
@@ -264,9 +285,9 @@ export default function ContactAndFeedbackPage() {
             <div className="border-b border-white/15 pb-3">
               <h2 className="font-serif text-xl sm:text-2xl font-bold flex items-center gap-2 text-white">
                 <ActiveIcon className="size-5 text-cyan-400" />
-                <span>{activeMeta.title}</span>
+                <span>{pick(activeMeta.titleBn, activeMeta.titleEn)}</span>
               </h2>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1">{activeMeta.subtitle}</p>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1">{pick(activeMeta.subtitleBn, activeMeta.subtitleEn)}</p>
             </div>
 
             {sent ? (
@@ -275,17 +296,17 @@ export default function ContactAndFeedbackPage() {
                   <CheckCircle2 className="size-8" />
                 </div>
                 <h3 className="font-serif text-lg font-bold text-emerald-300">
-                  আপনার বার্তা সফলভাবে পৌঁছেছে!
+                  {pick('আপনার বার্তা গ্রহণ করা হয়েছে।', 'Your message has been received.')}
                 </h3>
                 <p className="text-xs text-slate-300 max-w-md mx-auto">
-                  মাভাবিপ্রবি রিপোর্টার্স ইউনিটির দায়িত্বশীল টিম বিষয়টি পর্যালোচনা করে প্রয়োজনীয় পদক্ষেপ নেবে।
+                  {pick('মাভাবিপ্রবি রিপোর্টার্স ইউনিটির সংশ্লিষ্ট দল বার্তাটি পর্যালোচনা করে প্রয়োজনীয় পদক্ষেপ নেবে।', 'The relevant team at MBSTU Reporters’ Unity will review your message and take any necessary action.')}
                 </p>
                 <button
                   type="button"
                   onClick={() => setSent(false)}
                   className="rounded-full bg-cyan-500 text-slate-950 px-5 py-2 text-xs font-bold cursor-pointer"
                 >
-                  আরেকটি বার্তা পাঠান
+                  {pick('আরেকটি বার্তা পাঠান', 'Send another message')}
                 </button>
               </div>
             ) : (
@@ -307,10 +328,10 @@ export default function ContactAndFeedbackPage() {
                     <div>
                       <p className="font-bold text-sm text-white flex items-center gap-1.5">
                         <EyeOff className="size-3.5 text-cyan-300" />
-                        <span>আমার পরিচয় গোপন রাখুন (Anonymous)</span>
+                        <span>{pick('আমার পরিচয় গোপন রাখুন', 'Submit anonymously')}</span>
                       </p>
                       <p className="text-[10px] text-slate-300">
-                        নাম ও ব্যক্তিগত যোগাযোগের তথ্য ছাড়াই অভিযোগ বা মতামত পাঠান।
+                        {pick('নাম ও ব্যক্তিগত যোগাযোগের তথ্য ছাড়াই অভিযোগ বা মতামত পাঠান।', 'Submit a concern or feedback without providing your name or contact details.')}
                       </p>
                     </div>
                   </label>
@@ -320,19 +341,19 @@ export default function ContactAndFeedbackPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="font-bold text-cyan-200 block mb-1">
-                        {kind === 'admin_feedback' ? 'কর্মকর্তা / দপ্তরের নাম *' : 'আপনার পূর্ণ নাম *'}
+                        {kind === 'admin_feedback' ? pick('কর্মকর্তা / দপ্তরের নাম *', 'Officer / office name *') : pick('আপনার পূর্ণ নাম *', 'Your full name *')}
                       </label>
                       <input
                         required
                         className={inp}
-                        placeholder="পূর্ণ নাম লিখুন"
+                        placeholder={pick('পূর্ণ নাম লিখুন', 'Enter your full name')}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                       />
                     </div>
                     <div>
                       <label className="font-bold text-cyan-200 block mb-1">
-                        ইমেইল {kind === 'contact' ? '*' : '(ঐচ্ছিক)'}
+                        {pick('ইমেইল', 'Email')} {kind === 'contact' ? '*' : pick('(ঐচ্ছিক)', '(optional)')}
                       </label>
                       <input
                         type="email"
@@ -344,7 +365,7 @@ export default function ContactAndFeedbackPage() {
                     </div>
                     <div>
                       <label className="font-bold text-cyan-200 block mb-1">
-                        মোবাইল নম্বর (ঐচ্ছিক)
+                        {pick('মোবাইল নম্বর (ঐচ্ছিক)', 'Mobile number (optional)')}
                       </label>
                       <input
                         type="tel"
@@ -361,15 +382,15 @@ export default function ContactAndFeedbackPage() {
                   <div>
                     <label className="font-bold text-cyan-200 block mb-1">
                       {kind === 'admin_feedback'
-                        ? 'দপ্তর / অনুষদের নাম'
-                        : 'বিভাগ / ব্যাচ / হল (ঐচ্ছিক)'}
+                        ? pick('দপ্তর / অনুষদের নাম', 'Office / faculty')
+                        : pick('বিভাগ / ব্যাচ / হল (ঐচ্ছিক)', 'Department / batch / hall (optional)')}
                     </label>
                     <input
                       className={inp}
                       placeholder={
                         kind === 'admin_feedback'
-                          ? 'যেমন: রেজিস্ট্রার অফিস / প্রক্টর অফিস'
-                          : 'যেমন: CSE ১৮তম ব্যাচ / শহীদ জিয়া হল'
+                          ? pick('উদাহরণ: রেজিস্ট্রার অফিস / প্রক্টর অফিস', 'For example: Registrar’s Office / Proctor’s Office')
+                          : pick('উদাহরণ: সিএসই, ১৮তম ব্যাচ / শহীদ জিয়া হল', 'For example: CSE, 18th batch / Shaheed Zia Hall')
                       }
                       value={deptOrOffice}
                       onChange={(e) => setDeptOrOffice(e.target.value)}
@@ -377,11 +398,11 @@ export default function ContactAndFeedbackPage() {
                   </div>
 
                   <div>
-                    <label className="font-bold text-cyan-200 block mb-1">বিষয় *</label>
+                    <label className="font-bold text-cyan-200 block mb-1">{pick('বিষয় *', 'Subject *')}</label>
                     <input
                       required
                       className={inp}
-                      placeholder="সংক্ষিপ্ত বিষয় লিখুন"
+                      placeholder={pick('বিষয়টি সংক্ষেপে লিখুন', 'Enter a brief subject')}
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
                     />
@@ -391,7 +412,7 @@ export default function ContactAndFeedbackPage() {
                 {kind === 'correction' && (
                   <div>
                     <label className="font-bold text-cyan-200 block mb-1">
-                      যে সংবাদের সংশোধন প্রয়োজন তার লিংক (ঐচ্ছিক)
+                      {pick('যে সংবাদে সংশোধন প্রয়োজন, তার লিংক (ঐচ্ছিক)', 'Link to the report requiring correction (optional)')}
                     </label>
                     <input
                       className={inp}
@@ -403,12 +424,12 @@ export default function ContactAndFeedbackPage() {
                 )}
 
                 <div>
-                  <label className="font-bold text-cyan-200 block mb-1">বিস্তারিত বার্তা *</label>
+                  <label className="font-bold text-cyan-200 block mb-1">{pick('বিস্তারিত বার্তা *', 'Message *')}</label>
                   <textarea
                     required
                     rows={5}
                     className={inp}
-                    placeholder="আপনার অভিযোগ, মতামত বা বার্তাটি বিস্তারিত লিখুন..."
+                    placeholder={pick('আপনার অভিযোগ, মতামত বা বার্তার বিস্তারিত লিখুন', 'Provide details of your concern, feedback, or message')}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                   />
@@ -430,7 +451,7 @@ export default function ContactAndFeedbackPage() {
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-7 py-3 font-bold text-sm shadow-lg transition cursor-pointer disabled:opacity-50"
                 >
                   <Send className="size-4" />
-                  <span>{busy ? 'পাঠানো হচ্ছে...' : 'বার্তা পাঠান'}</span>
+                  <span>{busy ? pick('পাঠানো হচ্ছে…', 'Sending…') : pick('বার্তা পাঠান', 'Send message')}</span>
                 </button>
               </form>
             )}

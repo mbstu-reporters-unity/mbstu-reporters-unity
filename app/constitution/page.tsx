@@ -29,6 +29,82 @@ interface ArticleItem {
   clauses: string[]
 }
 
+const ARTICLES_EN: Record<string, { number: string; title: string; clauses: string[] }> = {
+  'art-1': {
+    number: 'Article 1',
+    title: 'Name and Scope',
+    clauses: [
+      'The organisation shall be named “Mawlana Bhashani Science and Technology University Reporters’ Unity”, abbreviated as “MBSTU Reporters’ Unity” or “MBSTURU”.',
+      'The organisation’s central office shall be located on the campus of Mawlana Bhashani Science and Technology University, Santosh, Tangail 1902.',
+      'The organisation’s activities shall be limited to the university campus and related areas.',
+    ],
+  },
+  'art-2': {
+    number: 'Article 2',
+    title: 'Principles and Objectives',
+    clauses: [
+      'To uphold free inquiry, a sound learning environment, and the free flow of information at the university.',
+      'To report university-related news through national, regional, and online media in an accurate, objective, and impartial manner.',
+      'To support the professional safety, solidarity, and rights of journalists working on campus.',
+      'To strengthen journalists’ skills and ethical practice to prevent irresponsible and sensationalist journalism.',
+    ],
+  },
+  'art-3': {
+    number: 'Article 3',
+    title: 'Membership and Categories',
+    clauses: [
+      'General Member: A current university student who has served responsibly for at least six months as a campus correspondent for a national, local, or online media outlet.',
+      'Associate Member: A new student interested in journalism who has successfully completed the organisation’s introductory training and probationary period.',
+      'Life Member: A former leader or senior member established in national media and contributing to the organisation’s overall welfare.',
+      'Applicants must apply using the prescribed form. The Executive Council must approve the application by majority vote.',
+    ],
+  },
+  'art-4': {
+    number: 'Article 4',
+    title: 'Termination of Membership and Disciplinary Measures',
+    clauses: [
+      'When a member ceases to be a student or submits a voluntary resignation, their status shall change from general member to former member.',
+      'If anti-organisational conduct, financial irregularity, unethical behaviour, or a breach of this Constitution is established, the Executive Council may suspend or permanently terminate membership.',
+      'The member concerned must receive written notice at least seven days before being given an opportunity to respond to the allegations.',
+    ],
+  },
+  'art-5': {
+    number: 'Article 5',
+    title: 'Organisational Structure and Executive Council',
+    clauses: [
+      'The organisation shall be administered by an Executive Council with a one-year term.',
+      'The Executive Council shall include a President, Vice-President, General Secretary, Joint General Secretary, Treasurer, Office Secretary, Publicity and Publications Secretary, Information and Technology Secretary, Sports and Cultural Secretary, and Executive Members.',
+      'All decisions of the Executive Council shall be made democratically by majority vote.',
+    ],
+  },
+  'art-6': {
+    number: 'Article 6',
+    title: 'Elections and Election Commission',
+    clauses: [
+      'Before the Executive Council’s term ends, it shall form an impartial three-member Election Commission comprising faculty advisers and senior members.',
+      'New leaders shall be elected by direct and secret ballot of general members included on the voter list.',
+      'The Election Commission shall make final decisions on election matters, from announcing the schedule through publishing the official results.',
+    ],
+  },
+  'art-7': {
+    number: 'Article 7',
+    title: 'Funds and Financial Management',
+    clauses: [
+      'The organisation’s central fund shall comprise monthly member contributions, donations, and income from publications.',
+      'Financial transactions shall be conducted through a scheduled-bank account in the organisation’s name, operated with the joint signatures of the President, General Secretary, and Treasurer.',
+      'At the end of each financial year, the Executive Council must present a complete audit report at the general meeting.',
+    ],
+  },
+  'art-8': {
+    number: 'Article 8',
+    title: 'Amendments to the Constitution',
+    clauses: [
+      'An amendment, change, or revision to any article of this Constitution requires the support of at least two-thirds (2/3) of all general members at a general meeting.',
+      'An amendment proposal must be formally submitted for the general meeting’s agenda at least three days in advance.',
+    ],
+  },
+}
+
 const ARTICLES: ArticleItem[] = [
   {
     id: 'art-1',
@@ -122,6 +198,15 @@ const ETHICS_CODE = [
   '৬. ব্যক্তিগত আক্রমণ পরিহার: কারো ধর্মীয় বিশ্বাস, জাতিসত্তা, শারীরিক অক্ষমতা বা লিঙ্গ নিয়ে কটূক্তি ও আক্রমণাত্মক লেখা সম্পূর্ণরূপে নিষিদ্ধ।',
 ]
 
+const ETHICS_CODE_EN = [
+  'Accuracy and Objectivity: Verify each fact against at least two reliable sources before publication.',
+  'Impartiality and Independence: Place accurate reporting above personal or political views.',
+  'Source Protection: Protect the safety and confidentiality of trusted confidential sources.',
+  'Avoiding Conflicts of Interest: Do not accept personal benefits, gifts, or improper advantages from any person or organisation.',
+  'Acknowledging and Correcting Errors: Promptly acknowledge and clearly correct any inadvertent error in a report.',
+  'Avoiding Personal Attacks and Discrimination: Derogatory or hostile content targeting religion, ethnicity, disability, or gender is prohibited.',
+]
+
 export default function ConstitutionPage() {
   const settings = useSiteSettings()
   const [openArticle, setOpenArticle] = useState<string | null>('art-1')
@@ -182,8 +267,8 @@ export default function ConstitutionPage() {
           <div className="print-hidden">
             <BackNavigation
               items={[
-                { label: 'আমাদের সম্পর্কে', href: '/about' },
-                { label: 'গঠনতন্ত্র ও নীতিমালা' },
+                { label: <Tx bn="আমাদের সম্পর্কে" en="About" />, href: '/about' },
+                { label: <Tx bn="গঠনতন্ত্র ও আচরণবিধি" en="Constitution and Code of Ethics" /> },
               ]}
             />
           </div>
@@ -192,17 +277,20 @@ export default function ConstitutionPage() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow">
               <Scale className="size-3.5" />
-              <span>সাংগঠনিক মূল বিধিমালা ও সংবিধিবদ্ধ কাঠামো</span>
+              <span><Tx bn="সংগঠনের মৌলিক বিধিমালা ও কাঠামো" en="The organisation’s governing rules and structure" /></span>
             </span>
 
             <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
-              গঠনতন্ত্র ও আচরণবিধি
+              <Tx bn="গঠনতন্ত্র ও আচরণবিধি" en="Constitution and Code of Ethics" />
             </h1>
             <p className="text-cyan-200 text-xs sm:text-sm font-semibold max-w-xl mx-auto">
               Constitution & Code of Ethics — MBSTU Reporters' Unity
             </p>
             <p className="text-slate-200 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed pt-1">
-              মাভাবিপ্রবি রিপোর্টার্স ইউনিটি পরিচালনাকারী সংবিধিবদ্ধ নীতিমালা, সদস্যপদের বিধান, নির্বাচন প্রক্রিয়া ও দায়িত্বশীল সাংবাদিকতার নৈতিক আচরণবিধি।
+              <Tx
+                bn="মাভাবিপ্রবি রিপোর্টার্স ইউনিটির পরিচালনা, সদস্যপদ, নির্বাচন এবং দায়িত্বশীল সাংবাদিকতার নৈতিক নীতিমালা এখানে তুলে ধরা হয়েছে।"
+                en="This document sets out the governance, membership, election, and ethical journalism standards of MBSTU Reporters’ Unity."
+              />
             </p>
 
             {/* অ্যাকশন বাটন: আসল PDF ডাউনলোড, প্রিন্ট ও আচরণবিধি লিংক */}
@@ -216,7 +304,7 @@ export default function ConstitutionPage() {
                   className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white px-5 py-2 text-xs font-bold shadow-lg transition active:scale-95 cursor-pointer"
                 >
                   <Download className="size-4" />
-                  <span>অফিসিয়াল PDF ডাউনলোড</span>
+                  <span><Tx bn="আনুষ্ঠানিক পিডিএফ ডাউনলোড" en="Download official PDF" /></span>
                 </a>
               ) : null}
 
@@ -226,7 +314,7 @@ export default function ConstitutionPage() {
                 className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 text-xs font-bold shadow-lg transition active:scale-95 cursor-pointer"
               >
                 <Printer className="size-4" />
-                <span>প্রিন্ট / PDF সংরক্ষণ</span>
+                <span><Tx bn="প্রিন্ট / পিডিএফ হিসেবে সংরক্ষণ" en="Print / Save as PDF" /></span>
               </button>
 
               <a
@@ -234,7 +322,7 @@ export default function ConstitutionPage() {
                 className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/25 text-white border border-white/20 px-4 py-2 text-xs font-bold transition active:scale-95"
               >
                 <ShieldCheck className="size-4 text-cyan-300" />
-                <span>সাংবাদিকতার আচরণবিধি</span>
+                <span><Tx bn="সাংবাদিকতার আচরণবিধি" en="Journalism Code of Ethics" /></span>
               </a>
             </div>
           </div>
@@ -243,15 +331,19 @@ export default function ConstitutionPage() {
           <section className="glass-card p-6 sm:p-8 space-y-3 text-white border-l-4 border-l-cyan-400">
             <h2 className="font-serif text-lg sm:text-xl font-bold text-cyan-300 flex items-center gap-2">
               <BookOpen className="size-5" />
-              <span>প্রস্তাবনা (Preamble)</span>
+              <span><Tx bn="প্রস্তাবনা" en="Preamble" /></span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-100 leading-relaxed text-justify whitespace-pre-line">
-              {constitutionCustom?.preambleBn ||
-                '"আমরা, মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের ক্যাম্পাসে সক্রিয় গণমাধ্যম প্রতিনিধিবৃন্দ—ক্যাম্পাসে মুক্ত ও নিরপেক্ষ সাংবাদিকতা চর্চা, তথ্যের অবাধ প্রবাহ নিশ্চিতকরণ, সাধারণ শিক্ষার্থীদের ন্যায্য অধিকার ও সমস্যা তুলে ধরা এবং বিশ্ববিদ্যালয়ের ইতিবাচক ভাবমূর্তি সমুন্নত রাখার দৃঢ় প্রত্যয়ে ঐক্যবদ্ধ হয়ে এই গঠনতন্ত্র প্রণয়ন ও গ্রহণ করছি।"'}
+              {constitutionCustom?.preambleBn || (
+                <Tx
+                  bn="“আমরা, মাওলানা ভাসানী বিজ্ঞান ও প্রযুক্তি বিশ্ববিদ্যালয়ের ক্যাম্পাসে কর্মরত গণমাধ্যম প্রতিনিধিরা—মুক্ত ও নিরপেক্ষ সাংবাদিকতার চর্চা, তথ্যের অবাধ প্রবাহ নিশ্চিত করা, শিক্ষার্থীদের ন্যায্য অধিকার ও সমস্যা তুলে ধরা এবং বিশ্ববিদ্যালয়ের ইতিবাচক ভাবমূর্তি সমুন্নত রাখার অঙ্গীকারে ঐক্যবদ্ধ হয়ে এই গঠনতন্ত্র প্রণয়ন ও গ্রহণ করছি।”"
+                  en="“We, the media representatives working on the campus of Mawlana Bhashani Science and Technology University, adopt this Constitution in our commitment to free and impartial journalism, the free flow of information, reporting students’ legitimate concerns and rights, and upholding the university’s positive standing.”"
+                />
+              )}
             </p>
             {constitutionCustom?.extraRulesBn && (
               <div className="mt-3 pt-3 border-t border-white/15">
-                <p className="text-xs font-bold text-amber-300 mb-2">📋 সংশোধিত ধারা / বিশেষ বিজ্ঞপ্তি:</p>
+                <p className="text-xs font-bold text-amber-300 mb-2"><Tx bn="📋 সংশোধিত ধারা / বিশেষ বিজ্ঞপ্তি:" en="📋 Amended provisions / special notice:" /></p>
                 <p className="text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre-line">
                   {constitutionCustom.extraRulesBn}
                 </p>
@@ -267,9 +359,9 @@ export default function ConstitutionPage() {
               </span>
               <div>
                 <h2 className="font-serif text-lg sm:text-xl font-bold text-white">
-                  ক্যাম্পাস সাংবাদিকতার আচরণবিধি (Code of Ethics)
+                  <Tx bn="ক্যাম্পাস সাংবাদিকতার আচরণবিধি" en="Campus Journalism Code of Ethics" />
                 </h2>
-                <p className="text-xs text-slate-300">সংগঠনের সকল সদস্যের জন্য অবশ্য পালনীয় পেশাগত নীতি</p>
+                <p className="text-xs text-slate-300"><Tx bn="সংগঠনের সকল সদস্যের জন্য প্রযোজ্য পেশাগত নীতিমালা" en="Professional standards applicable to all members of the organisation" /></p>
               </div>
             </div>
 
@@ -280,7 +372,7 @@ export default function ConstitutionPage() {
                   className="p-3.5 rounded-2xl bg-white/10 border border-white/15 flex items-start gap-2.5 hover:border-amber-400/60 transition-colors"
                 >
                   <CheckCircle2 className="size-4 text-amber-300 shrink-0 mt-0.5" />
-                  <p className="text-xs text-slate-100 leading-relaxed">{ethic}</p>
+                  <p className="text-xs text-slate-100 leading-relaxed"><Tx bn={ethic} en={ETHICS_CODE_EN[idx]} /></p>
                 </div>
               ))}
             </div>
@@ -291,9 +383,9 @@ export default function ConstitutionPage() {
             <div className="flex items-center justify-between px-1 text-white">
               <h2 className="font-serif text-xl font-bold flex items-center gap-2">
                 <Scale className="size-5 text-cyan-400" />
-                <span>গঠনতন্ত্রের পূর্ণাঙ্গ ধারাসমূহ ({ARTICLES.length}টি ধারা)</span>
+                <span><Tx bn={`গঠনতন্ত্রের পূর্ণাঙ্গ ধারাসমূহ (${ARTICLES.length}টি ধারা)`} en={`Full Constitution (${ARTICLES.length} Articles)`} /></span>
               </h2>
-              <span className="text-xs text-cyan-200 print-hidden">ক্লিক করে বিস্তারিত পড়ুন</span>
+              <span className="text-xs text-cyan-200 print-hidden"><Tx bn="বিস্তারিত দেখতে নির্বাচন করুন" en="Select an article to view details" /></span>
             </div>
 
             <div className="space-y-2.5">
@@ -313,10 +405,10 @@ export default function ConstitutionPage() {
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="shrink-0 px-2.5 py-1 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-mono font-bold text-xs">
-                          {art.number}
+                          <Tx bn={art.number} en={ARTICLES_EN[art.id].number} />
                         </span>
                         <h3 className="font-bold text-sm sm:text-base text-white truncate">
-                          {art.title}
+                          <Tx bn={art.title} en={ARTICLES_EN[art.id].title} />
                         </h3>
                       </div>
                       <span className="p-1 rounded-full bg-white/10 text-white/70 shrink-0 print-hidden">
@@ -329,7 +421,7 @@ export default function ConstitutionPage() {
                         {art.clauses.map((clause, cIdx) => (
                           <div key={cIdx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-200 leading-relaxed">
                             <span className="size-1.5 rounded-full bg-cyan-400 shrink-0 mt-2" />
-                            <p>{clause}</p>
+                            <p><Tx bn={clause} en={ARTICLES_EN[art.id].clauses[cIdx]} /></p>
                           </div>
                         ))}
                       </div>
@@ -351,8 +443,8 @@ export default function ConstitutionPage() {
                   <Users className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">বর্তমান কমিটি</p>
-                  <p className="text-[10px] text-slate-300">কার্যনির্বাহী পরিষদের সকল কর্মকর্তা</p>
+                  <p className="font-bold text-xs sm:text-sm"><Tx bn="বর্তমান কমিটি" en="Current Committee" /></p>
+                  <p className="text-[10px] text-slate-300"><Tx bn="কার্যনির্বাহী পরিষদের কর্মকর্তাবৃন্দ" en="Officers of the Executive Council" /></p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-amber-300 group-hover:translate-x-1 transition-transform" />
@@ -367,8 +459,8 @@ export default function ConstitutionPage() {
                   <BookOpen className="size-4" />
                 </span>
                 <div>
-                  <p className="font-bold text-xs sm:text-sm">আমাদের সম্পর্কে</p>
-                  <p className="text-[10px] text-slate-300">ইতিহাস, ভিশন ও সাংগঠনিক অর্জন</p>
+                  <p className="font-bold text-xs sm:text-sm"><Tx bn="আমাদের সম্পর্কে" en="About Us" /></p>
+                  <p className="text-[10px] text-slate-300"><Tx bn="ইতিহাস, লক্ষ্য ও সাংগঠনিক অর্জন" en="History, mission, and organisational achievements" /></p>
                 </div>
               </div>
               <ArrowRight className="size-4 text-cyan-300 group-hover:translate-x-1 transition-transform" />

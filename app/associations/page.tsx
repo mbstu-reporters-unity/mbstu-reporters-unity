@@ -7,6 +7,7 @@ import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
 import { getSiteSettings } from '@/lib/site-settings'
+import { Tx } from '@/lib/i18n'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,7 +31,7 @@ export default async function AssociationsPage() {
       <main className="min-h-screen py-6 sm:py-10">
         <div className="mx-auto max-w-6xl px-4 space-y-6">
           
-          <BackNavigation items={[{ label: 'অন্যান্য সাংবাদিক সমিতি' }]} />
+          <BackNavigation items={[{ label: <Tx bn="অন্যান্য সাংবাদিক সমিতি" en="Other Journalist Associations" /> }]} />
 
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center">
             {banner.eyebrow && (
@@ -39,7 +40,7 @@ export default async function AssociationsPage() {
               </span>
             )}
             <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
-              {banner.title || 'অন্যান্য সাংবাদিক সমিতি'}
+              {banner.title || <Tx bn="অন্যান্য সাংবাদিক সমিতি" en="Other Journalist Associations" />}
             </h1>
             {banner.subtitle && (
               <p className="text-white/80 text-xs sm:text-sm font-medium mt-1">
@@ -126,7 +127,7 @@ export default async function AssociationsPage() {
 
                       {assoc.contact_info && (
                         <div className="text-xs text-slate-200 bg-white/10 p-3 rounded-2xl border border-white/15 space-y-1">
-                          <p className="font-bold text-cyan-300 text-[11px]">যোগাযোগের তথ্য:</p>
+                          <p className="font-bold text-cyan-300 text-[11px]"><Tx bn="যোগাযোগের তথ্য:" en="Contact information:" /></p>
                           <p className="whitespace-pre-line">{assoc.contact_info}</p>
                         </div>
                       )}
@@ -174,7 +175,7 @@ export default async function AssociationsPage() {
           ) : (
             <div className="glass-card p-12 text-center space-y-2">
               <Newspaper className="size-10 text-white/50 mx-auto" />
-              <p className="text-base font-bold text-white">এখনো কোনো সাংবাদিক সমিতি যুক্ত করা হয়নি।</p>
+              <p className="text-base font-bold text-white"><Tx bn="এখনো কোনো সাংবাদিক সমিতি যুক্ত করা হয়নি।" en="No journalist associations have been added yet." /></p>
             </div>
           )}
 

@@ -24,6 +24,7 @@ import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
 import { getVisiblePosts, getImagesMetaForMany, type ImageMeta } from '@/lib/sb'
 import { getLiveReels } from '@/lib/reels'
+import { useLang } from '@/lib/i18n'
 
 type MediaKind = 'photo' | 'video'
 type VideoPlatform = 'youtube' | 'facebook' | 'direct'
@@ -114,11 +115,11 @@ function parseEmbedItems(raw?: string | null): Array<{
   return [{ url: s }]
 }
 
-function fmtBnDate(iso?: string | null): string {
+function fmtDate(iso: string | null | undefined, lang: 'bn' | 'en'): string {
   if (!iso) return ''
   const d = new Date(iso)
   if (isNaN(d.getTime())) return iso
-  return d.toLocaleDateString('bn-BD', {
+  return d.toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -127,11 +128,13 @@ function fmtBnDate(iso?: string | null): string {
 }
 
 export default function GalleryPage() {
+  const { lang, pick } = useLang()
   const [entries, setEntries] = useState<GalleryEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'all' | 'photo' | 'video'>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('সব')
   const [search, setSearch] = useState('')
+  const count = (value: number) => value.toLocaleString(lang === 'bn' ? 'bn-BD' : 'en-US')
 
   // লাইটবক্স ও ভিডিও প্লেয়ার স্টেট
   const [activePhotoIdx, setActivePhotoIdx] = useState<number | null>(null)
@@ -365,8 +368,8 @@ export default function GalleryPage() {
         <div className="mx-auto max-w-7xl px-4 space-y-6">
           <BackNavigation
             items={[
-              { label: 'সংবাদ ও মিডিয়া' },
-              { label: 'ফটো ও ভিডিও গ্যালারি' },
+              { label: pick('সংবাদ ও গণমাধ্যম', 'News and Media') },
+              { label: pick('ছবি ও ভিডিও গ্যালারি', 'Photo and Video Gallery') },
             ]}
           />
 
@@ -374,22 +377,22 @@ export default function GalleryPage() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow">
               <Camera className="size-3.5" />
-              <span>Photo & Video Archive • ক্যাম্পাস মিডিয়া গ্যালারি</span>
+              <span>{pick('ক্যাম্পাসের ছবি ও ভিডিও সংরক্ষণাগার', 'Campus Photo and Video Archive')}</span>
             </span>
 
             <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
-              ফটো ও ভিডিও গ্যালারি
+              {pick('ছবি ও ভিডিও গ্যালারি', 'Photo and Video Gallery')}
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed">
-              মাভাবিপ্রবির ক্যাম্পাস জীবন, অনুষ্ঠান, অর্জন এবং সাংবাদিকদের ধারণকৃত সকল আলোকচিত্র ও ভিডিও প্রতিবেদনের ডিজিটাল আর্কাইভ।
+              {pick('মাভাবিপ্রবির ক্যাম্পাস জীবন, অনুষ্ঠান, অর্জন এবং সাংবাদিকদের ধারণ করা আলোকচিত্র ও ভিডিও প্রতিবেদনের ডিজিটাল সংরক্ষণাগার।', 'A digital archive of campus life, events, achievements, photographs, and video reports from MBSTU.')}
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-2 pt-2 text-xs font-bold">
               <span className="bg-white/10 border border-white/20 px-3.5 py-1 rounded-full">
-                📷 মোট ছবি: <b className="text-cyan-300">{photoCount.toLocaleString('bn-BD')}টি</b>
+                📷 {pick('ছবি:', 'Photographs:')} <b className="text-cyan-300">{count(photoCount)}</b>
               </span>
               <span className="bg-white/10 border border-white/20 px-3.5 py-1 rounded-full">
-                🎥 মোট ভিডিও: <b className="text-rose-300">{videoCount.toLocaleString('bn-BD')}টি</b>
+                🎥 {pick('ভিডিও:', 'Videos:')} <b className="text-rose-300">{count(videoCount)}</b>
               </span>
             </div>
           </div>
@@ -401,7 +404,7 @@ export default function GalleryPage() {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/50" />
                 <input
                   type="text"
-                  placeholder="শিরোনাম, ক্যাপশন বা আলোকচিত্রীর নাম দিয়ে খুঁজুন..."
+                  placeholder={pick('শিরোনাম, ক্যাপশন বা আলোকচিত্রীর নাম দিয়ে খুঁজুন', 'Search by title, caption, or photographer')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full rounded-2xl border border-white/20 bg-white/10 pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 transition"
@@ -411,9 +414,9 @@ export default function GalleryPage() {
               <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                 <div className="flex gap-1.5">
                   {[
-                    { k: 'all' as const, l: `সব (${entries.length})`, Icon: Sparkles },
-                    { k: 'photo' as const, l: `ছবি (${photoCount})`, Icon: ImageIcon },
-                    { k: 'video' as const, l: `ভিডিও (${videoCount})`, Icon: Video },
+                    { k: 'all' as const, l: `${pick('সব', 'All')} (${count(entries.length)})`, Icon: Sparkles },
+                    { k: 'photo' as const, l: `${pick('ছবি', 'Photographs')} (${count(photoCount)})`, Icon: ImageIcon },
+                    { k: 'video' as const, l: `${pick('ভিডিও', 'Videos')} (${count(videoCount)})`, Icon: Video },
                   ].map((t) => (
                     <button
                       key={t.k}
@@ -436,7 +439,7 @@ export default function GalleryPage() {
                   onClick={loadGallery}
                   disabled={loading}
                   className="p-2.5 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 text-white cursor-pointer"
-                  title="রিফ্রেশ করুন"
+                  title={pick('তথ্য হালনাগাদ করুন', 'Refresh')}
                 >
                   <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
                 </button>
@@ -466,7 +469,7 @@ export default function GalleryPage() {
           {/* মিডিয়া গ্রিড */}
           {loading ? (
             <div className="glass-card p-12 text-center text-sm text-slate-300">
-              গ্যালারি লোড হচ্ছে...
+              {pick('গ্যালারি লোড হচ্ছে…', 'Loading gallery…')}
             </div>
           ) : filtered.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -489,7 +492,7 @@ export default function GalleryPage() {
                       ) : (
                         <div className="size-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-indigo-950 text-white/60 gap-2">
                           <Video className="size-10 text-rose-400" />
-                          <span className="text-[11px] font-semibold">ভিডিও রিপোর্ট</span>
+                          <span className="text-[11px] font-semibold">{pick('ভিডিও প্রতিবেদন', 'Video report')}</span>
                         </div>
                       )}
 
@@ -510,13 +513,13 @@ export default function GalleryPage() {
                                 ? 'YouTube'
                                 : item.platform === 'facebook'
                                   ? 'FB Video'
-                                  : 'ভিডিও'}
+                                  : pick('ভিডিও', 'Video')}
                             </span>
                           </>
                         ) : (
                           <>
                             <Camera className="size-2.5" />
-                            <span>ফটো</span>
+                            <span>{pick('ছবি', 'Photo')}</span>
                           </>
                         )}
                       </span>
@@ -536,7 +539,7 @@ export default function GalleryPage() {
                       ) : (
                         <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-black/65 backdrop-blur px-2.5 py-1 text-[10px] font-bold text-white border border-white/20 opacity-90 group-hover:opacity-100">
                           <ZoomIn className="size-3 text-cyan-300" />
-                          <span>বড় করে দেখুন</span>
+                          <span>{pick('বড় করে দেখুন', 'View larger')}</span>
                         </span>
                       )}
                     </div>
@@ -553,7 +556,7 @@ export default function GalleryPage() {
 
                   <div className="px-4 pb-3.5 pt-2 border-t border-white/10 flex items-center justify-between gap-2 text-[11px] text-slate-300">
                     <span className="truncate">
-                      {item.credit ? `📷 ${item.credit}` : fmtBnDate(item.date)}
+                      {item.credit ? `📷 ${item.credit}` : fmtDate(item.date, lang)}
                     </span>
 
                     {item.postHref && (
@@ -562,7 +565,7 @@ export default function GalleryPage() {
                         onClick={(e) => e.stopPropagation()}
                         className="inline-flex items-center gap-1 text-cyan-300 hover:text-white font-bold shrink-0"
                       >
-                        <span>মূল সংবাদ</span>
+                        <span>{pick('মূল সংবাদ', 'Original report')}</span>
                         <ExternalLink className="size-3" />
                       </Link>
                     )}
@@ -573,8 +576,8 @@ export default function GalleryPage() {
           ) : (
             <div className="glass-card p-12 text-center text-slate-300 space-y-2">
               <Camera className="size-10 text-white/40 mx-auto" />
-              <p className="text-base font-bold text-white">কোনো ছবি বা ভিডিও পাওয়া যায়নি।</p>
-              <p className="text-xs">অন্য কোনো ফিল্টার বা সার্চ শব্দ ব্যবহার করে দেখুন।</p>
+              <p className="text-base font-bold text-white">{pick('কোনো ছবি বা ভিডিও পাওয়া যায়নি।', 'No photographs or videos were found.')}</p>
+              <p className="text-xs">{pick('অন্য কোনো ফিল্টার বা অনুসন্ধান-শব্দ ব্যবহার করে দেখুন।', 'Try a different filter or search term.')}</p>
             </div>
           )}
 
@@ -613,15 +616,14 @@ export default function GalleryPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <span className="text-xs font-bold bg-white/15 px-3 py-1 rounded-full border border-white/20">
-              {(activePhotoIdx + 1).toLocaleString('bn-BD')} /{' '}
-              {filteredPhotos.length.toLocaleString('bn-BD')}
+              {count(activePhotoIdx + 1)} / {count(filteredPhotos.length)}
             </span>
 
             <button
               type="button"
               onClick={() => setActivePhotoIdx(null)}
               className="flex size-10 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white cursor-pointer"
-              aria-label="বন্ধ করুন"
+              aria-label={pick('বন্ধ করুন', 'Close')}
             >
               <X className="size-5" />
             </button>
@@ -647,7 +649,7 @@ export default function GalleryPage() {
                     )
                   }}
                   className="absolute left-3 top-1/2 -translate-y-1/2 flex size-10 sm:size-12 items-center justify-center rounded-full bg-black/65 hover:bg-black/90 border border-white/20 cursor-pointer"
-                  aria-label="আগের ছবি"
+                  aria-label={pick('আগের ছবি', 'Previous photograph')}
                 >
                   <ChevronLeft className="size-6" />
                 </button>
@@ -658,7 +660,7 @@ export default function GalleryPage() {
                     setActivePhotoIdx((activePhotoIdx + 1) % filteredPhotos.length)
                   }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 flex size-10 sm:size-12 items-center justify-center rounded-full bg-black/65 hover:bg-black/90 border border-white/20 cursor-pointer"
-                  aria-label="পরের ছবি"
+                  aria-label={pick('পরের ছবি', 'Next photograph')}
                 >
                   <ChevronRight className="size-6" />
                 </button>
@@ -678,11 +680,11 @@ export default function GalleryPage() {
             )}
             <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] pt-1">
               {activePhoto.credit && (
-                <span className="text-cyan-300 font-semibold">📷 ছবি: {activePhoto.credit}</span>
+                <span className="text-cyan-300 font-semibold">📷 {pick('ছবি:', 'Photograph:')} {activePhoto.credit}</span>
               )}
               <span className="inline-flex items-center gap-1 text-white/70">
                 <CalendarDays className="size-3 text-cyan-400" />
-                <span>{fmtBnDate(activePhoto.date)}</span>
+                <span>{fmtDate(activePhoto.date, lang)}</span>
               </span>
               {activePhoto.postHref && (
                 <Link
@@ -690,7 +692,7 @@ export default function GalleryPage() {
                   onClick={() => setActivePhotoIdx(null)}
                   className="inline-flex items-center gap-1 rounded-full bg-cyan-500 text-slate-950 px-3 py-0.5 font-bold"
                 >
-                  <span>মূল সংবাদ পড়ুন</span>
+                  <span>{pick('মূল সংবাদ পড়ুন', 'Read original report')}</span>
                   <ExternalLink className="size-3" />
                 </Link>
               )}
@@ -709,7 +711,7 @@ export default function GalleryPage() {
             type="button"
             onClick={() => setActiveVideo(null)}
             className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white cursor-pointer"
-            aria-label="বন্ধ করুন"
+            aria-label={pick('বন্ধ করুন', 'Close')}
           >
             <X className="size-5" />
           </button>
@@ -743,7 +745,7 @@ export default function GalleryPage() {
                 <p className="font-serif text-sm sm:text-base font-bold text-white">
                   {activeVideo.title}
                 </p>
-                <p className="text-xs text-slate-400">{fmtBnDate(activeVideo.date)}</p>
+                <p className="text-xs text-slate-400">{fmtDate(activeVideo.date, lang)}</p>
               </div>
               {activeVideo.postHref && (
                 <Link
@@ -751,7 +753,7 @@ export default function GalleryPage() {
                   onClick={() => setActiveVideo(null)}
                   className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500 text-slate-950 px-4 py-1.5 text-xs font-bold"
                 >
-                  <span>মূল সংবাদ ও মন্তব্য</span>
+                  <span>{pick('মূল সংবাদ ও মন্তব্য', 'Original report and comments')}</span>
                   <ExternalLink className="size-3.5" />
                 </Link>
               )}

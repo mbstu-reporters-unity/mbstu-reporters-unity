@@ -55,9 +55,9 @@ export function OpportunitySubmissionForm({
         typeof result.error === 'string'
           ? result.error
           : ''
-      if (!response.ok) throw new Error(error || pick('জমা পাঠানো যায়নি। আবার চেষ্টা করুন।', 'Unable to submit. Please try again.'))
+      if (!response.ok) throw new Error(error || pick('জমা দেওয়া সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।', 'Submission could not be completed. Please try again.'))
 
-      setMessage(pick('আপনার কাজ জমা হয়েছে। ধন্যবাদ!', 'Your entry has been submitted. Thank you!'))
+      setMessage(pick('আপনার জমা দেওয়া কাজ গ্রহণ করা হয়েছে। ধন্যবাদ।', 'Your entry has been received. Thank you.'))
       setFields({
         applicant_name: '',
         applicant_email: '',
@@ -73,7 +73,7 @@ export function OpportunitySubmissionForm({
       setMessage(
         error instanceof Error
           ? error.message
-          : pick('জমা পাঠানো যায়নি। আবার চেষ্টা করুন।', 'Unable to submit. Please try again.')
+          : pick('জমা দেওয়া সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।', 'Submission could not be completed. Please try again.')
       )
       humanCheck.refresh()
     } finally {
@@ -90,16 +90,16 @@ export function OpportunitySubmissionForm({
           className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/50 bg-emerald-500/15 px-4 py-2 text-xs font-bold text-emerald-100 transition hover:bg-emerald-500/25"
         >
           <Send className="size-3.5" />
-          {pick('লেখা/ছবি জমা দিন', 'Submit writing/photo')}
+          {pick('লেখা বা ছবি জমা দিন', 'Submit writing or a photograph')}
         </button>
       ) : (
         <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/15 bg-slate-950/40 p-4">
           <div className="flex items-start justify-between gap-2">
             <h3 className="text-sm font-bold text-white">
-              {pick('প্রতিযোগিতায় কাজ জমা', 'Submit a contest entry')}
+              {pick('প্রতিযোগিতার জন্য কাজ জমা দিন', 'Submit an entry for the competition')}
             </h3>
             <button type="button" onClick={() => setOpen(false)} className="text-xs text-slate-300 hover:text-white">
-              {pick('বন্ধ', 'Close')}
+              {pick('বন্ধ করুন', 'Close')}
             </button>
           </div>
           <p className="text-xs text-slate-300">{opportunityTitle}</p>
@@ -111,10 +111,10 @@ export function OpportunitySubmissionForm({
             <input maxLength={80} className={fieldClass} placeholder={pick('স্টুডেন্ট আইডি (ঐচ্ছিক)', 'Student ID (optional)')} value={fields.student_id} onChange={(e) => updateField('student_id', e.target.value)} />
             <input required maxLength={180} className={fieldClass} placeholder={pick('কাজের শিরোনাম *', 'Entry title *')} value={fields.entry_title} onChange={(e) => updateField('entry_title', e.target.value)} />
           </div>
-          <textarea maxLength={12000} rows={5} className={fieldClass} placeholder={pick('লেখা এখানে দিন (ঐচ্ছিক; সর্বোচ্চ ১২,০০০ অক্ষর)', 'Paste your writing here (optional; up to 12,000 characters)')} value={fields.entry_text} onChange={(e) => updateField('entry_text', e.target.value)} />
-          <input type="url" className={fieldClass} placeholder={pick('অথবা ছবির/কাজের https:// Drive লিংক (ঐচ্ছিক)', 'Or a https:// link to your photo/work (optional)')} value={fields.work_url} onChange={(e) => updateField('work_url', e.target.value)} />
+          <textarea maxLength={12000} rows={5} className={fieldClass} placeholder={pick('লেখা এখানে দিন (ঐচ্ছিক; সর্বোচ্চ ১২,০০০ অক্ষর)', 'Enter your writing here (optional; up to 12,000 characters)')} value={fields.entry_text} onChange={(e) => updateField('entry_text', e.target.value)} />
+          <input type="url" className={fieldClass} placeholder={pick('অথবা ছবি বা কাজের লিংক দিন (ঐচ্ছিক)', 'Or provide a link to your photograph or work (optional)')} value={fields.work_url} onChange={(e) => updateField('work_url', e.target.value)} />
           <p className="text-[11px] text-slate-400">
-            {pick('লেখা অথবা কাজের লিংকের অন্তত একটি দিতে হবে। আপনার যোগাযোগের তথ্য শুধু প্রতিযোগিতা পরিচালনার জন্য ব্যবহৃত হবে।', 'Provide writing or a work link. Your contact details are used only to administer the contest.')}
+            {pick('লেখা অথবা কাজের লিংক—অন্তত একটি জমা দিন। আপনার যোগাযোগের তথ্য কেবল প্রতিযোগিতা পরিচালনার কাজে ব্যবহৃত হবে।', 'Please provide either your writing or a link to your work. Your contact details will be used only to administer the competition.')}
           </p>
           <HumanVerification
             idPrefix={`opportunity-${opportunityId}`}
@@ -128,7 +128,7 @@ export function OpportunitySubmissionForm({
           />
           <button type="submit" disabled={busy} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
             <Send className="size-3.5" />
-            {busy ? pick('জমা হচ্ছে...', 'Submitting...') : pick('নিরাপদে জমা দিন', 'Submit securely')}
+            {busy ? pick('জমা দেওয়া হচ্ছে…', 'Submitting…') : pick('নিরাপদে জমা দিন', 'Submit securely')}
           </button>
           {message && <p role="status" className="text-xs font-bold text-cyan-200">{message}</p>}
         </form>

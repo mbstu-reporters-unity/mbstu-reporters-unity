@@ -20,7 +20,7 @@ export default function TermsOfUsePage() {
       <SiteHeader />
       <main className="min-h-screen py-8 sm:py-12">
         <div className="mx-auto max-w-4xl px-4 space-y-6">
-          <BackNavigation items={[{ label: 'ব্যবহারের শর্তাবলি' }]} />
+          <BackNavigation items={[{ label: <Tx bn="ব্যবহারের শর্তাবলি" en="Terms of Use" /> }]} />
 
           <div className="glass-card p-6 sm:p-10 space-y-6 text-white border border-white/20 rounded-3xl shadow-2xl">
             <div className="border-b border-white/15 pb-4 space-y-2">
@@ -29,16 +29,16 @@ export default function TermsOfUsePage() {
                 <span>Terms & Conditions</span>
               </span>
               <h1 className="font-serif text-2xl sm:text-4xl font-bold">
-                ব্যবহারের শর্তাবলি ও কপিরাইট
+                <Tx bn="ব্যবহারের শর্তাবলি ও কপিরাইট" en="Terms of Use and Copyright" />
               </h1>
-              <p className="text-xs text-slate-300">সর্বশেষ পরিমার্জন: ২০২৬</p>
+              <p className="text-xs text-slate-300"><Tx bn="সর্বশেষ পরিমার্জন: ২০২৬" en="Last revised: 2026" /></p>
             </div>
 
             <section className="space-y-3 text-xs sm:text-sm text-slate-200 leading-relaxed text-justify">
-              <h2 className="text-base sm:text-lg font-bold text-cyan-300">১. কনটেন্ট ও কপিরাইট স্বত্ব</h2>
+              <h2 className="text-base sm:text-lg font-bold text-cyan-300"><Tx bn="১. লেখা ও কপিরাইট" en="1. Content and Copyright" /></h2>
               <p>
                 <Tx
-                  bn="প্রতিটি লেখা, ছবি, ভিডিও বা প্রকাশনার স্বত্ব আলাদা হতে পারে। প্রকাশিত হলেই কোনো উপাদান সংগঠন বা প্রতিবেদকের একক মালিকানাধীন—এমন ধরে নেওয়া যাবে না; তৃতীয় পক্ষের উপাদানের স্বত্ব তাদের অধিকারীর থাকতে পারে। পুনঃপ্রকাশ বা বাণিজ্যিক ব্যবহারের আগে সংশ্লিষ্ট স্বত্বাধিকারীর অনুমতি নিন এবং প্রযোজ্য ক্ষেত্রে কৃতিত্ব দিন।"
+                  bn="প্রতিটি লেখা, ছবি, ভিডিও বা প্রকাশনার স্বত্ব পৃথক হতে পারে। কোনো উপাদান প্রকাশিত হলেই তা সংগঠন বা প্রতিবেদকের একক মালিকানাধীন—এমনটি ধরে নেওয়া যাবে না; তৃতীয় পক্ষের উপাদানের স্বত্ব সংশ্লিষ্ট অধিকারীর কাছে থাকতে পারে। পুনঃপ্রকাশ বা বাণিজ্যিক ব্যবহারের আগে স্বত্বাধিকারীর অনুমতি গ্রহণ করুন এবং প্রযোজ্য ক্ষেত্রে যথাযথ স্বীকৃতি দিন।"
                   en="Rights may differ for each article, photo, video, or publication. Publication does not by itself mean the material is exclusively owned by the organization or a reporter; third-party rights may remain with their owners. Obtain permission before republishing or commercial use, and credit the rights holder where appropriate."
                 />
               </p>
@@ -46,24 +46,24 @@ export default function TermsOfUsePage() {
                 href="/policies#copyright"
                 className="inline-flex items-center gap-1 text-cyan-300 underline underline-offset-4 hover:text-white"
               >
-                <Tx bn="কপিরাইট ও মিডিয়া ব্যবহারের বিস্তারিত নীতি" en="Copyright and media usage policy" />{' '}
+                <Tx bn="কপিরাইট ও গণমাধ্যম উপকরণ ব্যবহারের বিস্তারিত নীতি" en="Copyright and media usage policy" />{' '}
                 <AlertTriangle className="size-3.5" />
               </Link>
             </section>
 
             <section className="space-y-3 text-xs sm:text-sm text-slate-200 leading-relaxed text-justify">
-              <h2 className="text-base sm:text-lg font-bold text-cyan-300">২. মন্তব্য ও মুক্তমতের নিয়মাবলি</h2>
+              <h2 className="text-base sm:text-lg font-bold text-cyan-300"><Tx bn="২. মন্তব্য ও মতপ্রকাশের নিয়ম" en="2. Comments and Freedom of Expression" /></h2>
               <ul className="list-disc pl-5 space-y-1.5">
-                <li>সংবাদের নিচে পাঠকের গঠনমূলক মন্তব্যকে স্বাগত জানানো হয়।</li>
-                <li>ধর্মীয় বিদ্বেষ, ব্যক্তিগত আক্রমণ, গালাগালি, বিভ্রান্তিকর প্রোপাগান্ডা বা আইনি সীমা লঙ্ঘনকারী কোনো মন্তব্য গ্রহণযোগ্য নয়। মডারেশন টিম তা মুছে দেওয়ার ক্ষমতা রাখে।</li>
+                <li><Tx bn="সংবাদের নিচে পাঠকের গঠনমূলক মন্তব্যকে স্বাগত জানানো হয়।" en="Constructive reader comments on news reports are welcome." /></li>
+                <li><Tx bn="ধর্মীয় বিদ্বেষ, ব্যক্তিগত আক্রমণ, অশালীন ভাষা, বিভ্রান্তিকর প্রচারণা অথবা আইন লঙ্ঘনকারী মন্তব্য গ্রহণযোগ্য নয়। এ ধরনের মন্তব্য অপসারণের অধিকার সংরক্ষণ করে মডারেশন দল।" en="Comments involving religious hatred, personal attacks, abusive language, misleading propaganda, or unlawful content are not permitted. The moderation team reserves the right to remove such comments." /></li>
               </ul>
             </section>
 
             <section className="space-y-3 text-xs sm:text-sm text-slate-200 leading-relaxed text-justify">
-              <h2 className="text-base sm:text-lg font-bold text-cyan-300">৩. সংশোধনী নীতি (Corrections Policy)</h2>
+              <h2 className="text-base sm:text-lg font-bold text-cyan-300"><Tx bn="৩. সংশোধনী নীতি" en="3. Corrections Policy" /></h2>
               <p>
                 <Tx
-                  bn="প্রকাশিত প্রতিবেদনে ভুলের নির্ভরযোগ্য তথ্য পেলে আমরা তা যাচাই করে প্রয়োজনমতো সংশোধন বা হালনাগাদ করব। গুরুত্বপূর্ণ তথ্যগত সংশোধনের ক্ষেত্রে সংশোধনের নোট ও তারিখ দেওয়া হবে। অনুরোধে লেখার লিংক, ভুল অংশ, সঠিক তথ্য ও সম্ভব হলে প্রমাণ দিন।"
+                  bn="প্রকাশিত প্রতিবেদনে ভুলের বিষয়ে নির্ভরযোগ্য তথ্য পেলে আমরা তা যাচাই করে প্রয়োজন অনুযায়ী সংশোধন বা হালনাগাদ করব। গুরুত্বপূর্ণ তথ্যগত সংশোধনের ক্ষেত্রে সংশোধনী-নোট ও তারিখ উল্লেখ করা হবে। অনুরোধের সঙ্গে প্রতিবেদনের লিংক, ভুল অংশ, সঠিক তথ্য এবং সম্ভব হলে প্রমাণ যুক্ত করুন।"
                   en="If credible information indicates an error in a published report, we will review and correct or update it as appropriate. Material factual corrections will include a note and date. Please include the article link, disputed passage, accurate information, and evidence when possible."
                 />
               </p>
@@ -77,14 +77,14 @@ export default function TermsOfUsePage() {
             </section>
 
             <section className="space-y-3 text-xs sm:text-sm text-slate-200 leading-relaxed text-justify">
-              <h2 className="text-base sm:text-lg font-bold text-cyan-300">৪. বিজ্ঞাপন ও স্পন্সরশিপ</h2>
+              <h2 className="text-base sm:text-lg font-bold text-cyan-300"><Tx bn="৪. বিজ্ঞাপন ও পৃষ্ঠপোষকতা" en="4. Advertising and Sponsorship" /></h2>
               <p>
                 <Tx
-                  bn="বিজ্ঞাপন বা স্পন্সরড কনটেন্ট প্রকাশ করা হলে তা স্পষ্টভাবে চিহ্নিত করা হবে। পৃষ্ঠপোষকতা কোনো সংবাদ বা সম্পাদনাগত সিদ্ধান্ত কেনার নিশ্চয়তা দেয় না। বিস্তারিত জানতে "
+                  bn="বিজ্ঞাপন বা পৃষ্ঠপোষকতাপ্রাপ্ত উপাদান প্রকাশ করা হলে তা স্পষ্টভাবে চিহ্নিত করা হবে। পৃষ্ঠপোষকতা কোনো সংবাদ বা সম্পাদনাগত সিদ্ধান্তকে প্রভাবিত করার অধিকার দেয় না। বিস্তারিত জানতে "
                   en="Any advertising or sponsored content will be clearly labelled. Sponsorship does not buy news coverage or editorial decisions. Read our "
                 />
                 <Link href="/policies#advertising" className="text-cyan-300 underline underline-offset-4 hover:text-white">
-                  <Tx bn="বিজ্ঞাপন ও স্পন্সরশিপ নীতি" en="advertising and sponsorship policy" />
+                  <Tx bn="বিজ্ঞাপন ও পৃষ্ঠপোষকতা নীতি" en="advertising and sponsorship policy" />
                 </Link>{' '}
                 <Tx bn="দেখুন।" en="." />
               </p>

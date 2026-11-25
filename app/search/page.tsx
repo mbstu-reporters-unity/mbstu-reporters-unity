@@ -21,11 +21,13 @@ import { BackToTop } from '@/components/portal/back-to-top'
 import { BackNavigation } from '@/components/portal/back-navigation'
 import { getVisiblePosts, type Post } from '@/lib/sb'
 import { getVisibleCategoryNames } from '@/lib/categories'
+import { useLang } from '@/lib/i18n'
 
 const bn = (n: number | string) =>
   String(n).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)])
 
 export default function GlobalSearchPage() {
+  const { pick } = useLang()
   const [posts, setPosts] = useState<Post[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -113,20 +115,20 @@ export default function GlobalSearchPage() {
       <SiteHeader />
       <main className="min-h-screen py-6 sm:py-10">
         <div className="mx-auto max-w-6xl px-4 space-y-6">
-          <BackNavigation items={[{ label: 'গ্লোবাল সংবাদ সার্চ' }]} />
+          <BackNavigation items={[{ label: pick('সাইটজুড়ে সংবাদ অনুসন্ধান', 'Site-wide News Search') }]} />
 
           {/* হেডার ব্যানার */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/90 via-indigo-950 to-slate-950 text-white p-6 sm:p-10 shadow-2xl border border-white/20 text-center space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider shadow">
               <Search className="size-3.5" />
-              <span>Global Search & Advanced Filters</span>
+              <span>{pick('উন্নত অনুসন্ধান', 'Advanced Search')}</span>
             </span>
 
             <h1 className="font-serif text-2xl sm:text-4xl font-bold leading-tight drop-shadow-md">
-              সাইট-ব্যাপী সংবাদ ও প্রতিবেদন অনুসন্ধান
+              {pick('সাইটজুড়ে সংবাদ ও প্রতিবেদন অনুসন্ধান', 'Search News and Reports Across the Site')}
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed">
-              তারিখ, ক্যাটাগরি, লেখক ও জনপ্রিয়তা অনুযায়ী ক্যাম্পাসের সকল সংবাদ, ফিচার ও অনুসন্ধানী প্রতিবেদন খুঁজুন।
+              {pick('তারিখ, বিভাগ, লেখক ও পাঠসংখ্যা অনুযায়ী ক্যাম্পাসের সংবাদ, ফিচার ও অনুসন্ধানী প্রতিবেদন খুঁজুন।', 'Find campus news, features, and investigative reports by date, category, author, or readership.')}
             </p>
           </div>
 
@@ -136,7 +138,7 @@ export default function GlobalSearchPage() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-5 text-cyan-400" />
               <input
                 type="text"
-                placeholder="সংবাদের শিরোনাম, মূল বক্তব্য বা বিষয় লিখে খুঁজুন..."
+                placeholder={pick('সংবাদের শিরোনাম, মূল বক্তব্য অথবা বিষয় দিয়ে অনুসন্ধান করুন', 'Search by headline, key statement, or subject')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full rounded-2xl border border-white/20 bg-white/10 pl-11 pr-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 backdrop-blur"
@@ -145,7 +147,7 @@ export default function GlobalSearchPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
               <div>
-                <label className="font-bold text-cyan-200 block mb-1">ক্যাটাগরি:</label>
+                <label className="font-bold text-cyan-200 block mb-1">{pick('বিভাগ:', 'Category:')}</label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
@@ -158,9 +160,9 @@ export default function GlobalSearchPage() {
               </div>
 
               <div>
-                <label className="font-bold text-cyan-200 block mb-1">প্রতিবেদকের নাম:</label>
+                <label className="font-bold text-cyan-200 block mb-1">{pick('প্রতিবেদকের নাম:', 'Reporter:')}</label>
                 <input
-                  placeholder="যেমন: তানভীর আহমেদ"
+                  placeholder={pick('উদাহরণ: তানভীর আহমেদ', 'For example: Tanvir Ahmed')}
                   value={authorQuery}
                   onChange={(e) => setAuthorQuery(e.target.value)}
                   className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:border-cyan-400"
@@ -168,7 +170,7 @@ export default function GlobalSearchPage() {
               </div>
 
               <div>
-                <label className="font-bold text-cyan-200 block mb-1">শুরুর তারিখ:</label>
+                <label className="font-bold text-cyan-200 block mb-1">{pick('শুরুর তারিখ:', 'Start date:')}</label>
                 <input
                   type="date"
                   value={startDate}
@@ -178,7 +180,7 @@ export default function GlobalSearchPage() {
               </div>
 
               <div>
-                <label className="font-bold text-cyan-200 block mb-1">শেষের তারিখ:</label>
+                <label className="font-bold text-cyan-200 block mb-1">{pick('শেষের তারিখ:', 'End date:')}</label>
                 <input
                   type="date"
                   value={endDate}
@@ -190,7 +192,7 @@ export default function GlobalSearchPage() {
 
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3 text-xs">
               <div className="flex items-center gap-1.5 font-bold">
-                <span className="text-slate-300">সাজান:</span>
+                <span className="text-slate-300">{pick('ক্রম:', 'Sort:')}</span>
                 <button
                   type="button"
                   onClick={() => setSortBy('newest')}
@@ -198,7 +200,7 @@ export default function GlobalSearchPage() {
                     sortBy === 'newest' ? 'bg-cyan-500 text-slate-950 font-bold border-cyan-400' : 'border-white/20 bg-white/10'
                   }`}
                 >
-                  সর্বশেষ
+                  {pick('সাম্প্রতিক', 'Newest')}
                 </button>
                 <button
                   type="button"
@@ -208,7 +210,7 @@ export default function GlobalSearchPage() {
                   }`}
                 >
                   <TrendingUp className="size-3" />
-                  <span>সর্বাধিক পঠিত</span>
+                  <span>{pick('সর্বাধিক পঠিত', 'Most read')}</span>
                 </button>
                 <button
                   type="button"
@@ -217,20 +219,20 @@ export default function GlobalSearchPage() {
                     sortBy === 'oldest' ? 'bg-cyan-500 text-slate-950 font-bold border-cyan-400' : 'border-white/20 bg-white/10'
                   }`}
                 >
-                  পুরোনো
+                  {pick('প্রাচীনতম', 'Oldest')}
                 </button>
               </div>
 
               <div className="flex items-center gap-2">
                 <span className="text-cyan-300 font-bold">
-                  মোট ফলাফল: {bn(filtered.length)}টি
+                  {pick('মোট ফলাফল:', 'Total results:')} {bn(filtered.length)}
                 </span>
                 <button
                   type="button"
                   onClick={resetFilters}
                   className="text-slate-400 hover:text-white underline cursor-pointer"
                 >
-                  রিসেট
+                  {pick('ফিল্টার মুছুন', 'Clear filters')}
                 </button>
               </div>
             </div>

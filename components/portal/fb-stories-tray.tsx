@@ -157,7 +157,7 @@ export function FbStoriesTray({ standalone = false }: { standalone?: boolean }) 
   if (stories.length === 0 && !me && !standalone) return null
 
   const sec = settings.homeSections.sections.find((s) => s.key === "stories")
-  const addStoryLabel = pick(sec?.subtitleBn || "স্টোরি দিন", sec?.subtitleEn || "Add Story")
+  const addStoryLabel = pick(sec?.subtitleBn || "গল্প যোগ করুন", sec?.subtitleEn || "Add a story")
   const currentActiveStory = activeStoryIdx !== null ? stories[activeStoryIdx] : null
 
   return (
@@ -165,10 +165,10 @@ export function FbStoriesTray({ standalone = false }: { standalone?: boolean }) 
       {!standalone && (
         <div className="mx-auto mb-2 flex max-w-7xl items-center justify-between gap-3 px-4">
           <h2 className="font-serif text-base font-bold text-white">
-            {pick(sec?.titleBn || 'স্টোরিজ', sec?.titleEn || 'Stories')}
+            {pick(sec?.titleBn || 'গল্পসমূহ', sec?.titleEn || 'Stories')}
           </h2>
           <Link href="/stories" className="text-xs font-bold text-cyan-300 hover:underline">
-            সব স্টোরি
+            {pick('সকল গল্প দেখুন', 'View all stories')}
           </Link>
         </div>
       )}

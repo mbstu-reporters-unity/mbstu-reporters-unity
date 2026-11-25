@@ -12,6 +12,7 @@ import {
 } from '@/lib/polls-podcasts'
 import { SectionHeading } from './section-heading'
 import { HomepageCompactCarousel } from './homepage-transition-sections'
+import { useLang } from '@/lib/i18n'
 
 function getDeviceId(): string {
   try {
@@ -35,6 +36,7 @@ export function PollWidget({
   standalone?: boolean
   compact?: boolean
 }) {
+  const { pick } = useLang()
   const [polls, setPolls] = useState<CampusPoll[]>([])
   const [votes, setVotes] = useState<PollVoteRow[]>([])
   const [devId, setDevId] = useState('')
@@ -81,14 +83,14 @@ export function PollWidget({
         <div className="mx-auto max-w-5xl px-4 space-y-6">
           <SectionHeading
             inverted
-            eyebrow="Campus Opinion Poll"
-            title="ক্যাম্পাস জরিপ ও পাঠকের মতামত"
+            eyebrow={pick('ক্যাম্পাস জনমত জরিপ', 'Campus Opinion Poll')}
+            title={pick('ক্যাম্পাস বিষয়ে জনমত', 'Campus Opinion Polls')}
             titleEn="Campus Opinion Polls"
-            subtitle="সমসাময়িক ক্যাম্পাস বিষয়ে আপনার মতামত দিন ও লাইভ ফলাফল দেখুন।"
-            subtitleEn="Share your opinion and view live results."
+            subtitle={pick('সমসাময়িক ক্যাম্পাস বিষয়ে মতামত দিন এবং ফলাফল দেখুন।', 'Share your views on current campus issues and review the results.')}
+            subtitleEn="Share your views on current campus issues and review the results."
           />
           <div className="glass-card p-8 text-center text-sm text-slate-300" aria-live="polite">
-            {loaded ? 'এখনো কোনো সক্রিয় জরিপ নেই।' : 'জরিপ লোড হচ্ছে...'}
+            {loaded ? pick('এখনো কোনো সক্রিয় জরিপ নেই।', 'There are no active polls at this time.') : pick('জরিপ লোড হচ্ছে…', 'Loading polls…')}
           </div>
         </div>
       </section>
@@ -166,8 +168,8 @@ export function PollWidget({
         </div>
 
         <div className="flex items-center justify-between border-t border-white/10 pt-1 text-[11px] text-slate-300">
-          <span>মোট ভোট: <b className="text-cyan-300">{bn(totalVotes)}</b></span>
-          <span>{myVote ? '✓ আপনি ভোট দিয়েছেন' : 'পছন্দের অপশনে ট্যাপ করে ভোট দিন'}</span>
+          <span>{pick('মোট ভোট:', 'Total votes:')} <b className="text-cyan-300">{bn(totalVotes)}</b></span>
+          <span>{myVote ? pick('✓ আপনি ভোট দিয়েছেন', '✓ You have voted') : pick('আপনার পছন্দের বিকল্পটি নির্বাচন করে ভোট দিন', 'Select your preferred option to vote')}</span>
         </div>
       </div>
     )
@@ -181,18 +183,18 @@ export function PollWidget({
       <div className="mx-auto max-w-5xl space-y-6 px-4">
         <SectionHeading
           inverted
-          eyebrow="Campus Opinion Poll"
-          title="ক্যাম্পাস জরিপ ও পাঠকের মতামত"
+          eyebrow={pick('ক্যাম্পাস জনমত জরিপ', 'Campus Opinion Poll')}
+          title={pick('ক্যাম্পাস বিষয়ে জনমত', 'Campus Opinion Polls')}
           titleEn="Campus Opinion Polls"
-          subtitle="সমসাময়িক ক্যাম্পাস বিষয়ে আপনার মতামত দিন ও লাইভ ফলাফল দেখুন।"
-          subtitleEn="Share your opinion and view live results."
+          subtitle={pick('সমসাময়িক ক্যাম্পাস বিষয়ে মতামত দিন এবং ফলাফল দেখুন।', 'Share your views on current campus issues and review the results.')}
+          subtitleEn="Share your views on current campus issues and review the results."
           action={
             !standalone ? (
               <Link
                 href="/polls"
                 className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
               >
-                {compact ? 'সব দেখুন' : 'সব জরিপ'}
+                {compact ? pick('সব দেখুন', 'View all') : pick('সকল জরিপ', 'All polls')}
               </Link>
             ) : undefined
           }
@@ -200,7 +202,7 @@ export function PollWidget({
         {compact ? (
           <HomepageCompactCarousel
             slides={pollCards}
-            title="ক্যাম্পাস জরিপ"
+            title={pick('ক্যাম্পাস জনমত জরিপ', 'Campus Opinion Polls')}
             interval={9000}
             paused={Boolean(busyPoll)}
             className="max-w-none"
