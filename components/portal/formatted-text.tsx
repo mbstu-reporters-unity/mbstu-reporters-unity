@@ -201,7 +201,7 @@ export function FormattedText({
   if (inline) {
     return (
       <span
-        className={className}
+        className={`formatted-text ${className}`}
         dangerouslySetInnerHTML={{ __html: parsed }}
       />
     )
@@ -209,7 +209,7 @@ export function FormattedText({
 
   return (
     <div
-      className={`whitespace-pre-line leading-relaxed ${className}`}
+      className={`formatted-text whitespace-pre-line leading-relaxed ${className}`}
       dangerouslySetInnerHTML={{ __html: parsed }}
     />
   )
