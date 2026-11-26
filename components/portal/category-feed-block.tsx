@@ -1,13 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, ArrowLeft, Layers } from 'lucide-react'
+import { ArrowRight, Layers } from 'lucide-react'
 import type { Post } from '@/lib/sb'
-import { buildHomepageRotation } from '@/lib/homepage-feed'
 import { NewsGrid } from './news-card'
 import { SectionHeading } from './section-heading'
-import { useHomepageAutoplay } from './use-homepage-autoplay'
-import { useMemo } from 'react'
 
 // ক্যাটাগরি রঙের প্যালেট — globals.css-এর data-category-palette মান ব্যবহার করা হচ্ছে
 const PALETTES = ['sky', 'amber', 'indigo', 'violet', 'emerald', 'rose', 'teal', 'slate'] as const
@@ -52,7 +49,6 @@ export function CategoryFeedBlock({
   eyebrow,
   subSuffixBn,
   subPrefixEn,
-  initialNow,
 }: {
   cat: string
   index: number
@@ -61,22 +57,9 @@ export function CategoryFeedBlock({
   eyebrow: string
   subSuffixBn: string
   subPrefixEn: string
-  initialNow: number
 }) {
   const palette = getpalette(cat)
   const style = BADGE_STYLES[palette]
-
-  // ওয়েইটেড রোটেশন তৈরি করি (homepage-feed এলগরিদম)
-  const rotation = useMemo(
-    () => buildHomepageRotation(posts, (p) => p.created_at, initialNow),
-    [posts, initialNow],
-  )
-
-  const autoplay = useHomepageAutoplay(rotation.length, 7000, index)
-  const current = rotation[autoplay.index]
-
-  const uniqIds = Array.from(new Set(rotation.map((p) => p.id)))
-  const dotIndex = uniqIds.indexOf(current?.id ?? '')
 
   return (
     <section
@@ -118,86 +101,8 @@ export function CategoryFeedBlock({
           subtitleEn={`${subPrefixEn} ${cat}`}
         />
 
-        {/* রোটেটিং কার্ড */}
-        {current ? (
-          <div
-            ref={autoplay.containerRef}
-            {...autoplay.interactionProps}
-            className="touch-pan-y"
-            role="region"
-            aria-label={`${cat} ফিড`}
-            aria-live="polite"
-            aria-atomic="false"
-          >
-            <div
-              key={current.id}
-              className={`${
-                autoplay.reducedMotion ? '' : 'animate-in fade-in slide-in-from-right-4 duration-500'
-              } motion-reduce:animate-none`}
-            >
-              <NewsGrid posts={[current]} />
-            </div>
-
-            {/* নেভিগেশন — ডট + বাটন */}
-            {rotation.length > 1 && (
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <span
-                  className="text-xs font-bold rounded-full px-2.5 py-0.5"
-                  style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}
-                >
-                  {autoplay.index + 1} / {uniqIds.length}
-                </span>
-
-                <div className="flex items-center gap-2">
-                  {/* ডট ইন্ডিকেটর */}
-                  {uniqIds.length <= 7 && (
-                    <div className="hidden sm:flex items-center gap-1" aria-hidden="true">
-                      {uniqIds.map((id, i) => (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={() =>
-                            autoplay.setIndex(rotation.findIndex((p) => p.id === id))
-                          }
-                          aria-label={`${i + 1} নম্বর সংবাদে যান`}
-                          className={`rounded-full transition-all duration-300 ${
-                            i === dotIndex
-                              ? 'w-5 h-2'
-                              : 'w-2 h-2 bg-white/30 hover:bg-white/60'
-                          }`}
-                          style={i === dotIndex ? { backgroundColor: style.bg, width: '1.25rem' } : {}}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={autoplay.previous}
-                    aria-label="আগের সংবাদ"
-                    className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20 active:scale-95"
-                  >
-                    <ArrowLeft className="size-4" aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={autoplay.next}
-                    aria-label="পরের সংবাদ"
-                    className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20 active:scale-95"
-                  >
-                    <ArrowRight className="size-4" aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* মোবাইল সোয়াইপ ইঙ্গিত */}
-            {rotation.length > 1 && (
-              <p className="mt-1.5 text-center text-[10px] text-white/30 sm:hidden select-none" aria-hidden="true">
-                ← আঙুল দিয়ে সোয়াইপ করুন →
-              </p>
-            )}
-          </div>
+        {posts.length ? (
+          <NewsGrid posts={posts.slice(0, 3)} />
         ) : (
           <p className="glass-card p-5 text-sm text-slate-200">এই বিভাগে এখনো কোনো সংবাদ নেই।</p>
         )}

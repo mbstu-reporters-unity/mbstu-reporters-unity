@@ -148,9 +148,7 @@ export default async function ModernHomepageDemo() {
                 <GeneralNews
                   sectionConfig={topAreaSection}
                   prefetchedPosts={homePosts}
-                  prefetchedLimits={limits}
                   prefetchedCategories={categoryNames}
-                  initialNow={now}
                 />
               )}
             </div>

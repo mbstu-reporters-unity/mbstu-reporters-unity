@@ -1048,6 +1048,23 @@ export async function getVisiblePosts(limit = 50): Promise<Post[]> {
   }
 }
 
+export async function getPopularPosts(limit = 6): Promise<Post[]> {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/posts?select=*&or=(hidden.is.null,hidden.eq.false)&order=view_count.desc.nullslast,created_at.desc&limit=${limit}`,
+      { headers: hdr(), cache: "no-store" }
+    )
+    if (!res.ok) {
+      console.error(`Popular post query failed (${res.status})`)
+      return []
+    }
+    return await res.json()
+  } catch (error) {
+    console.error("Popular post query failed", error)
+    return []
+  }
+}
+
 export async function getHomepagePostHistory(): Promise<Post[]> {
   const pageSize = 200
   const rows: Post[] = []

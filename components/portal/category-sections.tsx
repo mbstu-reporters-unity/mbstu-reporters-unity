@@ -8,7 +8,6 @@ import {
 } from '@/lib/sb'
 import { getVisibleCategoryNames } from '@/lib/categories'
 import type { HomeSectionConfig } from '@/lib/site-settings'
-import { selectHomepageItems } from '@/lib/homepage-feed'
 import { SectionHeading } from './section-heading'
 import { CategoryFeedBlock } from './category-feed-block'
 
@@ -39,20 +38,13 @@ export async function CategorySections({
   const eyebrowText = sectionConfig?.eyebrow ?? 'News'
   const subSuffixBn = sectionConfig?.subtitleBn || 'বিভাগের সর্বশেষ সংবাদ ও প্রতিবেদন'
   const subPrefixEn = sectionConfig?.subtitleEn || 'Latest news in'
-  const now = Date.now()
-
   return (
     <>
       {cats.map((cat, i) => {
         const allCatPosts = newsOnly.filter((p) => p.category === cat)
         if (!allCatPosts.length) return null
 
-        // ৩ দিনের মধ্যে হোম পেজে দেখানোর যোগ্য পোস্ট বের করো
-        const homePosts = selectHomepageItems(allCatPosts, (p) => p.created_at, now)
-          .slice(0, HOME_PREVIEW_LIMIT)
-
-        // হোমে দেখানোর মতো পোস্ট না থাকলে এই ক্যাটাগরির ব্লক হোম পেজে দেখাবে না
-        if (!homePosts.length) return null
+        const homePosts = allCatPosts.slice(0, HOME_PREVIEW_LIMIT)
 
         const archiveLimit = limits[`limit:${cat}`] || 12
 
@@ -66,7 +58,6 @@ export async function CategorySections({
             eyebrow={eyebrowText}
             subSuffixBn={subSuffixBn}
             subPrefixEn={subPrefixEn}
-            initialNow={now}
           />
         )
       })}

@@ -100,9 +100,9 @@ export function NewsCard({ p }: { p: Post }) {
   return (
     <article
       ref={articleRef}
-      className="news-card scroll-mt-20 group flex h-full flex-col border-0 bg-transparent transition-all"
+      className="news-card scroll-mt-20 group flex h-full flex-col border-0 bg-transparent transition-all md:overflow-hidden md:rounded-2xl md:border md:border-white/15 md:bg-white/[0.05] md:shadow-lg"
     >
-      <div className="flex items-center justify-between gap-2.5 px-6 pt-3.5 pb-2.5 sm:px-7">
+      <div className="flex items-center justify-between gap-2.5 px-4 pt-3.5 pb-2.5 sm:px-5">
         <div className="flex items-center gap-2.5 min-w-0">
           {primaryHref ? (
             <Link href={primaryHref} className="shrink-0">
@@ -203,7 +203,7 @@ export function NewsCard({ p }: { p: Post }) {
         postDate={p.created_at}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col px-6 pt-3 pb-3 sm:px-7 sm:pb-4 space-y-2">
+      <div className="flex min-w-0 flex-1 flex-col px-4 pt-3 pb-3 sm:px-5 sm:pb-4 space-y-2">
         <h3
           onClick={toggleExpand}
           className="news-card-title break-words font-serif text-lg sm:text-xl font-bold leading-snug text-white hover:text-cyan-200 transition-colors drop-shadow-sm cursor-pointer select-none"

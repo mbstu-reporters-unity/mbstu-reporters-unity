@@ -1,5 +1,5 @@
 import { HomeEventsAndPopular } from '@/components/portal/home-events-popular'
-import { Fragment, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { connection } from 'next/server'
 import { TopBar } from '@/components/portal/top-bar'
 import { SiteHeader } from '@/components/portal/site-header'
@@ -20,23 +20,23 @@ import { PollWidget } from '@/components/portal/poll-widget'
 import { SiteFooter } from '@/components/portal/site-footer'
 import { BackToTop } from '@/components/portal/back-to-top'
 import { getSiteSettings, type HomeSectionConfig } from '@/lib/site-settings'
-import { getHomepagePostHistory, getLimits, CAT_CLUB, CAT_STUDENT } from '@/lib/sb'
+import { getHomepagePostHistory, getLimits, getPopularPosts, CAT_CLUB, CAT_STUDENT } from '@/lib/sb'
 import { getVisibleCategoryNames } from '@/lib/categories'
 import { getHomepageNotices } from '@/lib/notices'
 import { selectHomepageItems } from '@/lib/homepage-feed'
-import { HomepageFeedRotator } from '@/components/portal/homepage-feed-rotator'
 import { HomepageTransitionSection } from '@/components/portal/homepage-transition-sections'
 
 export const revalidate = 60
 
 export default async function Page() {
   await connection()
-  const [settings, postHistory, limits, categoryNames, noticeHistory] = await Promise.all([
+  const [settings, postHistory, limits, categoryNames, noticeHistory, popularPosts] = await Promise.all([
     getSiteSettings(),
     getHomepagePostHistory(),
     getLimits(),
     getVisibleCategoryNames(),
     getHomepageNotices(),
+    getPopularPosts(6),
   ])
   const sections = settings.homeSections.sections
   const now = Date.now()
@@ -44,13 +44,17 @@ export default async function Page() {
   const homePosts = selectHomepageItems(postHistory, (post) => post.created_at, now).filter(
     (post) => !post.category || visibleCategories.has(post.category)
   )
+  const allPublishedPosts = postHistory.filter(
+    (post) => !post.hidden && (!post.category || visibleCategories.has(post.category))
+  )
+  const activeNotices = noticeHistory.filter(
+    (notice) => !notice.expires_at || Date.parse(notice.expires_at) > now
+  )
   const homeNotices = selectHomepageItems(
-    noticeHistory.filter((notice) => !notice.expires_at || Date.parse(notice.expires_at) > now),
+    activeNotices,
     (notice) => notice.updated_at || notice.created_at,
     now
   )
-  const noticeSection = sections.find((section) => section.key === 'notice_board')
-  const feedNotices = noticeSection?.visible ? homeNotices : []
   const newsPosts = homePosts.filter(
     (post) => !post.page_id && post.category !== CAT_CLUB && post.category !== CAT_STUDENT
   )
@@ -83,7 +87,7 @@ export default async function Page() {
           <CategorySections
             key={sec.key}
             sectionConfig={sec}
-            prefetchedPosts={homePosts}
+            prefetchedPosts={allPublishedPosts}
             prefetchedLimits={limits}
             prefetchedCategories={categoryNames}
           />
@@ -138,23 +142,12 @@ export default async function Page() {
           <GeneralNews
             sectionConfig={topAreaSection}
             prefetchedPosts={homePosts}
-            prefetchedLimits={limits}
             prefetchedCategories={categoryNames}
-            initialNow={now}
+            prefetchedPopularPosts={popularPosts}
+            prefetchedNotices={activeNotices}
           />
         )}
-        {middleSections.map((section, index) => (
-          <Fragment key={section.key}>
-            {renderSection(section)}
-            <HomepageFeedRotator
-              posts={newsPosts}
-              notices={feedNotices}
-              title="সর্বশেষ সংবাদ ও হালনাগাদ নোটিশ"
-              initialIndex={index}
-              initialNow={now}
-            />
-          </Fragment>
-        ))}
+        {middleSections.map((section) => renderSection(section))}
         {leadershipSection?.visible && <LeadershipSection key={leadershipSection.key} />}
       </main>
       <SiteFooter />

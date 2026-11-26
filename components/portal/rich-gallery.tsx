@@ -470,8 +470,9 @@ export default function RichGallery({
 
   if (list.length === 0) return null
 
-  const { frameColor, viewerMode } = parseLayoutValue(layout)
-  const activeLayout: string = "stack"
+  const parsed = parseLayoutValue(layout)
+  const { frameColor, viewerMode } = parsed
+  const activeLayout = parsed.base
   const effectiveViewer: "lightbox" | "album" =
     viewerMode === "default" ? globalMode : viewerMode
 
