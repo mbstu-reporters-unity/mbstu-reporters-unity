@@ -247,7 +247,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     showThemeSwitcher: true,
     showSocialLinks: true,
     defaultLang: "bn",
-    defaultTheme: "ocean-glass",
+    defaultTheme: "daylight-light",
   },
   moderatorPanel: {
     globalEnabled: true,

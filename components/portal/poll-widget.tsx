@@ -45,6 +45,7 @@ export function PollWidget({
   const [busyPoll, setBusyPoll] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [shareStatus, setShareStatus] = useState('')
+  const [todayLabel, setTodayLabel] = useState('')
 
   async function sharePoll(poll: CampusPoll) {
     const url = `${window.location.origin}/polls#${encodeURIComponent(poll.id)}`
@@ -84,6 +85,14 @@ export function PollWidget({
   }
 
   useEffect(() => {
+    setTodayLabel(
+      new Intl.DateTimeFormat('bn-BD', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Dhaka',
+      }).format(new Date())
+    )
     const id = getDeviceId()
     setDevId(id)
 
@@ -119,13 +128,16 @@ export function PollWidget({
   if (!loaded || polls.length === 0) {
     if (kalbela) {
       return (
-        <section id="polls" className="border-b border-white/10 py-8 sm:py-10">
+        <section id="polls" className="w-full">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-4 flex items-center gap-2">
-              <BarChart3 className="size-5 text-cyan-400" aria-hidden="true" />
-              <h2 className="font-serif text-xl font-bold text-white sm:text-2xl">অনলাইন জরিপ</h2>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="size-5 text-rose-600" aria-hidden="true" />
+                <h2 className="font-serif text-xl font-bold text-[var(--theme-text-title)] sm:text-2xl">অনলাইন জরিপ</h2>
+              </div>
+              <time className="text-xs text-[var(--theme-text-muted)]">{todayLabel}</time>
             </div>
-            <div className="glass-card p-6 text-center text-sm text-slate-300" aria-live="polite">
+            <div className="rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-6 text-center text-sm text-[var(--theme-text-body)] shadow-sm" aria-live="polite">
               {loaded ? 'এখনো কোনো সক্রিয় জরিপ নেই।' : 'জরিপ লোড হচ্ছে…'}
             </div>
           </div>
@@ -161,39 +173,39 @@ export function PollWidget({
     return (
       <div
         key={poll.id}
-        className={`${kalbela ? 'rounded-2xl border border-white/15 bg-white/[0.04] text-white shadow-sm' : 'glass-card text-white'} space-y-4 ${
+        className={`${kalbela ? 'rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] shadow-sm' : 'glass-card text-white'} space-y-4 ${
           compact ? 'p-4 sm:p-5' : 'p-5 sm:p-6'
         }`}
       >
         {kalbela && (
-          <div className="flex items-center justify-between gap-3 border-b border-white/15 pb-3">
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-wide text-cyan-300">অনলাইন জরিপ</p>
-              <time className="mt-1 block text-[11px] text-slate-400">
-                {new Date(poll.created_at).toLocaleDateString('bn-BD', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                  timeZone: 'Asia/Dhaka',
-                })}
-              </time>
+          <div className="flex items-center justify-between gap-3 border-b border-[var(--theme-card-border)] pb-3">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="size-4 text-rose-600" aria-hidden="true" />
+              <div>
+                <p className="text-xs font-extrabold tracking-wide text-[var(--theme-brand)]">অনলাইন জরিপ</p>
+                <time className="mt-1 block text-[11px] text-[var(--theme-text-muted)]">
+                  {todayLabel}
+                </time>
+              </div>
             </div>
             <button
               type="button"
               onClick={() => sharePoll(poll)}
               aria-label="জরিপ শেয়ার করুন"
-              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-cyan-300 transition hover:bg-white/20"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-brand)] transition hover:bg-[var(--theme-brand-soft)]"
             >
               <Share2 className="size-4" aria-hidden="true" />
             </button>
           </div>
         )}
-        <div className="flex items-start justify-between gap-2 border-b border-white/15 pb-3">
+        <div className={`flex items-start justify-between gap-2 border-b pb-3 ${kalbela ? "border-[var(--theme-card-border)]" : "border-white/15"}`}>
           <div className="flex items-start gap-2.5">
-            <span className="shrink-0 rounded-xl border border-cyan-400/30 bg-cyan-500/20 p-2 text-cyan-300">
-              <BarChart3 className="size-4" />
+            <span className={`shrink-0 rounded-xl border p-2 ${kalbela ? "border-rose-200 bg-rose-50 text-rose-600" : "border-cyan-400/30 bg-cyan-500/20 text-cyan-300"}`}>
+              <Vote className="size-4" />
             </span>
-            <h3 className="font-serif text-base font-bold leading-snug sm:text-lg">{poll.question}</h3>
+            <h3 className={`font-serif text-base font-bold leading-snug sm:text-lg ${kalbela ? "text-[var(--theme-text-title)]" : "text-white"}`}>
+              {poll.question}
+            </h3>
           </div>
         </div>
 
@@ -210,17 +222,25 @@ export function PollWidget({
                 disabled={Boolean(myVote) || busyPoll === poll.id}
                 onClick={() => handleVote(poll.id, opt.id)}
                 className={`relative w-full overflow-hidden rounded-xl border p-3 text-left transition ${
-                  isMine
-                    ? 'border-cyan-400 bg-cyan-500/15'
-                    : myVote
-                      ? 'border-white/15 bg-white/5 cursor-default'
-                      : 'border-white/20 bg-white/10 hover:border-cyan-400 hover:bg-white/15 cursor-pointer'
+                  kalbela
+                    ? isMine
+                      ? 'border-rose-500 bg-rose-50 text-slate-900'
+                      : myVote
+                        ? 'border-slate-200 bg-slate-50 text-slate-800 cursor-default'
+                        : 'border-slate-200 bg-white text-slate-800 hover:border-rose-400 hover:bg-slate-50 cursor-pointer'
+                    : isMine
+                      ? 'border-cyan-400 bg-cyan-500/15 text-white'
+                      : myVote
+                        ? 'border-white/15 bg-white/5 text-white cursor-default'
+                        : 'border-white/20 bg-white/10 text-white hover:border-cyan-400 hover:bg-white/15 cursor-pointer'
                 }`}
               >
                 {myVote && (
                   <div
                     className={`absolute inset-y-0 left-0 transition-all duration-500 ${
-                      isMine ? 'bg-cyan-500/30' : 'bg-white/10'
+                      kalbela
+                        ? isMine ? 'bg-rose-200/80' : 'bg-slate-200/60'
+                        : isMine ? 'bg-cyan-500/30' : 'bg-white/10'
                     }`}
                     style={{ width: `${pct}%` }}
                   />
@@ -229,15 +249,15 @@ export function PollWidget({
                 <div className="relative z-10 flex items-center justify-between gap-2 text-xs font-semibold sm:text-sm">
                   <span className="flex min-w-0 items-center gap-2">
                     {isMine ? (
-                      <CheckCircle2 className="size-4 shrink-0 text-cyan-300" />
+                      <CheckCircle2 className={`size-4 shrink-0 ${kalbela ? "text-emerald-600" : "text-cyan-300"}`} />
                     ) : (
-                      <Vote className="size-3.5 shrink-0 text-white/50" />
+                      <Vote className={`size-3.5 shrink-0 ${kalbela ? "text-slate-400" : "text-white/50"}`} />
                     )}
                     <span className="truncate">{opt.label}</span>
                   </span>
 
                   {myVote && (
-                    <span className="shrink-0 text-xs font-bold tabular-nums text-cyan-200">
+                    <span className={`shrink-0 text-xs font-bold tabular-nums ${kalbela ? "text-slate-700" : "text-cyan-200"}`}>
                       {bn(pct)}% ({bn(count)})
                     </span>
                   )}
@@ -247,12 +267,12 @@ export function PollWidget({
           })}
         </div>
 
-        <div className="flex items-center justify-between border-t border-white/10 pt-1 text-[11px] text-slate-300">
-          <span>{pick('মোট ভোটদাতা:', 'Total voters:')} <b className="text-cyan-300">{bn(totalVotes)}{pick(' জন', '')}</b></span>
-          <span>{myVote ? pick('✓ আপনি ভোট দিয়েছেন', '✓ You have voted') : pick('আপনার পছন্দের বিকল্পটি নির্বাচন করে ভোট দিন', 'Select your preferred option to vote')}</span>
+        <div className={`flex flex-wrap items-center justify-between gap-2 border-t pt-2 text-[11px] ${kalbela ? "border-[var(--theme-card-border)] text-[var(--theme-text-muted)]" : "border-white/10 text-slate-300"}`}>
+          <span>{pick('মোট ভোটদাতা:', 'Total voters:')} <b className={kalbela ? "text-[var(--theme-brand)]" : "text-cyan-300"}>{bn(totalVotes)}{pick(' জন', '')}</b></span>
+          <span>{myVote ? <span className="inline-flex items-center gap-1"><CheckCircle2 className="size-3.5 text-emerald-600" />{pick('আপনি ভোট দিয়েছেন', 'You have voted')}</span> : pick('আপনার পছন্দের বিকল্পটি নির্বাচন করে ভোট দিন', 'Select your preferred option to vote')}</span>
         </div>
         {kalbela && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--theme-card-border)] pt-3">
             <div className="flex items-center gap-2" aria-label="জরিপ শেয়ার করুন">
               <button
                 type="button"
@@ -282,12 +302,12 @@ export function PollWidget({
                 type="button"
                 onClick={() => copyPollLink(poll)}
                 aria-label="জরিপের লিংক কপি করুন"
-                className="flex size-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white hover:bg-white/20"
+                className="flex size-8 items-center justify-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-title)] hover:bg-[var(--theme-brand-soft)]"
               >
                 <Copy className="size-3.5" aria-hidden="true" />
               </button>
             </div>
-            {shareStatus && <p className="text-[11px] text-cyan-300" aria-live="polite">{shareStatus}</p>}
+            {shareStatus && <p className="text-[11px] text-[var(--theme-brand)]" aria-live="polite">{shareStatus}</p>}
           </div>
         )}
       </div>
@@ -296,9 +316,9 @@ export function PollWidget({
 
   if (kalbela) {
     return (
-      <section id="polls" className="border-b border-white/10 py-8 sm:py-10">
+      <section id="polls" className="w-full">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-5">
             {pollCards.slice(0, 1)}
           </div>
         </div>

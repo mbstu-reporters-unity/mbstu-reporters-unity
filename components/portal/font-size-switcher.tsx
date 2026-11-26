@@ -33,14 +33,14 @@ export function FontSizeSwitcher() {
     <div
       role="group"
       aria-label="লেখার ফন্ট সাইজ পরিবর্তন"
-      className="inline-flex items-center rounded-full border border-white/30 bg-white/10 text-[11px] font-bold text-white overflow-hidden"
+      className="inline-flex items-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[11px] font-bold text-[var(--theme-text-title)] overflow-hidden"
     >
       <button
         type="button"
         onClick={() => applyStep(idx - 1)}
         disabled={idx === 0}
         title="লেখা ছোট করুন"
-        className="px-2 py-1 hover:bg-white/20 disabled:opacity-35 cursor-pointer"
+        className="px-2 py-1 hover:bg-[var(--theme-brand-soft)] disabled:opacity-35 cursor-pointer"
       >
         A-
       </button>
@@ -48,7 +48,7 @@ export function FontSizeSwitcher() {
         type="button"
         onClick={() => applyStep(1)}
         title="স্বাভাবিক ফন্ট সাইজ"
-        className="px-1.5 py-1 border-x border-white/20 hover:bg-white/20 cursor-pointer"
+        className="px-1.5 py-1 border-x border-[var(--theme-card-border)] hover:bg-[var(--theme-brand-soft)] cursor-pointer"
       >
         A
       </button>
@@ -57,7 +57,7 @@ export function FontSizeSwitcher() {
         onClick={() => applyStep(idx + 1)}
         disabled={idx === STEPS.length - 1}
         title="লেখা বড় করুন"
-        className="px-2 py-1 hover:bg-white/20 disabled:opacity-35 cursor-pointer"
+        className="px-2 py-1 hover:bg-[var(--theme-brand-soft)] disabled:opacity-35 cursor-pointer"
       >
         A+
       </button>

@@ -66,7 +66,7 @@ function apply(id: ThemeId) {
 export function ThemeSwitcher() {
   const { pick } = useLang()
   const [open, setOpen] = useState(false)
-  const [theme, setTheme] = useState<ThemeId>('ocean-glass')
+  const [theme, setTheme] = useState<ThemeId>('daylight-light')
   const box = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -104,10 +104,12 @@ export function ThemeSwitcher() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="true"
-        className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/15 px-3 py-1 text-xs font-bold text-white shadow-xs backdrop-blur-md transition-all hover:bg-white/25 active:scale-95 cursor-pointer"
+        aria-label={pick('থিম পরিবর্তন', 'Change theme')}
+        title={pick('থিম পরিবর্তন', 'Change theme')}
+        className="inline-flex size-8 sm:size-auto items-center justify-center gap-1.5 rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] px-0 sm:px-3 py-0 sm:py-1 text-xs font-bold text-[var(--theme-text-title)] shadow-xs transition-all hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] active:scale-95 cursor-pointer"
       >
         <Palette className="size-3.5" aria-hidden="true" />
-        <span>{pick('৫টি থিম', '5 Themes')}</span>
+        <span className="hidden sm:inline">{pick('৫টি থিম', '5 Themes')}</span>
       </button>
 
       {open && (

@@ -36,12 +36,12 @@ export function BackNavigation({
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-white/15 bg-slate-950/90 px-3 py-2 text-white shadow-sm select-none hero-daylight-dark-surface">
+    <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] px-3 py-2 text-[var(--theme-text-body)] shadow-sm select-none">
       <div className="flex items-center gap-1.5">
         <button
           type="button"
           onClick={handleStepBack}
-          className="inline-flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 px-3 py-1.5 text-xs font-bold text-cyan-100 transition-all duration-200 cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--theme-brand-soft)] hover:bg-[var(--theme-brand)] active:scale-95 border border-[var(--theme-card-border)] px-3 py-1.5 text-xs font-bold text-[var(--theme-text-title)] hover:text-[var(--theme-bg-solid)] transition-all duration-200 cursor-pointer"
         >
           <ArrowLeft className="size-3.5" />
           <span><Tx bn="পূর্ববর্তী পৃষ্ঠায় ফিরুন" en="Go to the previous page" /></span>
@@ -50,7 +50,7 @@ export function BackNavigation({
           <button
             type="button"
             onClick={() => router.forward()}
-            className="inline-flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 px-3 py-1.5 text-xs font-bold text-cyan-100 transition-all duration-200 cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--theme-brand-soft)] hover:bg-[var(--theme-brand)] active:scale-95 border border-[var(--theme-card-border)] px-3 py-1.5 text-xs font-bold text-[var(--theme-text-title)] hover:text-[var(--theme-bg-solid)] transition-all duration-200 cursor-pointer"
           >
             <span><Tx bn="পরবর্তী পৃষ্ঠায় যান" en="Go to the next page" /></span>
             <ArrowRight className="size-3.5" />
@@ -58,13 +58,13 @@ export function BackNavigation({
         )}
       </div>
 
-      <div className="flex items-center gap-1.5 text-xs text-white/70">
+      <div className="flex items-center gap-1.5 text-xs text-[var(--theme-text-body)]">
         <nav
           aria-label="Breadcrumb navigation"
           className="flex items-center gap-1 overflow-x-auto text-[11px] sm:text-xs"
         >
           {showHome && (
-            <Link href="/" className="flex shrink-0 items-center gap-1 text-white/80 hover:text-white">
+            <Link href="/" className="flex shrink-0 items-center gap-1 text-[var(--theme-text-body)] hover:text-[var(--theme-brand)]">
               <Home className="size-3" />
               <span><Tx bn="হোম" en="Home" /></span>
             </Link>
@@ -72,13 +72,13 @@ export function BackNavigation({
 
           {items.map((item, idx) => (
             <span key={idx} className="flex items-center gap-1">
-              <ChevronRight className="size-3 text-white/40 shrink-0" />
+              <ChevronRight className="size-3 text-[var(--theme-card-border)] shrink-0" />
               {item.href ? (
-                <Link href={item.href} className="text-white/80 hover:text-white truncate max-w-[110px]">
+                <Link href={item.href} className="text-[var(--theme-text-body)] hover:text-[var(--theme-brand)] truncate max-w-[110px]">
                   {item.label}
                 </Link>
               ) : (
-                <span className="text-white font-bold truncate max-w-[140px]">{item.label}</span>
+                <span className="text-[var(--theme-brand)] font-bold truncate max-w-[140px]">{item.label}</span>
               )}
             </span>
           ))}

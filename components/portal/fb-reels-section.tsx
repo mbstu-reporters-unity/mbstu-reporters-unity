@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { Play, Film, Share2, ExternalLink, ChevronUp, ChevronDown } from "lucide-react"
+import { Play, Film, Share2, ExternalLink, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Eye } from "lucide-react"
 import { getLiveReels, type ReelItem } from "@/lib/reels"
 import { useLang } from "@/lib/i18n"
 import { useSiteSettings } from "./site-settings-context"
@@ -22,6 +22,7 @@ export function FbReelsSection({
   showHeading = true,
   sectionId = "reels-hub",
   displayMode = "default",
+  newspaper = false,
 }: {
   standalone?: boolean
   compact?: boolean
@@ -29,6 +30,7 @@ export function FbReelsSection({
   showHeading?: boolean
   sectionId?: string
   displayMode?: "default" | "portrait" | "landscape"
+  newspaper?: boolean
 }) {
   const settings = useSiteSettings()
   const { pick } = useLang()
@@ -37,6 +39,7 @@ export function FbReelsSection({
   const [currentIndex, setCurrentIndex] = useState<number | null>(null)
 
   const containerRef = useRef<HTMLDivElement>(null)
+  const reelTrayRef = useRef<HTMLDivElement>(null)
   const itemRefs = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
@@ -113,12 +116,15 @@ export function FbReelsSection({
       setCurrentIndex(idx)
     }
   }
+  const scrollReels = (direction: -1 | 1) => {
+    reelTrayRef.current?.scrollBy({ left: direction * 320, behavior: "smooth" })
+  }
 
   if (reels.length === 0) {
     if (!standalone) return null
     return (
       <section id="reels-hub" className="mx-auto w-full max-w-7xl px-4 py-8">
-        <div className="glass-card p-8 text-center text-sm text-slate-300" aria-live="polite">
+        <div className={`${newspaper ? "rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)]" : "glass-card text-slate-300"} p-8 text-center text-sm`} aria-live="polite">
           {loaded ? pick('এখনো কোনো ভিডিও প্রকাশিত হয়নি।', 'No videos have been published yet.') : pick('ভিডিও লোড হচ্ছে…', 'Loading videos…')}
         </div>
       </section>
@@ -214,20 +220,28 @@ export function FbReelsSection({
   )
 
   const landscapeContent = (
-    <section className="my-8 border-b border-white/10 py-8 sm:py-10">
+    <section className={`w-full ${newspaper ? "py-0" : "my-8 border-b border-white/10 py-8 sm:py-10"}`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {showHeading && (
           <div className="mb-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Film className="size-5 text-rose-500" aria-hidden="true" />
-              <h2 className="font-serif text-lg font-bold text-white sm:text-xl">ভিডিও</h2>
+              <h2 className="font-serif text-lg font-bold text-[var(--theme-text-title)] sm:text-xl">ভিডিও</h2>
             </div>
-            <Link href="/reels" className="text-xs font-bold text-cyan-300 hover:underline">
+            <Link href="/reels" className="text-xs font-bold text-[var(--theme-brand)] hover:underline">
               সকল ভিডিও দেখুন
             </Link>
           </div>
         )}
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+        <div className="mb-4 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-[var(--theme-text-muted)]">
+          {["ক্যাম্পাস বুলেটিন", "সাক্ষাৎকার", "বিশেষ অনুষ্ঠান", "পডকাস্ট", "আয়োজন"].map((tag) => (
+            <span key={tag} className="inline-flex items-center gap-3">
+              <span>{tag}</span>
+              {tag !== "আয়োজন" && <span className="text-[var(--theme-card-border)]" aria-hidden="true">|</span>}
+            </span>
+          ))}
+        </div>
+        <div ref={reelTrayRef} className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
           {reels.map((reel, idx) => {
             const ytId = extractYouTubeId(reel.video_url)
             const thumb = reel.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null)
@@ -237,7 +251,11 @@ export function FbReelsSection({
                 type="button"
                 onClick={() => openReelAt(idx)}
                 aria-label={pick(`ভিডিও চালান: ${reel.title}`, `Play video: ${reel.title}`)}
-                className="group w-[230px] shrink-0 overflow-hidden rounded-xl border border-white/15 bg-white/[0.04] text-left transition hover:border-cyan-400/50 sm:w-[280px]"
+                className={`group w-[230px] shrink-0 overflow-hidden rounded-xl border text-left shadow-sm transition sm:w-[280px] ${
+                  newspaper
+                    ? "border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] hover:border-[var(--theme-brand)]"
+                    : "border-white/15 bg-white/[0.04] hover:border-cyan-400/50"
+                }`}
               >
                 <span className="relative block aspect-video bg-slate-950">
                   {thumb ? (
@@ -249,18 +267,28 @@ export function FbReelsSection({
                     </span>
                   )}
                   <span className="absolute inset-0 flex items-center justify-center bg-black/10 transition group-hover:bg-black/25">
-                    <span className="flex size-10 items-center justify-center rounded-full border border-white/40 bg-black/60 text-white">
-                      <Play className="ml-0.5 size-4 fill-current text-cyan-300" aria-hidden="true" />
+                    <span className="flex size-10 items-center justify-center rounded-full bg-red-600 text-white shadow-md">
+                      <Play className="ml-0.5 size-4 fill-current" aria-hidden="true" />
                     </span>
                   </span>
                 </span>
-                <span className="line-clamp-2 block px-3 py-2.5 text-sm font-bold leading-snug text-white">
+                <span className="line-clamp-2 block px-3 py-2.5 text-sm font-bold leading-snug text-[var(--theme-text-title)] transition-colors group-hover:text-[var(--theme-brand)]">
                   {reel.title}
                 </span>
               </button>
             )
           })}
         </div>
+        {reels.length > 2 && (
+          <div className="mt-3 flex justify-end gap-2">
+            <button type="button" onClick={() => scrollReels(-1)} aria-label="আগের ভিডিও" className="flex size-9 items-center justify-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-title)] shadow-sm transition hover:text-[var(--theme-brand)]">
+              <ChevronLeft className="size-5" aria-hidden="true" />
+            </button>
+            <button type="button" onClick={() => scrollReels(1)} aria-label="পরের ভিডিও" className="flex size-9 items-center justify-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-title)] shadow-sm transition hover:text-[var(--theme-brand)]">
+              <ChevronRight className="size-5" aria-hidden="true" />
+            </button>
+          </div>
+        )}
       </div>
     </section>
   )
@@ -295,7 +323,8 @@ export function FbReelsSection({
         </div>
       )}
 
-      <div className="flex gap-2.5 overflow-x-auto px-4 pb-2 scrollbar-none select-none">
+      <div className="relative">
+      <div ref={reelTrayRef} className="flex gap-2.5 overflow-x-auto px-4 pb-2 scrollbar-none select-none">
         {reels.map((reel, idx) => {
           const ytId = extractYouTubeId(reel.video_url)
           const thumb = reel.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null)
@@ -304,7 +333,20 @@ export function FbReelsSection({
             <div
               key={reel.id}
               onClick={() => openReelAt(idx)}
-              className={`relative shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-white/20 bg-slate-900 shadow-lg transition-all group active:scale-95 ${
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault()
+                  openReelAt(idx)
+                }
+              }}
+              aria-label={pick(`ভিডিও চালান: ${reel.title}`, `Play video: ${reel.title}`)}
+              className={`group relative shrink-0 cursor-pointer overflow-hidden rounded-2xl border shadow-lg transition-all active:scale-95 ${
+                newspaper
+                  ? "border-[var(--theme-card-border)] bg-[var(--theme-card-bg)]"
+                  : "border-white/20 bg-slate-900"
+              } ${
                 displayMode === "portrait"
                   ? "aspect-[9/16] w-[155px] sm:w-[180px]"
                   : "h-[225px] w-[135px] sm:h-[265px] sm:w-[160px]"
@@ -326,6 +368,13 @@ export function FbReelsSection({
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30 pointer-events-none" />
 
+              {typeof reel.view_count === "number" && (
+                <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 font-mono text-[10px] font-semibold text-white backdrop-blur-md">
+                  <Eye className="size-3" aria-hidden="true" />
+                  {reel.view_count.toLocaleString("bn-BD")}
+                </span>
+              )}
+
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="size-11 rounded-full bg-black/60 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-xl group-hover:scale-110 transition-transform">
                   <Play className="size-5 fill-current text-cyan-300 ml-0.5" />
@@ -333,7 +382,7 @@ export function FbReelsSection({
               </div>
 
               <div className="absolute bottom-2.5 inset-x-2.5 space-y-1">
-                <p className="text-[11px] font-bold text-white line-clamp-2 leading-tight drop-shadow-md">
+                <p className="line-clamp-2 text-xs font-bold leading-snug text-white drop-shadow-md sm:text-sm">
                   {reel.title}
                 </p>
                 <div className="flex items-center gap-1.5 pt-0.5">
@@ -351,6 +400,17 @@ export function FbReelsSection({
             </div>
           )
         })}
+      </div>
+      {newspaper && displayMode === "portrait" && reels.length > 2 && (
+        <>
+          <button type="button" onClick={() => scrollReels(-1)} aria-label="আগের ভিডিও স্টোরি" className="absolute left-1 top-1/2 z-10 hidden size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:bg-slate-50 sm:flex">
+            <ChevronLeft className="size-5" aria-hidden="true" />
+          </button>
+          <button type="button" onClick={() => scrollReels(1)} aria-label="পরের ভিডিও স্টোরি" className="absolute right-1 top-1/2 z-10 hidden size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:bg-slate-50 sm:flex">
+            <ChevronRight className="size-5" aria-hidden="true" />
+          </button>
+        </>
+      )}
       </div>
         </>
       )}

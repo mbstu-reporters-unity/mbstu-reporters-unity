@@ -14,11 +14,15 @@ function makeFormatters(lang: 'bn' | 'en') {
       month: 'long',
       year: 'numeric',
     }),
+    shortDate: new Intl.DateTimeFormat(locale, {
+      timeZone: 'Asia/Dhaka',
+      day: 'numeric',
+      month: 'short',
+    }),
     time: new Intl.DateTimeFormat(lang === 'bn' ? 'bn-BD' : 'en-US', {
       timeZone: 'Asia/Dhaka',
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
       hour12: true,
     }),
   }
@@ -36,17 +40,18 @@ export function LiveClock() {
   }, [])
 
   return (
-    <div className="flex items-center justify-between w-full text-white/90 text-[11px] sm:text-xs font-medium" aria-live="off">
+    <div className="flex min-w-0 items-center justify-between gap-2 text-[var(--theme-text-body)] text-[11px] sm:text-xs font-medium" aria-live="off">
       {/* বামে: ক্যালেন্ডার আইকন ও তারিখ */}
-      <span className="inline-flex items-center gap-1.5 text-slate-200">
-        <CalendarDays className="size-3.5 text-amber-400 shrink-0" aria-hidden="true" />
-        <span>{now ? fmt.date.format(now) : 'লোড হচ্ছে...'}</span>
+      <span className="inline-flex min-w-0 items-center gap-1.5">
+        <CalendarDays className="size-3.5 text-[var(--theme-brand)] shrink-0" aria-hidden="true" />
+        <span className="hidden truncate sm:inline">{now ? fmt.date.format(now) : 'লোড হচ্ছে...'}</span>
+        <span className="truncate sm:hidden">{now ? fmt.shortDate.format(now) : 'লোড হচ্ছে...'}</span>
       </span>
 
       {/* ডানে: ঘড়ির আইকন ও সময় */}
-      <span className="inline-flex items-center gap-1.5 tabular-nums text-cyan-200 font-semibold">
-        <Clock className="size-3.5 text-amber-400 shrink-0" aria-hidden="true" />
-        <time>{now ? fmt.time.format(now) : '--:--:--'}</time>
+      <span className="inline-flex shrink-0 items-center gap-1.5 tabular-nums text-[var(--theme-text-title)] font-semibold">
+        <Clock className="size-3.5 text-[var(--theme-brand)] shrink-0" aria-hidden="true" />
+        <time>{now ? fmt.time.format(now) : '--:--'}</time>
       </span>
     </div>
   )

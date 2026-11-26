@@ -3,6 +3,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
+  ArrowDown,
+  ArrowUp,
   CalendarDays,
   CheckCircle2,
   ChevronRight,
@@ -46,12 +48,21 @@ function formatBanglaDateTime(val?: string | null): string {
       year: 'numeric',
       timeZone: 'Asia/Dhaka',
     })
-    const time = d.toLocaleTimeString('bn-BD', {
+    const timeParts = new Intl.DateTimeFormat('bn-BD', {
       hour: 'numeric',
       minute: '2-digit',
+      hour12: true,
       timeZone: 'Asia/Dhaka',
-    })
-    return `${date}, ${time}`
+    }).formatToParts(d)
+    const hour = timeParts.find((part) => part.type === 'hour')?.value || ''
+    const minute = timeParts.find((part) => part.type === 'minute')?.value || ''
+    const rawPeriod = timeParts.find((part) => part.type === 'dayPeriod')?.value || ''
+    const period = /^(am|এএম)$/i.test(rawPeriod)
+      ? 'এএম'
+      : /^(pm|পিএম)$/i.test(rawPeriod)
+        ? 'পিএম'
+        : rawPeriod
+    return `${date}, ${hour}:${minute} ${period}`.trim()
   }
   return val
 }
@@ -107,6 +118,11 @@ export async function generateMetadata({
   const raw = (post.summary || post.heading || post.body || '').replace(/\s+/g, ' ').trim()
   const description = raw.length > 160 ? raw.slice(0, 157) + '...' : raw
   const url = `${BASE}/post/${id}`
+  const modifiedTime =
+    post.updated_at &&
+    new Date(post.updated_at).getTime() > new Date(post.created_at).getTime()
+      ? post.updated_at
+      : post.created_at
 
   return {
     title: `${post.title} | মাভাবিপ্রবি রিপোর্টার্স ইউনিটি`,
@@ -120,6 +136,7 @@ export async function generateMetadata({
       description: description || undefined,
       siteName: "MBSTU Reporters' Unity",
       publishedTime: post.created_at,
+      modifiedTime,
       images: post.image_url ? [{ url: post.image_url }] : undefined,
     },
   }
@@ -146,7 +163,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           date: post.created_at,
         }))
       : post.image_url
-        ? [{ url: post.image_url, date: post.created_at }]
+        ? [{ url: post.image_url, caption: null, credit: null, date: post.created_at }]
         : []
 
   const pageInfo = post.page || null
@@ -154,10 +171,19 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const author = post.author?.trim() || 'প্রতিবেদক, মাভাবিপ্রবি'
   const readMins = estimateReadMinutes(`${post.title || ''} ${post.heading || ''} ${post.body || ''}`)
   const specialBadge = getSpecialReportBadge(post.category)
+  const updatedAt =
+    post.updated_at &&
+    new Date(post.updated_at).getTime() > new Date(post.created_at).getTime()
+      ? post.updated_at
+      : null
+  const kicker =
+    (post.tags || []).find((tag) => tag.trim() && tag.trim() !== post.title.trim()) || category
+  const subheading =
+    post.heading?.trim() && post.heading.trim() !== post.title.trim() ? post.heading.trim() : null
   const safeExternalLink =
     post.link_url && /^https?:\/\//i.test(post.link_url.trim()) ? post.link_url.trim() : null
   const bodyParagraphs = splitBodyIntoParagraphs(post.body)
-  const insertAfter = bodyParagraphs.length >= 2 ? Math.min(3, bodyParagraphs.length) : 0
+  const insertAfter = bodyParagraphs.length >= 3 ? 3 : 0
   const inlineRelated = insertAfter > 0 ? relatedPosts[0] || null : null
   const remainingRelated = inlineRelated ? relatedPosts.slice(1) : relatedPosts
   const tags = Array.from(new Set([...(post.tags || []), category].map((tag) => tag.trim()).filter(Boolean)))
@@ -167,8 +193,9 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     '@type': 'NewsArticle',
     headline: post.title,
     description: description || undefined,
-    image: post.image_url ? [post.image_url] : undefined,
+    image: items[0]?.url ? [items[0].url] : undefined,
     datePublished: post.created_at,
+    dateModified: updatedAt || post.created_at,
     author: {
       '@type': 'Person',
       name: author,
@@ -188,6 +215,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       <TopBar />
       <SiteHeader />
       <main className="min-h-screen px-0 py-5 pb-20 sm:py-9" style={{ color: 'var(--theme-text-body)' }}>
+        <AdSlot slot="post_top" prefetchedAds={adBanners} />
         <PostViewTracker postId={id} />
         <script
           type="application/ld+json"
@@ -202,17 +230,14 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
             boxShadow: 'var(--theme-card-shadow)',
           }}
         >
-          <nav
-            aria-label="ব্রেডক্রাম্ব"
-            className="flex flex-wrap items-center gap-2 border-b border-[var(--theme-card-border)] pb-3 text-sm"
-          >
+          <nav aria-label="ব্রেডক্রাম্ব" className="flex flex-wrap items-center gap-2 pb-1 text-sm text-slate-500">
             <Link
               href="/"
               aria-label="হোম"
               className="inline-flex items-center gap-1 font-semibold text-[var(--theme-brand)] hover:underline"
             >
-              <Home className="size-4" aria-hidden="true" />
-              <span>হোম</span>
+              <Home className="size-3.5" aria-hidden="true" />
+              <span>প্রচ্ছদ</span>
             </Link>
             <ChevronRight className="size-4 opacity-50" aria-hidden="true" />
             <Link
@@ -265,19 +290,22 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           )}
 
           <header className="space-y-4">
-            <h1 className="font-serif text-2xl font-bold leading-snug text-[var(--theme-text-title)] sm:text-4xl">
+            <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[var(--theme-brand)] sm:text-sm">
+              {kicker}
+            </p>
+            <h1 className="font-serif text-2xl font-extrabold leading-[1.3] text-[var(--theme-text-title)] sm:text-3xl md:text-4xl lg:text-[40px]">
               {post.title}
             </h1>
-            {post.heading && (
-              <p className="rounded-r-lg border-l-4 border-[var(--theme-brand)] bg-[var(--theme-brand-soft)] py-2 pl-4 text-base font-medium leading-relaxed text-[var(--theme-text-body)] sm:text-lg">
-                {post.heading}
+            {subheading && (
+              <p className="font-serif text-base italic leading-relaxed text-[var(--theme-text-body)] sm:text-lg">
+                {subheading}
               </p>
             )}
 
-            <div className="flex flex-col gap-2 border-y border-[var(--theme-card-border)] py-3 text-sm">
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                <span className="inline-flex items-center gap-1.5">
-                  <User className="size-4 text-[var(--theme-brand)]" aria-hidden="true" />
+            <div className="grid gap-y-2 border-y border-[var(--theme-card-border)] py-3 text-xs text-[var(--theme-text-body)] sm:grid-cols-2 sm:text-sm">
+              <div className="inline-flex items-center gap-1.5">
+                <User className="size-3.5 text-slate-600" aria-hidden="true" />
+                <span>
                   {post.user_id ? (
                     <Link href={`/u/${post.user_id}`} className="font-semibold hover:text-[var(--theme-brand)] hover:underline">
                       {author}
@@ -286,18 +314,26 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                     <span className="font-semibold">{author}</span>
                   )}
                 </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Clock className="size-4 text-[var(--theme-brand)]" aria-hidden="true" />
-                  <span>প্রকাশ : {formatBanglaDateTime(post.created_at)}</span>
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <PenLine className="size-4 text-[var(--theme-brand)]" aria-hidden="true" />
-                  <span>অনলাইন সংস্করণ · {pageInfo ? 'কমিউনিটি পেজ' : category}</span>
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-xs opacity-75">
-                  <CalendarDays className="size-3.5" aria-hidden="true" />
-                  {readMins.toLocaleString('bn-BD')} মিনিট পাঠ
-                </span>
+              </div>
+              <div className="inline-flex items-center gap-1.5">
+                <ArrowUp className="size-3 text-emerald-600" aria-hidden="true" />
+                <span>প্রকাশ : {formatBanglaDateTime(post.created_at)}</span>
+              </div>
+              {updatedAt && (
+                <div className="inline-flex items-center gap-1.5">
+                  <ArrowDown className="size-3 text-rose-600" aria-hidden="true" />
+                  <span>আপডেট : {formatBanglaDateTime(updatedAt)}</span>
+                </div>
+              )}
+              <div className="inline-flex items-center gap-1.5">
+                <PenLine className="size-3.5 text-slate-500" aria-hidden="true" />
+                <span>অনলাইন সংস্করণ</span>
+                {pageInfo && <span className="text-slate-500">· কমিউনিটি পেজ</span>}
+              </div>
+              <div className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                <CalendarDays className="size-3.5" aria-hidden="true" />
+                <Clock className="size-3.5" aria-hidden="true" />
+                {readMins.toLocaleString('bn-BD')} মিনিট পাঠ
               </div>
               <PostMetaBadges data={post} />
             </div>
@@ -310,20 +346,34 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
             category={category}
             author={author}
             createdAt={post.created_at}
+            canonicalUrl={`${BASE}/post/${id}`}
           >
             <div className="space-y-6">
-              {items.length > 0 && (
-                <figure className="overflow-hidden rounded-xl border border-[var(--theme-card-border)] bg-black/10">
-                  <RichGallery
-                    items={items}
-                    layout={items.length === 1 ? 'stack' : layout}
-                    postTitle={post.title}
-                    postDate={post.created_at}
-                  />
-                </figure>
+              {items.length === 1 && (
+                <KalbelaPostImage
+                  src={items[0].url}
+                  alt={items[0].caption || post.title}
+                  className="aspect-video max-h-[540px] w-full"
+                  caption={items[0].caption || 'মাভাবিপ্রবি রিপোর্টার্স ইউনিটি'}
+                  credit={items[0].credit}
+                />
               )}
 
-              <AdSlot slot="post_top" prefetchedAds={adBanners} />
+              {items.length > 1 && (
+                <figure className="overflow-hidden rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)]">
+                  <RichGallery
+                    items={items}
+                    layout={layout}
+                    postTitle={post.title}
+                    postDate={post.created_at}
+                    compact
+                  />
+                  <figcaption className="border-t border-slate-200 bg-slate-100 px-4 py-2 text-xs font-medium text-slate-600">
+                    ছবি : {items[0].caption || 'মাভাবিপ্রবি রিপোর্টার্স ইউনিটি'}
+                    {items[0].credit ? ` · ${items[0].credit}` : ''}
+                  </figcaption>
+                </figure>
+              )}
 
               {post.video_url && (
                 <div className="overflow-hidden rounded-xl border border-[var(--theme-card-border)] bg-black">
@@ -337,15 +387,15 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                     <div key={`paragraph-${index}`}>
                       <FormattedText
                         text={paragraph}
-                        className="article-body-content text-[var(--theme-text-body)] leading-relaxed"
+                        className="article-body-content text-[var(--theme-text-body)] leading-[1.85]"
                       />
                       {insertAfter > 0 && index + 1 === insertAfter && (
-                        <div className="mt-5 space-y-4">
+                        <>
                           <AdSlot slot="post_middle" prefetchedAds={adBanners} />
                           {inlineRelated && (
                             <Link
                               href={`/post/${inlineRelated.id}`}
-                              className="flex items-center gap-3 overflow-hidden rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-2.5 transition hover:border-[var(--theme-brand)]"
+                              className="mt-5 flex items-center gap-3 overflow-hidden border-l-4 border-[#c8102e] bg-slate-50 p-2.5 transition hover:bg-slate-100"
                             >
                               <KalbelaPostImage
                                 src={inlineRelated.image_url}
@@ -365,7 +415,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                               </span>
                             </Link>
                           )}
-                        </div>
+                        </>
                       )}
                     </div>
                   ))}
@@ -389,6 +439,8 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                   <span>সংযুক্ত মূল সূত্র / ওয়েবসাইট দেখুন</span>
                 </a>
               )}
+
+              <AdSlot slot="post_bottom" prefetchedAds={adBanners} />
             </div>
           </ArticleReaderControls>
 
@@ -401,7 +453,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
               href="/contact"
               className="article-contact-cta flex w-full items-center justify-center rounded-xl bg-[var(--theme-brand)] px-4 py-3 text-center text-sm font-bold transition hover:brightness-110 sm:text-base"
             >
-              MBSTU Reporters&apos; Unity-এর সাথে যুক্ত থাকুন
+              MBSTU Reporters&apos; Unity-এর সাথে যুক্ত থাকুন →
             </Link>
 
             {tags.length > 0 && (
@@ -410,21 +462,19 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                 {tags.map((tag) => (
                   <Link
                     key={tag}
-                    href={`/search?q=${encodeURIComponent(tag)}`}
-                    className="rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-3 py-1 text-xs font-semibold text-[var(--theme-brand)] transition hover:border-[var(--theme-brand)]"
+                    href={`/search?q=${encodeURIComponent(tag.replace(/^#/, ''))}`}
+                    className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
                   >
-                    {tag}
+                    {tag.startsWith('#') ? tag : `#${tag}`}
                   </Link>
                 ))}
               </div>
             )}
 
-            <AdSlot slot="post_bottom" prefetchedAds={adBanners} />
-
-            <div className="border-t border-[var(--theme-card-border)] pt-4">
+            <div className="article-engagement rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-4">
               <ReactionBar postId={id} title={post.title} />
             </div>
-            <div className="border-t border-[var(--theme-card-border)] pt-4">
+            <div className="article-engagement rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-4">
               <CommentForm postId={id} initialComments={comments} />
             </div>
           </footer>

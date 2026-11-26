@@ -6,6 +6,7 @@ import { HeroCarousel } from "@/components/hero/HeroCarousel"
 import { SiteFooter } from "@/components/portal/site-footer"
 import { BackToTop } from "@/components/portal/back-to-top"
 import { KalbelaHomeSections } from "@/components/portal/kalbela-home-sections"
+import { AdSlot } from "@/components/portal/ad-slot"
 import { getVisibleCategoryNames } from "@/lib/categories"
 import { getFacultiesWithDepartments } from "@/lib/faculties"
 import { getNotices } from "@/lib/notices"
@@ -52,6 +53,7 @@ export default async function Page() {
   return (
     <>
       <TopBar />
+      <AdSlot slot="home_top" prefetchedAds={adBanners} />
       <SiteHeader />
       <NewsTicker />
       <main>

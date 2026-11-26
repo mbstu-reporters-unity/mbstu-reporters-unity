@@ -33,6 +33,7 @@ export type Post = {
   embed_media_url?: string | null
   user_id: string | null
   created_at: string
+  updated_at?: string | null
   hidden?: boolean | null
   link_url?: string | null
   view_count?: number | null
@@ -41,7 +42,7 @@ export type Post = {
   tags?: string[] | null
 }
 
-export type PostInput = Omit<Post, "id" | "created_at" | "user_id" | "page" | "author_user_type" | "view_count">
+export type PostInput = Omit<Post, "id" | "created_at" | "updated_at" | "user_id" | "page" | "author_user_type" | "view_count">
 
 export type PublicComment = {
   id: string

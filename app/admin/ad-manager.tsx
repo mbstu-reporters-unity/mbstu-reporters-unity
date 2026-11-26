@@ -6,7 +6,7 @@ import { getAdBanners, saveAdBanners, type AdBannerItem, type AdBannerSlot } fro
 import { uploadImage } from "@/lib/sb"
 
 const slots: Array<{ value: AdBannerSlot; label: string }> = [
-  { value: "home_top", label: "হোমপেজ: লিডের নিচে" },
+  { value: "home_top", label: "হোমপেজ: হেডারের ওপরে" },
   { value: "home_mid_1", label: "হোমপেজ: মাঝখানে ১" },
   { value: "home_mid_2", label: "হোমপেজ: মাঝখানে ২" },
   { value: "home_mid_3", label: "হোমপেজ: মাঝখানে ৩" },

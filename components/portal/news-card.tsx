@@ -102,7 +102,7 @@ export function NewsCard({ p }: { p: Post }) {
   return (
     <article
       ref={articleRef}
-      className="news-card scroll-mt-20 group flex h-full flex-col border-0 bg-transparent transition-all md:overflow-hidden md:rounded-2xl md:border md:border-white/15 md:bg-white/[0.05] md:shadow-lg"
+      className="news-card scroll-mt-20 group flex h-full flex-col overflow-hidden rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] shadow-sm transition-all md:rounded-2xl"
     >
       <div className="flex items-center justify-between gap-2.5 px-4 pt-3.5 pb-2.5 sm:px-5">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -113,10 +113,10 @@ export function NewsCard({ p }: { p: Post }) {
                 <img
                   src={primaryAvatar}
                   alt={primaryName}
-                  className="size-10 rounded-full object-cover object-top ring-2 ring-cyan-400/50 shadow-sm bg-slate-900"
+                  className="size-10 rounded-full object-cover object-top ring-2 ring-[var(--theme-brand)] shadow-sm bg-[var(--theme-bg-solid)]"
                 />
               ) : (
-                <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold text-sm ring-2 ring-white/25 shadow-sm">
+                <div className="flex size-10 items-center justify-center rounded-full bg-[var(--theme-brand)] text-[var(--theme-bg-solid)] font-bold text-sm ring-2 ring-[var(--theme-card-border)] shadow-sm">
                   {primaryName ? primaryName.charAt(0) : <User className="size-4" />}
                 </div>
               )}
@@ -126,10 +126,10 @@ export function NewsCard({ p }: { p: Post }) {
             <img
               src={primaryAvatar}
               alt={primaryName}
-              className="size-10 shrink-0 rounded-full object-cover object-top ring-2 ring-cyan-400/50 shadow-sm bg-slate-900"
+              className="size-10 shrink-0 rounded-full object-cover object-top ring-2 ring-[var(--theme-brand)] shadow-sm bg-[var(--theme-bg-solid)]"
             />
           ) : (
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-bold text-sm ring-2 ring-white/25 shadow-sm">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--theme-brand)] text-[var(--theme-bg-solid)] font-bold text-sm ring-2 ring-[var(--theme-card-border)] shadow-sm">
               {primaryName ? primaryName.charAt(0) : <User className="size-4" />}
             </div>
           )}
@@ -139,12 +139,12 @@ export function NewsCard({ p }: { p: Post }) {
               {primaryHref ? (
                 <Link
                   href={primaryHref}
-                  className="news-card-author-name text-sm font-bold text-white hover:text-cyan-300 truncate leading-tight transition-colors"
+                  className="news-card-author-name text-sm font-bold text-[var(--theme-text-title)] hover:text-[var(--theme-brand)] truncate leading-tight transition-colors"
                 >
                   {primaryName}
                 </Link>
               ) : (
-                <p className="news-card-author-name text-sm font-bold text-white truncate leading-tight">
+                <p className="news-card-author-name text-sm font-bold text-[var(--theme-text-title)] truncate leading-tight">
                   {primaryName}
                 </p>
               )}
@@ -153,21 +153,21 @@ export function NewsCard({ p }: { p: Post }) {
               )}
             </div>
 
-            <div className="news-card-meta flex flex-wrap items-center gap-1.5 text-[11px] text-cyan-200/85 mt-0.5">
+            <div className="news-card-meta flex flex-wrap items-center gap-1.5 text-[11px] text-[var(--theme-text-body)] mt-0.5">
               {pageInfo && (
                 <>
                   {p.user_id ? (
-                    <Link href={`/u/${p.user_id}`} className="text-white/80 hover:text-cyan-300 hover:underline truncate max-w-[120px]">
+                    <Link href={`/u/${p.user_id}`} className="text-[var(--theme-text-body)] hover:text-[var(--theme-brand)] hover:underline truncate max-w-[120px]">
                       {authorName}
                     </Link>
                   ) : (
-                    <span className="text-white/80 truncate max-w-[120px]">{authorName}</span>
+                    <span className="text-[var(--theme-text-body)] truncate max-w-[120px]">{authorName}</span>
                   )}
                   <span>·</span>
                 </>
               )}
               <span className="inline-flex items-center gap-1">
-                <CalendarDays className="size-3 text-cyan-300 shrink-0" />
+                <CalendarDays className="size-3 text-[var(--theme-brand)] shrink-0" />
                 <span>{formattedDate}</span>
               </span>
               <span>·</span>
@@ -189,7 +189,7 @@ export function NewsCard({ p }: { p: Post }) {
           <Link
             href={pageInfo ? `/p/${pageInfo.slug}` : `/category/${encodeURIComponent(categoryName)}`}
             data-category-palette={!pageInfo ? getCategoryBadgePalette(categoryName) : undefined}
-            className="news-card-category shrink-0 rounded-full px-3 py-1 text-[11px] font-bold border backdrop-blur-md transition max-w-[120px] truncate"
+            className="news-card-category shrink-0 rounded-full px-3 py-1 text-[11px] font-bold border transition max-w-[120px] truncate"
           >
             {pageInfo ? 'পেজ' : categoryName}
           </Link>
@@ -208,7 +208,7 @@ export function NewsCard({ p }: { p: Post }) {
       <div className="flex min-w-0 flex-1 flex-col px-4 pt-3 pb-3 sm:px-5 sm:pb-4 space-y-2">
         <h3
           onClick={toggleExpand}
-          className="news-card-title break-words font-serif text-lg sm:text-xl font-bold leading-snug text-white hover:text-cyan-200 transition-colors drop-shadow-sm cursor-pointer select-none"
+          className="news-card-title break-words font-serif text-lg sm:text-xl font-bold leading-snug text-[var(--theme-text-title)] hover:text-[var(--theme-brand)] transition-colors cursor-pointer select-none"
         >
           {p.title}
         </h3>
@@ -216,7 +216,7 @@ export function NewsCard({ p }: { p: Post }) {
         {p.heading && p.heading.trim() !== p.title.trim() && (
           <p
             onClick={toggleExpand}
-            className="news-card-body break-words text-xs sm:text-sm font-medium text-cyan-100/90 leading-snug border-l-2 border-cyan-400/70 pl-2.5 cursor-pointer"
+            className="news-card-body break-words text-xs sm:text-sm font-medium text-[var(--theme-text-body)] leading-snug border-l-2 border-[var(--theme-brand)] pl-2.5 cursor-pointer"
           >
             {p.heading}
           </p>
@@ -227,15 +227,15 @@ export function NewsCard({ p }: { p: Post }) {
         {(p.body || p.summary) && (
           <div
             onClick={toggleExpand}
-            className="news-card-body min-w-0 break-words text-xs sm:text-sm leading-relaxed text-slate-200 opacity-95 cursor-pointer"
+            className="news-card-body min-w-0 break-words text-xs sm:text-sm leading-relaxed text-[var(--theme-text-body)] cursor-pointer"
           >
             {expanded ? (
               <div className="space-y-2">
-                <FormattedText text={p.body || p.summary || ''} className="text-xs sm:text-sm text-slate-100 leading-relaxed" />
+                <FormattedText text={p.body || p.summary || ''} className="text-xs sm:text-sm text-[var(--theme-text-body)] leading-relaxed" />
                 <Link
                   href={`/post/${p.id}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-block text-xs font-bold text-cyan-300 hover:underline pt-1"
+                  className="inline-block text-xs font-bold text-[var(--theme-brand)] hover:underline pt-1"
                 >
                   আলাদা পেজে দেখুন →
                 </Link>
@@ -245,7 +245,7 @@ export function NewsCard({ p }: { p: Post }) {
                 {hasMore ? (
                   <>
                     <span>{shortBody}</span>
-                    <span className="ml-1 font-bold text-cyan-300">...আরও দেখুন</span>
+                    <span className="ml-1 font-bold text-[var(--theme-brand)]">...আরও দেখুন</span>
                   </>
                 ) : (
                   fullBody
@@ -255,7 +255,7 @@ export function NewsCard({ p }: { p: Post }) {
           </div>
         )}
 
-        <div className="mt-auto pt-2 border-t border-white/15">
+        <div className="mt-auto pt-2 border-t border-[var(--theme-card-border)]">
           <ReactionBar
             postId={p.id}
             title={p.title}
@@ -270,7 +270,7 @@ export function NewsCard({ p }: { p: Post }) {
 
 export function NewsGrid({ posts }: { posts: Post[] }) {
   return (
-    <div className="flex flex-col divide-y divide-white/20 border-y border-white/15 md:border-y-0 md:divide-y-0 md:grid md:items-stretch md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
       {posts.map((p) => (
         <NewsCard key={p.id} p={p} />
       ))}

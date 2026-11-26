@@ -26,7 +26,16 @@ export async function AdSlot({
   if (!banners.length) return null
 
   return (
-    <div className="mx-auto my-3 max-w-4xl px-4" aria-label="বিজ্ঞাপন">
+    <div
+      className={
+        slot === "home_top"
+          ? "mx-auto my-2 max-w-7xl border-y border-[var(--theme-card-border)] px-3 py-2 sm:px-4"
+          : slot === "post_top"
+            ? "mx-auto mb-4 mt-2 max-w-7xl border-y border-[var(--theme-card-border)] px-3 py-2 sm:px-4"
+          : "mx-auto my-3 max-w-4xl px-4"
+      }
+      aria-label="বিজ্ঞাপন"
+    >
       {banners.map(({ ad, href, external }) => (
         <div key={ad.id} className="mx-auto text-center">
           <p className="mb-1 text-[10px] font-medium text-slate-500">বিজ্ঞাপন / স্পন্সর</p>

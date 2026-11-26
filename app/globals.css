@@ -8,18 +8,18 @@
   --font-sans: var(--font-hind), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-noto-serif), Georgia, serif;
 
-  --color-brand: var(--theme-brand, #00d2ff);
-  --color-brand-dark: var(--theme-brand-dark, #0284c7);
-  --color-brand-soft: var(--theme-brand-soft, rgba(0, 210, 255, 0.15));
+  --color-brand: var(--theme-brand, #c8102e);
+  --color-brand-dark: var(--theme-brand-dark, #a50d25);
+  --color-brand-soft: var(--theme-brand-soft, rgba(200, 16, 46, 0.08));
   --color-navy: #0b1540;
   --color-crimson: #ef4444;
   --color-gold: #f59e0b;
 
-  --color-ring: var(--theme-brand, #00d2ff);
+  --color-ring: var(--theme-brand, #c8102e);
   --color-input: var(--theme-input-bg, rgba(255, 255, 255, 0.15));
-  --color-border: var(--theme-card-border, rgba(255, 255, 255, 0.2));
-  --color-foreground: var(--theme-text-body, #e2e8f0);
-  --color-background: var(--theme-bg-solid, #0b1540);
+  --color-border: var(--theme-card-border, #e2e8f0);
+  --color-foreground: var(--theme-text-body, #374151);
+  --color-background: var(--theme-bg-solid, #ffffff);
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -38,7 +38,19 @@
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  --theme-bg-solid: #ffffff;
+  --theme-bg-gradient: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --theme-card-bg: #ffffff;
+  --theme-card-border: #e2e8f0;
+  --theme-card-hover-border: #c8102e;
+  --theme-card-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+  --theme-text-title: #111827;
+  --theme-text-body: #374151;
+  --theme-brand: #c8102e;
+  --theme-brand-dark: #a50d25;
+  --theme-brand-soft: rgba(200, 16, 46, 0.08);
+  --theme-input-bg: #ffffff;
 }
 
 @layer base {
@@ -74,7 +86,7 @@
     background-size: cover;
     color: var(--theme-text-body, #e2e8f0);
     font-weight: 400;
-    line-height: 1.7;
+    line-height: 1.75;
     transition: background 0.3s ease, color 0.3s ease;
   }
 
@@ -86,14 +98,16 @@
     font-family: var(--font-serif), var(--font-hind), sans-serif;
     color: var(--theme-text-title, #ffffff);
     letter-spacing: -0.015em;
+    font-weight: 700;
+    line-height: 1.32;
   }
 }
 
 /* ========================================================
    ৪টি লিকুইড গ্লাস থিম
    ======================================================== */
-html,
 html[data-theme='ocean-glass'] {
+  color-scheme: dark;
   --theme-bg-solid: #0b1540;
   --theme-bg-gradient: radial-gradient(circle at 85% 15%, rgba(0, 210, 255, 0.35), transparent 50%),
                        radial-gradient(circle at 15% 85%, rgba(46, 16, 101, 0.45), transparent 55%),
@@ -110,6 +124,7 @@ html[data-theme='ocean-glass'] {
 }
 
 html[data-theme='sunset-peach'] {
+  color-scheme: dark;
   --theme-bg-solid: #181113;
   --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.35), transparent 45%),
                        radial-gradient(circle at 20% 80%, rgba(220, 38, 38, 0.3), transparent 50%),
@@ -126,6 +141,7 @@ html[data-theme='sunset-peach'] {
 }
 
 html[data-theme='pure-frost'] {
+  color-scheme: dark;
   --theme-bg-solid: #0f172a;
   --theme-bg-gradient: radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.2), transparent 50%),
                        linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -141,6 +157,7 @@ html[data-theme='pure-frost'] {
 }
 
 html[data-theme='midnight-neon'] {
+  color-scheme: dark;
   --theme-bg-solid: #030712;
   --theme-bg-gradient: radial-gradient(circle at 75% 20%, rgba(34, 197, 94, 0.25), transparent 45%),
                        radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.25), transparent 50%),
@@ -165,13 +182,13 @@ html[data-theme='daylight-light'] {
   --theme-bg-gradient: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   --theme-card-bg: #ffffff;
   --theme-card-border: #e2e8f0;
-  --theme-card-hover-border: #dc2626;
+  --theme-card-hover-border: #c8102e;
   --theme-card-shadow: 0 8px 24px -12px rgba(17, 24, 39, 0.2);
   --theme-text-title: #111827;
   --theme-text-body: #374151;
-  --theme-brand: #dc2626;
-  --theme-brand-dark: #b91c1c;
-  --theme-brand-soft: rgba(220, 38, 38, 0.08);
+  --theme-brand: #c8102e;
+  --theme-brand-dark: #a50d25;
+  --theme-brand-soft: rgba(200, 16, 46, 0.08);
   --theme-input-bg: #ffffff;
 }
 
@@ -257,6 +274,10 @@ html[data-theme='daylight-light'] .site-footer {
   color: #1e293b !important;
   background-color: #f8fafc !important;
   border-color: #cbd5e1 !important;
+}
+
+html[data-theme='daylight-light'] .site-header {
+  background-color: #ffffff !important;
 }
 
 html[data-theme='daylight-light'] .site-top-bar [class*="text-white"],
@@ -400,20 +421,20 @@ html[data-theme='daylight-light'] main .news-card .news-card-meta svg[class*="te
 /* ========================================================
    গ্লাস কার্ড কমন ইউটিলিটি
    ======================================================== */
-.glass-card {
-  background: var(--theme-card-bg, rgba(14, 34, 78, 0.65)) !important;
-  border: 1px solid var(--theme-card-border, rgba(255, 255, 255, 0.2)) !important;
-  box-shadow: var(--theme-card-shadow, 0 16px 36px -8px rgba(0, 10, 45, 0.65)) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 1.5rem;
-  color: var(--theme-text-body, #e2e8f0) !important;
+.glass-card,
+.newspaper-card {
+  background: var(--theme-card-bg, #ffffff) !important;
+  border: 1px solid var(--theme-card-border, #e2e8f0) !important;
+  box-shadow: var(--theme-card-shadow, 0 1px 3px rgba(15, 23, 42, 0.06)) !important;
+  border-radius: 0.875rem !important;
+  color: var(--theme-text-body, #374151) !important;
   transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.glass-card:hover {
+.glass-card:hover,
+.newspaper-card:hover {
   border-color: var(--theme-card-hover-border, rgba(0, 210, 255, 0.6)) !important;
-  box-shadow: 0 20px 45px -10px rgba(0, 15, 60, 0.8), 0 0 20px rgba(0, 210, 255, 0.2) !important;
+  box-shadow: 0 4px 8px rgba(15, 23, 42, 0.08) !important;
   transform: translateY(-2px);
 }
 
@@ -768,18 +789,95 @@ html[data-theme='daylight-light'] .category-section-badge-slate {
 
 .article-body-content {
   font-size: var(--article-font-size, 17px);
+  font-family: var(--font-hind), 'Hind Siliguri', 'SolaimanLipi', sans-serif;
+  line-height: 1.85;
   transition: font-size 200ms ease;
 }
 
-.article-body-content .formatted-text > p {
+.article-body-content > p {
   margin-block: 0 1.15em;
 }
 
-.article-body-content .formatted-text > p:last-child {
+.article-body-content > p:last-child {
   margin-block-end: 0;
 }
 
+.article-body-content h1,
+.article-body-content h2,
+.article-body-content h3 {
+  color: var(--theme-text-title);
+}
+
 .article-contact-cta {
+  color: #ffffff !important;
+}
+
+.article-engagement {
+  color: var(--theme-text-body);
+}
+
+html[data-theme='daylight-light'] .article-engagement [class~='text-white'],
+html[data-theme='daylight-light'] .article-engagement [class~='text-white/85'],
+html[data-theme='daylight-light'] .article-engagement [class~='text-white/80'],
+html[data-theme='daylight-light'] .article-engagement [class~='text-white/70'],
+html[data-theme='daylight-light'] .article-engagement [class~='text-white/60'],
+html[data-theme='daylight-light'] .article-engagement [class~='text-white/50'],
+html[data-theme='daylight-light'] .article-engagement [class~='text-white/45'],
+html[data-theme='daylight-light'] .article-engagement [class~='text-white/40'],
+html[data-theme='daylight-light'] .article-engagement [class~='text-slate-100'],
+html[data-theme='daylight-light'] .article-engagement [class~='text-slate-200'] {
+  color: #334155 !important;
+}
+
+html[data-theme='daylight-light'] .article-engagement [class~='text-cyan-200'],
+html[data-theme='daylight-light'] .article-engagement [class~='text-cyan-300'],
+html[data-theme='daylight-light'] .article-engagement [class~='text-cyan-400'] {
+  color: #0e7490 !important;
+}
+
+html[data-theme='daylight-light'] .article-engagement [class~='text-emerald-400'] {
+  color: #047857 !important;
+}
+
+html[data-theme='daylight-light'] .article-engagement [class~='text-rose-300'],
+html[data-theme='daylight-light'] .article-engagement [class~='text-rose-400'] {
+  color: #be123c !important;
+}
+
+html[data-theme='daylight-light'] .article-engagement [class~='bg-white/5'],
+html[data-theme='daylight-light'] .article-engagement [class~='bg-white/10'],
+html[data-theme='daylight-light'] .article-engagement [class~='bg-white/15'],
+html[data-theme='daylight-light'] .article-engagement [class~='bg-white/20'],
+html[data-theme='daylight-light'] .article-engagement [class~='bg-white/25'],
+html[data-theme='daylight-light'] .article-engagement [class~='bg-black/25'],
+html[data-theme='daylight-light'] .article-engagement [class~='bg-black/30'],
+html[data-theme='daylight-light'] .article-engagement [class~='bg-black/40'],
+html[data-theme='daylight-light'] .article-engagement [class~='bg-black/50'] {
+  background-color: #f8fafc !important;
+}
+
+html[data-theme='daylight-light'] .article-engagement [class~='border-white/10'],
+html[data-theme='daylight-light'] .article-engagement [class~='border-white/15'],
+html[data-theme='daylight-light'] .article-engagement [class~='border-white/20'],
+html[data-theme='daylight-light'] .article-engagement [class~='border-white/25'] {
+  border-color: #e2e8f0 !important;
+}
+
+html[data-theme='daylight-light'] .article-engagement [class*='border-cyan-400/'] {
+  border-color: #bae6fd !important;
+}
+
+html[data-theme='daylight-light'] .article-engagement input[class*='placeholder-white']::placeholder,
+html[data-theme='daylight-light'] .article-engagement textarea[class*='placeholder-white']::placeholder {
+  color: #64748b !important;
+}
+
+html[data-theme='daylight-light'] .article-engagement button[class*='bg-cyan-']:not([class*='/20']),
+html[data-theme='daylight-light'] .article-engagement button[class*='bg-gradient-to-r'] {
+  color: #ffffff !important;
+}
+
+html[data-theme='daylight-light'] .article-engagement [class*='bg-slate-900/95'] [class*='text-white'] {
   color: #ffffff !important;
 }
 
@@ -833,4 +931,27 @@ html[data-theme='daylight-light'] .site-header .home-category-nav-link {
 html[data-theme='daylight-light'] .site-header .home-category-nav-link:hover {
   background-color: #f8fafc !important;
   color: #b91c1c !important;
+}
+
+.site-header .home-category-nav-link {
+  position: relative;
+}
+
+.site-header .home-category-nav-link::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  content: '';
+  background: transparent;
+}
+
+.site-header .home-category-nav-link:hover::after,
+.site-header .home-category-nav-link[aria-current='page']::after {
+  background: var(--theme-brand, #c8102e);
+}
+
+.site-header .home-category-nav-link[aria-current='page'] {
+  color: var(--theme-brand, #c8102e) !important;
 }

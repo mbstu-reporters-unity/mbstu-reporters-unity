@@ -7,6 +7,7 @@ export interface ReelItem {
   author_avatar: string | null
   video_url: string
   thumbnail_url?: string | null
+  view_count?: number | null
   post_id?: string | null
   link_url?: string | null
   sort_order: number

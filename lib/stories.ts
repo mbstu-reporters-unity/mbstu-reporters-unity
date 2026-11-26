@@ -10,6 +10,7 @@ export interface StoryItem {
   caption?: string | null
   link_url?: string | null
   post_id?: string | null
+  view_count?: number | null
   is_highlight: boolean
   highlight_title?: string | null
   is_active: boolean

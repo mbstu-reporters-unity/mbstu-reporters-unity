@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
-import { X, Play, Pause, Sparkles, ChevronLeft, ChevronRight, ExternalLink, Plus } from "lucide-react"
+import { X, Play, Pause, Sparkles, ChevronLeft, ChevronRight, ExternalLink, Plus, Eye } from "lucide-react"
 import { getActiveStories, type StoryItem } from "@/lib/stories"
 import { getMe, type Profile } from "@/lib/sb"
 import { useLang } from "@/lib/i18n"
@@ -14,12 +14,14 @@ export function FbStoriesTray({
   showHeading = true,
   hideAddStory = false,
   portrait = false,
+  newspaper = false,
 }: {
   standalone?: boolean
   prefetchedStories?: StoryItem[]
   showHeading?: boolean
   hideAddStory?: boolean
   portrait?: boolean
+  newspaper?: boolean
 }) {
   const settings = useSiteSettings()
   const { pick } = useLang()
@@ -31,6 +33,7 @@ export function FbStoriesTray({
   const [me, setMe] = useState<Profile | null>(null)
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const storyTrayRef = useRef<HTMLDivElement>(null)
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null)
   const isHoldingRef = useRef(false)
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -177,6 +180,9 @@ export function FbStoriesTray({
   const sec = settings.homeSections.sections.find((s) => s.key === "stories")
   const addStoryLabel = pick(sec?.subtitleBn || "গল্প যোগ করুন", sec?.subtitleEn || "Add a story")
   const currentActiveStory = activeStoryIdx !== null ? stories[activeStoryIdx] : null
+  const scrollStories = (direction: -1 | 1) => {
+    storyTrayRef.current?.scrollBy({ left: direction * 300, behavior: "smooth" })
+  }
 
   return (
     <div id="stories" className="w-full my-4">
@@ -190,11 +196,16 @@ export function FbStoriesTray({
           </Link>
         </div>
       )}
-      <div className="w-full overflow-x-auto py-1 px-3 sm:px-4 scrollbar-none select-none">
-        <div className="flex gap-2 sm:gap-2.5 min-w-max items-center">
+      <div className="relative">
+        <div ref={storyTrayRef} className="w-full overflow-x-auto py-1 px-3 sm:px-4 scrollbar-none select-none">
+          <div className="flex min-w-max items-center gap-2 sm:gap-2.5">
           {!hideAddStory && <Link
             href="/admin"
-            className={`relative ${portrait ? 'aspect-[9/16] w-[155px] sm:w-[180px]' : 'h-[175px] w-[105px] sm:h-[205px] sm:w-[125px]'} shrink-0 overflow-hidden rounded-2xl border border-white/20 bg-slate-900/90 text-center shadow-lg transition-all group active:scale-95`}
+            className={`group relative ${portrait ? 'aspect-[9/16] w-[155px] sm:w-[180px]' : 'h-[175px] w-[105px] sm:h-[205px] sm:w-[125px]'} shrink-0 overflow-hidden rounded-2xl border text-center transition-all active:scale-95 ${
+              newspaper
+                ? "border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] shadow-md"
+                : "border-white/20 bg-slate-900/90 shadow-lg"
+            }`}
           >
             <div className="h-[65%] w-full bg-slate-800 flex items-center justify-center overflow-hidden">
               {me?.avatar_url ? (
@@ -207,11 +218,11 @@ export function FbStoriesTray({
               )}
             </div>
 
-            <div className="relative h-[35%] bg-slate-950 flex flex-col items-center justify-end pb-2 px-1">
-              <span className="absolute -top-4 size-8 rounded-full bg-blue-600 text-white ring-4 ring-slate-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition">
+            <div className={`relative flex h-[35%] flex-col items-center justify-end px-1 pb-2 ${newspaper ? "bg-[var(--theme-card-bg)]" : "bg-slate-950"}`}>
+              <span className={`absolute -top-4 flex size-8 items-center justify-center rounded-full text-white shadow-lg ring-4 transition group-hover:scale-110 ${newspaper ? "bg-sky-600 ring-[var(--theme-card-bg)]" : "bg-blue-600 ring-slate-950"}`}>
                 <Plus className="size-5" />
               </span>
-              <span className="text-[10px] font-bold text-white leading-tight">{addStoryLabel}</span>
+              <span className={`text-[10px] font-bold leading-tight ${newspaper ? "text-[var(--theme-text-title)]" : "text-white"}`}>{addStoryLabel}</span>
             </div>
           </Link>}
 
@@ -219,7 +230,20 @@ export function FbStoriesTray({
             <div
               key={st.id}
               onClick={() => openStory(idx)}
-              className={`relative ${portrait ? 'aspect-[9/16] w-[155px] sm:w-[180px]' : 'h-[175px] w-[105px] sm:h-[205px] sm:w-[125px]'} shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-white/20 shadow-lg transition-all group active:scale-95`}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault()
+                  openStory(idx)
+                }
+              }}
+              aria-label={st.highlight_title || st.caption || st.author_name}
+              className={`group relative ${portrait ? "aspect-[9/16] w-[155px] sm:w-[180px]" : "h-[175px] w-[105px] sm:h-[205px] sm:w-[125px]"} shrink-0 cursor-pointer overflow-hidden rounded-2xl border transition-all active:scale-95 ${
+                newspaper
+                  ? "border-[var(--theme-card-border)] shadow-md"
+                  : "border-white/20 shadow-lg"
+              }`}
             >
               {st.media_type === "video" ? (
                 <video src={st.media_url} className="size-full object-cover" muted playsInline />
@@ -232,7 +256,7 @@ export function FbStoriesTray({
                 />
               )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/35 pointer-events-none" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
               <div className="absolute top-2 left-2 size-8 rounded-full p-0.5 bg-blue-600 ring-2 ring-white/60 overflow-hidden shadow">
                 {st.author_avatar ? (
@@ -246,26 +270,52 @@ export function FbStoriesTray({
               </div>
 
               {st.is_highlight && (
-                <span className="absolute top-2 right-2 text-[9px] bg-amber-500 text-black px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 shadow">
+                <span className={`absolute right-2 flex items-center gap-0.5 rounded-full bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold text-black shadow ${typeof st.view_count === "number" ? "top-10" : "top-2"}`}>
                   <Sparkles className="size-2.5" />
                 </span>
               )}
 
+              {typeof st.view_count === "number" && (
+                <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 font-mono text-[10px] font-semibold text-white backdrop-blur-md">
+                  <Eye className="size-3" aria-hidden="true" />
+                  {st.view_count.toLocaleString("bn-BD")}
+                </span>
+              )}
+
+              {st.media_type === "video" && (
+                <span className="absolute inset-0 flex items-center justify-center text-white">
+                  <span className="flex size-11 items-center justify-center rounded-full border border-white/40 bg-white/20 shadow-lg backdrop-blur-md">
+                    <Play className="ml-0.5 size-5 fill-current" aria-hidden="true" />
+                  </span>
+                </span>
+              )}
+
               <div className="absolute bottom-2.5 inset-x-2">
-                <p className="text-[11px] font-bold text-white truncate drop-shadow-md">
-                  {st.is_highlight ? st.highlight_title || st.author_name : st.author_name}
+                <p className="line-clamp-2 text-xs font-bold leading-snug text-white drop-shadow-md sm:text-sm">
+                  {st.highlight_title || st.caption || st.author_name}
                 </p>
-                {st.caption && (
-                  <p className="text-[9px] text-slate-300 truncate mt-0.5">{st.caption}</p>
+                {(st.highlight_title || st.caption) && (
+                  <p className="mt-1 truncate text-[10px] text-white/80">{st.author_name}</p>
                 )}
               </div>
             </div>
           ))}
+          </div>
         </div>
+        {newspaper && stories.length > 2 && (
+          <>
+            <button type="button" onClick={() => scrollStories(-1)} aria-label="আগের ফটো স্টোরি" className="absolute left-1 top-1/2 z-10 hidden size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:bg-slate-50 sm:flex">
+              <ChevronLeft className="size-5" aria-hidden="true" />
+            </button>
+            <button type="button" onClick={() => scrollStories(1)} aria-label="পরের ফটো স্টোরি" className="absolute right-1 top-1/2 z-10 hidden size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:bg-slate-50 sm:flex">
+              <ChevronRight className="size-5" aria-hidden="true" />
+            </button>
+          </>
+        )}
       </div>
 
       {standalone && (
-        <p className="mx-4 mt-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-center text-xs text-slate-300" aria-live="polite">
+        <p className={`mx-4 mt-2 rounded-xl border px-4 py-3 text-center text-xs ${newspaper ? "border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)]" : "border-white/15 bg-white/10 text-slate-300"}`} aria-live="polite">
           {!loaded
             ? 'স্টোরি লোড হচ্ছে...'
             : stories.length === 0

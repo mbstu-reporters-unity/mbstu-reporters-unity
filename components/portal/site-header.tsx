@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   Award,
   Bell,
@@ -151,6 +151,7 @@ async function fetchHeaderData(): Promise<HeaderCachePayload> {
 }
 
 export function SiteHeader() {
+  const pathname = usePathname()
   const settings = useSiteSettings()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -966,30 +967,48 @@ export function SiteHeader() {
 
   return (
     <>
-      <header className="site-header sticky top-0 z-50 border-b border-white/10 bg-[#071030]/95 shadow-lg backdrop-blur-2xl w-full">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 gap-2">
-          <div className="min-w-0 flex-1 overflow-hidden">
-            <Logo inverted />
+      <header className="site-header sticky top-0 z-50 w-full border-b border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] text-[var(--theme-text-title)] shadow-sm">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-3 py-2 sm:flex-row sm:px-4 sm:py-2.5">
+          <div className="w-full min-w-0 overflow-hidden sm:flex-1">
+            <Logo />
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* ১. দ্রুত গ্লোবাল সার্চ বাটন */}
+          <div className="flex w-full shrink-0 items-center justify-between gap-1.5 sm:w-auto sm:justify-end sm:gap-2.5">
+            <Link
+              href="/publications"
+              aria-label={pick('প্রকাশনা ও ই-পেপার', 'Publications and e-paper')}
+              title={pick('প্রকাশনা ও ই-পেপার', 'Publications and e-paper')}
+              className="inline-flex size-8 sm:size-auto items-center justify-center sm:justify-start gap-1.5 rounded-lg border border-[var(--theme-card-border)] px-0 sm:px-2.5 py-0 sm:py-2 text-xs font-bold text-[var(--theme-text-body)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)]"
+            >
+              <Newspaper className="size-4" aria-hidden="true" />
+              <span className="hidden lg:inline">{pick('ই-পেপার', 'E-paper')}</span>
+            </Link>
+
+            <Link
+              href="/podcast"
+              aria-label={pick('প্রোগ্রাম ও পডকাস্ট', 'Programs and podcasts')}
+              title={pick('প্রোগ্রাম ও পডকাস্ট', 'Programs and podcasts')}
+              className="inline-flex size-8 sm:size-auto items-center justify-center sm:justify-start gap-1.5 rounded-lg border border-[var(--theme-card-border)] px-0 sm:px-2.5 py-0 sm:py-2 text-xs font-bold text-[var(--theme-text-body)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)]"
+            >
+              <Headphones className="size-4" aria-hidden="true" />
+              <span className="hidden lg:inline">{pick('প্রোগ্রাম', 'Programs')}</span>
+            </Link>
+
             <Link
               href="/search"
               aria-label="Search"
               title="সংবাদ অনুসন্ধান করুন"
-              className="flex size-9 sm:size-10 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-cyan-300 hover:text-white border border-white/20 transition cursor-pointer active:scale-95"
+              className="flex size-9 sm:size-10 items-center justify-center rounded-lg border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] cursor-pointer active:scale-95"
             >
               <Search className="size-4 sm:size-4.5" />
             </Link>
 
-            {/* বুকমার্ক সংরক্ষিত সংবাদ বাটন */}
             <button
               type="button"
               onClick={() => setBookmarksOpen(true)}
               aria-label={pick('সংরক্ষিত সংবাদ', 'Saved Articles')}
               title={pick('সংরক্ষিত সংবাদ দেখুন', 'View saved articles')}
-              className="relative flex size-9 sm:size-10 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-cyan-300 hover:text-white border border-white/20 transition cursor-pointer active:scale-95"
+              className="relative flex size-9 sm:size-10 items-center justify-center rounded-lg border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] cursor-pointer active:scale-95"
             >
               <Bookmark className={`size-4 sm:size-4.5 ${bookmarkCount > 0 ? 'fill-amber-400 text-amber-400' : ''}`} />
               {bookmarkCount > 0 && (
@@ -999,7 +1018,6 @@ export function SiteHeader() {
               )}
             </button>
 
-            {/* ২. বিশ্ববিদ্যালয়ের অফিশিয়াল লিংক */}
             <a
               href={activeUnivLink}
               target="_blank"
@@ -1008,7 +1026,7 @@ export function SiteHeader() {
               title="মাভাবিপ্রবি"
             >
               {activeUnivText && (
-                <span className="hidden md:inline text-xs font-bold text-white/90 truncate max-w-[140px]">
+                <span className="hidden md:inline text-xs font-bold text-[var(--theme-text-body)] truncate max-w-[140px]">
                   {activeUnivText}
                 </span>
               )}
@@ -1017,20 +1035,19 @@ export function SiteHeader() {
                 <img
                   src={activeUnivLogo}
                   alt="MBSTU"
-                  className="size-9 sm:size-11 rounded-full object-cover shrink-0 select-none bg-white/95 shadow-xs transition-transform hover:scale-105"
+                  className="size-9 sm:size-11 rounded-full border border-[var(--theme-card-border)] object-cover shrink-0 select-none bg-white shadow-xs transition-transform hover:scale-105"
                 />
               )}
             </a>
 
-            <span className="h-6 w-px bg-white/15 shrink-0" aria-hidden="true" />
+            <span className="h-6 w-px bg-[var(--theme-card-border)] shrink-0" aria-hidden="true" />
 
-            {/* ৩. ড্রিল-ডাউন মেনু টগল */}
             <button
               type="button"
               onClick={() => setMenuOpen((prev) => !prev)}
               aria-expanded={menuOpen}
               aria-label="Toggle Navigation Menu"
-              className="inline-flex items-center gap-1.5 h-9 sm:h-10 px-2.5 sm:px-4 rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/20 cursor-pointer shrink-0 active:scale-95 transition"
+              className="inline-flex items-center gap-1.5 h-9 sm:h-10 px-2.5 sm:px-4 rounded-lg bg-[var(--theme-brand)] hover:bg-[var(--theme-brand-dark)] text-[var(--theme-bg-solid)] border border-[var(--theme-brand)] cursor-pointer shrink-0 active:scale-95 transition"
             >
               <Menu className="size-4.5 sm:size-5" />
               <span className="hidden sm:inline text-xs font-bold">
@@ -1039,38 +1056,46 @@ export function SiteHeader() {
             </button>
           </div>
         </div>
-        <nav className="home-category-nav border-t border-white/10 bg-white/[0.03]" aria-label="সংবাদ বিভাগ">
+        <nav className="home-category-nav border-t border-[var(--theme-card-border)] bg-[var(--theme-card-bg)]" aria-label="সংবাদ বিভাগ">
           <div className="mx-auto flex max-w-7xl items-center gap-0 overflow-x-auto px-3 sm:px-4 scrollbar-none">
             <Link
               href="/"
               aria-label="হোম"
-              className="home-category-nav-link flex shrink-0 items-center justify-center px-3 py-3 text-slate-200 transition hover:bg-white/10 hover:text-white"
+              aria-current={pathname === '/' ? 'page' : undefined}
+              className="home-category-nav-link flex shrink-0 items-center justify-center border-r border-[var(--theme-card-border)] px-3 py-3 text-[var(--theme-text-body)] transition hover:bg-[var(--theme-brand-soft)] hover:text-[var(--theme-brand)]"
             >
               <Home className="size-4" aria-hidden="true" />
             </Link>
-            <Link href="/news" className="home-category-nav-link shrink-0 border-l border-white/10 px-3 py-3 text-[13px] font-bold text-slate-200 transition hover:bg-white/10 hover:text-white sm:text-sm">
+            <Link
+              href="/news"
+              aria-current={pathname === '/news' ? 'page' : undefined}
+              className="home-category-nav-link shrink-0 border-r border-[var(--theme-card-border)] px-3 py-3 text-[13px] font-bold text-[var(--theme-text-body)] transition hover:bg-[var(--theme-brand-soft)] hover:text-[var(--theme-brand)] sm:text-sm"
+            >
               সর্বশেষ
             </Link>
             {categoryNavigation.map((category) => (
               <Link
                 key={category}
                 href={`/category/${encodeURIComponent(category)}`}
-                className="home-category-nav-link shrink-0 border-l border-white/10 px-3 py-3 text-[13px] font-bold text-slate-200 transition hover:bg-white/10 hover:text-white sm:text-sm"
+                aria-current={pathname === `/category/${encodeURIComponent(category)}` ? 'page' : undefined}
+                className="home-category-nav-link shrink-0 border-r border-[var(--theme-card-border)] px-3 py-3 text-[13px] font-bold text-[var(--theme-text-body)] transition hover:bg-[var(--theme-brand-soft)] hover:text-[var(--theme-brand)] sm:text-sm"
               >
                 {category}
               </Link>
             ))}
             {[
-              ['সম্পাদকীয় ও মতামত', '/editorial'],
-              ['নোটিশ', '/notices'],
+              ['মতামত ও সম্পাদকীয়', '/editorial'],
+              ['ডিজিটাল নোটিশ', '/notices'],
               ['স্টুডেন্ট কর্নার', '/student-corner'],
               ['ক্লাব', '/clubs'],
               ['গ্যালারি', '/gallery'],
+              ['প্রকাশনা', '/publications'],
             ].map(([label, href]) => (
               <Link
                 key={href}
                 href={href}
-                className="home-category-nav-link shrink-0 border-l border-white/10 px-3 py-3 text-[13px] font-bold text-slate-200 transition hover:bg-white/10 hover:text-white sm:text-sm"
+                aria-current={pathname === href ? 'page' : undefined}
+                className="home-category-nav-link shrink-0 border-r border-[var(--theme-card-border)] px-3 py-3 text-[13px] font-bold text-[var(--theme-text-body)] transition hover:bg-[var(--theme-brand-soft)] hover:text-[var(--theme-brand)] sm:text-sm"
               >
                 {label}
               </Link>
