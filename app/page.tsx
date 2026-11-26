@@ -1,128 +1,53 @@
-import { HomeEventsAndPopular } from '@/components/portal/home-events-popular'
-import type { ReactNode } from 'react'
-import { connection } from 'next/server'
-import { TopBar } from '@/components/portal/top-bar'
-import { SiteHeader } from '@/components/portal/site-header'
-import { NewsTicker } from '@/components/portal/news-ticker'
-import { HeroCarousel } from '@/components/hero/HeroCarousel'
-import { FbStoriesTray } from '@/components/portal/fb-stories-tray'
-import { FbReelsSection } from '@/components/portal/fb-reels-section'
-import { LeadershipSection } from '@/components/portal/leadership-section'
-import { GeneralNews } from '@/components/portal/general-news'
-import { CommunityFeed } from '@/components/portal/community-feed'
-import { CategorySections } from '@/components/portal/category-sections'
-import { StudentCorner } from '@/components/portal/student-corner'
-import { ClubNews } from '@/components/portal/club-news'
-import { ClubPosts } from '@/components/portal/club-posts'
-import { CommunityPagesSection } from '@/components/portal/community-pages-section'
-import { NoticeBoard } from '@/components/portal/notice-board'
-import { PollWidget } from '@/components/portal/poll-widget'
-import { SiteFooter } from '@/components/portal/site-footer'
-import { BackToTop } from '@/components/portal/back-to-top'
-import { getSiteSettings, type HomeSectionConfig } from '@/lib/site-settings'
-import { getHomepagePostHistory, getLimits, getPopularPosts, CAT_CLUB, CAT_STUDENT } from '@/lib/sb'
-import { getVisibleCategoryNames } from '@/lib/categories'
-import { getHomepageNotices } from '@/lib/notices'
-import { selectHomepageItems } from '@/lib/homepage-feed'
-import { HomepageTransitionSection } from '@/components/portal/homepage-transition-sections'
+import { connection } from "next/server"
+import { TopBar } from "@/components/portal/top-bar"
+import { SiteHeader } from "@/components/portal/site-header"
+import { NewsTicker } from "@/components/portal/news-ticker"
+import { HeroCarousel } from "@/components/hero/HeroCarousel"
+import { SiteFooter } from "@/components/portal/site-footer"
+import { BackToTop } from "@/components/portal/back-to-top"
+import { KalbelaHomeSections } from "@/components/portal/kalbela-home-sections"
+import { getVisibleCategoryNames } from "@/lib/categories"
+import { getFacultiesWithDepartments } from "@/lib/faculties"
+import { getNotices } from "@/lib/notices"
+import { getAdBanners } from "@/lib/ads"
+import { getActiveStories } from "@/lib/stories"
+import { getLiveReels } from "@/lib/reels"
+import { getSiteSettings } from "@/lib/site-settings"
+import { getLimits, getTopPopularPosts, getVisiblePosts } from "@/lib/sb"
 
 export const revalidate = 60
 
 export default async function Page() {
   await connection()
-  const [settings, postHistory, limits, categoryNames, noticeHistory, popularPosts] = await Promise.all([
+  const [
+    settings,
+    postRows,
+    popularPosts,
+    categories,
+    notices,
+    faculties,
+    adBanners,
+    stories,
+    reels,
+    limits,
+  ] = await Promise.all([
     getSiteSettings(),
-    getHomepagePostHistory(),
-    getLimits(),
+    getVisiblePosts(200),
+    getTopPopularPosts(20),
     getVisibleCategoryNames(),
-    getHomepageNotices(),
-    getPopularPosts(6),
+    getNotices(),
+    getFacultiesWithDepartments(),
+    getAdBanners(),
+    getActiveStories(),
+    getLiveReels(),
+    getLimits(),
   ])
-  const sections = settings.homeSections.sections
-  const now = Date.now()
-  const visibleCategories = new Set(categoryNames)
-  const homePosts = selectHomepageItems(postHistory, (post) => post.created_at, now).filter(
-    (post) => !post.category || visibleCategories.has(post.category)
+  const allPublishedPosts = postRows.filter((post) => !post.hidden)
+  const visibleCategoryNames = new Set(categories)
+  const homepagePosts = allPublishedPosts.filter(
+    (post) => !post.category || visibleCategoryNames.has(post.category)
   )
-  const allPublishedPosts = postHistory.filter(
-    (post) => !post.hidden && (!post.category || visibleCategories.has(post.category))
-  )
-  const activeNotices = noticeHistory.filter(
-    (notice) => !notice.expires_at || Date.parse(notice.expires_at) > now
-  )
-  const homeNotices = selectHomepageItems(
-    activeNotices,
-    (notice) => notice.updated_at || notice.created_at,
-    now
-  )
-  const newsPosts = homePosts.filter(
-    (post) => !post.page_id && post.category !== CAT_CLUB && post.category !== CAT_STUDENT
-  )
-  const heroSection = sections.find((section) => section.key === 'hero')
-  const topAreaSection = sections.find((section) => section.key === 'general_news')
-  const leadershipSection = sections.find((section) => section.key === 'leadership')
-  const middleSections = sections.filter(
-    (section) =>
-      section.visible &&
-      section.key !== 'hero' &&
-      section.key !== 'general_news' &&
-      section.key !== 'leadership'
-  )
-
-  const renderSection = (sec: HomeSectionConfig): ReactNode => {
-    if (!sec.visible) return null
-    switch (sec.key) {
-      case 'hero':
-      case 'general_news':
-      case 'leadership':
-        return null
-      case 'stories':
-        return <FbStoriesTray key={sec.key} />
-      case 'reels':
-        return <FbReelsSection key={sec.key} compact />
-      case 'community_feed':
-        return <CommunityFeed key={sec.key} />
-      case 'category_sections':
-        return (
-          <CategorySections
-            key={sec.key}
-            sectionConfig={sec}
-            prefetchedPosts={allPublishedPosts}
-            prefetchedLimits={limits}
-            prefetchedCategories={categoryNames}
-          />
-        )
-      case 'student_corner':
-        return <StudentCorner key={sec.key} />
-      case 'club_news':
-        return <ClubNews key={sec.key} compact />
-      case 'club_posts':
-        return (
-          <ClubPosts
-            key={sec.key}
-            sectionConfig={sec}
-            prefetchedPosts={homePosts}
-            prefetchedLimits={limits}
-          />
-        )
-      case 'community_pages':
-        return <CommunityPagesSection key={sec.key} />
-      case 'notice_board':
-        return <NoticeBoard key={sec.key} prefetchedNotices={homeNotices} initialNow={now} />
-      case 'events_popular':
-        return <HomeEventsAndPopular key={sec.key} compact prefetchedPosts={newsPosts} />
-      case 'polls':
-        return <PollWidget key={sec.key} compact />
-      case 'departments':
-      case 'social_sites':
-      case 'timeline':
-      case 'fact_check':
-      case 'publications':
-        return <HomepageTransitionSection key={sec.key} kind={sec.key} sectionConfig={sec} />
-      default:
-        return null
-    }
-  }
+  const heroSection = settings.homeSections.sections.find((section) => section.key === "hero")
 
   return (
     <>
@@ -138,17 +63,20 @@ export default async function Page() {
         </section>
 
         {heroSection?.visible && <HeroCarousel key={heroSection.key} />}
-        {topAreaSection?.visible && (
-          <GeneralNews
-            sectionConfig={topAreaSection}
-            prefetchedPosts={homePosts}
-            prefetchedCategories={categoryNames}
-            prefetchedPopularPosts={popularPosts}
-            prefetchedNotices={activeNotices}
-          />
-        )}
-        {middleSections.map((section) => renderSection(section))}
-        {leadershipSection?.visible && <LeadershipSection key={leadershipSection.key} />}
+        <KalbelaHomeSections
+          settings={settings}
+          posts={homepagePosts}
+          popularPosts={popularPosts.filter(
+            (post) => !post.category || visibleCategoryNames.has(post.category)
+          )}
+          categories={categories}
+          notices={notices}
+          faculties={faculties}
+          stories={stories}
+          reels={reels}
+          adBanners={adBanners}
+          limits={limits}
+        />
       </main>
       <SiteFooter />
       <BackToTop />

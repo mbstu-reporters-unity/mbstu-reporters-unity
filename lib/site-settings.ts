@@ -19,6 +19,7 @@ export type DefaultThemeId =
   | "sunset-peach"
   | "pure-frost"
   | "midnight-neon"
+  | "daylight-light"
 
 export type StatIconKey =
   | "calendar"

@@ -88,13 +88,15 @@ const bn = (n: number | string) => String(n).replace(/\d/g, (d) => '০১২৩
 export function ClubNews({
   standalone = false,
   compact = false,
+  allowFallback = true,
 }: {
   standalone?: boolean
   compact?: boolean
+  allowFallback?: boolean
 }) {
   const { pick } = useLang()
   const settings = useSiteSettings()
-  const [list, setList] = useState<Club[]>(fallbackClubs)
+  const [list, setList] = useState<Club[]>(allowFallback ? fallbackClubs : [])
   const [dbMap, setDbMap] = useState<Record<string, ClubItem>>({})
   const [filter, setFilter] = useState('All')
   const [selected, setSelected] = useState<Club | null>(null)
@@ -107,7 +109,7 @@ export function ClubNews({
   const sliderContainerRef = useRef<HTMLDivElement>(null)
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
-  const clubsRef = useRef<Club[]>(fallbackClubs)
+  const clubsRef = useRef<Club[]>(allowFallback ? fallbackClubs : [])
 
   const handleCloseDialog = useCallback(() => {
     setSelected(null)
@@ -134,7 +136,7 @@ export function ClubNews({
   useEffect(() => {
     Promise.all([getCampusClubs(), getClubCarouselConfig()]).then(([items, cfg]) => {
       const activeItems = (items || []).filter((it) => it.is_active !== false)
-      const formatted = activeItems.length > 0 ? activeItems.map(formatClub) : fallbackClubs
+      const formatted = activeItems.length > 0 ? activeItems.map(formatClub) : allowFallback ? fallbackClubs : []
       setList(formatted)
       clubsRef.current = formatted
       if (cfg) setConfig(cfg)
@@ -176,7 +178,7 @@ export function ClubNews({
       window.removeEventListener('open-club-modal', handleOpenModal)
       window.removeEventListener('popstate', handlePopState)
     }
-  }, [handleOpenClub])
+  }, [allowFallback, handleOpenClub])
 
   useEffect(() => {
     if (sliderContainerRef.current) {

@@ -437,7 +437,7 @@ export default function SiteSettingsManager({
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                  ডিফল্ট গ্লাস থিম:
+                  ডিফল্ট থিম:
                 </label>
                 <select
                   className={inp}
@@ -453,6 +453,7 @@ export default function SiteSettingsManager({
                   <option value="sunset-peach">২. সানসেট পিচ গ্লাস</option>
                   <option value="pure-frost">৩. স্নো হোয়াইট ফ্রস্টেড</option>
                   <option value="midnight-neon">৪. মিডনাইট নিয়ন গ্লাস</option>
+                  <option value="daylight-light">৫. কালবেলা স্টাইল লাইট সংবাদপত্র</option>
                 </select>
               </div>
             </div>

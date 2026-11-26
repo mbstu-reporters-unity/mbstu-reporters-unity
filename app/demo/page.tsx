@@ -162,7 +162,7 @@ export default async function ModernHomepageDemo() {
                     <Award className="size-4" />
                     <span>জনপ্রিয় ও আসন্ন আয়োজন</span>
                   </div>
-                  <HomeEventsAndPopular compact prefetchedPosts={newsPosts} />
+                  <HomeEventsAndPopular compact />
                 </div>
               )}
 

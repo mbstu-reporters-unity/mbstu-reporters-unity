@@ -36,6 +36,9 @@ export type Post = {
   hidden?: boolean | null
   link_url?: string | null
   view_count?: number | null
+  is_featured?: boolean | null
+  summary?: string | null
+  tags?: string[] | null
 }
 
 export type PostInput = Omit<Post, "id" | "created_at" | "user_id" | "page" | "author_user_type" | "view_count">
@@ -795,12 +798,12 @@ export async function createPost(token: string, data: PostInput) {
 }
 
 export async function updatePost(token: string, id: string, data: PostInput) {
-  await ok(
-    await fetch(`${SB_URL}/rest/v1/posts?id=eq.${encodeURIComponent(id)}`, {
-      method: "PATCH",
-      headers: { ...hdr(token, true), Prefer: "return=minimal" },
-      body: JSON.stringify(data),
-    })
+  await savePostWithExtraFallback(
+    `${SB_URL}/rest/v1/posts?id=eq.${encodeURIComponent(id)}`,
+    token,
+    data,
+    "PATCH",
+    "return=minimal"
   )
 }
 
@@ -1048,7 +1051,7 @@ export async function getVisiblePosts(limit = 50): Promise<Post[]> {
   }
 }
 
-export async function getPopularPosts(limit = 6): Promise<Post[]> {
+export async function getTopPopularPosts(limit = 20): Promise<Post[]> {
   try {
     const res = await fetch(
       `${SB_URL}/rest/v1/posts?select=*&or=(hidden.is.null,hidden.eq.false)&order=view_count.desc.nullslast,created_at.desc&limit=${limit}`,
@@ -1058,11 +1061,44 @@ export async function getPopularPosts(limit = 6): Promise<Post[]> {
       console.error(`Popular post query failed (${res.status})`)
       return []
     }
-    return await res.json()
+    const rows: Post[] = await res.json()
+    return await attachProfileAvatars(rows)
   } catch (error) {
     console.error("Popular post query failed", error)
     return []
   }
+}
+
+export async function getPopularPosts(limit = 6): Promise<Post[]> {
+  return getTopPopularPosts(limit)
+}
+
+export async function getRelatedPosts(
+  postId: string,
+  category: string | null,
+  limit = 4
+): Promise<Post[]> {
+  if (limit <= 0) return []
+
+  if (category) {
+    try {
+      const res = await fetch(
+        `${SB_URL}/rest/v1/posts?select=*&or=(hidden.is.null,hidden.eq.false)&id=neq.${encodeURIComponent(postId)}&category=eq.${encodeURIComponent(category)}&order=created_at.desc&limit=${limit}`,
+        { headers: hdr(), cache: "no-store" }
+      )
+      if (!res.ok) {
+        console.error(`Related post query failed (${res.status})`)
+      } else {
+        const rows: Post[] = await res.json()
+        if (rows.length) return await attachProfileAvatars(rows)
+      }
+    } catch (error) {
+      console.error("Related post query failed", error)
+    }
+  }
+
+  const latest = await getVisiblePosts(limit + 1)
+  return latest.filter((post) => post.id !== postId).slice(0, limit)
 }
 
 export async function getHomepagePostHistory(): Promise<Post[]> {
@@ -1436,15 +1472,46 @@ export async function removeAllImages(token: string, type: ParentType, id: strin
 }
 
 export async function createPostReturningId(token: string, data: PostInput): Promise<string | null> {
-  const res = await ok(
-    await fetch(`${SB_URL}/rest/v1/posts?select=id`, {
-      method: "POST",
-      headers: { ...hdr(token, true), Prefer: "return=representation" },
-      body: JSON.stringify(data),
-    })
+  const res = await savePostWithExtraFallback(
+    `${SB_URL}/rest/v1/posts?select=id`,
+    token,
+    data,
+    "POST",
+    "return=representation"
   )
   const rows: { id: string }[] = await res.json()
   return rows[0]?.id ?? null
+}
+
+const OPTIONAL_POST_FIELDS = ["is_featured", "summary", "tags"] as const
+
+async function savePostWithExtraFallback(
+  url: string,
+  token: string,
+  data: PostInput,
+  method: "POST" | "PATCH",
+  prefer: string
+): Promise<Response> {
+  const send = (payload: PostInput) =>
+    fetch(url, {
+      method,
+      headers: { ...hdr(token, true), Prefer: prefer },
+      body: JSON.stringify(payload),
+    })
+
+  let res = await send(data)
+  if (!res.ok) {
+    const error = await res.clone().json().catch(() => ({}))
+    const message = [error.message, error.msg, error.details].filter(Boolean).join(" ")
+    if (!OPTIONAL_POST_FIELDS.some((field) => message.includes(field))) {
+      return await ok(res)
+    }
+
+    const fallback: PostInput = { ...data }
+    for (const field of OPTIONAL_POST_FIELDS) delete fallback[field]
+    res = await send(fallback)
+  }
+  return await ok(res)
 }
 
 /* ---------- ইমেজ মেটা, ক্যাপশন ও লেআউট ---------- */

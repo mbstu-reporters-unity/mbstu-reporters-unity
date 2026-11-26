@@ -8,11 +8,23 @@ import { getMe, type Profile } from "@/lib/sb"
 import { useLang } from "@/lib/i18n"
 import { useSiteSettings } from "./site-settings-context"
 
-export function FbStoriesTray({ standalone = false }: { standalone?: boolean }) {
+export function FbStoriesTray({
+  standalone = false,
+  prefetchedStories,
+  showHeading = true,
+  hideAddStory = false,
+  portrait = false,
+}: {
+  standalone?: boolean
+  prefetchedStories?: StoryItem[]
+  showHeading?: boolean
+  hideAddStory?: boolean
+  portrait?: boolean
+}) {
   const settings = useSiteSettings()
   const { pick } = useLang()
-  const [stories, setStories] = useState<StoryItem[]>([])
-  const [loaded, setLoaded] = useState(false)
+  const [stories, setStories] = useState<StoryItem[]>(prefetchedStories || [])
+  const [loaded, setLoaded] = useState(Boolean(prefetchedStories))
   const [activeStoryIdx, setActiveStoryIdx] = useState<number | null>(null)
   const [progress, setProgress] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
@@ -24,6 +36,12 @@ export function FbStoriesTray({ standalone = false }: { standalone?: boolean }) 
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
+    if (prefetchedStories) {
+      setStories(prefetchedStories)
+      setLoaded(true)
+      return
+    }
+
     getActiveStories().then((items) => {
       setStories(items)
       setLoaded(true)
@@ -33,7 +51,7 @@ export function FbStoriesTray({ standalone = false }: { standalone?: boolean }) 
     if (t) {
       getMe(t).then(setMe).catch(() => {})
     }
-  }, [])
+  }, [prefetchedStories])
 
   useEffect(() => {
     const handlePopState = () => {
@@ -162,7 +180,7 @@ export function FbStoriesTray({ standalone = false }: { standalone?: boolean }) 
 
   return (
     <div id="stories" className="w-full my-4">
-      {!standalone && (
+      {!standalone && showHeading && (
         <div className="mx-auto mb-2 flex max-w-7xl items-center justify-between gap-3 px-4">
           <h2 className="font-serif text-base font-bold text-white">
             {pick(sec?.titleBn || 'গল্পসমূহ', sec?.titleEn || 'Stories')}
@@ -174,9 +192,9 @@ export function FbStoriesTray({ standalone = false }: { standalone?: boolean }) 
       )}
       <div className="w-full overflow-x-auto py-1 px-3 sm:px-4 scrollbar-none select-none">
         <div className="flex gap-2 sm:gap-2.5 min-w-max items-center">
-          <Link
+          {!hideAddStory && <Link
             href="/admin"
-            className="relative w-[105px] sm:w-[125px] h-[175px] sm:h-[205px] rounded-2xl overflow-hidden border border-white/20 bg-slate-900/90 shadow-lg flex flex-col justify-between group active:scale-95 transition-all shrink-0 cursor-pointer text-center"
+            className={`relative ${portrait ? 'aspect-[9/16] w-[155px] sm:w-[180px]' : 'h-[175px] w-[105px] sm:h-[205px] sm:w-[125px]'} shrink-0 overflow-hidden rounded-2xl border border-white/20 bg-slate-900/90 text-center shadow-lg transition-all group active:scale-95`}
           >
             <div className="h-[65%] w-full bg-slate-800 flex items-center justify-center overflow-hidden">
               {me?.avatar_url ? (
@@ -195,13 +213,13 @@ export function FbStoriesTray({ standalone = false }: { standalone?: boolean }) 
               </span>
               <span className="text-[10px] font-bold text-white leading-tight">{addStoryLabel}</span>
             </div>
-          </Link>
+          </Link>}
 
           {stories.map((st, idx) => (
             <div
               key={st.id}
               onClick={() => openStory(idx)}
-              className="relative w-[105px] sm:w-[125px] h-[175px] sm:h-[205px] rounded-2xl overflow-hidden border border-white/20 shadow-lg cursor-pointer group active:scale-95 transition-all shrink-0"
+              className={`relative ${portrait ? 'aspect-[9/16] w-[155px] sm:w-[180px]' : 'h-[175px] w-[105px] sm:h-[205px] sm:w-[125px]'} shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-white/20 shadow-lg transition-all group active:scale-95`}
             >
               {st.media_type === "video" ? (
                 <video src={st.media_url} className="size-full object-cover" muted playsInline />

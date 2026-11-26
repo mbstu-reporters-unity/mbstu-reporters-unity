@@ -18,25 +18,39 @@ function extractYouTubeId(url: string): string | null {
 export function FbReelsSection({
   standalone = false,
   compact = false,
+  prefetchedReels,
+  showHeading = true,
+  sectionId = "reels-hub",
+  displayMode = "default",
 }: {
   standalone?: boolean
   compact?: boolean
+  prefetchedReels?: ReelItem[]
+  showHeading?: boolean
+  sectionId?: string
+  displayMode?: "default" | "portrait" | "landscape"
 }) {
   const settings = useSiteSettings()
   const { pick } = useLang()
-  const [reels, setReels] = useState<ReelItem[]>([])
-  const [loaded, setLoaded] = useState(false)
+  const [reels, setReels] = useState<ReelItem[]>(prefetchedReels || [])
+  const [loaded, setLoaded] = useState(Boolean(prefetchedReels))
   const [currentIndex, setCurrentIndex] = useState<number | null>(null)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const itemRefs = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
+    if (prefetchedReels) {
+      setReels(prefetchedReels)
+      setLoaded(true)
+      return
+    }
+
     getLiveReels().then((items) => {
       setReels(items)
       setLoaded(true)
     })
-  }, [])
+  }, [prefetchedReels])
 
   useEffect(() => {
     const handlePopState = () => {
@@ -118,7 +132,8 @@ export function FbReelsSection({
   const compactContent = (
       <section className="my-8 border-b border-white/10 py-8 sm:py-10">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-5 flex items-center justify-between gap-4">
+          {showHeading && (
+            <div className="mb-5 flex items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-2">
               <Film className="size-5 shrink-0 text-rose-500" aria-hidden="true" />
               <h2 className="font-serif text-lg font-bold text-white sm:text-xl">
@@ -133,7 +148,8 @@ export function FbReelsSection({
             <Link href="/reels" className="shrink-0 text-xs font-bold text-cyan-300 hover:underline">
               {pick('সকল ভিডিও দেখুন', 'View all videos')}
             </Link>
-          </div>
+            </div>
+          )}
           <HomepageCompactCarousel
             title={headingText}
             interval={7500}
@@ -197,31 +213,87 @@ export function FbReelsSection({
       </section>
   )
 
-  return (
-    <div id="reels-hub" className={`w-full my-6 ${compact ? '' : 'space-y-3'}`}>
-      {compact ? compactContent : (
-        <>
-      <div className="flex items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <Film className="size-5 text-rose-500" />
-          <h3 className="font-serif text-lg font-bold text-white flex items-center gap-1.5">
-            <span>{headingText}</span>
-            {badgeText && (
-              <span className="text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded-full">
-                {badgeText}
-              </span>
-            )}
-          </h3>
-        </div>
-        <div className="flex items-center gap-3">
-          {!standalone && (
+  const landscapeContent = (
+    <section className="my-8 border-b border-white/10 py-8 sm:py-10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {showHeading && (
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Film className="size-5 text-rose-500" aria-hidden="true" />
+              <h2 className="font-serif text-lg font-bold text-white sm:text-xl">ভিডিও</h2>
+            </div>
             <Link href="/reels" className="text-xs font-bold text-cyan-300 hover:underline">
-              {compact ? pick('সকল ভিডিও দেখুন', 'View all videos') : pick('সকল ভিডিও', 'All videos')}
+              সকল ভিডিও দেখুন
             </Link>
-          )}
-          <span className="text-xs text-cyan-300 font-semibold">{reels.length} {pick('টি ভিডিও', reels.length === 1 ? 'video' : 'videos')}</span>
+          </div>
+        )}
+        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+          {reels.map((reel, idx) => {
+            const ytId = extractYouTubeId(reel.video_url)
+            const thumb = reel.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null)
+            return (
+              <button
+                key={reel.id}
+                type="button"
+                onClick={() => openReelAt(idx)}
+                aria-label={pick(`ভিডিও চালান: ${reel.title}`, `Play video: ${reel.title}`)}
+                className="group w-[230px] shrink-0 overflow-hidden rounded-xl border border-white/15 bg-white/[0.04] text-left transition hover:border-cyan-400/50 sm:w-[280px]"
+              >
+                <span className="relative block aspect-video bg-slate-950">
+                  {thumb ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={thumb} alt="" className="size-full object-cover" />
+                  ) : (
+                    <span className="flex size-full items-center justify-center">
+                      <Film className="size-9 text-white/40" aria-hidden="true" />
+                    </span>
+                  )}
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/10 transition group-hover:bg-black/25">
+                    <span className="flex size-10 items-center justify-center rounded-full border border-white/40 bg-black/60 text-white">
+                      <Play className="ml-0.5 size-4 fill-current text-cyan-300" aria-hidden="true" />
+                    </span>
+                  </span>
+                </span>
+                <span className="line-clamp-2 block px-3 py-2.5 text-sm font-bold leading-snug text-white">
+                  {reel.title}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </div>
+    </section>
+  )
+
+  return (
+    <div id={sectionId} className={`w-full my-6 ${compact ? '' : 'space-y-3'}`}>
+      {displayMode === "landscape" ? landscapeContent : compact ? compactContent : (
+        <>
+      {showHeading && (
+        <div className="flex items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <Film className="size-5 text-rose-500" />
+            <h3 className="flex items-center gap-1.5 font-serif text-lg font-bold text-white">
+              <span>{headingText}</span>
+              {badgeText && (
+                <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                  {badgeText}
+                </span>
+              )}
+            </h3>
+          </div>
+          <div className="flex items-center gap-3">
+            {!standalone && (
+              <Link href="/reels" className="text-xs font-bold text-cyan-300 hover:underline">
+                {pick('সকল ভিডিও দেখুন', 'All videos')}
+              </Link>
+            )}
+            <span className="text-xs font-semibold text-cyan-300">
+              {reels.length} {pick('টি ভিডিও', reels.length === 1 ? 'video' : 'videos')}
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-2.5 overflow-x-auto px-4 pb-2 scrollbar-none select-none">
         {reels.map((reel, idx) => {
@@ -232,7 +304,11 @@ export function FbReelsSection({
             <div
               key={reel.id}
               onClick={() => openReelAt(idx)}
-              className="relative w-[135px] sm:w-[160px] h-[225px] sm:h-[265px] rounded-2xl overflow-hidden bg-slate-900 border border-white/20 shadow-lg shrink-0 group active:scale-95 transition-all block cursor-pointer"
+              className={`relative shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-white/20 bg-slate-900 shadow-lg transition-all group active:scale-95 ${
+                displayMode === "portrait"
+                  ? "aspect-[9/16] w-[155px] sm:w-[180px]"
+                  : "h-[225px] w-[135px] sm:h-[265px] sm:w-[160px]"
+              }`}
             >
               {thumb ? (
                 // eslint-disable-next-line @next/next/no-img-element

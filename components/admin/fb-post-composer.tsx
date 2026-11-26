@@ -244,29 +244,37 @@ async function saveRowWithMetaFallback(
     Prefer: "return=representation",
   }
 
+  let currentPayload = payload
   let res = await fetch(url, {
     method,
     headers,
-    body: JSON.stringify(payload),
+    body: JSON.stringify(currentPayload),
   })
 
-  if (!res.ok) {
-    const errObj = await res.json().catch(() => ({}))
+  while (!res.ok) {
+    const errObj = await res.clone().json().catch(() => ({}))
     const errText = (errObj.message || errObj.msg || errObj.details || "") as string
-    if (/meta|column|schema cache/i.test(errText) && "meta" in payload) {
-      const { meta: _ignored, ...fallbackPayload } = payload
-      res = await fetch(url, {
-        method,
-        headers,
-        body: JSON.stringify(fallbackPayload),
-      })
-      if (!res.ok) {
-        const err2 = await res.json().catch(() => ({}))
-        throw new Error(err2.message || err2.msg || `ত্রুটি (${res.status})`)
-      }
-    } else {
+    const missingPostExtras =
+      table === "posts" &&
+      ["is_featured", "summary", "tags"].some((field) => errText.includes(field) && field in currentPayload)
+    const missingMeta = /\bmeta\b/i.test(errText) && "meta" in currentPayload
+    if (!missingPostExtras && !missingMeta) {
       throw new Error(errText || `ত্রুটি (${res.status})`)
     }
+
+    const fallbackPayload = { ...currentPayload }
+    if (missingMeta) delete fallbackPayload.meta
+    if (missingPostExtras) {
+      delete fallbackPayload.is_featured
+      delete fallbackPayload.summary
+      delete fallbackPayload.tags
+    }
+    currentPayload = fallbackPayload
+    res = await fetch(url, {
+      method,
+      headers,
+      body: JSON.stringify(currentPayload),
+    })
   }
 
   const rows: { id: string }[] = await res.json().catch(() => [])
@@ -312,6 +320,9 @@ export default function FbPostComposer({
   const [category, setCategory] = useState(
     disableVideo ? "সম্পাদকীয় ও মতামত" : categories[0] || "ক্যাম্পাস সংবাদ"
   )
+  const [isFeatured, setIsFeatured] = useState(false)
+  const [summary, setSummary] = useState("")
+  const [tagsInput, setTagsInput] = useState("")
   const [selectedPageId, setSelectedPageId] = useState(
     defaultPageId || (lockToPage ? communityPages[0]?.id || "" : "")
   )
@@ -394,6 +405,9 @@ export default function FbPostComposer({
       const p = editItem as Post
       setHeading(p.heading || "")
       setBody(p.body || "")
+      setIsFeatured(Boolean(p.is_featured))
+      setSummary(p.summary || "")
+      setTagsInput((p.tags || []).join(", "))
       setCategory(p.category || (disableVideo ? "সম্পাদকীয় ও মতামত" : categories[0] || "ক্যাম্পাস সংবাদ"))
       setSelectedPageId(p.page_id || defaultPageId || (lockToPage ? communityPages[0]?.id || "" : ""))
       setSelectedClubId(p.club_id || "")
@@ -637,10 +651,14 @@ export default function FbPostComposer({
           finalAuthorAvatar = await uploadImage(token, avatarBlob)
         }
         const isClub = !lockToPage && (category.includes("ক্লাব") || category.includes("Club"))
+        const tags = tagsInput.split(",").map((tag) => tag.trim()).filter(Boolean)
         const payload: Record<string, any> = {
           title: finalTitle,
           heading: heading.trim() || null,
           body: body.trim() || (finalPhotoUrls.length > 0 ? finalTitle : ""),
+          is_featured: isFeatured,
+          summary: summary.trim() || null,
+          tags: tags.length ? tags : null,
           category: disableVideo ? "সম্পাদকীয় ও মতামত" : category,
           club_id: isClub && selectedClubId ? selectedClubId : null,
           page_id: selectedPageId || null,
@@ -1627,6 +1645,36 @@ export default function FbPostComposer({
                         </select>
                       </div>
                     )}
+
+                    <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 font-semibold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={isFeatured}
+                        onChange={(e) => setIsFeatured(e.target.checked)}
+                      />
+                      বাছাইকৃত / প্রধান সংবাদ (Featured)
+                    </label>
+
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">সংক্ষিপ্ত সারসংক্ষেপ:</label>
+                      <textarea
+                        className="w-full border border-slate-300 rounded-xl px-3 py-2 bg-white"
+                        rows={3}
+                        value={summary}
+                        onChange={(e) => setSummary(e.target.value)}
+                        placeholder="সংবাদের সংক্ষিপ্ত সারসংক্ষেপ (ঐচ্ছিক)"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">ট্যাগসমূহ (কমা দিয়ে লিখুন):</label>
+                      <input
+                        className="w-full border border-slate-300 rounded-xl px-3 py-2 bg-white"
+                        value={tagsInput}
+                        onChange={(e) => setTagsInput(e.target.value)}
+                        placeholder="শিক্ষা, ক্যাম্পাস, গবেষণা"
+                      />
+                    </div>
 
                     {communityPages.length > 0 && (
                       <div>

@@ -1,28 +1,26 @@
 import Link from 'next/link'
 import { CalendarDays, MapPin, TrendingUp, ArrowRight, Ticket, Eye } from 'lucide-react'
 import { getCampusEvents } from '@/lib/events'
-import { getVisiblePosts, type Post } from '@/lib/sb'
+import { getTopPopularPosts, type Post } from '@/lib/sb'
 import { SectionHeading } from './section-heading'
 import { HomepageCompactCarousel } from './homepage-transition-sections'
 
 const bn = (n: number | string) => String(n).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)])
 
 export async function HomeEventsAndPopular({
-  prefetchedPosts,
+  prefetchedPopularPosts,
   compact = false,
 }: {
-  prefetchedPosts?: Post[]
+  prefetchedPopularPosts?: Post[]
   compact?: boolean
 } = {}) {
-  const [events, posts] = await Promise.all([
+  const [events, popular] = await Promise.all([
     getCampusEvents(),
-    prefetchedPosts ? Promise.resolve(prefetchedPosts) : getVisiblePosts(100),
+    prefetchedPopularPosts ? Promise.resolve(prefetchedPopularPosts) : getTopPopularPosts(4),
   ])
 
   const upcomingEvents = events.filter((e) => e.is_upcoming !== false).slice(0, 2)
-  const popularPosts = [...posts]
-    .sort((a, b) => (Number(b.view_count) || 0) - (Number(a.view_count) || 0))
-    .slice(0, 4)
+  const popularPosts = popular.slice(0, 4)
 
   if (upcomingEvents.length === 0 && popularPosts.length === 0) return null
 

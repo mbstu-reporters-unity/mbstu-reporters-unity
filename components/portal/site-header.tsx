@@ -959,6 +959,10 @@ export function SiteHeader() {
   const activeUnivLogo = settings.branding.univLogoUrl || univLogo
   const activeUnivLink = settings.branding.univLinkUrl || univLink || 'https://mbstu.ac.bd'
   const activeUnivText = settings.branding.univText !== undefined ? settings.branding.univText : univText
+  const categoryNavigation = useMemo(
+    () => Array.from(new Set(categoriesList.filter((category) => category.trim()))),
+    [categoriesList]
+  )
 
   return (
     <>
@@ -1035,6 +1039,44 @@ export function SiteHeader() {
             </button>
           </div>
         </div>
+        <nav className="home-category-nav border-t border-white/10 bg-white/[0.03]" aria-label="সংবাদ বিভাগ">
+          <div className="mx-auto flex max-w-7xl items-center gap-0 overflow-x-auto px-3 sm:px-4 scrollbar-none">
+            <Link
+              href="/"
+              aria-label="হোম"
+              className="home-category-nav-link flex shrink-0 items-center justify-center px-3 py-3 text-slate-200 transition hover:bg-white/10 hover:text-white"
+            >
+              <Home className="size-4" aria-hidden="true" />
+            </Link>
+            <Link href="/news" className="home-category-nav-link shrink-0 border-l border-white/10 px-3 py-3 text-[13px] font-bold text-slate-200 transition hover:bg-white/10 hover:text-white sm:text-sm">
+              সর্বশেষ
+            </Link>
+            {categoryNavigation.map((category) => (
+              <Link
+                key={category}
+                href={`/category/${encodeURIComponent(category)}`}
+                className="home-category-nav-link shrink-0 border-l border-white/10 px-3 py-3 text-[13px] font-bold text-slate-200 transition hover:bg-white/10 hover:text-white sm:text-sm"
+              >
+                {category}
+              </Link>
+            ))}
+            {[
+              ['সম্পাদকীয় ও মতামত', '/editorial'],
+              ['নোটিশ', '/notices'],
+              ['স্টুডেন্ট কর্নার', '/student-corner'],
+              ['ক্লাব', '/clubs'],
+              ['গ্যালারি', '/gallery'],
+            ].map(([label, href]) => (
+              <Link
+                key={href}
+                href={href}
+                className="home-category-nav-link shrink-0 border-l border-white/10 px-3 py-3 text-[13px] font-bold text-slate-200 transition hover:bg-white/10 hover:text-white sm:text-sm"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+        </nav>
       </header>
 
       <DrillDownMenu

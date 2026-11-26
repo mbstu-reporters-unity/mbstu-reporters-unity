@@ -46,13 +46,14 @@ import BackupExportManager from "./backup-export-manager"
 import NewsroomWorkflow from "./newsroom-workflow"
 import CouncilArchiveManager from "./council-archive-manager"
 import AlumniOpportunityManager from "./alumni-opportunity-manager"
+import AdManager from "./ad-manager"
 import ImageSection, { useImageSection } from "../../components/portal/image-section"
 import { GlobalTextStudio } from "../../components/portal/global-text-studio"
 import FbPostComposer from "../../components/admin/fb-post-composer"
 import { DigitalIdCard } from "../../components/portal/digital-id-card"
 import { BackNavigation } from "../../components/portal/back-navigation"
 import {
-  Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare,
+  Menu, X, ExternalLink, LogOut, Newspaper, Bell, Radio, MessageSquare, Megaphone,
   Sparkles, Sliders, Layers, Building2, GraduationCap, Users, UserCheck,
   Star, FileText, BookOpen, Globe2, ShieldCheck, User, Settings, Upload, Trash2,
   Camera, Eye, EyeOff, Film, Briefcase, Inbox, Send, Feather, CreditCard, UserPlus,
@@ -75,7 +76,7 @@ type Tab =
   | "social_sites" | "administration" | "community_pages" | "send_submission"
   | "submissions_inbox" | "teacher_columns" | "content_hub" | "membership_apps"
   | "resource_manager" | "event_manager" | "feedback_newsletter" | "polls_podcast" | "backup_export"
-  | "newsroom" | "council_archive"
+  | "newsroom" | "council_archive" | "ad_manager"
   | "alumni_opportunities"
   | "users_teacher" | "users_student" | "users_staff" | "users_reporter"
 
@@ -960,6 +961,7 @@ export default function AdminPage() {
         { id: "site_settings", label: "সাইট সেটিংস", icon: Settings, adminOnly: true },
         { id: "hero", label: "হিরো স্লাইডার", icon: Sparkles, adminOnly: true },
         { id: "hero_banner", label: "হিরো ব্যানার", icon: Sliders, adminOnly: true },
+        { id: "ad_manager", label: "বিজ্ঞাপন ও স্পন্সর লিংক", icon: Megaphone, adminOnly: true },
         { id: "limits", label: "সংবাদ ও ক্যাটাগরি সংখ্যা", icon: Layers, adminOnly: true },
         { id: "categories", label: "ক্যাটাগরি কন্ট্রোল", icon: Layers, adminOnly: true },
         { id: "backup_export", label: "১-ক্লিকে ডাটাবেজ ব্যাকআপ (JSON)", icon: Database, adminOnly: true },
@@ -1677,6 +1679,7 @@ export default function AdminPage() {
         {tab === "site_settings" && isAdmin && <SiteSettingsManager token={token} shrink={shrink} />}
         {tab === "hero" && isAdmin && <HeroManager token={token} shrink={shrink} />}
         {tab === "hero_banner" && isAdmin && <HeroBannerManager token={token} shrink={shrink} />}
+        {tab === "ad_manager" && isAdmin && <AdManager token={token} shrink={shrink} />}
         {tab === "ticker" && isAdmin && <TickerManager token={token} author={me.full_name} />}
         {tab === "students" && isAdmin && (
           <StudentManager

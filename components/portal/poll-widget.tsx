@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { BarChart3, CheckCircle2, Vote } from 'lucide-react'
+import { BarChart3, CheckCircle2, Copy, Share2, Vote } from 'lucide-react'
 import {
   getCampusPolls,
   getPollVotes,
@@ -32,9 +32,11 @@ const bn = (n: number) => n.toLocaleString('bn-BD')
 export function PollWidget({
   standalone = false,
   compact = false,
+  kalbela = false,
 }: {
   standalone?: boolean
   compact?: boolean
+  kalbela?: boolean
 }) {
   const { pick } = useLang()
   const [polls, setPolls] = useState<CampusPoll[]>([])
@@ -42,6 +44,44 @@ export function PollWidget({
   const [devId, setDevId] = useState('')
   const [busyPoll, setBusyPoll] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [shareStatus, setShareStatus] = useState('')
+
+  async function sharePoll(poll: CampusPoll) {
+    const url = `${window.location.origin}/polls#${encodeURIComponent(poll.id)}`
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: poll.question, url })
+        setShareStatus('')
+        return
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setShareStatus('শেয়ার করা যায়নি। আবার চেষ্টা করুন।')
+        return
+      }
+    }
+
+    await copyPollLink(poll)
+  }
+
+  async function copyPollLink(poll: CampusPoll) {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/polls#${encodeURIComponent(poll.id)}`)
+      setShareStatus('জরিপের লিংক কপি হয়েছে।')
+    } catch {
+      setShareStatus('লিংক কপি করা যায়নি।')
+    }
+  }
+
+  function openSocialShare(service: 'facebook' | 'whatsapp' | 'x', poll: CampusPoll) {
+    const url = encodeURIComponent(`${window.location.origin}/polls#${encodeURIComponent(poll.id)}`)
+    const text = encodeURIComponent(poll.question)
+    const targets = {
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      whatsapp: `https://wa.me/?text=${text}%20${url}`,
+      x: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+    }
+    window.open(targets[service], '_blank', 'noopener,noreferrer')
+  }
 
   useEffect(() => {
     const id = getDeviceId()
@@ -77,6 +117,21 @@ export function PollWidget({
   }
 
   if (!loaded || polls.length === 0) {
+    if (kalbela) {
+      return (
+        <section id="polls" className="border-b border-white/10 py-8 sm:py-10">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-4 flex items-center gap-2">
+              <BarChart3 className="size-5 text-cyan-400" aria-hidden="true" />
+              <h2 className="font-serif text-xl font-bold text-white sm:text-2xl">অনলাইন জরিপ</h2>
+            </div>
+            <div className="glass-card p-6 text-center text-sm text-slate-300" aria-live="polite">
+              {loaded ? 'এখনো কোনো সক্রিয় জরিপ নেই।' : 'জরিপ লোড হচ্ছে…'}
+            </div>
+          </div>
+        </section>
+      )
+    }
     if (!standalone) return null
     return (
       <section id="polls" className="py-12 sm:py-16 border-b border-white/10 relative">
@@ -106,8 +161,33 @@ export function PollWidget({
     return (
       <div
         key={poll.id}
-        className={`glass-card space-y-4 text-white ${compact ? 'p-4 sm:p-5' : 'p-5 sm:p-6'}`}
+        className={`${kalbela ? 'rounded-2xl border border-white/15 bg-white/[0.04] text-white shadow-sm' : 'glass-card text-white'} space-y-4 ${
+          compact ? 'p-4 sm:p-5' : 'p-5 sm:p-6'
+        }`}
       >
+        {kalbela && (
+          <div className="flex items-center justify-between gap-3 border-b border-white/15 pb-3">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-wide text-cyan-300">অনলাইন জরিপ</p>
+              <time className="mt-1 block text-[11px] text-slate-400">
+                {new Date(poll.created_at).toLocaleDateString('bn-BD', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                  timeZone: 'Asia/Dhaka',
+                })}
+              </time>
+            </div>
+            <button
+              type="button"
+              onClick={() => sharePoll(poll)}
+              aria-label="জরিপ শেয়ার করুন"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-cyan-300 transition hover:bg-white/20"
+            >
+              <Share2 className="size-4" aria-hidden="true" />
+            </button>
+          </div>
+        )}
         <div className="flex items-start justify-between gap-2 border-b border-white/15 pb-3">
           <div className="flex items-start gap-2.5">
             <span className="shrink-0 rounded-xl border border-cyan-400/30 bg-cyan-500/20 p-2 text-cyan-300">
@@ -168,12 +248,63 @@ export function PollWidget({
         </div>
 
         <div className="flex items-center justify-between border-t border-white/10 pt-1 text-[11px] text-slate-300">
-          <span>{pick('মোট ভোট:', 'Total votes:')} <b className="text-cyan-300">{bn(totalVotes)}</b></span>
+          <span>{pick('মোট ভোটদাতা:', 'Total voters:')} <b className="text-cyan-300">{bn(totalVotes)}{pick(' জন', '')}</b></span>
           <span>{myVote ? pick('✓ আপনি ভোট দিয়েছেন', '✓ You have voted') : pick('আপনার পছন্দের বিকল্পটি নির্বাচন করে ভোট দিন', 'Select your preferred option to vote')}</span>
         </div>
+        {kalbela && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3">
+            <div className="flex items-center gap-2" aria-label="জরিপ শেয়ার করুন">
+              <button
+                type="button"
+                onClick={() => openSocialShare('facebook', poll)}
+                aria-label="Facebook-এ শেয়ার করুন"
+                className="flex size-8 items-center justify-center rounded-full bg-blue-600 text-xs font-extrabold text-white hover:bg-blue-500"
+              >
+                f
+              </button>
+              <button
+                type="button"
+                onClick={() => openSocialShare('whatsapp', poll)}
+                aria-label="WhatsApp-এ শেয়ার করুন"
+                className="flex size-8 items-center justify-center rounded-full bg-green-600 text-[9px] font-extrabold text-white hover:bg-green-500"
+              >
+                WA
+              </button>
+              <button
+                type="button"
+                onClick={() => openSocialShare('x', poll)}
+                aria-label="X-এ শেয়ার করুন"
+                className="flex size-8 items-center justify-center rounded-full bg-slate-800 text-xs font-extrabold text-white hover:bg-slate-700"
+              >
+                X
+              </button>
+              <button
+                type="button"
+                onClick={() => copyPollLink(poll)}
+                aria-label="জরিপের লিংক কপি করুন"
+                className="flex size-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white hover:bg-white/20"
+              >
+                <Copy className="size-3.5" aria-hidden="true" />
+              </button>
+            </div>
+            {shareStatus && <p className="text-[11px] text-cyan-300" aria-live="polite">{shareStatus}</p>}
+          </div>
+        )}
       </div>
     )
   })
+
+  if (kalbela) {
+    return (
+      <section id="polls" className="border-b border-white/10 py-8 sm:py-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-5 lg:grid-cols-2">
+            {pollCards.slice(0, 1)}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section

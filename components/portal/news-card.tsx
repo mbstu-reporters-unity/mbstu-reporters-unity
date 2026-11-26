@@ -91,7 +91,9 @@ export function NewsCard({ p }: { p: Post }) {
   const primaryName = pageInfo ? pageInfo.name : authorName
 
   const fullBody = cleanText(p.body)
-  const { short: shortBody, hasMore } = truncateText(fullBody, 140)
+  const excerpt = cleanText(p.summary) || fullBody
+  const { short: shortBody, hasMore: excerptHasMore } = truncateText(excerpt, 140)
+  const hasMore = excerptHasMore || fullBody.length > excerpt.length
 
   function toggleExpand() {
     setExpanded((prev) => !prev)
@@ -222,14 +224,14 @@ export function NewsCard({ p }: { p: Post }) {
 
         <PostMetaBadges data={p} compact={!expanded} />
 
-        {p.body && (
+        {(p.body || p.summary) && (
           <div
             onClick={toggleExpand}
             className="news-card-body min-w-0 break-words text-xs sm:text-sm leading-relaxed text-slate-200 opacity-95 cursor-pointer"
           >
             {expanded ? (
               <div className="space-y-2">
-                <FormattedText text={p.body} className="text-xs sm:text-sm text-slate-100 leading-relaxed" />
+                <FormattedText text={p.body || p.summary || ''} className="text-xs sm:text-sm text-slate-100 leading-relaxed" />
                 <Link
                   href={`/post/${p.id}`}
                   onClick={(e) => e.stopPropagation()}
