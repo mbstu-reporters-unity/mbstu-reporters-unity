@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { getHeroBannerSlides } from '@/lib/hero-banner'
 import type { HeroSlide, HeroSettings } from '@/lib/hero'
-import { parseVideoUrl } from '@/lib/hero'
+import { parseVideoUrl, notifyVideoPlaying } from '@/lib/hero'
 import {
   ArrowRight,
   ChevronLeft,
@@ -25,6 +25,7 @@ import {
   Clock,
   Compass,
   CheckCircle2,
+  Play,
 } from 'lucide-react'
 
 interface HeroBreakingBannerProps {
@@ -78,17 +79,17 @@ function getBannerBg(slide: HeroSlide) {
 }
 
 export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
+  const bannerId = useRef('banner_video_player')
   const [slides, setSlides] = useState<HeroSlide[]>([])
   const [loaded, setLoaded] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [isInViewport, setIsInViewport] = useState(true)
+  const [userClickedPlay, setUserClickedPlay] = useState(false)
 
   const sectionRef = useRef<HTMLElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-
-  const isTouchingRef = useRef(false)
   const touchStartX = useRef<number | null>(null)
   const touchStartY = useRef<number | null>(null)
 
@@ -105,7 +106,33 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
       .catch(() => setLoaded(true))
   }, [])
 
-  // স্ক্রল আউট হলে ব্যাকগ্রাউন্ড অডিও/ভিডিও থামানোর জন্য
+  const pauseBannerVideo = () => {
+    setUserClickedPlay(false)
+    if (videoRef.current) {
+      videoRef.current.pause()
+    }
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
+        '*'
+      )
+    }
+  }
+
+  // গ্লোবাল ভিডিও কো-অর্ডিনেটর: নিচের ক্যারোসেলে ভিডিও প্লে হলে ব্যানার ভিডিও সাথে সাথে বন্ধ হওয়া
+  useEffect(() => {
+    const handleGlobalVideoPlay = (e: Event) => {
+      const custom = e as CustomEvent<{ id: string }>
+      if (custom.detail?.id && custom.detail.id !== bannerId.current) {
+        pauseBannerVideo()
+      }
+    }
+
+    window.addEventListener('mbstu-active-video-play', handleGlobalVideoPlay)
+    return () => window.removeEventListener('mbstu-active-video-play', handleGlobalVideoPlay)
+  }, [])
+
+  // স্ক্রল আউট হলে বা ব্যাকগ্রাউন্ডে গেলে ভিডিও পজ করা
   useEffect(() => {
     const el = sectionRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
@@ -115,12 +142,23 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         const entry = entries[0]
         const visible = Boolean(entry && entry.isIntersecting && entry.intersectionRatio >= 0.2)
         setIsInViewport(visible)
+        if (!visible) pauseBannerVideo()
       },
       { threshold: [0, 0.2] }
     )
 
     observer.observe(el)
-    return () => observer.disconnect()
+
+    const handleVisibility = () => {
+      if (document.hidden) pauseBannerVideo()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      observer.disconnect()
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [])
 
   const total = slides.length
@@ -128,26 +166,28 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
 
   const nextSlide = useCallback(() => {
     if (total <= 1) return
+    pauseBannerVideo()
     setCurrentIndex((prev) => (prev + 1) % total)
   }, [total])
 
   const prevSlide = useCallback(() => {
     if (total <= 1) return
+    pauseBannerVideo()
     setCurrentIndex((prev) => (prev - 1 + total) % total)
   }, [total])
 
   const isVideoSlide = currentSlide?.slide_type === 'video'
 
-  // ⭐ সমাধান: ব্যানারে ভিডিও থাকলে টাইমার স্লাইডকে নিজে নিজে বদলাবে না
+  // ভিডিও স্লাইড হলে অটো-স্লাইড বন্ধ থাকবে
   useEffect(() => {
     if (total <= 1) return
-    if (isVideoSlide) return // ভিডিও দেখতে থাকলে অটো-স্লাইড বন্ধ থাকবে
+    if (isVideoSlide) return
 
     const rawDur = Number(currentSlide?.slide_duration) || 5000
     const safeDuration = rawDur < 100 ? rawDur * 1000 : rawDur
 
     const interval = setInterval(() => {
-      if (!isPaused && !isTouchingRef.current) {
+      if (!isPaused) {
         setCurrentIndex((prev) => (prev + 1) % total)
       }
     }, safeDuration)
@@ -155,37 +195,19 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
     return () => clearInterval(interval)
   }, [total, currentSlide?.id, currentSlide?.slide_duration, isPaused, isVideoSlide])
 
-  // ব্যানার স্ক্রিনের বাইরে গেলে ভিডিও পজ
-  useEffect(() => {
-    if (!isInViewport) {
-      if (videoRef.current) {
-        videoRef.current.pause()
-      }
-      if (iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
-          '*'
-        )
-      }
-    }
-  }, [isInViewport])
-
+  // আঙুল দিয়ে ডানে-বামে সোয়াইপ
   const handleTouchStart = (e: React.TouchEvent) => {
-    isTouchingRef.current = true
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
   }
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    isTouchingRef.current = false
     if (touchStartX.current === null || touchStartY.current === null || total <= 1) return
 
     const diffX = e.changedTouches[0].clientX - touchStartX.current
     const diffY = e.changedTouches[0].clientY - touchStartY.current
-    const absX = Math.abs(diffX)
-    const absY = Math.abs(diffY)
 
-    if (absX > 35 && absX > absY * 1.2) {
+    if (Math.abs(diffX) > 30 && Math.abs(diffX) > Math.abs(diffY) * 1.1) {
       if (diffX < 0) nextSlide()
       else prevSlide()
     }
@@ -215,6 +237,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
   )
 
   const hasAnyText = Boolean(badgeLayer?.text || titleLayer?.text || descLayer?.text)
+  const videoThumb = parsedVideo.thumbnail || imageUrl || '/images/hero-1.png'
 
   return (
     <section
@@ -246,30 +269,52 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         </div>
       )}
 
-      {/* ২. ভিডিও স্লাইড (ইউটিউব ও ফেসবুক প্লেয়ার ফুল রেশিওতে চলবে) */}
+      {/* ২. ভিডিও স্লাইড (ট্যাপ করলে চলবে, আগে ডানে-বামে পূর্ণ সোয়াইপ করা যাবে) */}
       {isVideoSlide && (
         <div className="w-full flex items-center justify-center bg-black overflow-hidden relative">
           <div className="w-full max-w-4xl aspect-video max-h-[380px] sm:max-h-[460px]">
-            {parsedVideo.isEmbed ? (
-              <iframe
-                ref={iframeRef}
-                src={`${parsedVideo.embedSrc}&autoplay=1&mute=1`}
-                className="w-full h-full border-0 pointer-events-auto"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                allowFullScreen
-                title="Banner Video"
-              />
+            {!userClickedPlay ? (
+              <div
+                onClick={() => {
+                  setUserClickedPlay(true)
+                  notifyVideoPlaying(bannerId.current)
+                }}
+                className="relative w-full h-full flex items-center justify-center cursor-pointer group"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={videoThumb}
+                  alt="Video thumbnail"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/25 transition-colors" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="size-14 sm:size-16 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+                    <Play className="size-7 fill-current ml-1" />
+                  </span>
+                </div>
+              </div>
             ) : (
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                controls
-                playsInline
-                autoPlay
-                muted
-                loop
-                className="w-full h-full object-contain pointer-events-auto"
-              />
+              parsedVideo.isEmbed ? (
+                <iframe
+                  ref={iframeRef}
+                  src={`${parsedVideo.embedSrc}&autoplay=1`}
+                  className="w-full h-full border-0 pointer-events-auto"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                  allowFullScreen
+                  title="Banner Video"
+                />
+              ) : (
+                <video
+                  ref={videoRef}
+                  src={videoUrl}
+                  controls
+                  playsInline
+                  autoPlay
+                  onPlay={() => notifyVideoPlaying(bannerId.current)}
+                  className="w-full h-full object-contain pointer-events-auto"
+                />
+              )
             )}
           </div>
         </div>
@@ -457,7 +502,10 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
               <button
                 key={idx}
                 type="button"
-                onClick={() => setCurrentIndex(idx)}
+                onClick={() => {
+                  pauseBannerVideo()
+                  setCurrentIndex(idx)
+                }}
                 className={`h-1.5 rounded-full transition-all cursor-pointer ${
                   idx === currentIndex ? 'w-5 bg-cyan-400 shadow-sm' : 'w-1.5 bg-white/40 hover:bg-white/70'
                 }`}
