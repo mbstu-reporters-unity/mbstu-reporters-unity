@@ -42,8 +42,7 @@ function timeAgo(iso: string) {
   if (s < 3600) return `${n(s / 60)} মিনিট আগে`
   if (s < 86400) return `${n(s / 3600)} ঘণ্টা আগে`
   if (s < 86400 * 30) return `${n(s / 86400)} দিন আগে`
-  if (s < 86400 * 365) return `${n(s / (86400 * 30))} মাস আগে`
-  return `${n(s / (86400 * 365))} বছর আগে`
+  return `${n(s / (86400 * 30))} মাস আগে`
 }
 
 export function StudentDialog({
@@ -180,48 +179,48 @@ export function StudentDialog({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="animate-in fade-in absolute inset-0 bg-slate-950/85 backdrop-blur-md cursor-default"
+        className="animate-in fade-in absolute inset-0 bg-slate-950/80 backdrop-blur-md cursor-default"
       />
 
       <div
         role="dialog"
         aria-modal="true"
-        className="animate-in zoom-in-95 fade-in relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-white/20 bg-slate-950/95 text-white shadow-2xl backdrop-blur-2xl scrollbar-none"
+        className="animate-in zoom-in-95 fade-in relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] shadow-2xl backdrop-blur-2xl scrollbar-none"
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/15 bg-slate-900/90 px-5 py-3.5 backdrop-blur">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 px-3 py-1 text-xs font-bold">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--theme-card-border)] bg-[var(--theme-card-bg)]/95 px-5 py-3.5 backdrop-blur">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--theme-brand-soft)] text-[var(--theme-brand)] border border-[var(--theme-card-border)] px-3 py-1 text-xs font-bold">
             <Icon className="size-3.5" />
             {item.kind}
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="flex size-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 cursor-pointer"
+            className="flex size-8 items-center justify-center rounded-full bg-[var(--theme-brand-soft)] text-[var(--theme-text-title)] hover:bg-[var(--theme-brand)] hover:text-white cursor-pointer transition"
           >
             <X className="size-4" />
           </button>
         </div>
 
         <div className="p-5 sm:p-6 space-y-4">
-          <h2 className="font-serif text-xl sm:text-2xl font-bold leading-snug text-white drop-shadow-md">
+          <h2 className="font-serif text-xl sm:text-2xl font-bold leading-snug text-[var(--theme-text-title)]">
             {item.title}
           </h2>
 
-          <div className="space-y-2 border-b border-white/15 pb-3">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
-              {item.author && <span className="font-bold text-white text-sm">{item.author}</span>}
+          <div className="space-y-2 border-b border-[var(--theme-card-border)] pb-3">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--theme-text-body)]">
+              {item.author && <span className="font-bold text-[var(--theme-text-title)] text-sm">{item.author}</span>}
               {item.dept && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 border border-white/20 px-2.5 py-0.5 font-semibold text-cyan-200">
+                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--theme-brand-soft)] border border-[var(--theme-card-border)] px-2.5 py-0.5 font-semibold text-[var(--theme-brand)]">
                   <GraduationCap className="size-3" /> {item.dept}
                 </span>
               )}
               {item.batch && (
-                <span className="rounded-full bg-white/10 px-2.5 py-0.5 font-semibold text-amber-300 border border-white/15">
+                <span className="rounded-full bg-[var(--theme-card-bg)] px-2.5 py-0.5 font-semibold text-amber-500 border border-[var(--theme-card-border)]">
                   {item.batch}
                 </span>
               )}
-              <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-cyan-200/80">
-                <CalendarDays className="size-3 text-cyan-400" />
+              <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-[var(--theme-text-body)] opacity-75">
+                <CalendarDays className="size-3 text-[var(--theme-brand)]" />
                 {new Date(item.created_at).toLocaleDateString('bn-BD')}
               </span>
             </div>
@@ -232,7 +231,7 @@ export function StudentDialog({
           <RichGallery items={galleryItems} layout={layout} />
 
           {item.excerpt && (
-            <FormattedText text={item.excerpt} className="text-sm sm:text-base text-slate-100 py-1" />
+            <FormattedText text={item.excerpt} className="text-sm sm:text-base text-[var(--theme-text-body)] py-1" />
           )}
 
           {item.embed_media_url && (
@@ -245,22 +244,22 @@ export function StudentDialog({
                 href={item.link_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--theme-brand)] hover:underline"
               >
                 🔗 মূল প্রকাশিত লিংক দেখুন →
               </a>
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white/10 p-3 border border-white/15">
-            <span className="text-xs font-bold text-white/80">শেয়ার করুন:</span>
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-[var(--theme-brand-soft)] p-3 border border-[var(--theme-card-border)]">
+            <span className="text-xs font-bold text-[var(--theme-text-title)]">শেয়ার করুন:</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleShare}
-                className="inline-flex items-center gap-1 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 px-3 py-1 text-xs font-bold text-white cursor-pointer"
+                className="inline-flex items-center gap-1 rounded-full bg-[var(--theme-card-bg)] hover:bg-[var(--theme-brand-soft)] border border-[var(--theme-card-border)] px-3 py-1 text-xs font-bold text-[var(--theme-text-title)] cursor-pointer transition"
               >
-                {copied ? <Check className="size-3 text-cyan-300" /> : <Share2 className="size-3" />}
+                {copied ? <Check className="size-3 text-emerald-600" /> : <Share2 className="size-3" />}
                 {copied ? 'কপি হয়েছে!' : 'লিংক'}
               </button>
               <a
@@ -284,28 +283,28 @@ export function StudentDialog({
 
           <ReactionBar postId={item.id} title={item.title} />
 
-          <div className="space-y-3 pt-3 border-t border-white/15">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-300">
+          <div className="space-y-3 pt-3 border-t border-[var(--theme-card-border)]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--theme-brand)]">
               মন্তব্য ({comments.length})
             </h4>
 
             {comments.map((c) => (
-              <div key={c.id} className="rounded-xl bg-white/5 border border-white/10 p-2.5 text-xs space-y-1">
-                <p className="font-bold text-cyan-200 flex justify-between">
+              <div key={c.id} className="rounded-xl bg-[var(--theme-brand-soft)] border border-[var(--theme-card-border)] p-2.5 text-xs space-y-1">
+                <p className="font-bold text-[var(--theme-brand)] flex justify-between">
                   <span>{c.name || 'নামহীন পাঠক'}</span>
-                  <span className="text-[10px] text-white/50 font-normal">{timeAgo(c.created_at)}</span>
+                  <span className="text-[10px] text-[var(--theme-text-body)] opacity-70 font-normal">{timeAgo(c.created_at)}</span>
                 </p>
-                <p className="whitespace-pre-line text-slate-200 leading-relaxed">{c.message}</p>
+                <p className="whitespace-pre-line text-[var(--theme-text-body)] leading-relaxed">{c.message}</p>
               </div>
             ))}
 
             {comments.length === 0 && (
-              <p className="text-xs text-white/50">এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি আপনিই করুন!</p>
+              <p className="text-xs text-[var(--theme-text-body)] opacity-70">এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি আপনিই করুন!</p>
             )}
 
             <div className="space-y-2 pt-1">
               <input
-                className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400"
+                className="w-full rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] px-3 py-2 text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)]/50 focus:outline-none focus:border-[var(--theme-brand)]"
                 placeholder="আপনার নাম (ঐচ্ছিক)"
                 maxLength={60}
                 value={cName}
@@ -314,7 +313,7 @@ export function StudentDialog({
               <textarea
                 rows={2}
                 maxLength={1000}
-                className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400"
+                className="w-full rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] px-3 py-2 text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)]/50 focus:outline-none focus:border-[var(--theme-brand)]"
                 placeholder="এই লেখার ওপর আপনার মন্তব্য লিখুন..."
                 value={cText}
                 onChange={(e) => setCText(e.target.value)}
@@ -333,12 +332,12 @@ export function StudentDialog({
                 type="button"
                 disabled={cBusy || !cText.trim()}
                 onClick={handleAddComment}
-                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-4 py-1.5 text-xs font-bold cursor-pointer shadow disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--theme-brand)] hover:bg-[var(--theme-brand-dark)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] px-4 py-2 text-xs font-bold cursor-pointer shadow-sm disabled:opacity-50"
               >
                 <Send className="size-3" />
                 <span>{cBusy ? 'পাঠানো হচ্ছে...' : 'মন্তব্য পাঠান'}</span>
               </button>
-              {cErr && <p className="text-xs text-rose-300">{cErr}</p>}
+              {cErr && <p className="text-xs text-rose-500">{cErr}</p>}
             </div>
           </div>
         </div>
