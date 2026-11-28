@@ -439,7 +439,7 @@ export function ReactionBar({
   const getReplies = (pid: string) => comments.filter((c) => c.parent_id === pid)
 
   return (
-    <div className={noTopBorder ? 'relative pt-1' : 'relative mt-2 border-t border-[var(--theme-card-border)] pt-2.5'}>
+    <div className={noTopBorder ? 'pt-1 relative' : 'mt-2 border-t border-[var(--theme-card-border)] pt-2.5 relative'}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-4 sm:gap-5">
           {allowReactions && (
@@ -453,7 +453,7 @@ export function ReactionBar({
                 <div
                   role="listbox"
                   aria-label="রিঅ্যাকশন বাছাই করুন"
-                  className="animate-in zoom-in-95 fade-in absolute bottom-full left-0 z-50 mb-2.5 flex items-center gap-1 rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] px-2.5 py-1.5 shadow-2xl backdrop-blur-2xl"
+                  className="hero-daylight-dark-surface absolute bottom-full left-0 mb-2.5 z-50 flex items-center gap-1 rounded-full border border-white/25 bg-slate-900/95 px-2.5 py-1.5 shadow-2xl backdrop-blur-2xl animate-in zoom-in-95 fade-in"
                 >
                   {REACTIONS.map((r) => (
                     <button
@@ -462,8 +462,8 @@ export function ReactionBar({
                       title={r.label}
                       aria-label={r.label}
                       onClick={() => react(r.key, true)}
-                      className={`flex size-9 cursor-pointer items-center justify-center rounded-full text-xl transition-transform hover:scale-125 active:scale-125 sm:size-10 sm:text-2xl ${
-                        mine === r.key ? 'scale-110 bg-[var(--theme-brand-soft)] ring-2 ring-[var(--theme-brand)]' : ''
+                      className={`flex size-9 sm:size-10 items-center justify-center rounded-full text-xl sm:text-2xl transition-transform hover:scale-125 active:scale-125 cursor-pointer ${
+                        mine === r.key ? 'bg-white/20 ring-2 ring-cyan-400 scale-110' : ''
                       }`}
                     >
                       {r.icon}
@@ -486,14 +486,14 @@ export function ReactionBar({
                   react(mine || 'love')
                 }}
                 title="ট্যাপ করুন অথবা চেপে ধরে রিয়েকশন বাছাই করুন"
-                className={`inline-flex cursor-pointer touch-manipulation select-none items-center gap-1.5 py-1.5 text-xs font-semibold transition active:scale-95 sm:text-sm ${
+                className={`inline-flex items-center gap-1.5 py-1.5 text-xs sm:text-sm font-semibold select-none touch-manipulation transition active:scale-95 cursor-pointer ${
                   activeReaction
-                    ? 'font-bold text-rose-500'
-                    : 'text-[var(--theme-text-body)] hover:text-[var(--theme-brand)]'
+                    ? 'text-rose-500 font-bold'
+                    : 'text-[var(--theme-text-body)] hover:text-[var(--theme-text-title)]'
                 }`}
               >
                 {activeReaction ? (
-                  <span className="text-base leading-none sm:text-lg">{activeReaction.icon}</span>
+                  <span className="text-base sm:text-lg leading-none">{activeReaction.icon}</span>
                 ) : (
                   <Heart className="size-[18px]" aria-hidden="true" />
                 )}
@@ -508,10 +508,10 @@ export function ReactionBar({
             <button
               type="button"
               onClick={handleToggleComments}
-              className={`inline-flex cursor-pointer items-center gap-1.5 py-1.5 text-xs font-semibold transition active:scale-95 sm:text-sm ${
+              className={`inline-flex items-center gap-1.5 py-1.5 text-xs sm:text-sm font-semibold transition active:scale-95 cursor-pointer ${
                 commentsOpen
-                  ? 'font-bold text-[var(--theme-brand)]'
-                  : 'text-[var(--theme-text-body)] hover:text-[var(--theme-brand)]'
+                  ? 'text-[var(--theme-brand)] font-bold'
+                  : 'text-[var(--theme-text-body)] hover:text-[var(--theme-text-title)]'
               }`}
             >
               <MessageCircle className="size-[18px]" aria-hidden="true" />
@@ -525,7 +525,7 @@ export function ReactionBar({
             <button
               type="button"
               onClick={share}
-              className="inline-flex cursor-pointer items-center gap-1.5 py-1.5 text-xs font-semibold text-[var(--theme-text-body)] transition hover:text-[var(--theme-brand)] active:scale-95 sm:text-sm"
+              className="inline-flex items-center gap-1.5 py-1.5 text-xs sm:text-sm font-semibold text-[var(--theme-text-body)] hover:text-[var(--theme-text-title)] transition active:scale-95 cursor-pointer"
             >
               {copied ? (
                 <Check className="size-[18px] text-emerald-500" />
@@ -542,12 +542,12 @@ export function ReactionBar({
             type="button"
             onClick={() => setPickerOpen((v) => !v)}
             aria-label="সব রিয়েকশন"
-            className="flex shrink-0 cursor-pointer items-center -space-x-1"
+            className="flex items-center -space-x-1 cursor-pointer shrink-0"
           >
             {topReactions.map((r) => (
               <span
                 key={r.key}
-                className="flex size-5 items-center justify-center rounded-full bg-[var(--theme-card-bg)] text-xs shadow ring-1 ring-[var(--theme-card-border)]"
+                className="flex size-5 items-center justify-center rounded-full bg-[var(--theme-card-bg)] ring-1 ring-[var(--theme-card-border)] text-xs shadow"
               >
                 {r.icon}
               </span>
@@ -556,52 +556,50 @@ export function ReactionBar({
         )}
       </div>
 
-      {msg && <p className="mt-1 text-xs font-semibold text-rose-500">{msg}</p>}
+      {msg && <p className="mt-1 text-xs text-rose-500 font-semibold">{msg}</p>}
 
       {inlineComments && allowComments && commentsOpen && (
-        <div className="animate-in fade-in mt-3 space-y-3 border-t border-[var(--theme-card-border)] pt-3">
+        <div className="mt-3 pt-3 border-t border-[var(--theme-card-border)] space-y-3 animate-in fade-in">
           {rootComments.length > 0 ? (
-            <div className="max-h-72 space-y-2.5 overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
               {rootComments.map((c) => {
                 const replies = getReplies(c.id)
                 const isReplying = replyTo === c.id
                 return (
                   <div key={c.id} className="space-y-1.5">
-                    <div className="rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-3 py-2 text-xs">
+                    <div className="rounded-2xl bg-[var(--theme-brand-soft)] px-3 py-2 text-xs border border-[var(--theme-card-border)]">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-bold text-[var(--theme-brand)]">{c.name || 'নামহীন পাঠক'}</span>
-                        <span className="text-[10px] text-[var(--theme-text-body)] opacity-75">
-                          {timeAgo(c.created_at)}
-                        </span>
+                        <span className="text-[10px] text-[var(--theme-text-body)] opacity-70">{timeAgo(c.created_at)}</span>
                       </div>
-                      <p className="mt-0.5 whitespace-pre-line leading-relaxed text-[var(--theme-text-body)]">
+                      <p className="whitespace-pre-line text-[var(--theme-text-body)] mt-0.5 leading-relaxed">
                         {c.message}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3 pl-2 text-[11px]">
+                    <div className="pl-2 flex items-center gap-3 text-[11px]">
                       <button
                         type="button"
                         onClick={() => {
                           setReplyTo(isReplying ? null : c.id)
                           setRStatus('idle')
                         }}
-                        className="cursor-pointer font-semibold text-[var(--theme-text-body)] hover:text-[var(--theme-brand)]"
+                        className="font-semibold text-[var(--theme-text-body)] hover:text-[var(--theme-brand)] cursor-pointer"
                       >
                         {isReplying ? 'বাতিল' : 'Reply'}
                       </button>
                     </div>
 
                     {isReplying && (
-                      <div className="ml-4 space-y-1.5 rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-2.5 text-xs">
+                      <div className="ml-4 p-2.5 rounded-xl bg-[var(--theme-brand-soft)] border border-[var(--theme-card-border)] space-y-1.5 text-xs">
                         <input
-                          className="w-full rounded-lg border border-[var(--theme-card-border)] bg-[var(--theme-input-bg,var(--theme-bg-solid))] px-2.5 py-1 text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)] placeholder:opacity-60 focus:border-[var(--theme-brand)] focus:outline-none"
+                          className="w-full rounded-lg border border-[var(--theme-card-border)] bg-[var(--theme-input-bg,var(--theme-card-bg))] px-2.5 py-1 text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)]/60 focus:outline-none focus:border-[var(--theme-brand)]"
                           placeholder="আপনার নাম (ঐচ্ছিক)"
                           value={rName}
                           onChange={(e) => setRName(e.target.value)}
                         />
                         <div className="flex gap-1.5">
                           <input
-                            className="flex-1 rounded-lg border border-[var(--theme-card-border)] bg-[var(--theme-input-bg,var(--theme-bg-solid))] px-2.5 py-1 text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)] placeholder:opacity-60 focus:border-[var(--theme-brand)] focus:outline-none"
+                            className="flex-1 rounded-lg border border-[var(--theme-card-border)] bg-[var(--theme-input-bg,var(--theme-card-bg))] px-2.5 py-1 text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)]/60 focus:outline-none focus:border-[var(--theme-brand)]"
                             placeholder="রিপ্লাই লিখুন..."
                             value={rText}
                             onChange={(e) => setRText(e.target.value)}
@@ -610,7 +608,7 @@ export function ReactionBar({
                             type="button"
                             disabled={rBusy || !rText.trim()}
                             onClick={() => submitReply(c.id)}
-                            className="cursor-pointer rounded-lg bg-[var(--theme-brand)] px-2.5 py-1 text-xs font-bold text-[var(--theme-brand-contrast,var(--theme-bg-solid))] disabled:opacity-50"
+                            className="rounded-lg bg-[var(--theme-brand)] hover:bg-[var(--theme-brand-dark)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] px-2.5 py-1 text-xs font-bold disabled:opacity-50 cursor-pointer"
                           >
                             <CornerDownRight className="size-3.5" />
                           </button>
@@ -626,25 +624,25 @@ export function ReactionBar({
                           compact
                         />
                         {rStatus === 'error' && (
-                          <p className="text-[11px] font-semibold text-rose-500">{rErr}</p>
+                          <p className="text-[11px] text-rose-500 font-semibold">{rErr}</p>
                         )}
                         {rStatus === 'success' && (
-                          <p className="text-[11px] font-semibold text-emerald-600">✓ অনুমোদনের পর দেখা যাবে</p>
+                          <p className="text-[11px] text-emerald-600 font-semibold">✓ অনুমোদনের পর দেখা যাবে</p>
                         )}
                       </div>
                     )}
 
                     {replies.length > 0 && (
-                      <div className="ml-5 space-y-1.5 border-l border-[var(--theme-brand)] pl-2.5">
+                      <div className="ml-5 space-y-1.5 border-l-2 border-[var(--theme-brand)] pl-2.5">
                         {replies.map((r) => (
-                          <div key={r.id} className="rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-2.5 py-1.5 text-xs">
-                            <p className="flex justify-between text-[11px] font-bold text-[var(--theme-brand)]">
+                          <div key={r.id} className="rounded-xl bg-[var(--theme-card-bg)] px-2.5 py-1.5 text-xs border border-[var(--theme-card-border)]">
+                            <p className="font-bold text-[11px] text-[var(--theme-brand)] flex justify-between">
                               <span>{r.name || 'নামহীন পাঠক'}</span>
-                              <span className="text-[10px] font-normal text-[var(--theme-text-body)] opacity-75">
+                              <span className="text-[10px] text-[var(--theme-text-body)] opacity-70 font-normal">
                                 {timeAgo(r.created_at)}
                               </span>
                             </p>
-                            <p className="mt-0.5 whitespace-pre-line text-[var(--theme-text-body)]">{r.message}</p>
+                            <p className="whitespace-pre-line text-[var(--theme-text-body)] mt-0.5">{r.message}</p>
                           </div>
                         ))}
                       </div>
@@ -654,14 +652,12 @@ export function ReactionBar({
               })}
             </div>
           ) : (
-            <p className="text-xs text-[var(--theme-text-body)] opacity-80">
-              এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি করুন!
-            </p>
+            <p className="text-xs text-[var(--theme-text-body)] opacity-75">এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি করুন!</p>
           )}
 
           <div className="space-y-1.5">
             <input
-              className="w-full rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-input-bg,var(--theme-bg-solid))] px-3 py-1.5 text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)] placeholder:opacity-60 focus:border-[var(--theme-brand)] focus:outline-none"
+              className="w-full rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-input-bg,var(--theme-card-bg))] px-3 py-1.5 text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)]/60 focus:outline-none focus:border-[var(--theme-brand)]"
               placeholder="আপনার নাম (ঐচ্ছিক)"
               maxLength={60}
               value={cName}
@@ -678,11 +674,11 @@ export function ReactionBar({
               compact
             />
             <div className="flex items-center gap-2">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] text-[var(--theme-brand)]">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--theme-brand-soft)] text-[var(--theme-brand)] border border-[var(--theme-card-border)]">
                 <User className="size-4" />
               </div>
               <input
-                className="flex-1 rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-input-bg,var(--theme-bg-solid))] px-3.5 py-2 text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)] placeholder:opacity-60 focus:border-[var(--theme-brand)] focus:outline-none"
+                className="flex-1 rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-input-bg,var(--theme-card-bg))] px-3.5 py-2 text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)]/60 focus:outline-none focus:border-[var(--theme-brand)]"
                 placeholder="মন্তব্য লিখুন..."
                 maxLength={1000}
                 value={cText}
@@ -699,18 +695,18 @@ export function ReactionBar({
                 disabled={cBusy || !cText.trim()}
                 onClick={submitComment}
                 aria-label="মন্তব্য পাঠান"
-                className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[var(--theme-brand)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] transition hover:brightness-110 disabled:opacity-40"
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--theme-brand)] hover:bg-[var(--theme-brand-dark)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] disabled:opacity-40 cursor-pointer transition"
               >
                 <Send className="size-3.5" />
               </button>
             </div>
             {cStatus === 'success' && (
-              <p className="text-[11px] font-semibold text-emerald-600">
+              <p className="text-[11px] text-emerald-600 font-semibold">
                 ✅ আপনার মন্তব্য জমা হয়েছে! অনুমোদনের পর এখানে দেখাবে।
               </p>
             )}
             {cStatus === 'error' && (
-              <p className="text-[11px] font-semibold text-rose-500">❌ {cErr}</p>
+              <p className="text-[11px] text-rose-500 font-semibold">❌ {cErr}</p>
             )}
           </div>
         </div>
