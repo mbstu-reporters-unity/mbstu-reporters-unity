@@ -32,17 +32,17 @@ export async function ClubPosts({
   if (!posts.length && !standalone) return null
 
   return (
-    <section id="club-latest" className="py-12 sm:py-16 border-b border-white/10 relative">
+    <section id="club-latest" className="py-12 sm:py-16 border-b border-[var(--theme-card-border)] relative">
       <div className="mx-auto max-w-7xl md:px-6 lg:px-8">
         <div className="mb-8 flex items-end justify-between gap-4 px-4 md:px-0">
           <div>
-            <h3 className="font-serif text-2xl font-bold text-white sm:text-3xl drop-shadow-md">
+            <h3 className="font-serif text-2xl font-bold text-[var(--theme-text-title)] sm:text-3xl">
               <Tx
                 bn={sectionConfig?.titleBn || 'সর্বশেষ ক্লাব সংবাদ'}
                 en={sectionConfig?.titleEn || 'Latest Club News'}
               />
             </h3>
-            <p className="mt-1 text-xs sm:text-sm text-cyan-100/80">
+            <p className="mt-1 text-xs sm:text-sm text-[var(--theme-text-body)] opacity-85">
               <Tx
                 bn={sectionConfig?.subtitleBn || 'ক্যাম্পাস ক্লাব রিপোর্টারদের প্রকাশিত সর্বশেষ সংবাদ।'}
                 en={sectionConfig?.subtitleEn || 'Latest news posted by our campus club reporters.'}
@@ -50,7 +50,7 @@ export async function ClubPosts({
             </p>
           </div>
           {!standalone && (
-            <Link href="/clubs" className="shrink-0 text-xs font-bold text-cyan-300 hover:underline">
+            <Link href="/clubs" className="shrink-0 text-xs font-bold text-[var(--theme-brand)] hover:underline">
               সব ক্লাব সংবাদ
             </Link>
           )}
@@ -58,7 +58,7 @@ export async function ClubPosts({
         {posts.length > 0 ? (
           <NewsGrid posts={posts} />
         ) : (
-          <p className="mx-4 rounded-xl border border-white/15 bg-white/10 p-6 text-center text-sm text-slate-300">
+          <p className="mx-4 rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-6 text-center text-sm text-[var(--theme-text-body)]">
             এখনো কোনো ক্লাব সংবাদ নেই।
           </p>
         )}
