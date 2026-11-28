@@ -2,15 +2,14 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import type { HeroSlide, SubMediaItem } from '@/lib/hero'
-import { parseVideoUrl } from '@/lib/hero'
-import { Calendar, User, ExternalLink } from 'lucide-react'
+import { parseVideoUrl, notifyVideoPlaying } from '@/lib/hero'
+import { Play, Calendar, User, ExternalLink } from 'lucide-react'
 
 interface HeroMediaRendererProps {
   slide?: HeroSlide | null
   item?: SubMediaItem | null
   fitMode?: 'contain' | 'cover'
   isActive: boolean
-  autoPlayVideo?: boolean
   isCompact?: boolean
   onVideoStateChange?: (isPlaying: boolean) => void
   onVideoEnd?: () => void
@@ -49,16 +48,18 @@ export function HeroMediaRenderer({
   item,
   fitMode = 'contain',
   isActive,
-  autoPlayVideo = true,
   isCompact = false,
   onVideoStateChange,
   onVideoEnd,
 }: HeroMediaRendererProps) {
+  const myId = useRef(`video_${slide?.id || item?.id || Math.random().toString(36).slice(2)}`)
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const [inViewport, setInViewport] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [userClickedPlay, setUserClickedPlay] = useState(false)
 
   const type = slide?.slide_type || item?.type || 'color'
   const isVideo = type === 'video'
@@ -69,7 +70,29 @@ export function HeroMediaRenderer({
   const bannerWidth = slide?.banner_config?.width_pct ?? 100
   const bannerHeight = slide?.banner_config?.height_px ?? 480
 
-  // ভিউপোর্ট ডিটেকশন: স্ক্রল করে নিচে গেলে ভিডিও বন্ধ হবে
+  // স্লাইড পরিবর্তন হলে ভিডিও প্লে স্টেট রিসেট করা
+  useEffect(() => {
+    if (!isActive) {
+      setUserClickedPlay(false)
+      setIsPlaying(false)
+      pauseVideo()
+    }
+  }, [isActive])
+
+  // গ্লোবাল কো-অর্ডিনেটর: অন্য কোনো ভিডিও (যেমন ব্যানার) চললে এই ভিডিওটি স্বয়ংক্রিয়ভাবে বন্ধ হওয়া
+  useEffect(() => {
+    const handleGlobalVideoPlay = (e: Event) => {
+      const custom = e as CustomEvent<{ id: string }>
+      if (custom.detail?.id && custom.detail.id !== myId.current) {
+        pauseVideo()
+      }
+    }
+
+    window.addEventListener('mbstu-active-video-play', handleGlobalVideoPlay)
+    return () => window.removeEventListener('mbstu-active-video-play', handleGlobalVideoPlay)
+  }, [])
+
+  // ভিউপোর্ট ও ব্যাকগ্রাউন্ড ডিটেকশন
   useEffect(() => {
     const el = containerRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
@@ -79,26 +102,67 @@ export function HeroMediaRenderer({
         const entry = entries[0]
         const visible = Boolean(entry && entry.isIntersecting && entry.intersectionRatio >= 0.2)
         setInViewport(visible)
+        if (!visible) pauseVideo()
       },
       { threshold: [0, 0.2, 0.5] }
     )
 
     observer.observe(el)
-    return () => observer.disconnect()
+
+    const handleVisibility = () => {
+      if (document.hidden) pauseVideo()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      observer.disconnect()
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [])
 
-  // ইউটিউব প্লেয়ারের মেসেজ ইভেন্ট ডিটেকশন (Play/Pause/End ট্র্যাক করা)
+  const pauseVideo = () => {
+    setIsPlaying(false)
+    onVideoStateChange?.(false)
+    if (videoRef.current) {
+      videoRef.current.pause()
+    }
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
+        '*'
+      )
+    }
+  }
+
+  const handleStartPlay = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setUserClickedPlay(true)
+    setIsPlaying(true)
+    onVideoStateChange?.(true)
+    notifyVideoPlaying(myId.current)
+
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {})
+    }
+  }
+
+  // ইউটিউব পোস্টমেসেজ ইভেন্ট লিসেনার
   useEffect(() => {
     const handleYouTubeMessages = (e: MessageEvent) => {
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
         if (data && (data.event === 'onStateChange' || data.event === 'infoDelivery')) {
           const state = data.info?.playerState ?? data.info
-          if (state === 1 || state === 3) {
+          if (state === 1) {
+            setIsPlaying(true)
             onVideoStateChange?.(true)
+            notifyVideoPlaying(myId.current)
           } else if (state === 2) {
+            setIsPlaying(false)
             onVideoStateChange?.(false)
           } else if (state === 0) {
+            setIsPlaying(false)
             onVideoStateChange?.(false)
             onVideoEnd?.()
           }
@@ -109,32 +173,6 @@ export function HeroMediaRenderer({
     window.addEventListener('message', handleYouTubeMessages)
     return () => window.removeEventListener('message', handleYouTubeMessages)
   }, [onVideoStateChange, onVideoEnd])
-
-  const shouldAutoPlay = isActive && inViewport && autoPlayVideo
-
-  useEffect(() => {
-    if (!inViewport || !isActive) {
-      if (videoRef.current) {
-        videoRef.current.pause()
-      }
-      if (iframeRef.current?.contentWindow && parsedVideo.platform === 'youtube') {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
-          '*'
-        )
-      }
-      onVideoStateChange?.(false)
-    } else if (shouldAutoPlay) {
-      if (videoRef.current) {
-        videoRef.current
-          .play()
-          .then(() => {
-            onVideoStateChange?.(true)
-          })
-          .catch(() => {})
-      }
-    }
-  }, [shouldAutoPlay, inViewport, isActive, onVideoStateChange, parsedVideo.platform])
 
   const layers = slide?.text_layers || []
   const titleLayer =
@@ -151,13 +189,7 @@ export function HeroMediaRenderer({
   )
 
   const hasCustomLayers = layers.some((l: any) => l.enabled && l.text?.trim())
-
-  const getEmbedSource = () => {
-    if (!parsedVideo.embedSrc) return ''
-    const base = parsedVideo.embedSrc
-    const autoplayParam = shouldAutoPlay ? '&autoplay=1&mute=1' : '&autoplay=0'
-    return `${base}${autoplayParam}`
-  }
+  const videoThumb = parsedVideo.thumbnail || imageUrl || '/images/hero-1.png'
 
   return (
     <div
@@ -199,43 +231,72 @@ export function HeroMediaRenderer({
           </div>
         )}
 
-        {/* ৩. ভিডিও ব্যানার (ইউটিউব, ফেসবুক ও ডিরেক্ট ফাইল) - কোনো কৃত্রিম বাটন ছাড়া শুধুমাত্র অফিসিয়াল প্লেয়ার */}
+        {/* ৩. ভিডিও ব্যানার (ক্লিক করলে চলবে, ক্লিকে আগে ডানে-বামে মসৃণ সোয়াইপ হবে) */}
         {isVideo && (
           <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
-            {parsedVideo.isEmbed ? (
-              <div className="relative w-full h-full flex items-center justify-center aspect-video max-h-full">
-                <iframe
-                  ref={iframeRef}
-                  src={getEmbedSource()}
-                  className="w-full h-full border-0 pointer-events-auto z-10"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                  allowFullScreen
-                  title={slide?.title || 'Video Player'}
+            {!userClickedPlay ? (
+              // প্রি-প্লে থাম্বনেইল ভিউ (ফলে এর ওপর দিয়ে অনায়াসে আঙুল দিয়ে ডানে-বামে সোয়াইপ করা যায়)
+              <div
+                onClick={handleStartPlay}
+                className="relative w-full h-full flex items-center justify-center cursor-pointer group"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={videoThumb}
+                  alt={slide?.title || 'Video'}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/25 transition-colors" />
+
+                {/* বড় ও স্পষ্ট সেন্ট্রাল প্লে বাটন */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="size-14 sm:size-16 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+                    <Play className="size-7 fill-current ml-1" />
+                  </span>
+                </div>
               </div>
             ) : (
-              <div className="relative w-full h-full flex items-center justify-center">
-                <video
-                  ref={videoRef}
-                  src={videoUrl}
-                  controls
-                  playsInline
-                  loop
-                  muted
-                  onPlay={() => onVideoStateChange?.(true)}
-                  onPause={() => onVideoStateChange?.(false)}
-                  onEnded={() => {
-                    onVideoStateChange?.(false)
-                    onVideoEnd?.()
-                  }}
-                  className="w-full h-full object-contain pointer-events-auto z-10"
-                />
+              // ইউজার প্লে বাটনে চাপার পর অ্যাক্টিভ আইফ্রেম বা ভিডিও প্লেয়ার
+              <div className="relative w-full h-full flex items-center justify-center aspect-video max-h-full">
+                {parsedVideo.isEmbed ? (
+                  <iframe
+                    ref={iframeRef}
+                    src={`${parsedVideo.embedSrc}&autoplay=1`}
+                    className="w-full h-full border-0 pointer-events-auto z-10"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                    allowFullScreen
+                    title={slide?.title || 'Video Player'}
+                  />
+                ) : (
+                  <video
+                    ref={videoRef}
+                    src={videoUrl}
+                    controls
+                    autoPlay
+                    playsInline
+                    onPlay={() => {
+                      setIsPlaying(true)
+                      onVideoStateChange?.(true)
+                      notifyVideoPlaying(myId.current)
+                    }}
+                    onPause={() => {
+                      setIsPlaying(false)
+                      onVideoStateChange?.(false)
+                    }}
+                    onEnded={() => {
+                      setIsPlaying(false)
+                      onVideoStateChange?.(false)
+                      onVideoEnd?.()
+                    }}
+                    className="w-full h-full object-contain pointer-events-auto z-10"
+                  />
+                )}
               </div>
             )}
           </div>
         )}
 
-        {/* ৪. টেক্সট লেয়ারসমূহ: শুধুমাত্র ছবি বা কালার স্লাইডে দেখাবে, ভিডিওর ওপর কোনো টেক্সট ওভারল্যাপ করবে না */}
+        {/* ৪. টেক্সট লেয়ারসমূহ: ভিডিওর ওপর অপ্রয়োজনীয় টেক্সট ওভারলে ছাড়া শুধু ছবি/কালারে থাকবে */}
         {hasCustomLayers && !isVideo && (
           isCompact ? (
             <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between z-20 pointer-events-none">
