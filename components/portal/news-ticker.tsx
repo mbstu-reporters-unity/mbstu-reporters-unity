@@ -40,28 +40,28 @@ import {
 const POLL = 120000
 const MASK = 'linear-gradient(to right, transparent 0, #000 30px, #000 calc(100% - 30px), transparent 100%)'
 
-export function renderTickerBadgeIcon(key?: string, className = "size-4 shrink-0") {
+export function renderTickerBadgeIcon(key?: string, className = 'size-4 shrink-0') {
   switch (key) {
-    case "radio": return <Radio className={className} />
-    case "siren": return <Siren className={className} />
-    case "flame": return <Flame className={className} />
-    case "zap": return <Zap className={className} />
-    case "bell": return <BellRing className={className} />
-    case "megaphone": return <Megaphone className={className} />
-    case "newspaper": return <Newspaper className={className} />
-    case "alert-triangle": return <AlertTriangle className={className} />
-    case "sparkles": return <Sparkles className={className} />
-    case "star": return <Star className={className} />
-    case "award": return <Award className={className} />
-    case "clock": return <Clock className={className} />
-    case "compass": return <Compass className={className} />
-    case "check-circle": return <CheckCircle2 className={className} />
-    case "shield-alert": return <ShieldAlert className={className} />
-    case "activity": return <Activity className={className} />
-    case "volume-2": return <Volume2 className={className} />
-    case "info": return <Info className={className} />
-    case "globe": return <Globe className={className} />
-    case "flame-kindling": return <FlameKindling className={className} />
+    case 'radio': return <Radio className={className} />
+    case 'siren': return <Siren className={className} />
+    case 'flame': return <Flame className={className} />
+    case 'zap': return <Zap className={className} />
+    case 'bell': return <BellRing className={className} />
+    case 'megaphone': return <Megaphone className={className} />
+    case 'newspaper': return <Newspaper className={className} />
+    case 'alert-triangle': return <AlertTriangle className={className} />
+    case 'sparkles': return <Sparkles className={className} />
+    case 'star': return <Star className={className} />
+    case 'award': return <Award className={className} />
+    case 'clock': return <Clock className={className} />
+    case 'compass': return <Compass className={className} />
+    case 'check-circle': return <CheckCircle2 className={className} />
+    case 'shield-alert': return <ShieldAlert className={className} />
+    case 'activity': return <Activity className={className} />
+    case 'volume-2': return <Volume2 className={className} />
+    case 'info': return <Info className={className} />
+    case 'globe': return <Globe className={className} />
+    case 'flame-kindling': return <FlameKindling className={className} />
     default: return <Radio className={className} />
   }
 }
@@ -134,10 +134,10 @@ function Slide({
       <div
         ref={textRef}
         onAnimationEnd={handleFinish}
-        className={`absolute left-0 top-0 flex h-full items-center whitespace-nowrap text-xs sm:text-sm font-bold text-white drop-shadow ${animKey}`}
+        className={`absolute left-0 top-0 flex h-full items-center whitespace-nowrap text-xs sm:text-sm font-bold text-[var(--theme-text-title)] ${animKey}`}
       >
         <span
-          className="mr-2.5 size-2 shrink-0 rounded-full bg-cyan-400 shadow-[0_0_8px_#00e5ff]"
+          className="mr-2.5 size-2 shrink-0 rounded-full bg-[var(--theme-brand)]"
           aria-hidden="true"
         />
 
@@ -147,14 +147,14 @@ function Slide({
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-cyan-300 hover:underline transition-colors"
+              className="hover:text-[var(--theme-brand)] hover:underline transition-colors"
             >
               {item.title}
             </a>
           ) : (
             <Link
               href={item.url}
-              className="hover:text-cyan-300 hover:underline transition-colors"
+              className="hover:text-[var(--theme-brand)] hover:underline transition-colors"
             >
               {item.title}
             </Link>
@@ -162,7 +162,7 @@ function Slide({
         ) : (
           <div className="flex items-center gap-2">
             {badgeConfig.show_brief && badgeConfig.brief_text && (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 bg-red-600/80 text-white border border-red-400/40 shadow-xs">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 bg-red-600 text-white border border-red-400/40 shadow-xs">
                 {badgeConfig.brief_text}
               </span>
             )}
@@ -184,7 +184,6 @@ export function NewsTicker() {
   const [soundOn, setSoundOn] = useState(false)
 
   const audio = useRef<AudioContext | null>(null)
-  const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const list = items.filter((t) => t.is_active !== false)
   const total = list.length
@@ -264,15 +263,12 @@ export function NewsTicker() {
 
   return (
     <div className="relative z-20 mx-auto max-w-7xl px-3 sm:px-4 py-2" role="region" aria-label="সর্বশেষ সংবাদ">
-      <div className="flex items-center rounded-full border border-white/20 bg-slate-950/70 backdrop-blur-2xl shadow-xl p-1.5">
-        
-        {/* ব্রেকিং বেজ */}
-        <div className="flex shrink-0 items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs font-bold sm:text-sm select-none rounded-full shadow-lg border border-white/30 bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 text-white">
+      <div className="flex items-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] backdrop-blur-2xl shadow-md p-1.5">
+        <div className="flex shrink-0 items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs font-bold sm:text-sm select-none rounded-full shadow-md bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 text-white">
           <span>{renderTickerBadgeIcon(badgeConfig.icon, 'size-3.5 sm:size-4 shrink-0')}</span>
           <span>{badgeConfig.badge_text || 'সর্বশেষ'}</span>
         </div>
 
-        {/* স্ক্রলিং সংবাদ বক্স */}
         <div
           className="min-w-0 flex-1 overflow-hidden px-2"
           onMouseEnter={() => setPaused(true)}
@@ -290,27 +286,26 @@ export function NewsTicker() {
           />
         </div>
 
-        {/* অ্যারো বাটন */}
         {total > 1 && (
-          <div className="flex items-center gap-1 px-1.5 text-xs select-none shrink-0 font-bold text-white">
+          <div className="flex items-center gap-1 px-1.5 text-xs select-none shrink-0 font-bold text-[var(--theme-text-title)]">
             <button
               type="button"
               onClick={prevSlide}
-              className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white cursor-pointer active:scale-95 transition"
+              className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-[var(--theme-brand-soft)] hover:bg-[var(--theme-brand)] hover:text-[var(--theme-brand-contrast,var(--theme-bg-solid))] border border-[var(--theme-card-border)] text-[var(--theme-text-title)] cursor-pointer active:scale-95 transition"
               title="আগের ব্রেকিং"
               aria-label="Previous"
             >
               <ChevronLeft className="size-4" />
             </button>
-            
-            <span className="tabular-nums text-[11px] px-1 font-bold text-cyan-300">
+
+            <span className="tabular-nums text-[11px] px-1 font-bold text-[var(--theme-brand)]">
               {bn(idx + 1)}/{bn(total)}
             </span>
 
             <button
               type="button"
               onClick={nextSlide}
-              className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white cursor-pointer active:scale-95 transition"
+              className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-[var(--theme-brand-soft)] hover:bg-[var(--theme-brand)] hover:text-[var(--theme-brand-contrast,var(--theme-bg-solid))] border border-[var(--theme-card-border)] text-[var(--theme-text-title)] cursor-pointer active:scale-95 transition"
               title="পরের ব্রেকিং"
               aria-label="Next"
             >
@@ -319,15 +314,14 @@ export function NewsTicker() {
           </div>
         )}
 
-        {/* অডিও অ্যালার্ট বাটন */}
         <button
           type="button"
           onClick={toggleSound}
           aria-pressed={soundOn}
           aria-label={soundOn ? 'অ্যালার্ট বন্ধ' : 'অ্যালার্ট চালু'}
-          className="hidden size-7 sm:flex shrink-0 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white cursor-pointer mr-1 transition active:scale-95"
+          className="hidden size-7 sm:flex shrink-0 items-center justify-center rounded-full bg-[var(--theme-brand-soft)] border border-[var(--theme-card-border)] text-[var(--theme-text-title)] cursor-pointer mr-1 transition active:scale-95"
         >
-          {soundOn ? <Volume2 className="size-3.5 text-cyan-300" /> : <VolumeX className="size-3.5 opacity-40" />}
+          {soundOn ? <Volume2 className="size-3.5 text-[var(--theme-brand)]" /> : <VolumeX className="size-3.5 opacity-50" />}
         </button>
       </div>
     </div>
