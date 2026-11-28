@@ -20,13 +20,15 @@ export function HeroCarousel() {
   const [slides, setSlides] = useState<HeroSlide[]>([])
   const [settings, setSettings] = useState<HeroSettings | null>(null)
   const [loaded, setLoaded] = useState(false)
-  
+
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+  const [isInViewport, setIsInViewport] = useState(true)
   const [touchStart, setTouchStart] = useState<number | null>(null)
-  
+
+  const sliderRef = useRef<HTMLElement>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -42,9 +44,27 @@ export function HeroCarousel() {
       .catch(() => setLoaded(true))
   }, [])
 
+  // স্ক্রল করে নিচে গেলে স্লাইডারের ভিডিও এবং টাইমার স্বয়ংক্রিয়ভাবে থামিয়ে দেওয়ার জন্য ভিউপোর্ট অবজারভার
+  useEffect(() => {
+    const el = sliderRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        const visible = Boolean(entry && entry.isIntersecting && entry.intersectionRatio >= 0.25)
+        setIsInViewport(visible)
+      },
+      { threshold: [0, 0.25, 0.5] }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [loaded])
+
   const total = slides.length
   const configuredSplits = settings?.desktop_splits || 1
-  
+
   const activeSplits = useMemo(() => {
     if (total <= 1) return 1
     return Math.min(configuredSplits, total)
@@ -67,10 +87,18 @@ export function HeroCarousel() {
     setCurrentIndex(idx % total)
   }
 
+  // স্লাইডার টাইমার হ্যান্ডলিং (ইউজার মাউস রাখলে, ভিডিও চললে বা স্ক্রিন থেকে স্ক্রল আউট হলে টাইমার পজ থাকবে)
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
 
-    if (isPaused || isHovered || isVideoPlaying || total <= 1 || duration <= 0) {
+    if (
+      !isInViewport ||
+      isPaused ||
+      isHovered ||
+      isVideoPlaying ||
+      total <= 1 ||
+      duration <= 0
+    ) {
       return
     }
 
@@ -81,7 +109,7 @@ export function HeroCarousel() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [nextSlide, duration, isPaused, isHovered, isVideoPlaying, total, currentIndex])
+  }, [nextSlide, duration, isPaused, isHovered, isVideoPlaying, isInViewport, total, currentIndex])
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.touches[0].clientX)
@@ -122,6 +150,7 @@ export function HeroCarousel() {
       {/* হিরো স্লাইডার */}
       {total > 0 && (
         <section
+          ref={sliderRef}
           aria-label="Hero Slider"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
@@ -135,7 +164,7 @@ export function HeroCarousel() {
               <div key={`${visibleSlides[0].id}_${currentIndex}`} className={`w-full h-full tr_${effect0}`}>
                 <HeroMediaRenderer
                   slide={visibleSlides[0]}
-                  isActive={true}
+                  isActive={isInViewport}
                   isCompact={false}
                   onVideoStateChange={setIsVideoPlaying}
                   onVideoEnd={nextSlide}
@@ -151,7 +180,7 @@ export function HeroCarousel() {
                 <div key={`${visibleSlides[0].id}_0_${currentIndex}`} className={`w-full h-full tr_${effect0}`}>
                   <HeroMediaRenderer
                     slide={visibleSlides[0]}
-                    isActive={true}
+                    isActive={isInViewport}
                     isCompact={false}
                     onVideoStateChange={setIsVideoPlaying}
                     onVideoEnd={nextSlide}
@@ -163,7 +192,7 @@ export function HeroCarousel() {
                 <div key={`${visibleSlides[1].id}_1_${currentIndex}`} className={`w-full h-full tr_${effect1}`}>
                   <HeroMediaRenderer
                     slide={visibleSlides[1]}
-                    isActive={true}
+                    isActive={false}
                     isCompact={false}
                     onVideoStateChange={setIsVideoPlaying}
                     onVideoEnd={nextSlide}
@@ -180,7 +209,7 @@ export function HeroCarousel() {
                 <div key={`${visibleSlides[0].id}_top_${currentIndex}`} className={`w-full h-full tr_${effect0}`}>
                   <HeroMediaRenderer
                     slide={visibleSlides[0]}
-                    isActive={true}
+                    isActive={isInViewport}
                     isCompact={false}
                     onVideoStateChange={setIsVideoPlaying}
                     onVideoEnd={nextSlide}
@@ -193,7 +222,7 @@ export function HeroCarousel() {
                   <div key={`${visibleSlides[1].id}_b1_${currentIndex}`} className={`w-full h-full tr_${effect1}`}>
                     <HeroMediaRenderer
                       slide={visibleSlides[1]}
-                      isActive={true}
+                      isActive={false}
                       isCompact={true}
                       onVideoStateChange={setIsVideoPlaying}
                       onVideoEnd={nextSlide}
@@ -205,7 +234,7 @@ export function HeroCarousel() {
                   <div key={`${visibleSlides[2].id}_b2_${currentIndex}`} className={`w-full h-full tr_${effect2}`}>
                     <HeroMediaRenderer
                       slide={visibleSlides[2]}
-                      isActive={true}
+                      isActive={false}
                       isCompact={true}
                       onVideoStateChange={setIsVideoPlaying}
                       onVideoEnd={nextSlide}
@@ -271,7 +300,7 @@ export function HeroCarousel() {
           )}
 
           {/* প্রোগ্রেস বার */}
-          {!isPaused && !isHovered && !isVideoPlaying && total > 1 && duration > 0 && (
+          {!isPaused && !isHovered && !isVideoPlaying && isInViewport && total > 1 && duration > 0 && (
             <div className="w-full h-1 bg-white/10 overflow-hidden">
               <div
                 key={currentIndex}
