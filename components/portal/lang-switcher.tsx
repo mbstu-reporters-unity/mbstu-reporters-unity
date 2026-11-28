@@ -13,7 +13,7 @@ export function LangSwitcher() {
     <div
       role="group"
       aria-label="ভাষা নির্বাচন / Language selection"
-      className="inline-flex overflow-hidden rounded-full border border-[var(--theme-card-border)] text-xs font-semibold"
+      className="inline-flex overflow-hidden rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-xs font-semibold"
     >
       {OPTIONS.map((o) => (
         <button
@@ -22,9 +22,9 @@ export function LangSwitcher() {
           onClick={() => setLang(o.id)}
           aria-pressed={lang === o.id}
           className={
-            'px-3 py-1.5 transition-colors ' +
+            'px-2.5 sm:px-3 py-1.5 transition-colors cursor-pointer ' +
             (lang === o.id
-              ? 'bg-[var(--theme-brand)] text-[var(--theme-bg-solid)]'
+              ? 'bg-[var(--theme-brand)] text-[var(--theme-brand-contrast)] font-bold'
               : 'text-[var(--theme-text-body)] hover:bg-[var(--theme-brand-soft)]')
           }
         >
