@@ -26,10 +26,11 @@ export function HeroCarousel() {
   const [isHovered, setIsHovered] = useState(false)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const [isInViewport, setIsInViewport] = useState(true)
-  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
 
   const sliderRef = useRef<HTMLElement>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     Promise.all([getHeroSlides(), getHeroSettings()])
@@ -44,7 +45,17 @@ export function HeroCarousel() {
       .catch(() => setLoaded(true))
   }, [])
 
-  // স্ক্রল করে নিচে গেলে স্লাইডারের ভিডিও এবং টাইমার স্বয়ংক্রিয়ভাবে পজ করা
+  // স্ক্রিন সাইজ পর্যবেক্ষণ: মোবাইলে ১টি করে স্লাইড পূর্ণাঙ্গভাবে দেখাতে হবে যাতে টাচ সোয়াইপ এবং ভিডিও ভালো থাকে
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // স্ক্রল আউট ডিটেকশন
   useEffect(() => {
     const el = sliderRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
@@ -65,15 +76,17 @@ export function HeroCarousel() {
   const total = slides.length
   const configuredSplits = settings?.desktop_splits || 1
 
+  // মোবাইলে সবসময় ১টি স্লাইড, ডেস্কটপে সেটিং অনুযায়ী স্প্লিট
   const activeSplits = useMemo(() => {
     if (total <= 1) return 1
+    if (isMobile) return 1
     return Math.min(configuredSplits, total)
-  }, [total, configuredSplits])
+  }, [total, configuredSplits, isMobile])
 
   const currentSlide = slides[currentIndex] || slides[0] || null
   const duration = currentSlide?.slide_duration || settings?.default_duration || 5000
 
-  // যদি বর্তমান স্লাইডে ভিডিও থাকে
+  // ভিডিও স্লাইড কি না যাচাই
   const isCurrentVideo =
     currentSlide?.slide_type === 'video' ||
     currentSlide?.media_items?.[0]?.type === 'video'
@@ -92,11 +105,10 @@ export function HeroCarousel() {
     setCurrentIndex(idx % total)
   }
 
-  // ⭐ সমাধান: ভিডিও স্লাইডে থাকলে কিংবা ভিডিও প্লে/পজ অবস্থায় থাকলে স্লাইডার স্বয়ংক্রিয়ভাবে সরবে না
+  // ⭐ ভিডিও স্লাইডে থাকলে ভিউয়ারের জন্য অটো-স্লাইড বন্ধ থাকবে
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
 
-    // যদি বর্তমান স্লাইড ভিডিও হয়, অথবা ইউজার পজ করে রাখে, অথবা ভিডিও চলছে—তাহলে অটো-স্লাইড বন্ধ থাকবে
     if (
       !isInViewport ||
       isPaused ||
@@ -118,18 +130,25 @@ export function HeroCarousel() {
     }
   }, [nextSlide, duration, isPaused, isHovered, isVideoPlaying, isCurrentVideo, isInViewport, total, currentIndex])
 
+  // ⭐ নির্ভরযোগ্য আঙুলের সোয়াইপ হ্যান্ডলার (React State ল্যাগ ছাড়া সরাসরি Ref দিয়ে)
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.touches[0].clientX)
+    touchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    }
   }
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStart === null || total <= 1) return
-    const diff = e.changedTouches[0].clientX - touchStart
-    if (Math.abs(diff) > 40) {
-      if (diff < 0) nextSlide()
+    if (!touchStartRef.current || total <= 1) return
+    const diffX = e.changedTouches[0].clientX - touchStartRef.current.x
+    const diffY = e.changedTouches[0].clientY - touchStartRef.current.y
+    touchStartRef.current = null
+
+    // আনুভূমিক সোয়াইপ যাচাই
+    if (Math.abs(diffX) > 35 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+      if (diffX < 0) nextSlide()
       else prevSlide()
     }
-    setTouchStart(null)
   }
 
   const visibleSlides = useMemo(() => {
@@ -165,9 +184,9 @@ export function HeroCarousel() {
           onTouchEnd={handleTouchEnd}
           className="relative w-full overflow-hidden select-none bg-black border-b border-white/10"
         >
-          {/* ================= ১টি SPLIT ================= */}
+          {/* ================= ১টি SPLIT (মোবাইলে সবসময় এবং সিঙ্গেল ভিউতে) ================= */}
           {activeSplits === 1 && visibleSlides[0] && (
-            <div className="relative h-[440px] sm:h-[500px] lg:h-[560px] w-full overflow-hidden bg-slate-900">
+            <div className="relative h-[260px] sm:h-[480px] lg:h-[560px] w-full overflow-hidden bg-slate-900">
               <div key={`${visibleSlides[0].id}_${currentIndex}`} className={`w-full h-full tr_${effect0}`}>
                 <HeroMediaRenderer
                   slide={visibleSlides[0]}
@@ -181,10 +200,10 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ================= ২টি SPLIT ================= */}
+          {/* ================= ২টি SPLIT (ডেস্কটপ ভিউ) ================= */}
           {activeSplits === 2 && visibleSlides.length >= 2 && (
             <div className="flex flex-col divide-y divide-white/10 w-full">
-              <div className="relative h-[240px] sm:h-[290px] w-full overflow-hidden bg-slate-900">
+              <div className="relative h-[250px] sm:h-[300px] w-full overflow-hidden bg-slate-900">
                 <div key={`${visibleSlides[0].id}_0_${currentIndex}`} className={`w-full h-full tr_${effect0}`}>
                   <HeroMediaRenderer
                     slide={visibleSlides[0]}
@@ -197,7 +216,7 @@ export function HeroCarousel() {
                 </div>
               </div>
 
-              <div className="relative h-[240px] sm:h-[290px] w-full overflow-hidden bg-slate-900">
+              <div className="relative h-[250px] sm:h-[300px] w-full overflow-hidden bg-slate-900">
                 <div key={`${visibleSlides[1].id}_1_${currentIndex}`} className={`w-full h-full tr_${effect1}`}>
                   <HeroMediaRenderer
                     slide={visibleSlides[1]}
@@ -212,10 +231,10 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ================= ৩টি SPLIT (নিচের ভিডিওগুলো সচল ও দৃশ্যমান থাকবে) ================= */}
+          {/* ================= ৩টি SPLIT (ডেস্কটপ ভিউ) ================= */}
           {activeSplits === 3 && visibleSlides.length >= 3 && (
             <div className="flex flex-col divide-y divide-white/10 w-full">
-              <div className="relative h-[260px] sm:h-[310px] w-full overflow-hidden bg-slate-900">
+              <div className="relative h-[260px] sm:h-[320px] w-full overflow-hidden bg-slate-900">
                 <div key={`${visibleSlides[0].id}_top_${currentIndex}`} className={`w-full h-full tr_${effect0}`}>
                   <HeroMediaRenderer
                     slide={visibleSlides[0]}
@@ -258,17 +277,32 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ব্যাজ */}
-          <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 shadow">
-            <Layers className="size-3 text-yellow-400" />
-            <span className="text-[11px] text-white font-medium">
-              পোস্ট {bn(currentIndex + 1)}/{bn(total)}
-            </span>
-          </div>
-
-          {/* কন্ট্রোল বার */}
+          {/* স্ক্রিনের দুই পাশে বড় টাচ সোয়াইপ বাটন (যেকোনো সময় সহজে নেক্সট/প্রিভিয়াস করার জন্য) */}
           {total > 1 && (
-            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950/90 border-t border-white/10">
+            <>
+              <button
+                type="button"
+                onClick={prevSlide}
+                aria-label="আগের স্লাইড"
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-30 flex size-9 items-center justify-center rounded-full bg-black/60 hover:bg-black/85 text-white border border-white/25 shadow-lg active:scale-95 transition"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <button
+                type="button"
+                onClick={nextSlide}
+                aria-label="পরের স্লাইড"
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-30 flex size-9 items-center justify-center rounded-full bg-black/60 hover:bg-black/85 text-white border border-white/25 shadow-lg active:scale-95 transition"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            </>
+          )}
+
+          {/* কন্ট্রোল বার (যেখানে পোস্ট কাউন্টার সুন্দরভাবে স্থানান্তরিত হয়েছে) */}
+          {total > 1 && (
+            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950/95 border-t border-white/10">
+              {/* ডটস */}
               <div className="flex items-center gap-1.5">
                 {slides.map((_, idx) => (
                   <button
@@ -277,18 +311,24 @@ export function HeroCarousel() {
                     onClick={() => goToSlide(idx)}
                     aria-label={`স্লাইড ${idx + 1}`}
                     className={`h-2 rounded-full transition-all cursor-pointer ${
-                      idx === currentIndex ? 'w-6 bg-emerald-500 shadow-md' : 'w-2 bg-white/30 hover:bg-white/70'
+                      idx === currentIndex ? 'w-6 bg-cyan-400 shadow-md' : 'w-2 bg-white/30 hover:bg-white/70'
                     }`}
                   />
                 ))}
               </div>
 
+              {/* মাঝখানে বা ডানপাশে পোস্টের নম্বর (যা আগে ভিডিওর ওপর সাবটাইটেল ঢেকে রেখেছিল) */}
               <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-cyan-300 bg-white/10 px-2.5 py-1 rounded-full border border-white/15 flex items-center gap-1 shadow-xs">
+                  <Layers className="size-3 text-yellow-400" />
+                  <span>পোস্ট {bn(currentIndex + 1)}/{bn(total)}</span>
+                </span>
+
                 <button
                   type="button"
                   onClick={() => setIsPaused(!isPaused)}
                   aria-label={isPaused ? 'চালান' : 'থামান'}
-                  className="size-7 sm:size-8 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition cursor-pointer border border-white/10"
+                  className="size-7 sm:size-8 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition cursor-pointer border border-white/10 active:scale-95"
                 >
                   {isPaused ? <Play className="size-3 text-green-400" /> : <Pause className="size-3 text-yellow-400" />}
                 </button>
@@ -296,7 +336,7 @@ export function HeroCarousel() {
                   type="button"
                   onClick={prevSlide}
                   aria-label="আগের স্লাইড"
-                  className="size-7 sm:size-8 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition cursor-pointer border border-white/10"
+                  className="size-7 sm:size-8 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition cursor-pointer border border-white/10 active:scale-95"
                 >
                   <ChevronLeft className="size-4" />
                 </button>
@@ -304,7 +344,7 @@ export function HeroCarousel() {
                   type="button"
                   onClick={nextSlide}
                   aria-label="পরের স্লাইড"
-                  className="size-7 sm:size-8 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition cursor-pointer border border-white/10"
+                  className="size-7 sm:size-8 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition cursor-pointer border border-white/10 active:scale-95"
                 >
                   <ChevronRight className="size-4" />
                 </button>
@@ -317,7 +357,7 @@ export function HeroCarousel() {
             <div className="w-full h-1 bg-white/10 overflow-hidden">
               <div
                 key={currentIndex}
-                className="h-full bg-emerald-500 origin-left"
+                className="h-full bg-cyan-400 origin-left"
                 style={{
                   animation: `heroTimer ${duration}ms linear forwards`,
                 }}
