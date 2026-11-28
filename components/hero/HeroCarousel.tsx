@@ -44,7 +44,7 @@ export function HeroCarousel() {
       .catch(() => setLoaded(true))
   }, [])
 
-  // স্ক্রল করে নিচে গেলে স্লাইডারের ভিডিও এবং টাইমার স্বয়ংক্রিয়ভাবে থামিয়ে দেওয়ার জন্য ভিউপোর্ট অবজারভার
+  // স্ক্রল করে নিচে গেলে স্লাইডারের ভিডিও এবং টাইমার স্বয়ংক্রিয়ভাবে পজ করা
   useEffect(() => {
     const el = sliderRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
@@ -73,6 +73,11 @@ export function HeroCarousel() {
   const currentSlide = slides[currentIndex] || slides[0] || null
   const duration = currentSlide?.slide_duration || settings?.default_duration || 5000
 
+  // যদি বর্তমান স্লাইডে ভিডিও থাকে
+  const isCurrentVideo =
+    currentSlide?.slide_type === 'video' ||
+    currentSlide?.media_items?.[0]?.type === 'video'
+
   const nextSlide = useCallback(() => {
     if (total <= 1) return
     setCurrentIndex((prev) => (prev + 1) % total)
@@ -87,15 +92,17 @@ export function HeroCarousel() {
     setCurrentIndex(idx % total)
   }
 
-  // স্লাইডার টাইমার হ্যান্ডলিং (ইউজার মাউস রাখলে, ভিডিও চললে বা স্ক্রিন থেকে স্ক্রল আউট হলে টাইমার পজ থাকবে)
+  // ⭐ সমাধান: ভিডিও স্লাইডে থাকলে কিংবা ভিডিও প্লে/পজ অবস্থায় থাকলে স্লাইডার স্বয়ংক্রিয়ভাবে সরবে না
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
 
+    // যদি বর্তমান স্লাইড ভিডিও হয়, অথবা ইউজার পজ করে রাখে, অথবা ভিডিও চলছে—তাহলে অটো-স্লাইড বন্ধ থাকবে
     if (
       !isInViewport ||
       isPaused ||
       isHovered ||
       isVideoPlaying ||
+      isCurrentVideo ||
       total <= 1 ||
       duration <= 0
     ) {
@@ -109,7 +116,7 @@ export function HeroCarousel() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [nextSlide, duration, isPaused, isHovered, isVideoPlaying, isInViewport, total, currentIndex])
+  }, [nextSlide, duration, isPaused, isHovered, isVideoPlaying, isCurrentVideo, isInViewport, total, currentIndex])
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.touches[0].clientX)
@@ -165,6 +172,7 @@ export function HeroCarousel() {
                 <HeroMediaRenderer
                   slide={visibleSlides[0]}
                   isActive={isInViewport}
+                  autoPlayVideo={isInViewport}
                   isCompact={false}
                   onVideoStateChange={setIsVideoPlaying}
                   onVideoEnd={nextSlide}
@@ -181,6 +189,7 @@ export function HeroCarousel() {
                   <HeroMediaRenderer
                     slide={visibleSlides[0]}
                     isActive={isInViewport}
+                    autoPlayVideo={isInViewport}
                     isCompact={false}
                     onVideoStateChange={setIsVideoPlaying}
                     onVideoEnd={nextSlide}
@@ -192,7 +201,8 @@ export function HeroCarousel() {
                 <div key={`${visibleSlides[1].id}_1_${currentIndex}`} className={`w-full h-full tr_${effect1}`}>
                   <HeroMediaRenderer
                     slide={visibleSlides[1]}
-                    isActive={false}
+                    isActive={isInViewport}
+                    autoPlayVideo={false}
                     isCompact={false}
                     onVideoStateChange={setIsVideoPlaying}
                     onVideoEnd={nextSlide}
@@ -202,7 +212,7 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ================= ৩টি SPLIT ================= */}
+          {/* ================= ৩টি SPLIT (নিচের ভিডিওগুলো সচল ও দৃশ্যমান থাকবে) ================= */}
           {activeSplits === 3 && visibleSlides.length >= 3 && (
             <div className="flex flex-col divide-y divide-white/10 w-full">
               <div className="relative h-[260px] sm:h-[310px] w-full overflow-hidden bg-slate-900">
@@ -210,6 +220,7 @@ export function HeroCarousel() {
                   <HeroMediaRenderer
                     slide={visibleSlides[0]}
                     isActive={isInViewport}
+                    autoPlayVideo={isInViewport}
                     isCompact={false}
                     onVideoStateChange={setIsVideoPlaying}
                     onVideoEnd={nextSlide}
@@ -222,7 +233,8 @@ export function HeroCarousel() {
                   <div key={`${visibleSlides[1].id}_b1_${currentIndex}`} className={`w-full h-full tr_${effect1}`}>
                     <HeroMediaRenderer
                       slide={visibleSlides[1]}
-                      isActive={false}
+                      isActive={isInViewport}
+                      autoPlayVideo={false}
                       isCompact={true}
                       onVideoStateChange={setIsVideoPlaying}
                       onVideoEnd={nextSlide}
@@ -234,7 +246,8 @@ export function HeroCarousel() {
                   <div key={`${visibleSlides[2].id}_b2_${currentIndex}`} className={`w-full h-full tr_${effect2}`}>
                     <HeroMediaRenderer
                       slide={visibleSlides[2]}
-                      isActive={false}
+                      isActive={isInViewport}
+                      autoPlayVideo={false}
                       isCompact={true}
                       onVideoStateChange={setIsVideoPlaying}
                       onVideoEnd={nextSlide}
@@ -299,8 +312,8 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* প্রোগ্রেস বার */}
-          {!isPaused && !isHovered && !isVideoPlaying && isInViewport && total > 1 && duration > 0 && (
+          {/* প্রোগ্রেস বার (শুধুমাত্র ছবি বা কালার স্লাইডে চলবে, ভিডিওতে নয়) */}
+          {!isPaused && !isHovered && !isVideoPlaying && !isCurrentVideo && isInViewport && total > 1 && duration > 0 && (
             <div className="w-full h-1 bg-white/10 overflow-hidden">
               <div
                 key={currentIndex}
