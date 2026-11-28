@@ -43,16 +43,16 @@ export function NewsletterBox() {
   }
 
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/[0.06] p-4 space-y-2.5 backdrop-blur-md">
+    <div className="rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-4 space-y-2.5 shadow-xs">
       <div className="flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shrink-0">
+        <span className="flex size-8 items-center justify-center rounded-xl bg-[var(--theme-brand-soft)] text-[var(--theme-brand)] border border-[var(--theme-card-border)] shrink-0">
           <Mail className="size-4" />
         </span>
         <div>
-          <p className="text-xs sm:text-sm font-bold text-white">
+          <p className="text-xs sm:text-sm font-bold text-[var(--theme-text-title)]">
             {pick('নিউজলেটার নিবন্ধন', 'Newsletter Subscription')}
           </p>
-          <p className="text-[11px] text-slate-300">
+          <p className="text-[11px] text-[var(--theme-text-body)] opacity-80">
             {pick(
               'সাপ্তাহিক ক্যাম্পাস সংবাদ ও নোটিশ ইমেইলে পেতে নিবন্ধন করুন।',
               'Subscribe to receive weekly campus news and notices by email.'
@@ -62,8 +62,8 @@ export function NewsletterBox() {
       </div>
 
       {done ? (
-        <div className="flex items-center gap-2 rounded-xl bg-emerald-500/20 border border-emerald-400/40 px-3 py-2 text-xs font-bold text-emerald-200">
-          <CheckCircle2 className="size-4 shrink-0" />
+        <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-300 px-3 py-2 text-xs font-bold text-emerald-800">
+          <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
           <span>
             {pick(
               'নিউজলেটারে আপনার নিবন্ধন সম্পন্ন হয়েছে।',
@@ -80,12 +80,12 @@ export function NewsletterBox() {
               placeholder={pick('আপনার ইমেইল ঠিকানা লিখুন', 'Enter your email address')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="min-w-0 flex-1 rounded-xl border border-white/20 bg-black/30 px-3 py-2 text-xs text-white placeholder-white/45 focus:outline-none focus:border-cyan-400"
+              className="min-w-0 flex-1 rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] px-3 py-2 text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)]/50 focus:outline-none focus:border-[var(--theme-brand)]"
             />
             <button
               type="submit"
               disabled={busy}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-3.5 py-2 text-xs font-bold shadow cursor-pointer disabled:opacity-50 transition"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--theme-brand)] hover:bg-[var(--theme-brand-dark)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] px-3.5 py-2 text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 transition"
             >
               <Send className="size-3.5" />
               <span>{busy ? '...' : pick('নিবন্ধন করুন', 'Subscribe')}</span>
@@ -104,7 +104,7 @@ export function NewsletterBox() {
         </form>
       )}
 
-      {err && <p className="text-[11px] font-semibold text-rose-300">{err}</p>}
+      {err && <p className="text-[11px] font-semibold text-rose-500">{err}</p>}
     </div>
   )
 }
