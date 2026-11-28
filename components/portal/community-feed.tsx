@@ -82,7 +82,7 @@ export function CommunityFeed({ standalone = false }: { standalone?: boolean }) 
   if (!loaded || posts.length === 0) {
     if (!standalone) return null
     return (
-      <section id="community-feed" className="py-14 sm:py-20 border-b border-white/10 relative">
+      <section id="community-feed" className="relative border-b border-[var(--theme-card-border)] py-14 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
           <SectionHeading
             inverted
@@ -92,7 +92,7 @@ export function CommunityFeed({ standalone = false }: { standalone?: boolean }) 
             subtitle={sec?.subtitleBn || 'ক্যাম্পাস কমিউনিটির পেজে প্রকাশিত সাম্প্রতিক পোস্টসমূহ।'}
             subtitleEn={sec?.subtitleEn || 'Recent posts from campus community pages.'}
           />
-          <div className="glass-card p-8 text-center text-sm text-slate-300" aria-live="polite">
+          <div className="glass-card p-8 text-center text-sm text-[var(--theme-text-body)]" aria-live="polite">
             {loaded ? 'এখনো কোনো কমিউনিটি পোস্ট নেই।' : 'কমিউনিটি পোস্ট লোড হচ্ছে...'}
           </div>
         </div>
@@ -104,7 +104,7 @@ export function CommunityFeed({ standalone = false }: { standalone?: boolean }) 
   const remaining = Math.max(0, filtered.length - visiblePosts.length)
 
   return (
-    <section id="community-feed" className="py-14 sm:py-20 border-b border-white/10 relative">
+    <section id="community-feed" className="relative border-b border-[var(--theme-card-border)] py-14 sm:py-20">
       <div className="mx-auto max-w-7xl md:px-6 lg:px-8">
         <div className="px-4 md:px-0">
           <SectionHeading
@@ -121,7 +121,7 @@ export function CommunityFeed({ standalone = false }: { standalone?: boolean }) 
               !standalone ? (
                 <Link
                   href="/community"
-                  className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
+                  className="inline-flex shrink-0 items-center rounded-full bg-[var(--theme-brand)] px-4 py-2 text-xs font-bold text-[var(--theme-brand-contrast,var(--theme-bg-solid))] transition hover:bg-[var(--theme-brand-dark)]"
                 >
                   কমিউনিটি পেজ
                 </Link>
@@ -143,8 +143,8 @@ export function CommunityFeed({ standalone = false }: { standalone?: boolean }) 
                   }}
                   className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                     active
-                      ? 'border-cyan-300/60 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
-                      : 'border-white/20 bg-white/10 text-white/80 hover:bg-white/20'
+                      ? 'border-[var(--theme-brand)] bg-[var(--theme-brand)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] shadow-md'
+                      : 'border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] hover:border-[var(--theme-brand)] hover:text-[var(--theme-text-title)]'
                   }`}
                 >
                   <Icon className="size-3.5" />
@@ -160,7 +160,7 @@ export function CommunityFeed({ standalone = false }: { standalone?: boolean }) 
           <NewsGrid posts={visiblePosts} />
         ) : (
           <div className="px-4 md:px-0">
-            <div className="glass-card p-8 text-center text-xs text-slate-300">
+            <div className="glass-card p-8 text-center text-xs text-[var(--theme-text-body)]">
               এই বিভাগে এখনো কোনো পোস্ট পাওয়া যায়নি।
             </div>
           </div>
@@ -171,9 +171,9 @@ export function CommunityFeed({ standalone = false }: { standalone?: boolean }) 
             <button
               type="button"
               onClick={() => setShownCount((c) => c + PAGE_SIZE)}
-              className="inline-flex items-center gap-2 rounded-full bg-white/15 hover:bg-white/25 text-white border border-white/25 px-6 py-2.5 text-xs sm:text-sm font-bold shadow-lg transition active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--theme-card-bg)] hover:bg-[var(--theme-brand-soft)] text-[var(--theme-text-title)] border border-[var(--theme-card-border)] hover:border-[var(--theme-brand)] px-6 py-2.5 text-xs sm:text-sm font-bold shadow-sm transition active:scale-95 cursor-pointer"
             >
-              <Sparkles className="size-4 text-cyan-300" />
+              <Sparkles className="size-4 text-[var(--theme-brand)]" />
               <span>আরও পোস্ট দেখুন ({remaining.toLocaleString('bn-BD')}টি বাকি)</span>
             </button>
           </div>
