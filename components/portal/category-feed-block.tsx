@@ -6,7 +6,6 @@ import type { Post } from '@/lib/sb'
 import { NewsGrid } from './news-card'
 import { SectionHeading } from './section-heading'
 
-// ক্যাটাগরি রঙের প্যালেট — globals.css-এর data-category-palette মান ব্যবহার করা হচ্ছে
 const PALETTES = ['sky', 'amber', 'indigo', 'violet', 'emerald', 'rose', 'teal', 'slate'] as const
 const PALETTE_BY_NAME: Record<string, (typeof PALETTES)[number]> = {
   'ক্যাম্পাস সংবাদ': 'sky',
@@ -27,9 +26,6 @@ function getpalette(cat: string): (typeof PALETTES)[number] {
   return PALETTES[hash % PALETTES.length]
 }
 
-// প্যালেট নাম → Tailwind/CSS কাস্টম প্রপার্টি ম্যাপ
-// (globals.css-এ .news-card-category[data-category-palette='*'] দিয়ে নিয়ন্ত্রিত হয়)
-// এখানে সেকশন হেডার ব্যাজের জন্য ইনলাইন স্টাইল ব্যবহার করা হচ্ছে
 const BADGE_STYLES: Record<(typeof PALETTES)[number], { bg: string; text: string; border: string }> = {
   sky:     { bg: '#075985', text: '#ffffff', border: '#0e7490' },
   amber:   { bg: '#92400e', text: '#ffffff', border: '#b45309' },
@@ -64,17 +60,14 @@ export function CategoryFeedBlock({
   return (
     <section
       id={`cat-${index}`}
-      className="border-b border-white/10 py-10 sm:py-14 relative"
+      className="border-b border-[var(--theme-card-border)] py-8 sm:py-12 relative"
       aria-label={`${cat} বিভাগ`}
     >
       <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
-
-        {/* সেকশন শিরোনাম — ক্যাটাগরি ব্যাজ সহ */}
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            {/* রঙিন ক্যাটাগরি ব্যাজ */}
             <span
-              className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold border"
+              className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold border shadow-xs"
               style={{ backgroundColor: style.bg, color: style.text, borderColor: style.border }}
               aria-label={`ক্যাটাগরি: ${cat}`}
             >
@@ -83,10 +76,9 @@ export function CategoryFeedBlock({
             </span>
           </div>
 
-          {/* আর্কাইভ লিঙ্ক */}
           <Link
             href={`/category/${encodeURIComponent(cat)}`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-bold text-slate-200 transition hover:bg-white/20 active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] hover:bg-[var(--theme-brand-soft)] px-3.5 py-1.5 text-xs font-bold text-[var(--theme-text-title)] hover:text-[var(--theme-brand)] transition active:scale-95 shadow-xs"
           >
             সব দেখুন
             <ArrowRight className="size-3.5" aria-hidden="true" />
@@ -94,7 +86,7 @@ export function CategoryFeedBlock({
         </div>
 
         <SectionHeading
-          inverted
+          inverted={false}
           eyebrow={eyebrow}
           title={cat}
           subtitle={`${cat} ${subSuffixBn}`}
@@ -104,7 +96,7 @@ export function CategoryFeedBlock({
         {posts.length ? (
           <NewsGrid posts={posts.slice(0, 3)} />
         ) : (
-          <p className="glass-card p-5 text-sm text-slate-200">এই বিভাগে এখনো কোনো সংবাদ নেই।</p>
+          <p className="glass-card p-5 text-sm text-[var(--theme-text-body)]">এই বিভাগে এখনো কোনো সংবাদ নেই।</p>
         )}
       </div>
     </section>
