@@ -128,7 +128,7 @@ export function CommunityPagesSection({
   if (pages.length === 0) {
     if (mode !== 'directory') return null
     return (
-      <section id="community-pages" className="py-14 sm:py-20 border-b border-white/10 relative">
+      <section id="community-pages" className="relative border-b border-[var(--theme-card-border)] py-14 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             inverted
@@ -138,7 +138,7 @@ export function CommunityPagesSection({
             subtitle={sec?.subtitleBn || 'মাভাবিপ্রবির বিভিন্ন ক্যাম্পাস সংগঠনের সক্রিয় পেজ ও কার্যক্রম।'}
             subtitleEn={sec?.subtitleEn || 'Active pages and activities from campus organizations.'}
           />
-          <div className="glass-card p-8 text-center text-sm text-slate-300" aria-live="polite">
+          <div className="glass-card p-8 text-center text-sm text-[var(--theme-text-body)]" aria-live="polite">
             {loaded ? 'এখনো কোনো সক্রিয় কমিউনিটি পেজ নেই।' : 'কমিউনিটি পেজ লোড হচ্ছে...'}
           </div>
         </div>
@@ -155,7 +155,7 @@ export function CommunityPagesSection({
   }
 
   return (
-    <section id="community-pages" className="py-14 sm:py-20 border-b border-white/10 relative">
+    <section id="community-pages" className="relative border-b border-[var(--theme-card-border)] py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           inverted
@@ -171,7 +171,7 @@ export function CommunityPagesSection({
             !isDirectory ? (
               <Link
                 href="/community"
-                className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
+                className="inline-flex shrink-0 items-center rounded-full bg-[var(--theme-brand)] px-4 py-2 text-xs font-bold text-[var(--theme-brand-contrast,var(--theme-bg-solid))] transition hover:bg-[var(--theme-brand-dark)]"
               >
                 সব কমিউনিটি পেজ
               </Link>
@@ -191,12 +191,12 @@ export function CommunityPagesSection({
                 }}
                 className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                   filter === cat
-                    ? 'border-cyan-300/60 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
-                    : 'border-white/20 bg-white/10 text-white/80 hover:bg-white/20'
+                    ? 'border-[var(--theme-brand)] bg-[var(--theme-brand)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] shadow-md'
+                    : 'border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] hover:border-[var(--theme-brand)] hover:text-[var(--theme-text-title)]'
                 }`}
               >
                 <span>{cat === 'All' ? 'সকল পেজ' : cat}</span>
-                <span className="ml-1.5 text-[10px] opacity-75">
+                <span className="ml-1.5 text-[10px] opacity-80">
                   ({cat === 'All' ? pages.length : pages.filter((p) => (p.category || 'ক্যাম্পাস সংগঠন') === cat).length})
                 </span>
               </button>
@@ -217,10 +217,10 @@ export function CommunityPagesSection({
               return (
                 <article
                   key={page.id}
-                  className="glass-card group flex flex-col justify-between overflow-hidden text-white"
+                  className="glass-card group flex flex-col justify-between overflow-hidden text-[var(--theme-text-body)]"
                 >
                   <div>
-                    <div className="relative h-32 sm:h-36 w-full overflow-hidden bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 border-b border-white/10">
+                    <div className="hero-daylight-dark-surface relative h-32 sm:h-36 w-full overflow-hidden bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 border-b border-[var(--theme-card-border)]">
                       {page.cover_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -230,23 +230,23 @@ export function CommunityPagesSection({
                           className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
-                        <div className="size-full flex items-center justify-center text-white/20 font-bold text-lg uppercase tracking-widest select-none">
+                        <div className="size-full flex items-center justify-center text-white/40 font-bold text-lg uppercase tracking-widest select-none px-4 text-center">
                           {page.name}
                         </div>
                       )}
-                      <span className="absolute top-2.5 right-2.5 rounded-full bg-black/60 backdrop-blur px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
+                      <span className="absolute top-2.5 right-2.5 rounded-full bg-black/70 backdrop-blur px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/25">
                         {page.category || 'কমিউনিটি'}
                       </span>
                     </div>
 
                     <div className="px-5 pt-0 pb-4 relative">
                       <div className="flex items-end justify-between -mt-10 mb-3">
-                        <div className="relative size-20 rounded-full bg-slate-900 ring-4 ring-cyan-400/80 shadow-lg overflow-hidden shrink-0 flex items-center justify-center">
+                        <div className="relative size-20 rounded-full bg-[var(--theme-bg-solid)] ring-4 ring-[var(--theme-brand)] shadow-lg overflow-hidden shrink-0 flex items-center justify-center">
                           {page.avatar_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={page.avatar_url} alt={page.name} loading="lazy" className="size-full object-cover" />
                           ) : (
-                            <div className="size-full bg-cyan-600 text-white flex items-center justify-center text-2xl font-bold">
+                            <div className="size-full bg-[var(--theme-brand)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] flex items-center justify-center text-2xl font-bold">
                               {page.name.charAt(0)}
                             </div>
                           )}
@@ -255,12 +255,12 @@ export function CommunityPagesSection({
                         <button
                           type="button"
                           onClick={(e) => handleShare(e, page)}
-                          className="rounded-full p-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 transition cursor-pointer"
+                          className="rounded-full p-2 bg-[var(--theme-brand-soft)] hover:bg-[var(--theme-brand)] text-[var(--theme-text-title)] hover:text-[var(--theme-brand-contrast,var(--theme-bg-solid))] border border-[var(--theme-card-border)] transition cursor-pointer"
                           title={copiedId === page.id ? 'লিংক কপি হয়েছে' : 'শেয়ার করুন'}
                           aria-label="শেয়ার করুন"
                         >
                           {copiedId === page.id ? (
-                            <Check className="size-3.5 text-cyan-300" />
+                            <Check className="size-3.5" />
                           ) : (
                             <Share2 className="size-3.5" />
                           )}
@@ -269,7 +269,7 @@ export function CommunityPagesSection({
 
                       <div className="space-y-1">
                         <div className="flex items-center gap-1.5">
-                          <Link href={`/p/${page.slug}`} className="font-serif text-lg font-bold text-white hover:text-cyan-300 transition-colors line-clamp-1">
+                          <Link href={`/p/${page.slug}`} className="font-serif text-lg font-bold text-[var(--theme-text-title)] hover:text-[var(--theme-brand)] transition-colors line-clamp-1">
                             {page.name}
                           </Link>
                           {page.is_verified && (
@@ -279,27 +279,27 @@ export function CommunityPagesSection({
                           )}
                         </div>
                         {page.name_en && (
-                          <p className="text-xs text-cyan-200/80 truncate">{page.name_en}</p>
+                          <p className="text-xs text-[var(--theme-brand)] font-medium truncate">{page.name_en}</p>
                         )}
                       </div>
 
                       {page.bio && (
-                        <p className="mt-3 text-xs text-slate-200 line-clamp-2 leading-relaxed">
+                        <p className="mt-3 text-xs text-[var(--theme-text-body)] line-clamp-2 leading-relaxed">
                           {page.bio}
                         </p>
                       )}
 
-                      <div className="mt-4 pt-3 border-t border-white/15 space-y-1.5 text-[11px] text-slate-300">
+                      <div className="mt-4 pt-3 border-t border-[var(--theme-card-border)] space-y-1.5 text-[11px] text-[var(--theme-text-body)]">
                         {page.location && (
                           <p className="flex items-center gap-1.5 truncate">
-                            <MapPin className="size-3 text-cyan-400 shrink-0" />
+                            <MapPin className="size-3 text-[var(--theme-brand)] shrink-0" />
                             <span className="truncate">{page.location}</span>
                           </p>
                         )}
                         {safeWebsiteUrl && (
                           <p className="flex items-center gap-1.5 truncate">
-                            <Globe className="size-3 text-cyan-400 shrink-0" />
-                            <a href={safeWebsiteUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline truncate">
+                            <Globe className="size-3 text-[var(--theme-brand)] shrink-0" />
+                            <a href={safeWebsiteUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--theme-brand)] font-semibold hover:underline truncate">
                               অফিসিয়াল ওয়েবসাইট
                             </a>
                           </p>
@@ -308,10 +308,10 @@ export function CommunityPagesSection({
                     </div>
                   </div>
 
-                  <div className="p-4 border-t border-white/15">
+                  <div className="p-4 border-t border-[var(--theme-card-border)]">
                     <Link
                       href={`/p/${page.slug}`}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-4 py-2.5 text-xs font-bold shadow-md transition active:scale-98 border border-white/20"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--theme-brand)] hover:bg-[var(--theme-brand-dark)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] px-4 py-2.5 text-xs font-bold shadow-sm transition active:scale-98"
                     >
                       <Newspaper className="size-3.5" />
                       <span>পেজ ও টাইমলাইন দেখুন</span>
@@ -324,7 +324,7 @@ export function CommunityPagesSection({
           </div>
 
           {!isDirectory && total > 1 && (
-            <div className="mt-6 flex items-center justify-between gap-4 border-t border-white/10 pt-4">
+            <div className="mt-6 flex items-center justify-between gap-4 border-t border-[var(--theme-card-border)] pt-4">
               <div className="flex items-center gap-1.5">
                 {filteredPages.map((_, i) => (
                   <button
@@ -333,7 +333,7 @@ export function CommunityPagesSection({
                     onClick={() => setCurrentIndex(i)}
                     aria-label={`স্লাইড ${i + 1}`}
                     className={`h-2 rounded-full transition-all cursor-pointer ${
-                      i === currentIndex ? 'w-6 bg-cyan-400 shadow-sm' : 'w-2 bg-white/30 hover:bg-white/50'
+                      i === currentIndex ? 'w-6 bg-[var(--theme-brand)] shadow-sm' : 'w-2 bg-[var(--theme-card-border)] hover:opacity-80'
                     }`}
                   />
                 ))}
@@ -344,15 +344,15 @@ export function CommunityPagesSection({
                   type="button"
                   onClick={() => setIsPaused(!isPaused)}
                   aria-label={isPaused ? 'চালান' : 'থামান'}
-                  className="size-8 rounded-xl bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 cursor-pointer"
+                  className="size-8 rounded-xl bg-[var(--theme-card-bg)] border border-[var(--theme-card-border)] text-[var(--theme-text-title)] flex items-center justify-center hover:border-[var(--theme-brand)] cursor-pointer"
                 >
-                  {isPaused ? <Play className="size-3 text-cyan-400" /> : <Pause className="size-3 text-amber-400" />}
+                  {isPaused ? <Play className="size-3 text-[var(--theme-brand)]" /> : <Pause className="size-3 text-amber-500" />}
                 </button>
                 <button
                   type="button"
                   onClick={prevSlide}
                   aria-label="আগের পেজ"
-                  className="size-8 rounded-xl bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 cursor-pointer active:scale-95"
+                  className="size-8 rounded-xl bg-[var(--theme-card-bg)] border border-[var(--theme-card-border)] text-[var(--theme-text-title)] flex items-center justify-center hover:border-[var(--theme-brand)] cursor-pointer active:scale-95"
                 >
                   <ChevronLeft className="size-4" />
                 </button>
@@ -360,7 +360,7 @@ export function CommunityPagesSection({
                   type="button"
                   onClick={nextSlide}
                   aria-label="পরের পেজ"
-                  className="size-8 rounded-xl bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 cursor-pointer active:scale-95"
+                  className="size-8 rounded-xl bg-[var(--theme-card-bg)] border border-[var(--theme-card-border)] text-[var(--theme-text-title)] flex items-center justify-center hover:border-[var(--theme-brand)] cursor-pointer active:scale-95"
                 >
                   <ChevronRight className="size-4" />
                 </button>
