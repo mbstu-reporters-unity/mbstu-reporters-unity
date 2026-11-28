@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowRight, Download, ExternalLink, FileText, Bell, Pin } from "lucide-react"
+import { ArrowRight, Download, ExternalLink, Bell, Pin } from "lucide-react"
 import { BRANCHES, getNotices, downloadUrl, timeAgo } from "@/lib/notices"
 import type { Notice } from "@/lib/notices"
 import { SectionHeading } from "./section-heading"
@@ -10,7 +10,6 @@ import { useSiteSettings } from "./site-settings-context"
 import { selectHomepageItems } from "@/lib/homepage-feed"
 import { useHomepageAging } from "./use-homepage-aging"
 import { useLang } from "@/lib/i18n"
-import NoticeMediaPreview from "./notice-media-preview"
 
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", timeZone: "Asia/Dhaka" })
@@ -55,10 +54,12 @@ export function NoticeBoard({
   const list = currentRows.slice(0, limit)
 
   return (
-    <section id="notices" className="border-b border-slate-200 py-6 sm:py-9 bg-white">
+    <section
+      id="notices"
+      className="border-b border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] py-6 sm:py-9"
+    >
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
         <SectionHeading
-          inverted={false}
           eyebrow={sec?.eyebrow ?? "Digital Notice Board"}
           title={sec?.titleBn || "ডিজিটাল নোটিশ বোর্ড"}
           titleEn={sec?.titleEn || "Digital Notice Board"}
@@ -69,44 +70,54 @@ export function NoticeBoard({
           subtitleEn={sec?.subtitleEn || "Latest notices from MBSTU & MBSTURU."}
         />
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
-          <div className="flex items-center gap-2 bg-slate-50 border-b border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-800">
-            <Bell className="size-4 text-[#c8102e]" aria-hidden="true" />
-            <span>{pick('সাম্প্রতিক নোটিশ', 'Recent Notices')}</span>
+        <div className="glass-card overflow-hidden rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] shadow-xs">
+          <div className="flex items-center gap-2 border-b border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-4 py-2.5 text-xs font-bold text-[var(--theme-text-title)]">
+            <Bell className="size-4 text-[var(--theme-brand)]" aria-hidden="true" />
+            <span>{pick("সাম্প্রতিক নোটিশ", "Recent Notices")}</span>
           </div>
 
-          {loading && <p className="p-4 text-xs text-slate-500">{pick('লোড হচ্ছে…', 'Loading…')}</p>}
+          {loading && (
+            <p className="p-4 text-xs text-[var(--theme-text-body)]">
+              {pick("লোড হচ্ছে…", "Loading…")}
+            </p>
+          )}
           {!loading && list.length === 0 && (
-            <p className="p-4 text-xs text-slate-500">{pick('এখনো কোনো নোটিশ প্রকাশিত হয়নি।', 'No notices have been published yet.')}</p>
+            <p className="p-4 text-xs text-[var(--theme-text-body)]">
+              {pick("এখনো কোনো নোটিশ প্রকাশিত হয়নি।", "No notices have been published yet.")}
+            </p>
           )}
 
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-[var(--theme-card-border)]">
             {list.map((n) => {
               const branch = BRANCHES.find((b) => b.key === n.branch)?.bn || n.branch
               return (
                 <li
                   key={n.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 hover:bg-slate-50 transition"
+                  className="flex flex-col justify-between gap-3 p-3.5 transition hover:bg-[var(--theme-brand-soft)] sm:flex-row sm:items-center sm:p-4"
                 >
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-800">
-                      <span className="font-serif text-base font-bold leading-none">{day(n.created_at)}</span>
-                      <span className="text-[9px] font-bold uppercase text-[#c8102e]">{month(n.created_at)}</span>
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] text-[var(--theme-text-title)]">
+                      <span className="font-serif text-base font-bold leading-none">
+                        {day(n.created_at)}
+                      </span>
+                      <span className="text-[9px] font-bold uppercase text-[var(--theme-brand)]">
+                        {month(n.created_at)}
+                      </span>
                     </div>
 
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-1.5">
                         {n.is_pinned && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-50 border border-rose-200 px-2 py-0.2 text-[10px] font-bold text-[#c8102e]">
+                          <span className="inline-flex items-center gap-0.5 rounded-full border border-[var(--theme-brand)] bg-[var(--theme-brand-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--theme-brand)]">
                             <Pin className="size-2.5" />
-                            {pick('পিন করা', 'Pinned')}
+                            {pick("পিন করা", "Pinned")}
                           </span>
                         )}
-                        <span className="rounded-full bg-slate-100 px-2 py-0.2 text-[10px] font-bold text-slate-700">
+                        <span className="rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] px-2 py-0.5 text-[10px] font-bold text-[var(--theme-text-body)]">
                           {branch}
                         </span>
                         {n.ref_number && (
-                          <span className="font-mono text-[10px] text-slate-400">
+                          <span className="font-mono text-[10px] text-[var(--theme-text-body)] opacity-80">
                             {n.ref_number}
                           </span>
                         )}
@@ -114,12 +125,12 @@ export function NoticeBoard({
 
                       <Link
                         href={`/notices?n=${n.id}`}
-                        className="block font-serif font-bold text-sm sm:text-base text-slate-900 hover:text-[#c8102e] transition leading-snug truncate"
+                        className="block truncate font-serif text-sm font-bold leading-snug text-[var(--theme-text-title)] transition hover:text-[var(--theme-brand)] sm:text-base"
                       >
                         {n.title}
                       </Link>
 
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-[var(--theme-text-body)] opacity-80">
                         {timeAgo(noticeActivityAt(n))}
                       </p>
                     </div>
@@ -128,20 +139,20 @@ export function NoticeBoard({
                   {n.file_url ? (
                     <a
                       href={downloadUrl(n.file_url, n.file_name)}
-                      className="inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-[#c8102e] hover:bg-[#a50d25] text-white px-3.5 py-1.5 text-xs font-bold transition shadow-xs self-start sm:self-auto"
+                      className="inline-flex shrink-0 items-center justify-center gap-1 self-start rounded-full bg-[var(--theme-brand)] px-3.5 py-1.5 text-xs font-bold text-[var(--theme-brand-contrast,#ffffff)] shadow-xs transition hover:bg-[var(--theme-brand-dark)] sm:self-auto"
                     >
                       <Download className="size-3" />
-                      <span>{pick('ডাউনলোড', 'Download')}</span>
+                      <span>{pick("ডাউনলোড", "Download")}</span>
                     </a>
                   ) : safeUrl(n.link_url) ? (
                     <a
                       href={n.link_url!}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex shrink-0 items-center justify-center gap-1 rounded-full border border-slate-300 bg-white text-slate-800 px-3 py-1.5 text-xs font-semibold hover:border-[#c8102e] hover:text-[#c8102e] transition self-start sm:self-auto"
+                      className="inline-flex shrink-0 items-center justify-center gap-1 self-start rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] px-3 py-1.5 text-xs font-semibold text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] sm:self-auto"
                     >
                       <ExternalLink className="size-3" />
-                      <span>{pick('লিংক', 'Link')}</span>
+                      <span>{pick("লিংক", "Link")}</span>
                     </a>
                   ) : null}
                 </li>
@@ -151,9 +162,9 @@ export function NoticeBoard({
 
           <Link
             href="/notices"
-            className="flex items-center justify-center gap-1.5 border-t border-slate-200 bg-slate-50 py-2.5 text-xs font-bold text-[#c8102e] hover:bg-slate-100 transition"
+            className="flex items-center justify-center gap-1.5 border-t border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] py-2.5 text-xs font-bold text-[var(--theme-brand)] transition hover:opacity-90"
           >
-            <span>{pick('সকল নোটিশ দেখুন', 'View all notices')}</span>
+            <span>{pick("সকল নোটিশ দেখুন", "View all notices")}</span>
             <ArrowRight className="size-3" />
           </Link>
         </div>
