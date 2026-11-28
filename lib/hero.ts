@@ -180,20 +180,26 @@ function hdr(token?: string, json = false): Record<string, string> {
   return h
 }
 
-/**
- * ইউটিউব ও ফেসবুকের সব ধরনের ভিডিও লিংক নিখুঁতভাবে পার্স করার ফাংশন
- */
+// গ্লোবাল ভিডিও কো-অর্ডিনেটর: একটি ভিডিও চললে অন্য সব ভিডিও স্বয়ংক্রিয়ভাবে বন্ধ করা
+export function notifyVideoPlaying(sourceId: string) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('mbstu-active-video-play', { detail: { id: sourceId } }))
+  }
+}
+
 export function parseVideoUrl(rawUrl: string): {
   isEmbed: boolean
   embedSrc?: string
   platform: "youtube" | "facebook" | "direct"
+  videoId?: string
+  thumbnail?: string
 } {
   if (!rawUrl || typeof rawUrl !== "string") {
     return { isEmbed: false, platform: "direct" }
   }
   const url = rawUrl.trim()
 
-  // ১. ইউটিউব লিংক ডিটেকশন (Shorts, Live, Watch, youtu.be)
+  // ১. ইউটিউব ভিডিও ডিটেকশন ও থাম্বনেইল তৈরি
   const ytMatch = url.match(
     /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v|shorts|live)\/))([^?&"'>#]+)/i
   )
@@ -202,18 +208,19 @@ export function parseVideoUrl(rawUrl: string): {
     return {
       isEmbed: true,
       platform: "youtube",
+      videoId,
+      thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
       embedSrc: `https://www.youtube.com/embed/${videoId}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1&controls=1`,
     }
   }
 
-  // ২. ফেসবুক ভিডিও ও রিলস লিংক ডিটেকশন (Facebook Watch, Reels, Videos, Share Links)
+  // ২. ফেসবুক ভিডিও ও রিলস লিংক
   if (
     url.includes("facebook.com") ||
     url.includes("fb.watch") ||
     url.includes("fb.com")
   ) {
-    // মোবাইল লিংক (m.facebook.com) কে ক্লিন ওয়েব লিংকে রূপান্তর
-    let cleanFbUrl = url.replace("m.facebook.com", "www.facebook.com")
+    const cleanFbUrl = url.replace("m.facebook.com", "www.facebook.com")
     return {
       isEmbed: true,
       platform: "facebook",
@@ -223,7 +230,6 @@ export function parseVideoUrl(rawUrl: string): {
     }
   }
 
-  // ৩. ডিরেক্ট ভিডিও ফাইল (.mp4, .webm, ইত্যাদি)
   return { isEmbed: false, platform: "direct" }
 }
 
