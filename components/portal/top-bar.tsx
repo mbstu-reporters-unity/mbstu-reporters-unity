@@ -30,8 +30,7 @@ export function TopBar() {
   if (!tb.showTopBar && !showAnnouncement) return null
 
   return (
-    <div className="site-top-bar relative z-[60] border-b border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] shadow-xs">
-      {/* জরুরি ঘোষণা ব্যানার */}
+    <div className="site-top-bar relative z-[60] border-b border-[var(--theme-card-border)] bg-[var(--theme-topbar-bg)] text-[var(--theme-text-body)] shadow-xs">
       {showAnnouncement && (
         <div className="site-announcement border-b border-amber-300 bg-amber-50 px-3 py-1.5 text-center text-xs font-bold text-amber-900">
           <div className="mx-auto max-w-7xl flex items-center justify-center gap-2 flex-wrap">
@@ -61,35 +60,31 @@ export function TopBar() {
         </div>
       )}
 
-      {/* সারি ১: লাইভ ঘড়ি, তারিখ ও ইউটিলিটি কন্ট্রোল */}
       {tb.showTopBar && (
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 sm:px-4 py-1.5">
-          {/* বামে: তারিখ ও সেকেন্ডসহ লাইভ ঘড়ি */}
           {tb.showClock && (
             <div className="min-w-0 shrink-0">
               <LiveClock />
             </div>
           )}
 
-          {/* ডানে: ভাষা, ফন্ট সাইজ ও থিম বাটন */}
           {showSecondRow && (
             <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
               {tb.showLocation && (
                 <div className="hidden lg:flex items-center">
-                  <span className="site-location-pill inline-flex items-center gap-1 rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-2.5 py-0.5 font-semibold text-[11px] text-[var(--theme-text-body)]">
+                  <span className="site-location-pill inline-flex items-center gap-1 rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-2.5 py-0.5 font-semibold text-[11px] text-[var(--theme-text-title)]">
                     <MapPin className="size-3 text-[var(--theme-brand)] shrink-0" aria-hidden="true" />
                     <span>{pick(tb.locationBn, tb.locationEn)}</span>
                   </span>
                 </div>
               )}
 
-              {/* সংরক্ষিত ও তথ্য পাঠান বাটন (ট্যাবলেটে ও কম্পিউটারে) */}
               <div className="hidden md:flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setBookmarksOpen(true)}
                   aria-label={pick('সংরক্ষিত সংবাদ', 'Saved Articles')}
-                  className="inline-flex items-center gap-1 rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] px-2.5 py-0.5 text-xs font-bold text-[var(--theme-text-body)] transition hover:border-[var(--theme-brand)]"
+                  className="inline-flex items-center gap-1 rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] px-2.5 py-0.5 text-xs font-bold text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] cursor-pointer"
                 >
                   <Bookmark className={`size-3.5 ${bookmarkCount > 0 ? 'fill-amber-400 text-amber-400' : ''}`} />
                   <span>{pick('সংরক্ষিত', 'Saved')}</span>
@@ -103,21 +98,19 @@ export function TopBar() {
                 <button
                   type="button"
                   onClick={() => setTipOpen(true)}
-                  className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-900 transition hover:bg-amber-100"
+                  className="inline-flex items-center gap-1 rounded-full border border-amber-400/50 bg-amber-500/15 px-2.5 py-0.5 text-xs font-bold text-[var(--theme-text-title)] transition hover:bg-amber-500/25 cursor-pointer"
                 >
-                  <Send className="size-3 text-amber-800" />
+                  <Send className="size-3 text-amber-500" />
                   <span>{pick('তথ্য পাঠান', 'Submit a tip')}</span>
                 </button>
               </div>
 
-              {/* ভাষা নির্বাচন */}
               {tb.showLangSwitcher && (
                 <div className="shrink-0">
                   <LangSwitcher />
                 </div>
               )}
 
-              {/* ফন্ট সাইজ ও থিম বাটন */}
               <div className="flex items-center gap-1">
                 <FontSizeSwitcher />
                 {tb.showThemeSwitcher && <ThemeSwitcher />}
@@ -133,7 +126,6 @@ export function TopBar() {
         </div>
       )}
 
-      {/* ডায়ালগসমূহ */}
       <BookmarksDialog open={bookmarksOpen} onClose={() => setBookmarksOpen(false)} />
       <TipSubmissionDialog open={tipOpen} onClose={() => setTipOpen(false)} />
     </div>
