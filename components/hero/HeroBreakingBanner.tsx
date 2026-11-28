@@ -59,13 +59,14 @@ function getBannerBg(slide: HeroSlide) {
       return cfg.stops?.[0]?.color || '#1e1b4b'
     }
     const angle = cfg.angle ?? 135
-    const stops = cfg.stops && cfg.stops.length > 0
-      ? cfg.stops
-      : [
-          { color: '#1e1b4b', stop: 0 },
-          { color: '#1e3a8a', stop: 50 },
-          { color: '#0f172a', stop: 100 },
-        ]
+    const stops =
+      cfg.stops && cfg.stops.length > 0
+        ? cfg.stops
+        : [
+            { color: '#1e1b4b', stop: 0 },
+            { color: '#1e3a8a', stop: 50 },
+            { color: '#0f172a', stop: 100 },
+          ]
     const stopString = [...stops]
       .sort((a, b) => a.stop - b.stop)
       .map((s) => `${s.color} ${s.stop}%`)
@@ -81,6 +82,11 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
   const [loaded, setLoaded] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [isInViewport, setIsInViewport] = useState(true)
+
+  const sectionRef = useRef<HTMLElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   const isTouchingRef = useRef(false)
   const touchStartX = useRef<number | null>(null)
@@ -99,6 +105,24 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
       .catch(() => setLoaded(true))
   }, [])
 
+  // স্ক্রল আউট হলে ব্যাকগ্রাউন্ড অডিও/ভিডিও বন্ধ করার জন্য IntersectionObserver
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        const visible = Boolean(entry && entry.isIntersecting && entry.intersectionRatio >= 0.2)
+        setIsInViewport(visible)
+      },
+      { threshold: [0, 0.2] }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   const total = slides.length
   const currentSlide = slides[currentIndex] || slides[0]
 
@@ -112,6 +136,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
     setCurrentIndex((prev) => (prev - 1 + total) % total)
   }, [total])
 
+  // স্লাইড অটো-রোটেশন
   useEffect(() => {
     if (total <= 1) return
     const rawDur = Number(currentSlide?.slide_duration) || 5000
@@ -125,6 +150,21 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
 
     return () => clearInterval(interval)
   }, [total, currentSlide?.id, currentSlide?.slide_duration, isPaused])
+
+  // ব্যানার স্ক্রিনে না থাকলে ভিডিও বন্ধ করা
+  useEffect(() => {
+    if (!isInViewport) {
+      if (videoRef.current) {
+        videoRef.current.pause()
+      }
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
+          '*'
+        )
+      }
+    }
+  }, [isInViewport])
 
   const handleTouchStart = (e: React.TouchEvent) => {
     isTouchingRef.current = true
@@ -151,8 +191,8 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
 
   if (!loaded || !slides || slides.length === 0) return null
 
-  const bannerHeight = currentSlide.banner_config?.height_px || 200
   const slideType = currentSlide.slide_type || 'color'
+  const isVideoSlide = slideType === 'video'
   const videoUrl = currentSlide.video_config?.url || ''
   const parsedVideo = parseVideoUrl(videoUrl)
   const imageUrl = currentSlide.media_items?.[0]?.url || ''
@@ -161,14 +201,21 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
   const hasButton = Boolean(currentSlide.button_text?.trim() && buttonHref && buttonHref !== '#')
   const isExternalButton = /^https?:\/\//i.test(buttonHref)
 
-  const badgeLayer = layers.find((l: any) => l.enabled !== false && (l.id === 'txt_badge' || l.bg_color))
+  const badgeLayer = layers.find(
+    (l: any) => l.enabled !== false && (l.id === 'txt_badge' || l.bg_color)
+  )
   const titleLayer =
     layers.find((l: any) => l.enabled !== false && (l.id === 'txt_title' || l.label?.includes('শিরোনাম'))) ||
     layers.find((l: any) => l.enabled !== false && l !== badgeLayer)
-  const descLayer = layers.find((l: any) => l.enabled !== false && l !== badgeLayer && l !== titleLayer)
+  const descLayer = layers.find(
+    (l: any) => l.enabled !== false && l !== badgeLayer && l !== titleLayer
+  )
+
+  const hasAnyText = Boolean(badgeLayer?.text || titleLayer?.text || descLayer?.text)
 
   return (
     <section
+      ref={sectionRef}
       aria-label="Hero Banner"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -179,12 +226,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         background: slideType === 'color' ? getBannerBg(currentSlide) : '#000000',
       }}
     >
-      <style>{`
-        @media (min-width: 640px) {
-          .hero-banner-inner { min-height: ${bannerHeight}px; }
-        }
-      `}</style>
-
+      {/* ১. ছবি স্লাইড */}
       {slideType === 'image' && (
         <div className="absolute inset-0 size-full pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -195,198 +237,215 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
             className="size-full object-cover transition-opacity duration-500"
             loading="eager"
           />
-        </div>
-      )}
-
-      {slideType === 'video' && (
-        <div className="absolute inset-0 size-full flex items-center justify-center bg-black z-0 pointer-events-auto">
-          {parsedVideo.isEmbed ? (
-            <iframe
-              src={`${parsedVideo.embedSrc}&playsinline=1&controls=1`}
-              className="size-full aspect-video border-0 pointer-events-auto"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-              allowFullScreen
-              title="Banner Video"
-            />
-          ) : (
-            <video
-              src={videoUrl}
-              controls
-              playsInline
-              className="size-full object-contain pointer-events-auto"
-            />
+          {hasAnyText && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/30 pointer-events-none" />
           )}
         </div>
       )}
 
-      {(slideType === 'image' || slideType === 'video') && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/30 pointer-events-none z-[1]" />
-      )}
-
-      <div className="hero-banner-inner max-w-7xl mx-auto px-4 sm:px-8 py-4 sm:py-5 relative z-10 flex flex-col justify-center">
-        
-        {/* মোবাইল ভিউ: সুশৃঙ্খল ফ্লেক্স লেআউট (ব্যানার ব্যাজ ফিক্সড) */}
-        <div className={`flex flex-col items-start gap-2 sm:hidden w-full max-w-xl ${total > 1 ? 'pb-7' : 'pb-1'}`}>
-          {badgeLayer && (badgeLayer.text || badgeLayer.title) && (
-            <div className={`anim_${badgeLayer.animation || 'fade-up'}`}>
-              <span
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold shadow-md whitespace-nowrap"
-                style={{
-                  display: 'inline-flex',
-                  backgroundColor: badgeLayer.bg_color || '#dc2626',
-                  color: badgeLayer.color || '#ffffff',
-                }}
-              >
-                <span className="relative flex size-2 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-85" />
-                  <span className="relative inline-flex rounded-full size-2 bg-white" />
-                </span>
-                {badgeLayer.icon && renderBadgeIcon(badgeLayer.icon, "size-3 shrink-0")}
-                <span>{badgeLayer.text || badgeLayer.title}</span>
-              </span>
-            </div>
-          )}
-
-          {titleLayer && (titleLayer.text || titleLayer.title) && (
-            <h2
-              className={`font-serif text-base sm:text-lg font-bold text-white leading-snug drop-shadow-md anim_${titleLayer.animation || 'fade-up'}`}
-              style={{ color: titleLayer.color || '#ffffff' }}
-            >
-              {titleLayer.text || titleLayer.title}
-            </h2>
-          )}
-
-          {descLayer && (descLayer.text || descLayer.description || descLayer.title) && (
-            <p
-              className={`text-xs text-slate-200/90 leading-relaxed line-clamp-2 drop-shadow anim_${descLayer.animation || 'fade-up'}`}
-              style={{ color: descLayer.color || '#e2e8f0' }}
-            >
-              {descLayer.text || descLayer.description || descLayer.title}
-            </p>
-          )}
-
-          {hasButton && (
-            <div className="pt-0.5 pointer-events-auto">
-              {isExternalButton ? (
-                <a
-                  href={buttonHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white text-red-700 font-bold text-xs shadow-lg active:scale-95"
-                >
-                  <span>{currentSlide.button_text}</span>
-                  <ArrowRight className="size-3" />
-                </a>
+      {/* ২. ভিডিও স্লাইড (ইউটিউব, ফেসবুক ও ডিরেক্ট ফাইল) - রেসপন্সিভ ও ঝাপসা মুক্ত */}
+      {isVideoSlide && (
+        <div className="w-full flex items-center justify-center bg-black overflow-hidden relative">
+          <div className="w-full max-w-4xl aspect-video max-h-[380px] sm:max-h-[460px]">
+            {isInViewport ? (
+              parsedVideo.isEmbed ? (
+                <iframe
+                  ref={iframeRef}
+                  src={`${parsedVideo.embedSrc}&autoplay=1&mute=1`}
+                  className="w-full h-full border-0 pointer-events-auto"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                  allowFullScreen
+                  title="Banner Video"
+                />
               ) : (
-                <Link
-                  href={buttonHref}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white text-red-700 font-bold text-xs shadow-lg active:scale-95"
-                >
-                  <span>{currentSlide.button_text}</span>
-                  <ArrowRight className="size-3" />
-                </Link>
-              )}
-            </div>
-          )}
+                <video
+                  ref={videoRef}
+                  src={videoUrl}
+                  controls
+                  playsInline
+                  autoPlay
+                  muted
+                  loop
+                  className="w-full h-full object-contain pointer-events-auto"
+                />
+              )
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-white/50 text-xs">
+                ভিডিও পজ করা হয়েছে
+              </div>
+            )}
+          </div>
         </div>
+      )}
 
-        {/* ডেস্কটপ ভিউ */}
-        <div className="hidden sm:flex flex-row items-center justify-between gap-4 pointer-events-none size-full">
-          <div className="relative w-full flex-1 pointer-events-none" style={{ minHeight: `${Math.max(120, bannerHeight - 40)}px` }}>
-            {layers.map((layer: any, idx: number) => {
-              if (layer.enabled === false) return null
-              const displayText = layer.text || layer.title || ''
-              if (!displayText) return null
-
-              const scale = layer.size_scale || 1
-              const align = layer.align || 'left'
-              const anim = layer.animation || 'fade-up'
-              const iconKey = layer.icon
-              const isBadge = layer.id === 'txt_badge' || layer.bg_color
-
-              return (
-                <div
-                  key={`${currentSlide.id}_${layer.id || idx}_${currentIndex}`}
-                  className="absolute transition-all duration-300 pointer-events-none"
+      {/* ৩. টেক্সট ওভারলে (শুধুমাত্র কালার বা ইমেজ স্লাইড হলে সম্পূর্ণ দেখা যাবে) */}
+      {!isVideoSlide && (
+        <div className="hero-banner-inner max-w-7xl mx-auto px-4 sm:px-8 py-5 sm:py-7 relative z-10 flex flex-col justify-center min-h-[160px] sm:min-h-[200px]">
+          {/* মোবাইল ভিউ */}
+          <div className={`flex flex-col items-start gap-2 sm:hidden w-full max-w-xl ${total > 1 ? 'pb-7' : 'pb-1'}`}>
+            {badgeLayer && (badgeLayer.text || badgeLayer.title) && (
+              <div className={`anim_${badgeLayer.animation || 'fade-up'}`}>
+                <span
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold shadow-md whitespace-nowrap"
                   style={{
-                    left: `${layer.x ?? 30}%`,
-                    top: `${layer.y ?? 50}%`,
-                    transform: 'translate(-50%, -50%)',
-                    maxWidth: '90%',
-                    textAlign: align,
+                    display: 'inline-flex',
+                    backgroundColor: badgeLayer.bg_color || '#dc2626',
+                    color: badgeLayer.color || '#ffffff',
                   }}
                 >
-                  <div style={{ transform: `scale(${scale})` }}>
-                    <div
-                      className={`anim_${anim}`}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontFamily: layer.font || undefined,
-                        color: layer.color || '#FFFFFF',
-                        backgroundColor: layer.bg_color || undefined,
-                        padding: layer.bg_color ? '4px 14px' : undefined,
-                        borderRadius: layer.bg_color ? '9999px' : undefined,
-                        textAlign: align,
-                      }}
-                    >
-                      {isBadge && (
-                        <span className="relative flex size-2 mr-1.5 shrink-0">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-85" />
-                          <span className="relative inline-flex rounded-full size-2 bg-white" />
-                        </span>
-                      )}
+                  <span className="relative flex size-2 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-85" />
+                    <span className="relative inline-flex rounded-full size-2 bg-white" />
+                  </span>
+                  {badgeLayer.icon && renderBadgeIcon(badgeLayer.icon, "size-3 shrink-0")}
+                  <span>{badgeLayer.text || badgeLayer.title}</span>
+                </span>
+              </div>
+            )}
 
+            {titleLayer && (titleLayer.text || titleLayer.title) && (
+              <h2
+                className={`font-serif text-base sm:text-lg font-bold text-white leading-snug drop-shadow-md anim_${titleLayer.animation || 'fade-up'}`}
+                style={{ color: titleLayer.color || '#ffffff' }}
+              >
+                {titleLayer.text || titleLayer.title}
+              </h2>
+            )}
+
+            {descLayer && (descLayer.text || descLayer.description || descLayer.title) && (
+              <p
+                className={`text-xs text-slate-200/90 leading-relaxed line-clamp-2 drop-shadow anim_${descLayer.animation || 'fade-up'}`}
+                style={{ color: descLayer.color || '#e2e8f0' }}
+              >
+                {descLayer.text || descLayer.description || descLayer.title}
+              </p>
+            )}
+
+            {hasButton && (
+              <div className="pt-0.5 pointer-events-auto">
+                {isExternalButton ? (
+                  <a
+                    href={buttonHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white text-red-700 font-bold text-xs shadow-lg active:scale-95"
+                  >
+                    <span>{currentSlide.button_text}</span>
+                    <ArrowRight className="size-3" />
+                  </a>
+                ) : (
+                  <Link
+                    href={buttonHref}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white text-red-700 font-bold text-xs shadow-lg active:scale-95"
+                  >
+                    <span>{currentSlide.button_text}</span>
+                    <ArrowRight className="size-3" />
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ডেস্কটপ ভিউ */}
+          <div className="hidden sm:flex flex-row items-center justify-between gap-4 pointer-events-none size-full">
+            <div className="relative w-full flex-1 pointer-events-none min-h-[140px]">
+              {layers.map((layer: any, idx: number) => {
+                if (layer.enabled === false) return null
+                const displayText = layer.text || layer.title || ''
+                if (!displayText) return null
+
+                const scale = layer.size_scale || 1
+                const align = layer.align || 'left'
+                const anim = layer.animation || 'fade-up'
+                const iconKey = layer.icon
+                const isBadge = layer.id === 'txt_badge' || layer.bg_color
+
+                return (
+                  <div
+                    key={`${currentSlide.id}_${layer.id || idx}_${currentIndex}`}
+                    className="absolute transition-all duration-300 pointer-events-none"
+                    style={{
+                      left: `${layer.x ?? 30}%`,
+                      top: `${layer.y ?? 50}%`,
+                      transform: 'translate(-50%, -50%)',
+                      maxWidth: '90%',
+                      textAlign: align,
+                    }}
+                  >
+                    <div style={{ transform: `scale(${scale})` }}>
                       <div
-                        className={`leading-tight drop-shadow-lg flex items-center ${
-                          layer.weight === 'bold'
-                            ? 'font-bold'
-                            : layer.weight === 'semibold'
-                            ? 'font-semibold'
-                            : 'font-normal'
-                        } ${layer.italic ? 'italic' : ''} text-base lg:text-xl`}
+                        className={`anim_${anim}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontFamily: layer.font || undefined,
+                          color: layer.color || '#FFFFFF',
+                          backgroundColor: layer.bg_color || undefined,
+                          padding: layer.bg_color ? '4px 14px' : undefined,
+                          borderRadius: layer.bg_color ? '9999px' : undefined,
+                          textAlign: align,
+                        }}
                       >
-                        {iconKey && renderBadgeIcon(iconKey, "size-4 mr-1.5 shrink-0")}
-                        {layer.id === 'txt_date' && !iconKey && <Calendar className="inline-block size-3.5 mr-1.5 opacity-80" />}
-                        <span>{displayText}</span>
+                        {isBadge && (
+                          <span className="relative flex size-2 mr-1.5 shrink-0">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-85" />
+                            <span className="relative inline-flex rounded-full size-2 bg-white" />
+                          </span>
+                        )}
+
+                        <div
+                          className={`leading-tight drop-shadow-lg flex items-center ${
+                            layer.weight === 'bold'
+                              ? 'font-bold'
+                              : layer.weight === 'semibold'
+                              ? 'font-semibold'
+                              : 'font-normal'
+                          } ${layer.italic ? 'italic' : ''} text-base lg:text-xl`}
+                        >
+                          {iconKey && renderBadgeIcon(iconKey, "size-4 mr-1.5 shrink-0")}
+                          {layer.id === 'txt_date' && !iconKey && (
+                            <Calendar className="inline-block size-3.5 mr-1.5 opacity-80" />
+                          )}
+                          <span>{displayText}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-
-          {hasButton && (
-            <div className="z-30 shrink-0 self-center pointer-events-auto">
-              {isExternalButton ? (
-                <a
-                  href={buttonHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-slate-100 text-red-700 font-bold text-xs transition-all shadow-xl active:scale-95 cursor-pointer"
-                >
-                  <span>{currentSlide.button_text}</span>
-                  <ArrowRight className="size-3.5" />
-                </a>
-              ) : (
-                <Link
-                  href={buttonHref}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-slate-100 text-red-700 font-bold text-xs transition-all shadow-xl active:scale-95 cursor-pointer"
-                >
-                  <span>{currentSlide.button_text}</span>
-                  <ArrowRight className="size-3.5" />
-                </Link>
-              )}
+                )
+              })}
             </div>
-          )}
+
+            {hasButton && (
+              <div className="z-30 shrink-0 self-center pointer-events-auto">
+                {isExternalButton ? (
+                  <a
+                    href={buttonHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-slate-100 text-red-700 font-bold text-xs transition-all shadow-xl active:scale-95 cursor-pointer"
+                  >
+                    <span>{currentSlide.button_text}</span>
+                    <ArrowRight className="size-3.5" />
+                  </a>
+                ) : (
+                  <Link
+                    href={buttonHref}
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-slate-100 text-red-700 font-bold text-xs transition-all shadow-xl active:scale-95 cursor-pointer"
+                  >
+                    <span>{currentSlide.button_text}</span>
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
         </div>
+      )}
 
-      </div>
-
+      {/* নেভিগেশন ও ডটস */}
       {total > 1 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-black/50 backdrop-blur px-3 py-1 rounded-full border border-white/10 pointer-events-auto">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-black/60 backdrop-blur px-3 py-1 rounded-full border border-white/15 pointer-events-auto">
           <button
             type="button"
             onClick={prevSlide}
@@ -395,7 +454,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
           >
             <ChevronLeft className="size-3.5" />
           </button>
-          
+
           <div className="flex items-center gap-1.5">
             {slides.map((_, idx) => (
               <button
@@ -403,7 +462,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
                 type="button"
                 onClick={() => setCurrentIndex(idx)}
                 className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                  idx === currentIndex ? 'w-5 bg-white shadow-sm' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                  idx === currentIndex ? 'w-5 bg-cyan-400 shadow-sm' : 'w-1.5 bg-white/40 hover:bg-white/70'
                 }`}
                 aria-label={`Slide ${idx + 1}`}
               />
