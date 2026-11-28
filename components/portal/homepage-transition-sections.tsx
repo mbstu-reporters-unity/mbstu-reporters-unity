@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
-import { ArrowLeft, ArrowRight, ExternalLink, FileText } from "lucide-react"
+import { ArrowLeft, ArrowRight, ExternalLink, FileText, CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react"
 import {
   getFactCheckItems,
   getPublicationItems,
@@ -34,10 +34,8 @@ const headings: Record<TransitionKind, { eyebrow: string; title: string; titleEn
   social_sites: { eyebrow: "Social Sites & Groups", title: "সোশ্যাল সাইট ও গ্রুপ", titleEn: "Social Sites & Groups" },
   timeline: { eyebrow: "Campus Timeline", title: "ক্যাম্পাস টাইমলাইন", titleEn: "Campus Timeline" },
   fact_check: { eyebrow: "Fact Check", title: "ফ্যাক্ট চেক", titleEn: "Fact Check" },
-  publications: { eyebrow: "Publications", title: "প্রকাশনা", titleEn: "Publications" },
+  publications: { eyebrow: "Publications", title: "প্রকাশনা ও আর্কাইভ", titleEn: "Publications" },
 }
-
-const transitionSlideClass = "-mx-4 border-b border-white/15 text-white sm:-mx-6 lg:-mx-8"
 
 function isSafeUrl(value: string | null | undefined): value is string {
   return !!value && /^https?:\/\//i.test(value)
@@ -48,7 +46,7 @@ export function HomepageCompactCarousel({
   title,
   interval,
   paused = false,
-  className = "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8",
+  className = "mx-auto max-w-7xl px-3 sm:px-6 lg:px-8",
 }: {
   slides: ReactNode[]
   title: string
@@ -74,8 +72,8 @@ export function HomepageCompactCarousel({
               key={index}
               aria-hidden={!active}
               inert={!active}
-              className={`[grid-area:1/1] transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none ${
-                active ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-4 opacity-0"
+              className={`[grid-area:1/1] transition-opacity duration-500 ease-out ${
+                active ? "opacity-100" : "pointer-events-none opacity-0"
               }`}
             >
               {slide}
@@ -84,26 +82,26 @@ export function HomepageCompactCarousel({
         })}
       </div>
       {slides.length > 1 && (
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <span className="text-xs font-medium text-slate-300">
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-2 text-slate-600">
+          <span className="text-xs font-semibold text-slate-500">
             {autoplay.index + 1} / {slides.length}
           </span>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <button
               type="button"
               onClick={autoplay.previous}
               aria-label={`${title}: আগেরটি`}
-              className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20"
+              className="rounded-full border border-slate-300 bg-white p-1.5 text-slate-700 hover:bg-slate-100 hover:text-[#c8102e] transition"
             >
-              <ArrowLeft className="size-4" aria-hidden="true" />
+              <ArrowLeft className="size-3.5" aria-hidden="true" />
             </button>
             <button
               type="button"
               onClick={autoplay.next}
               aria-label={`${title}: পরেরটি`}
-              className="rounded-full border border-white/20 bg-white/10 p-2 text-white transition hover:bg-white/20"
+              className="rounded-full border border-slate-300 bg-white p-1.5 text-slate-700 hover:bg-slate-100 hover:text-[#c8102e] transition"
             >
-              <ArrowRight className="size-4" aria-hidden="true" />
+              <ArrowRight className="size-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -112,28 +110,35 @@ export function HomepageCompactCarousel({
   )
 }
 
+/* ==================== ১. অনুষদ কার্ড ==================== */
 function DepartmentSlide({ faculty }: { faculty: FacultyWithDepartments }) {
   return (
-    <article className={`${transitionSlideClass} overflow-hidden`}>
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs text-slate-800">
       {faculty.image_url && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={faculty.image_url}
           alt=""
           loading="lazy"
-          className="block h-auto w-full object-contain"
+          className="aspect-[16/9] max-h-64 w-full object-cover"
         />
       )}
-      <div className="space-y-2 p-6 sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">{faculty.name_en || "Faculty"}</p>
-        <h3 className="font-serif text-xl font-bold text-white sm:text-2xl">{faculty.name}</h3>
-        {faculty.description && <p className="text-sm leading-relaxed text-slate-200">{faculty.description}</p>}
-        <div className="mt-4 flex flex-wrap gap-2">
+      <div className="p-4 sm:p-5 space-y-2">
+        <span className="inline-block rounded-full bg-rose-50 text-[#c8102e] font-bold text-[10px] px-2.5 py-0.5">
+          {faculty.name_en || "Faculty"}
+        </span>
+        <h3 className="font-serif text-base sm:text-xl font-bold text-slate-900">{faculty.name}</h3>
+        {faculty.description && (
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-2">
+            {faculty.description}
+          </p>
+        )}
+        <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-100">
           {faculty.departments.map((department) => (
             <Link
               key={department.id}
               href={`/department/${department.id}`}
-              className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
+              className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-[#c8102e] hover:text-[#c8102e] transition"
             >
               {department.name}
             </Link>
@@ -144,36 +149,38 @@ function DepartmentSlide({ faculty }: { faculty: FacultyWithDepartments }) {
   )
 }
 
+/* ==================== ২. সোশ্যাল সাইট কার্ড ==================== */
 function SocialSiteSlide({ site }: { site: SocialSite }) {
   const links = [
     { label: "ওয়েবসাইট", href: site.website_url },
     { label: "Facebook", href: site.fb_url },
     { label: "YouTube", href: site.yt_url },
   ].filter((link): link is { label: string; href: string } => isSafeUrl(link.href))
+
   return (
-    <article className={`${transitionSlideClass} overflow-hidden`}>
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs text-slate-800">
       {site.logo_url && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={site.logo_url} alt="" loading="lazy" className="block h-auto w-full object-contain" />
+        <img src={site.logo_url} alt="" loading="lazy" className="aspect-[16/9] max-h-52 w-full object-contain bg-slate-50 p-2" />
       )}
-      <div className="space-y-3 p-6 sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">{site.category || "Community"}</p>
-        <h3 className="font-serif text-xl font-bold text-white sm:text-2xl">{site.name}</h3>
-        {site.name_en && <p className="text-sm font-semibold text-cyan-100">{site.name_en}</p>}
-        {site.description && <p className="text-sm leading-relaxed text-slate-200">{site.description}</p>}
-        {site.contact_info && <p className="text-xs text-slate-300">{site.contact_info}</p>}
-        <div className="flex flex-wrap gap-2 pt-1">
+      <div className="p-4 sm:p-5 space-y-2">
+        <span className="inline-block rounded-full bg-cyan-50 text-cyan-800 font-bold text-[10px] px-2.5 py-0.5">
+          {site.category || "Community"}
+        </span>
+        <h3 className="font-serif text-base sm:text-xl font-bold text-slate-900">{site.name}</h3>
+        {site.name_en && <p className="text-xs text-slate-500 font-medium">{site.name_en}</p>}
+        {site.description && <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-3">{site.description}</p>}
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
           {links.map((link) => (
             <a
               key={`${site.id}:${link.href}`}
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`${site.name} ${link.label}`}
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-700 to-blue-800 px-4 py-2 text-xs font-bold text-white transition hover:from-cyan-600 hover:to-blue-700"
+              className="inline-flex items-center gap-1 rounded-full bg-[#c8102e] text-white px-3 py-1 text-xs font-bold hover:bg-[#a50d25] transition"
             >
-              <ExternalLink className="size-3.5" aria-hidden="true" />
-              {link.label}
+              <span>{link.label}</span>
+              <ExternalLink className="size-3" />
             </a>
           ))}
         </div>
@@ -182,124 +189,124 @@ function SocialSiteSlide({ site }: { site: SocialSite }) {
   )
 }
 
+/* ==================== ৩. টাইমলাইন কার্ড ==================== */
 function TimelineSlide({ item }: { item: TimelineItem }) {
   return (
-    <article className={`${transitionSlideClass} overflow-hidden`}>
-      <div className="space-y-3 p-6 sm:p-8">
-        <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-cyan-200">
-          <span>{item.date_label}</span>
-          <span aria-hidden="true">·</span>
-          <span>{item.category}</span>
-          {item.status && <span className="rounded-full bg-white/15 px-2 py-1">{item.status}</span>}
-        </div>
-        <h3 className="font-serif text-xl font-bold text-white sm:text-2xl">{item.title}</h3>
-        <p className="text-sm leading-relaxed text-slate-200">{item.summary}</p>
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs text-slate-800 p-4 sm:p-5 space-y-2.5">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+        <span className="text-xs font-bold text-[#c8102e]">{item.date_label}</span>
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+          {item.category}
+        </span>
       </div>
+      <h3 className="font-serif text-base sm:text-xl font-bold text-slate-900 leading-snug">
+        {item.title}
+      </h3>
+      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-3">{item.summary}</p>
       {item.image_url && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.image_url} alt="" loading="lazy" className="block h-auto w-full object-contain" />
+        <img src={item.image_url} alt="" loading="lazy" className="rounded-xl aspect-[16/9] max-h-48 w-full object-cover" />
       )}
       {isSafeUrl(item.post_url) && (
-        <div className="px-6 py-5 sm:px-8">
-          <a
-            href={item.post_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-xs font-bold text-cyan-300 hover:underline"
-          >
-            বিস্তারিত
-            <ExternalLink className="size-3.5" aria-hidden="true" />
-          </a>
-        </div>
+        <a
+          href={item.post_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs font-bold text-[#c8102e] hover:underline pt-1"
+        >
+          <span>বিস্তারিত পড়ুন</span>
+          <ExternalLink className="size-3" />
+        </a>
       )}
     </article>
   )
 }
 
+/* ==================== ৪. ফ্যাক্ট-চেক কার্ড ==================== */
 function FactCheckSlide({ item }: { item: FactCheckItem }) {
-  const verdictClass =
-    item.verdict === "true"
-      ? "bg-gradient-to-r from-emerald-700 to-green-800"
-      : item.verdict === "false"
-        ? "bg-gradient-to-r from-rose-700 to-red-800"
-        : item.verdict === "misleading"
-          ? "bg-gradient-to-r from-amber-700 to-orange-800"
-          : "bg-gradient-to-r from-slate-700 to-slate-900"
-  const verdictLabel =
-    item.verdict === "unverified"
-      ? "যাচাই চলছে"
-      : item.verdict === "misleading"
-        ? "বিভ্রান্তিকর"
-        : item.verdict === "true"
-          ? "সত্য"
-          : "মিথ্যা"
+  const isTrue = item.verdict === "true"
+  const isFalse = item.verdict === "false"
+  const label = isTrue ? "সত্য প্রমাণিত" : isFalse ? "মিথ্যা / গুজব" : "বিভ্রান্তিকর"
+  const badgeCls = isTrue
+    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+    : isFalse
+      ? "bg-rose-100 text-rose-800 border-rose-300"
+      : "bg-amber-100 text-amber-800 border-amber-300"
+
   return (
-    <article className={`${transitionSlideClass} overflow-hidden`}>
-      <div className="space-y-3 p-6 sm:p-8">
-        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold text-white ${verdictClass}`}>
-          {verdictLabel}
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs text-slate-800 p-4 sm:p-5 space-y-2.5">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+        <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full border ${badgeCls}`}>
+          {isTrue ? <CheckCircle2 className="size-3.5" /> : <AlertTriangle className="size-3.5" />}
+          <span>{label}</span>
         </span>
-        <p className="text-sm font-semibold text-slate-200">দাবি: {item.claim}</p>
-        {item.claim_source && <p className="text-xs text-slate-300">উৎস: {item.claim_source}</p>}
-        <h3 className="font-serif text-xl font-bold text-white sm:text-2xl">{item.title}</h3>
-        <p className="text-sm leading-relaxed text-slate-200">{item.explanation}</p>
+        <span className="text-[10px] text-slate-400">{item.checked_date}</span>
       </div>
+
+      <div className="rounded-xl bg-slate-50 p-2.5 border border-slate-100">
+        <p className="text-[11px] font-bold text-slate-500 uppercase">প্রচারিত দাবি:</p>
+        <p className="text-xs sm:text-sm font-semibold text-slate-900 line-clamp-2">“{item.claim}”</p>
+      </div>
+
+      <h3 className="font-serif text-base sm:text-lg font-bold text-slate-900 leading-snug">
+        {item.title}
+      </h3>
+      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-3">
+        {item.explanation}
+      </p>
+
       {item.image_url && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.image_url} alt="" loading="lazy" className="block h-auto w-full object-contain" />
+        <img src={item.image_url} alt="" loading="lazy" className="rounded-xl aspect-[16/9] max-h-48 w-full object-contain bg-slate-50 border" />
       )}
-      <div className="flex flex-wrap items-center gap-3 px-6 py-5 text-xs text-slate-300 sm:px-8">
-        {item.checker_name && <span>{item.checker_name}</span>}
-        <time dateTime={item.created_at}>{item.checked_date}</time>
-        {isSafeUrl(item.evidence_url) && (
-          <a href={item.evidence_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-cyan-300">
-            প্রমাণ
-            <ExternalLink className="size-3" aria-hidden="true" />
-          </a>
-        )}
-      </div>
     </article>
   )
 }
 
+/* ==================== ৫. প্রকাশনা ও আর্কাইভ কার্ড ==================== */
 function PublicationSlide({ item }: { item: PublicationItem }) {
   const href = isSafeUrl(item.download_url) ? item.download_url : item.pdf_url
   return (
-    <article className={`${transitionSlideClass} overflow-hidden`}>
-      {item.cover_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.cover_url} alt="" loading="lazy" className="block h-auto w-full object-contain" />
-      ) : (
-        <div className="flex min-h-48 items-center justify-center bg-white/10 text-cyan-200">
-          <FileText className="size-12" aria-hidden="true" />
-        </div>
-      )}
-      <div className="space-y-3 p-6 sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">{item.pub_type}</p>
-        <h3 className="font-serif text-xl font-bold text-white sm:text-2xl">{item.title}</h3>
-        {item.issue_label && <p className="text-sm font-semibold text-cyan-100">{item.issue_label}</p>}
-        {item.description && <p className="text-sm leading-relaxed text-slate-200">{item.description}</p>}
-        <div className="flex flex-wrap gap-3 text-xs text-slate-300">
-          <time dateTime={item.published_date}>{item.published_date}</time>
-          {item.pages_count && <span>{item.pages_count} পৃষ্ঠা</span>}
-          {item.editor_name && <span>সম্পাদক: {item.editor_name}</span>}
-        </div>
-        {isSafeUrl(href) && (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex w-fit items-center gap-2 rounded-full bg-gradient-to-r from-cyan-700 to-blue-800 px-4 py-2 text-xs font-bold text-white hover:from-cyan-600 hover:to-blue-700"
-          >
-            <FileText className="size-3.5" aria-hidden="true" />
-            প্রকাশনা দেখুন
-          </a>
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs text-slate-800 p-4 sm:p-5 space-y-3">
+      <div className="flex items-start gap-4">
+        {item.cover_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={item.cover_url} alt="" loading="lazy" className="w-20 h-28 object-cover rounded-xl border shrink-0 bg-slate-50 shadow-xs" />
+        ) : (
+          <div className="w-20 h-28 rounded-xl bg-rose-50 border border-rose-200 text-[#c8102e] flex items-center justify-center shrink-0">
+            <FileText className="size-8" />
+          </div>
         )}
+        <div className="min-w-0 flex-1 space-y-1">
+          <span className="inline-block text-[10px] font-bold text-[#c8102e] bg-rose-50 px-2 py-0.5 rounded-full">
+            {item.pub_type}
+          </span>
+          <h3 className="font-serif text-base font-bold text-slate-900 line-clamp-2">{item.title}</h3>
+          {item.issue_label && <p className="text-xs text-slate-500 font-semibold">{item.issue_label}</p>}
+          <p className="text-[11px] text-slate-400">{item.published_date}</p>
+        </div>
       </div>
+      {item.description && (
+        <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed border-t border-slate-100 pt-2">
+          {item.description}
+        </p>
+      )}
+      {isSafeUrl(href) && (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#c8102e] hover:bg-[#a50d25] px-4 py-2 rounded-xl shadow-xs transition"
+        >
+          <FileText className="size-3.5" />
+          <span>প্রকাশনা দেখুন / ডাউনলোড</span>
+        </a>
+      )}
     </article>
   )
 }
 
+/* ==================== প্রধান এক্সপোর্ট ==================== */
 export function HomepageTransitionSection({
   kind,
   sectionConfig,
@@ -312,8 +319,6 @@ export function HomepageTransitionSection({
 
   useEffect(() => {
     let active = true
-    setData(null)
-    setFailed(false)
     const load = async () => {
       try {
         let nextData: TransitionData | null = null
@@ -336,7 +341,6 @@ export function HomepageTransitionSection({
         }
         if (active && nextData) setData(nextData)
       } catch (error) {
-        console.error(`Homepage ${kind} preview failed`, error)
         if (active) setFailed(true)
       }
     }
@@ -365,30 +369,24 @@ export function HomepageTransitionSection({
   }, [data, kind])
 
   return (
-    <section className="relative py-12 sm:py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="border-b border-slate-200 py-6 sm:py-8 bg-white">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
         <SectionHeading
-          inverted
+          inverted={false}
           eyebrow={sectionConfig.eyebrow || heading.eyebrow}
           title={sectionConfig.titleBn || heading.title}
           titleEn={sectionConfig.titleEn || heading.titleEn}
           subtitle={sectionConfig.subtitleBn}
           subtitleEn={sectionConfig.subtitleEn}
         />
-      </div>
-      {slides.length ? (
-        <HomepageCompactCarousel slides={slides} title={heading.title} interval={7500} />
-      ) : (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="glass-card p-5 text-sm text-slate-200" role="status">
-            {failed
-              ? "এই অংশের তথ্য এখন লোড করা যাচ্ছে না।"
-              : data?.kind === kind
-                ? "এই অংশে এখনো কোনো তথ্য নেই।"
-                : "তথ্য লোড হচ্ছে..."}
+        {slides.length ? (
+          <HomepageCompactCarousel slides={slides} title={heading.title} interval={7500} />
+        ) : (
+          <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500 text-center">
+            {failed ? "তথ্য লোড করা যায়নি।" : "তথ্য লোড হচ্ছে..."}
           </p>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   )
 }
