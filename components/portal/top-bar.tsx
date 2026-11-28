@@ -61,17 +61,17 @@ export function TopBar() {
         </div>
       )}
 
-      {/* সারি ১: পরিচ্ছন্ন ও সুনির্দিষ্ট টপ বার */}
+      {/* সারি ১: লাইভ ঘড়ি, তারিখ ও ইউটিলিটি কন্ট্রোল */}
       {tb.showTopBar && (
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 sm:px-4 py-1">
-          {/* বামে: তারিখ ও ঘড়ি */}
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 sm:px-4 py-1.5">
+          {/* বামে: তারিখ ও সেকেন্ডসহ লাইভ ঘড়ি */}
           {tb.showClock && (
-            <div className="min-w-0 shrink">
+            <div className="min-w-0 shrink-0">
               <LiveClock />
             </div>
           )}
 
-          {/* ডানে: ইউটিলিটি কন্ট্রোলসমূহ */}
+          {/* ডানে: ভাষা, ফন্ট সাইজ ও থিম বাটন */}
           {showSecondRow && (
             <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
               {tb.showLocation && (
@@ -83,7 +83,7 @@ export function TopBar() {
                 </div>
               )}
 
-              {/* সংরক্ষিত ও তথ্য পাঠান বাটন (ট্যাবলেটে ও কম্পিউটারে দৃশ্যমান) */}
+              {/* সংরক্ষিত ও তথ্য পাঠান বাটন (ট্যাবলেটে ও কম্পিউটারে) */}
               <div className="hidden md:flex items-center gap-1.5">
                 <button
                   type="button"
