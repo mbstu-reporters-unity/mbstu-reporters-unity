@@ -54,10 +54,7 @@ export function NoticeBoard({
   const list = currentRows.slice(0, limit)
 
   return (
-    <section
-      id="notices"
-      className="border-b border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] py-6 sm:py-9"
-    >
+    <section id="notices" className="border-b border-[var(--theme-card-border)] py-6 sm:py-9">
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
         <SectionHeading
           eyebrow={sec?.eyebrow ?? "Digital Notice Board"}
@@ -76,15 +73,9 @@ export function NoticeBoard({
             <span>{pick("সাম্প্রতিক নোটিশ", "Recent Notices")}</span>
           </div>
 
-          {loading && (
-            <p className="p-4 text-xs text-[var(--theme-text-body)]">
-              {pick("লোড হচ্ছে…", "Loading…")}
-            </p>
-          )}
+          {loading && <p className="p-4 text-xs text-[var(--theme-text-body)]">{pick("লোড হচ্ছে…", "Loading…")}</p>}
           {!loading && list.length === 0 && (
-            <p className="p-4 text-xs text-[var(--theme-text-body)]">
-              {pick("এখনো কোনো নোটিশ প্রকাশিত হয়নি।", "No notices have been published yet.")}
-            </p>
+            <p className="p-4 text-xs text-[var(--theme-text-body)]">{pick("এখনো কোনো নোটিশ প্রকাশিত হয়নি।", "No notices have been published yet.")}</p>
           )}
 
           <ul className="divide-y divide-[var(--theme-card-border)]">
@@ -93,16 +84,12 @@ export function NoticeBoard({
               return (
                 <li
                   key={n.id}
-                  className="flex flex-col justify-between gap-3 p-3.5 transition hover:bg-[var(--theme-brand-soft)] sm:flex-row sm:items-center sm:p-4"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 hover:bg-[var(--theme-brand-soft)] transition"
                 >
-                  <div className="flex min-w-0 items-start gap-3">
-                    <div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] text-[var(--theme-text-title)]">
-                      <span className="font-serif text-base font-bold leading-none">
-                        {day(n.created_at)}
-                      </span>
-                      <span className="text-[9px] font-bold uppercase text-[var(--theme-brand)]">
-                        {month(n.created_at)}
-                      </span>
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] text-[var(--theme-text-title)]">
+                      <span className="font-serif text-base font-bold leading-none">{day(n.created_at)}</span>
+                      <span className="text-[9px] font-bold uppercase text-[var(--theme-brand)]">{month(n.created_at)}</span>
                     </div>
 
                     <div className="min-w-0 space-y-1">
@@ -113,11 +100,11 @@ export function NoticeBoard({
                             {pick("পিন করা", "Pinned")}
                           </span>
                         )}
-                        <span className="rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] px-2 py-0.5 text-[10px] font-bold text-[var(--theme-text-body)]">
+                        <span className="rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--theme-text-title)]">
                           {branch}
                         </span>
                         {n.ref_number && (
-                          <span className="font-mono text-[10px] text-[var(--theme-text-body)] opacity-80">
+                          <span className="font-mono text-[10px] text-[var(--theme-text-body)] opacity-75">
                             {n.ref_number}
                           </span>
                         )}
@@ -125,12 +112,12 @@ export function NoticeBoard({
 
                       <Link
                         href={`/notices?n=${n.id}`}
-                        className="block truncate font-serif text-sm font-bold leading-snug text-[var(--theme-text-title)] transition hover:text-[var(--theme-brand)] sm:text-base"
+                        className="block font-serif font-bold text-sm sm:text-base text-[var(--theme-text-title)] hover:text-[var(--theme-brand)] transition leading-snug truncate"
                       >
                         {n.title}
                       </Link>
 
-                      <p className="text-[11px] text-[var(--theme-text-body)] opacity-80">
+                      <p className="text-[11px] text-[var(--theme-text-body)] opacity-75">
                         {timeAgo(noticeActivityAt(n))}
                       </p>
                     </div>
@@ -139,7 +126,7 @@ export function NoticeBoard({
                   {n.file_url ? (
                     <a
                       href={downloadUrl(n.file_url, n.file_name)}
-                      className="inline-flex shrink-0 items-center justify-center gap-1 self-start rounded-full bg-[var(--theme-brand)] px-3.5 py-1.5 text-xs font-bold text-[var(--theme-brand-contrast,#ffffff)] shadow-xs transition hover:bg-[var(--theme-brand-dark)] sm:self-auto"
+                      className="inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-[var(--theme-brand)] hover:bg-[var(--theme-brand-dark)] text-[var(--theme-bg-solid)] px-3.5 py-1.5 text-xs font-bold transition shadow-xs self-start sm:self-auto"
                     >
                       <Download className="size-3" />
                       <span>{pick("ডাউনলোড", "Download")}</span>
@@ -149,7 +136,7 @@ export function NoticeBoard({
                       href={n.link_url!}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex shrink-0 items-center justify-center gap-1 self-start rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] px-3 py-1.5 text-xs font-semibold text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] sm:self-auto"
+                      className="inline-flex shrink-0 items-center justify-center gap-1 rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] text-[var(--theme-text-title)] px-3 py-1.5 text-xs font-semibold hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] transition self-start sm:self-auto"
                     >
                       <ExternalLink className="size-3" />
                       <span>{pick("লিংক", "Link")}</span>
@@ -162,7 +149,7 @@ export function NoticeBoard({
 
           <Link
             href="/notices"
-            className="flex items-center justify-center gap-1.5 border-t border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] py-2.5 text-xs font-bold text-[var(--theme-brand)] transition hover:opacity-90"
+            className="flex items-center justify-center gap-1.5 border-t border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] py-2.5 text-xs font-bold text-[var(--theme-brand)] hover:opacity-90 transition"
           >
             <span>{pick("সকল নোটিশ দেখুন", "View all notices")}</span>
             <ArrowRight className="size-3" />
