@@ -13,8 +13,8 @@ export const THEMES = [
     en: 'Ocean Blue',
     dbn: 'নীলাভ স্বচ্ছতার আবহ',
     den: 'A clear ocean-blue appearance',
-    bg: '#3b82f6',
-    dot: '#0284c7',
+    bg: '#04256e',
+    dot: '#22d3ee',
   },
   {
     id: 'sunset-peach',
@@ -22,8 +22,8 @@ export const THEMES = [
     en: 'Sunset Peach',
     dbn: 'উষ্ণ পীচ রঙের আবহ',
     den: 'A warm peach-toned appearance',
-    bg: '#3d2325',
-    dot: '#f97316',
+    bg: '#36171d',
+    dot: '#fb923c',
   },
   {
     id: 'pure-frost',
@@ -31,8 +31,8 @@ export const THEMES = [
     en: 'Pure Frost',
     dbn: 'সরল ও স্বচ্ছ শুভ্র আবহ',
     den: 'A clean, frosted-white appearance',
-    bg: '#f1f5f9',
-    dot: '#475569',
+    bg: '#e0f2fe',
+    dot: '#0369a1',
   },
   {
     id: 'midnight-neon',
@@ -41,7 +41,7 @@ export const THEMES = [
     dbn: 'গাঢ় পটভূমিতে নিয়ন আলোর আভা',
     den: 'A dark appearance with neon accents',
     bg: '#030712',
-    dot: '#22c55e',
+    dot: '#34d399',
   },
   {
     id: 'daylight-light',
@@ -50,7 +50,7 @@ export const THEMES = [
     dbn: 'পাঠের উপযোগী উজ্জ্বল আবহ',
     den: 'A bright appearance designed for reading',
     bg: '#ffffff',
-    dot: '#0284c7',
+    dot: '#c8102e',
   },
 ] as const
 
@@ -115,13 +115,13 @@ export function ThemeSwitcher() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-3xl border border-white/20 bg-slate-950/90 p-2 text-left shadow-2xl backdrop-blur-2xl animate-in zoom-in-95 fade-in max-h-[75vh] overflow-y-auto scrollbar-none"
+          className="hero-daylight-dark-surface absolute right-0 z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-3xl border border-white/20 bg-slate-950/95 p-2 text-left text-white shadow-2xl backdrop-blur-2xl animate-in zoom-in-95 fade-in max-h-[75vh] overflow-y-auto scrollbar-none"
         >
           <div className="px-3 pb-2 pt-2 border-b border-white/10 mb-1 flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-white/70">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
               {pick('পাঁচটি রঙের বিন্যাস', 'Five colour schemes')}
             </p>
-            <span className="text-[10px] text-cyan-400 font-bold">{pick('৫টি বিন্যাস', '5 schemes')}</span>
+            <span className="text-[10px] text-cyan-300 font-bold">{pick('৫টি বিন্যাস', '5 schemes')}</span>
           </div>
 
           <div className="space-y-1">
@@ -135,19 +135,19 @@ export function ThemeSwitcher() {
                 className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left transition-all cursor-pointer ${
                   theme === t.id
                     ? 'bg-white/20 border border-white/30 text-white shadow-sm'
-                    : 'text-white/80 hover:bg-white/10 hover:text-white'
+                    : 'text-slate-200 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 <span
                   aria-hidden="true"
                   className="size-7 shrink-0 rounded-full border border-white/40 shadow-xs"
-                  style={{ background: `linear-gradient(135deg, ${t.bg} 40%, ${t.dot} 100%)` }}
+                  style={{ background: `linear-gradient(135deg, ${t.bg} 45%, ${t.dot} 100%)` }}
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-xs font-bold leading-tight truncate">{pick(t.bn, t.en)}</span>
-                  <span className="block text-[10px] text-white/60 truncate mt-0.5">{pick(t.dbn, t.den)}</span>
+                  <span className="block text-xs font-bold leading-tight truncate text-white">{pick(t.bn, t.en)}</span>
+                  <span className="block text-[10px] text-slate-300 truncate mt-0.5">{pick(t.dbn, t.den)}</span>
                 </span>
-                {theme === t.id && <Check className="size-4 shrink-0 text-cyan-400" aria-hidden="true" />}
+                {theme === t.id && <Check className="size-4 shrink-0 text-cyan-300" aria-hidden="true" />}
               </button>
             ))}
           </div>
