@@ -82,8 +82,8 @@ export function HomepageCompactCarousel({
         })}
       </div>
       {slides.length > 1 && (
-        <div className="mt-3 flex items-center justify-between gap-3 border-t border-[var(--theme-card-border)] pt-2 text-[var(--theme-text-body)]">
-          <span className="text-xs font-semibold">
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-[var(--theme-card-border)] pt-2.5">
+          <span className="text-xs font-semibold text-[var(--theme-text-body)]">
             {autoplay.index + 1} / {slides.length}
           </span>
           <div className="flex gap-1.5">
@@ -91,7 +91,7 @@ export function HomepageCompactCarousel({
               type="button"
               onClick={autoplay.previous}
               aria-label={`${title}: আগেরটি`}
-              className="cursor-pointer rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-1.5 text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)]"
+              className="rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-1.5 text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] cursor-pointer"
             >
               <ArrowLeft className="size-3.5" aria-hidden="true" />
             </button>
@@ -99,7 +99,7 @@ export function HomepageCompactCarousel({
               type="button"
               onClick={autoplay.next}
               aria-label={`${title}: পরেরটি`}
-              className="cursor-pointer rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-1.5 text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)]"
+              className="rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-1.5 text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] cursor-pointer"
             >
               <ArrowRight className="size-3.5" aria-hidden="true" />
             </button>
@@ -110,21 +110,22 @@ export function HomepageCompactCarousel({
   )
 }
 
-/* ==================== ১. অনুষদ কার্ড ==================== */
 function DepartmentSlide({ faculty }: { faculty: FacultyWithDepartments }) {
   return (
-    <article className="glass-card overflow-hidden rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] shadow-xs">
+    <article className="glass-card overflow-hidden text-[var(--theme-text-body)]">
       {faculty.image_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={faculty.image_url}
-          alt=""
-          loading="lazy"
-          className="aspect-[16/9] max-h-64 w-full object-cover"
-        />
+        <div className="bg-black/25">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={faculty.image_url}
+            alt={faculty.name}
+            loading="lazy"
+            className="aspect-[16/9] max-h-64 w-full object-cover"
+          />
+        </div>
       )}
       <div className="space-y-2 p-4 sm:p-5">
-        <span className="inline-block rounded-full bg-[var(--theme-brand-soft)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--theme-brand)]">
+        <span className="inline-block rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--theme-brand)]">
           {faculty.name_en || "Faculty"}
         </span>
         <h3 className="font-serif text-base font-bold text-[var(--theme-text-title)] sm:text-xl">
@@ -135,12 +136,12 @@ function DepartmentSlide({ faculty }: { faculty: FacultyWithDepartments }) {
             {faculty.description}
           </p>
         )}
-        <div className="flex flex-wrap gap-1.5 border-t border-[var(--theme-card-border)] pt-2">
+        <div className="flex flex-wrap gap-1.5 border-t border-[var(--theme-card-border)] pt-2.5">
           {faculty.departments.map((department) => (
             <Link
               key={department.id}
               href={`/department/${department.id}`}
-              className="rounded-lg border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] px-2.5 py-1 text-xs font-semibold text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)]"
+              className="rounded-lg border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)]"
             >
               {department.name}
             </Link>
@@ -151,7 +152,6 @@ function DepartmentSlide({ faculty }: { faculty: FacultyWithDepartments }) {
   )
 }
 
-/* ==================== ২. সোশ্যাল সাইট কার্ড ==================== */
 function SocialSiteSlide({ site }: { site: SocialSite }) {
   const links = [
     { label: "ওয়েবসাইট", href: site.website_url },
@@ -160,41 +160,41 @@ function SocialSiteSlide({ site }: { site: SocialSite }) {
   ].filter((link): link is { label: string; href: string } => isSafeUrl(link.href))
 
   return (
-    <article className="glass-card overflow-hidden rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] shadow-xs">
+    <article className="glass-card overflow-hidden text-[var(--theme-text-body)]">
       {site.logo_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={site.logo_url}
-          alt=""
-          loading="lazy"
-          className="aspect-[16/9] max-h-52 w-full bg-[var(--theme-bg-solid)] object-contain p-2"
-        />
+        <div className="border-b border-[var(--theme-card-border)] bg-white/90 p-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={site.logo_url}
+            alt={site.name}
+            loading="lazy"
+            className="aspect-[16/9] max-h-52 w-full object-contain"
+          />
+        </div>
       )}
       <div className="space-y-2 p-4 sm:p-5">
-        <span className="inline-block rounded-full bg-[var(--theme-brand-soft)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--theme-brand)]">
+        <span className="inline-block rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--theme-brand)]">
           {site.category || "Community"}
         </span>
         <h3 className="font-serif text-base font-bold text-[var(--theme-text-title)] sm:text-xl">
           {site.name}
         </h3>
         {site.name_en && (
-          <p className="text-xs font-medium text-[var(--theme-text-body)] opacity-85">
-            {site.name_en}
-          </p>
+          <p className="text-xs font-medium text-[var(--theme-text-body)] opacity-80">{site.name_en}</p>
         )}
         {site.description && (
           <p className="line-clamp-3 text-xs leading-relaxed text-[var(--theme-text-body)] sm:text-sm">
             {site.description}
           </p>
         )}
-        <div className="flex flex-wrap gap-2 border-t border-[var(--theme-card-border)] pt-2">
+        <div className="flex flex-wrap gap-2 border-t border-[var(--theme-card-border)] pt-2.5">
           {links.map((link) => (
             <a
               key={`${site.id}:${link.href}`}
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-full bg-[var(--theme-brand)] px-3 py-1 text-xs font-bold text-[var(--theme-brand-contrast,#ffffff)] transition hover:bg-[var(--theme-brand-dark)]"
+              className="inline-flex items-center gap-1 rounded-full bg-[var(--theme-brand)] px-3.5 py-1 text-xs font-bold text-[var(--theme-brand-contrast,var(--theme-bg-solid))] shadow-xs transition hover:brightness-110"
             >
               <span>{link.label}</span>
               <ExternalLink className="size-3" />
@@ -206,10 +206,9 @@ function SocialSiteSlide({ site }: { site: SocialSite }) {
   )
 }
 
-/* ==================== ৩. টাইমলাইন কার্ড ==================== */
 function TimelineSlide({ item }: { item: TimelineItem }) {
   return (
-    <article className="glass-card space-y-2.5 overflow-hidden rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-4 text-[var(--theme-text-body)] shadow-xs sm:p-5">
+    <article className="glass-card space-y-2.5 overflow-hidden p-4 text-[var(--theme-text-body)] sm:p-5">
       <div className="flex items-center justify-between border-b border-[var(--theme-card-border)] pb-2">
         <span className="text-xs font-bold text-[var(--theme-brand)]">{item.date_label}</span>
         <span className="rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--theme-text-title)]">
@@ -223,13 +222,15 @@ function TimelineSlide({ item }: { item: TimelineItem }) {
         {item.summary}
       </p>
       {item.image_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={item.image_url}
-          alt=""
-          loading="lazy"
-          className="aspect-[16/9] max-h-48 w-full rounded-xl object-cover"
-        />
+        <div className="overflow-hidden rounded-xl border border-[var(--theme-card-border)] bg-black/20">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={item.image_url}
+            alt={item.title}
+            loading="lazy"
+            className="aspect-[16/9] max-h-48 w-full object-cover"
+          />
+        </div>
       )}
       {isSafeUrl(item.post_url) && (
         <a
@@ -246,7 +247,6 @@ function TimelineSlide({ item }: { item: TimelineItem }) {
   )
 }
 
-/* ==================== ৪. ফ্যাক্ট-চেক কার্ড ==================== */
 function FactCheckSlide({ item }: { item: FactCheckItem }) {
   const isTrue = item.verdict === "true"
   const isFalse = item.verdict === "false"
@@ -258,16 +258,16 @@ function FactCheckSlide({ item }: { item: FactCheckItem }) {
       : "bg-amber-400 text-slate-950 border-amber-300"
 
   return (
-    <article className="glass-card space-y-2.5 overflow-hidden rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-4 text-[var(--theme-text-body)] shadow-xs sm:p-5">
+    <article className="glass-card space-y-2.5 overflow-hidden p-4 text-[var(--theme-text-body)] sm:p-5">
       <div className="flex items-center justify-between border-b border-[var(--theme-card-border)] pb-2">
         <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${badgeCls}`}>
           {isTrue ? <CheckCircle2 className="size-3.5" /> : <AlertTriangle className="size-3.5" />}
           <span>{label}</span>
         </span>
-        <span className="text-[10px] text-[var(--theme-text-body)] opacity-75">{item.checked_date}</span>
+        <span className="text-[11px] text-[var(--theme-text-body)] opacity-80">{item.checked_date}</span>
       </div>
 
-      <div className="rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] p-2.5">
+      <div className="rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] p-3">
         <p className="text-[11px] font-bold uppercase text-[var(--theme-brand)]">প্রচারিত দাবি:</p>
         <p className="line-clamp-2 text-xs font-semibold text-[var(--theme-text-title)] sm:text-sm">
           “{item.claim}”
@@ -282,31 +282,32 @@ function FactCheckSlide({ item }: { item: FactCheckItem }) {
       </p>
 
       {item.image_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={item.image_url}
-          alt=""
-          loading="lazy"
-          className="aspect-[16/9] max-h-48 w-full rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] object-contain"
-        />
+        <div className="overflow-hidden rounded-xl border border-[var(--theme-card-border)] bg-black/15">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={item.image_url}
+            alt={item.title}
+            loading="lazy"
+            className="aspect-[16/9] max-h-48 w-full object-contain"
+          />
+        </div>
       )}
     </article>
   )
 }
 
-/* ==================== ৫. প্রকাশনা ও আর্কাইভ কার্ড ==================== */
 function PublicationSlide({ item }: { item: PublicationItem }) {
   const href = isSafeUrl(item.download_url) ? item.download_url : item.pdf_url
   return (
-    <article className="glass-card space-y-3 overflow-hidden rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-4 text-[var(--theme-text-body)] shadow-xs sm:p-5">
+    <article className="glass-card space-y-3 overflow-hidden p-4 text-[var(--theme-text-body)] sm:p-5">
       <div className="flex items-start gap-4">
         {item.cover_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={item.cover_url}
-            alt=""
+            alt={item.title}
             loading="lazy"
-            className="h-28 w-20 shrink-0 rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] object-cover shadow-xs"
+            className="h-28 w-20 shrink-0 rounded-xl border border-[var(--theme-card-border)] bg-black/10 object-cover shadow-xs"
           />
         ) : (
           <div className="flex h-28 w-20 shrink-0 items-center justify-center rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] text-[var(--theme-brand)]">
@@ -314,24 +315,20 @@ function PublicationSlide({ item }: { item: PublicationItem }) {
           </div>
         )}
         <div className="min-w-0 flex-1 space-y-1">
-          <span className="inline-block rounded-full bg-[var(--theme-brand-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--theme-brand)]">
+          <span className="inline-block rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--theme-brand)]">
             {item.pub_type}
           </span>
           <h3 className="line-clamp-2 font-serif text-base font-bold text-[var(--theme-text-title)]">
             {item.title}
           </h3>
           {item.issue_label && (
-            <p className="text-xs font-semibold text-[var(--theme-text-body)]">
-              {item.issue_label}
-            </p>
+            <p className="text-xs font-semibold text-[var(--theme-text-body)]">{item.issue_label}</p>
           )}
-          <p className="text-[11px] text-[var(--theme-text-body)] opacity-75">
-            {item.published_date}
-          </p>
+          <p className="text-[11px] text-[var(--theme-text-body)] opacity-75">{item.published_date}</p>
         </div>
       </div>
       {item.description && (
-        <p className="line-clamp-2 border-t border-[var(--theme-card-border)] pt-2 text-xs leading-relaxed text-[var(--theme-text-body)]">
+        <p className="line-clamp-2 border-t border-[var(--theme-card-border)] pt-2.5 text-xs leading-relaxed text-[var(--theme-text-body)]">
           {item.description}
         </p>
       )}
@@ -340,7 +337,7 @@ function PublicationSlide({ item }: { item: PublicationItem }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--theme-brand)] px-4 py-2 text-xs font-bold text-[var(--theme-brand-contrast,#ffffff)] shadow-xs transition hover:bg-[var(--theme-brand-dark)]"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--theme-brand)] px-4 py-2 text-xs font-bold text-[var(--theme-brand-contrast,var(--theme-bg-solid))] shadow-xs transition hover:brightness-110"
         >
           <FileText className="size-3.5" />
           <span>প্রকাশনা দেখুন / ডাউনলোড</span>
@@ -350,7 +347,6 @@ function PublicationSlide({ item }: { item: PublicationItem }) {
   )
 }
 
-/* ==================== প্রধান এক্সপোর্ট ==================== */
 export function HomepageTransitionSection({
   kind,
   sectionConfig,
@@ -413,7 +409,7 @@ export function HomepageTransitionSection({
   }, [data, kind])
 
   return (
-    <section className="border-b border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] py-6 sm:py-8">
+    <section className="border-b border-[var(--theme-card-border)] py-6 sm:py-8">
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
         <SectionHeading
           eyebrow={sectionConfig.eyebrow || heading.eyebrow}
@@ -425,7 +421,7 @@ export function HomepageTransitionSection({
         {slides.length ? (
           <HomepageCompactCarousel slides={slides} title={heading.title} interval={7500} />
         ) : (
-          <p className="rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-4 text-center text-xs text-[var(--theme-text-body)]">
+          <p className="glass-card p-4 text-center text-xs text-[var(--theme-text-body)]">
             {failed ? "তথ্য লোড করা যায়নি।" : "তথ্য লোড হচ্ছে..."}
           </p>
         )}
