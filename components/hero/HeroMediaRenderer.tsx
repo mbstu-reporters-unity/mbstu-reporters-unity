@@ -10,6 +10,7 @@ interface HeroMediaRendererProps {
   item?: SubMediaItem | null
   fitMode?: 'contain' | 'cover'
   isActive: boolean
+  autoPlayVideo?: boolean
   isCompact?: boolean
   onVideoStateChange?: (isPlaying: boolean) => void
   onVideoEnd?: () => void
@@ -48,6 +49,7 @@ export function HeroMediaRenderer({
   item,
   fitMode = 'contain',
   isActive,
+  autoPlayVideo = true,
   isCompact = false,
   onVideoStateChange,
   onVideoEnd,
@@ -57,10 +59,11 @@ export function HeroMediaRenderer({
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const [muted, setMuted] = useState(true)
-  const [isPlaying, setIsPlaying] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(false)
   const [inViewport, setInViewport] = useState(true)
 
   const type = slide?.slide_type || item?.type || 'color'
+  const isVideo = type === 'video'
   const videoUrl = slide?.video_config?.url || item?.url || ''
   const parsedVideo = parseVideoUrl(videoUrl)
   const imageUrl = item?.url || (slide?.media_items?.[0] as any)?.url || ''
@@ -68,7 +71,7 @@ export function HeroMediaRenderer({
   const bannerWidth = slide?.banner_config?.width_pct ?? 100
   const bannerHeight = slide?.banner_config?.height_px ?? 480
 
-  // ১. ভিউপোর্ট অবজারভার: ইউজার যখন স্ক্রল করে নিচের দিকে যাবে, তখন ভিডিও স্বয়ংক্রিয়ভাবে পজ হবে
+  // ১. ভিউপোর্ট অবজারভার: ইউজার যখন স্ক্রল করে নিচের দিকে যাবে, তখন ভিডিও পজ হবে
   useEffect(() => {
     const el = containerRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
@@ -76,41 +79,50 @@ export function HeroMediaRenderer({
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0]
-        const visible = Boolean(entry && entry.isIntersecting && entry.intersectionRatio >= 0.25)
+        const visible = Boolean(entry && entry.isIntersecting && entry.intersectionRatio >= 0.2)
         setInViewport(visible)
       },
-      { threshold: [0, 0.25, 0.5] }
+      { threshold: [0, 0.2, 0.5] }
     )
 
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
 
-  // ২. স্লাইড অ্যাক্টিভ বা ইন-ভিউ না থাকলে তাৎক্ষণিক ভিডিও ও সাউন্ড বন্ধ করা
-  const shouldPlay = isActive && inViewport
-
+  // ২. ইউটিউব আইফ্রেমের স্টেট ডিটেকশন (Play/Pause/End ট্র্যাক করা)
   useEffect(() => {
-    if (shouldPlay) {
-      if (videoRef.current) {
-        videoRef.current
-          .play()
-          .then(() => {
+    const handleYouTubeMessages = (e: MessageEvent) => {
+      try {
+        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
+        if (data && (data.event === 'onStateChange' || data.event === 'infoDelivery')) {
+          const state = data.info?.playerState ?? data.info
+          if (state === 1 || state === 3) {
+            // ১ = Playing, ৩ = Buffering
             setIsPlaying(true)
             onVideoStateChange?.(true)
-          })
-          .catch(() => {
+          } else if (state === 2) {
+            // ২ = Paused
             setIsPlaying(false)
             onVideoStateChange?.(false)
-          })
-      }
-      if (iframeRef.current?.contentWindow && parsedVideo.platform === 'youtube') {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
-          '*'
-        )
-      }
-    } else {
-      // স্লাইড স্ক্রিনের বাইরে চলে গেলে অথবা অন্য স্লাইড আসলে ভিডিও পজ
+          } else if (state === 0) {
+            // ০ = Ended
+            setIsPlaying(false)
+            onVideoStateChange?.(false)
+            onVideoEnd?.()
+          }
+        }
+      } catch {}
+    }
+
+    window.addEventListener('message', handleYouTubeMessages)
+    return () => window.removeEventListener('message', handleYouTubeMessages)
+  }, [onVideoStateChange, onVideoEnd])
+
+  // ৩. স্লাইড পরিবর্তন বা ভিউপোর্টের বাইরে গেলে ভিডিও নিয়ন্ত্রণ
+  const shouldAutoPlay = isActive && inViewport && autoPlayVideo
+
+  useEffect(() => {
+    if (!inViewport || !isActive) {
       if (videoRef.current) {
         videoRef.current.pause()
         setIsPlaying(false)
@@ -120,14 +132,20 @@ export function HeroMediaRenderer({
           JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
           '*'
         )
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'mute', args: [] }),
-          '*'
-        )
       }
       onVideoStateChange?.(false)
+    } else if (shouldAutoPlay) {
+      if (videoRef.current) {
+        videoRef.current
+          .play()
+          .then(() => {
+            setIsPlaying(true)
+            onVideoStateChange?.(true)
+          })
+          .catch(() => {})
+      }
     }
-  }, [shouldPlay, onVideoStateChange, parsedVideo.platform])
+  }, [shouldAutoPlay, inViewport, isActive, onVideoStateChange, parsedVideo.platform])
 
   const togglePlayPause = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -214,6 +232,14 @@ export function HeroMediaRenderer({
 
   const hasCustomLayers = layers.some((l: any) => l.enabled && l.text?.trim())
 
+  // আইফ্রেম সোর্স URL তৈরি (অটো-প্লে বা স্বাভাবিক মোড)
+  const getEmbedSource = () => {
+    if (!parsedVideo.embedSrc) return ''
+    const base = parsedVideo.embedSrc
+    const autoplayParam = shouldAutoPlay ? '&autoplay=1&mute=1' : '&autoplay=0'
+    return `${base}${autoplayParam}`
+  }
+
   return (
     <div
       ref={containerRef}
@@ -248,61 +274,54 @@ export function HeroMediaRenderer({
               loading="eager"
               draggable={false}
             />
-            {/* ছবির উপরেই শুধু হালকা সুরক্ষা শ্যাডো থাকবে যাতে লেখা পড়তে সুবিধা হয় */}
             {hasCustomLayers && (
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none z-[15]" />
             )}
           </div>
         )}
 
-        {/* ৩. ভিডিও ব্যানার (ইউটিউব, ফেসবুক ও ডিরেক্ট ফাইল) - কোনো ঝাপসা ওভারলে ছাড়া সম্পূর্ণ ক্লিয়ার */}
-        {type === 'video' && (
+        {/* ৩. ভিডিও ব্যানার (ইউটিউব, ফেসবুক এবং ডিরেক্ট ফাইল) - সবসময় সম্পূর্ণ সক্রিয় ও দৃশ্যমান */}
+        {isVideo && (
           <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
             {parsedVideo.isEmbed ? (
-              shouldPlay ? (
-                <div className="relative w-full h-full flex items-center justify-center aspect-video max-h-full">
-                  <iframe
-                    ref={iframeRef}
-                    src={`${parsedVideo.embedSrc}&autoplay=1&mute=1`}
-                    className="w-full h-full border-0 pointer-events-auto z-10"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                    allowFullScreen
-                    title={slide?.title || 'Video Player'}
-                  />
+              <div className="relative w-full h-full flex items-center justify-center aspect-video max-h-full">
+                <iframe
+                  ref={iframeRef}
+                  src={getEmbedSource()}
+                  className="w-full h-full border-0 pointer-events-auto z-10"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                  allowFullScreen
+                  title={slide?.title || 'Video Player'}
+                />
 
-                  {parsedVideo.platform === 'youtube' && (
-                    <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5 pointer-events-auto">
-                      <button
-                        type="button"
-                        onClick={toggleEmbedPlayPause}
-                        className="px-2.5 py-1 rounded-full bg-black/75 hover:bg-black text-white transition-all border border-white/20 shadow-lg flex items-center gap-1 text-[11px] font-semibold cursor-pointer active:scale-95"
-                      >
-                        {isPlaying ? (
-                          <Pause className="size-3 text-yellow-400" />
-                        ) : (
-                          <Play className="size-3 text-green-400" />
-                        )}
-                        <span>{isPlaying ? 'পজ' : 'চালান'}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={toggleEmbedSound}
-                        className="p-1.5 rounded-full bg-black/75 hover:bg-black text-white transition-all border border-white/20 shadow-lg cursor-pointer active:scale-95"
-                      >
-                        {muted ? (
-                          <VolumeX className="size-3 text-red-400" />
-                        ) : (
-                          <Volume2 className="size-3 text-green-400" />
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-slate-950 text-white/50 text-xs">
-                  ভিডিও পজ করা হয়েছে
-                </div>
-              )
+                {parsedVideo.platform === 'youtube' && (
+                  <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5 pointer-events-auto">
+                    <button
+                      type="button"
+                      onClick={toggleEmbedPlayPause}
+                      className="px-2.5 py-1 rounded-full bg-black/75 hover:bg-black text-white transition-all border border-white/20 shadow-lg flex items-center gap-1 text-[11px] font-semibold cursor-pointer active:scale-95"
+                    >
+                      {isPlaying ? (
+                        <Pause className="size-3 text-yellow-400" />
+                      ) : (
+                        <Play className="size-3 text-green-400" />
+                      )}
+                      <span>{isPlaying ? 'পজ' : 'চালান'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleEmbedSound}
+                      className="p-1.5 rounded-full bg-black/75 hover:bg-black text-white transition-all border border-white/20 shadow-lg cursor-pointer active:scale-95"
+                    >
+                      {muted ? (
+                        <VolumeX className="size-3 text-red-400" />
+                      ) : (
+                        <Volume2 className="size-3 text-green-400" />
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="relative w-full h-full flex items-center justify-center">
                 <video
@@ -311,6 +330,14 @@ export function HeroMediaRenderer({
                   playsInline
                   loop
                   muted={muted}
+                  onPlay={() => {
+                    setIsPlaying(true)
+                    onVideoStateChange?.(true)
+                  }}
+                  onPause={() => {
+                    setIsPlaying(false)
+                    onVideoStateChange?.(false)
+                  }}
                   onEnded={() => {
                     setIsPlaying(false)
                     onVideoStateChange?.(false)
@@ -349,8 +376,8 @@ export function HeroMediaRenderer({
           </div>
         )}
 
-        {/* ================= ৪. টেক্সট লেয়ার ও বাটন (ভিডিও থাকলে দৃশ্যমানতা রক্ষা করে নিচে অবস্থান নেবে) ================= */}
-        {hasCustomLayers && (
+        {/* ৪. টেক্সট লেয়ারসমূহ: ভিডিও চলাকালীন স্ক্রিনে কোনো বিশৃঙ্খলা না ঘটিয়ে নিচে অবস্থান নিশ্চিত করা */}
+        {hasCustomLayers && !isVideo && (
           isCompact ? (
             <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between z-20 pointer-events-none">
               <div className="my-auto text-center space-y-1.5 px-1">
@@ -394,7 +421,7 @@ export function HeroMediaRenderer({
             </div>
           ) : (
             <>
-              {/* মোবাইল ভিউ: ভিডিওর উপরে লেখার ওভারল্যাপ কমানো */}
+              {/* মোবাইল ভিউ */}
               <div className="sm:hidden absolute inset-x-0 bottom-0 z-20 flex flex-col justify-end p-3 pb-6 pointer-events-none bg-gradient-to-t from-black/80 via-black/40 to-transparent">
                 <div className="space-y-1.5 max-w-sm">
                   {titleLayer && (titleLayer.text || titleLayer.title) && (
