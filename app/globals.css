@@ -41,16 +41,30 @@
   color-scheme: light;
   --theme-bg-solid: #ffffff;
   --theme-bg-gradient: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --theme-surface-1: #ffffff;
+  --theme-surface-2: #f1f5f9;
   --theme-card-bg: #ffffff;
   --theme-card-border: #e2e8f0;
   --theme-card-hover-border: #c8102e;
-  --theme-card-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+  --theme-card-shadow: 0 4px 16px -6px rgba(15, 23, 42, 0.08);
   --theme-text-title: #111827;
   --theme-text-body: #374151;
+  --theme-text-muted: #4b5563;
   --theme-brand: #c8102e;
   --theme-brand-dark: #a50d25;
+  --theme-brand-contrast: #ffffff;
   --theme-brand-soft: rgba(200, 16, 46, 0.08);
+  --theme-header-bg: #ffffff;
+  --theme-topbar-bg: #f8fafc;
+  --theme-nav-bg: #ffffff;
+  --theme-footer-bg: #f1f5f9;
+  --theme-footer-bottom-bg: #e2e8f0;
+  --theme-drawer-bg: #ffffff;
   --theme-input-bg: #ffffff;
+  --theme-input-border: #94a3b8;
+  --theme-input-text: #111827;
+  --theme-input-placeholder: #64748b;
+  --theme-media-bg: #f1f5f9;
 }
 
 @layer base {
@@ -104,337 +118,326 @@
 }
 
 /* ========================================================
-   ৪টি লিকুইড গ্লাস থিম
+   থিম ১: নীল কাচের আবহ (Ocean Blue)
    ======================================================== */
 html[data-theme='ocean-glass'] {
   color-scheme: dark;
-  --theme-bg-solid: #0b1540;
-  --theme-bg-gradient: radial-gradient(circle at 85% 15%, rgba(0, 210, 255, 0.35), transparent 50%),
+  --theme-bg-solid: #071238;
+  --theme-bg-gradient: radial-gradient(circle at 85% 15%, rgba(0, 210, 255, 0.32), transparent 50%),
                        radial-gradient(circle at 15% 85%, rgba(46, 16, 101, 0.45), transparent 55%),
-                       linear-gradient(135deg, #0b1540 0%, #032d84 40%, #004e9a 75%, #006f85 100%);
-  --theme-card-bg: rgba(14, 34, 78, 0.65);
-  --theme-card-border: rgba(255, 255, 255, 0.2);
-  --theme-card-hover-border: rgba(0, 210, 255, 0.55);
-  --theme-card-shadow: 0 16px 36px -8px rgba(0, 10, 45, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+                       linear-gradient(135deg, #071238 0%, #032875 40%, #00468c 75%, #006278 100%);
+  --theme-surface-1: rgba(6, 20, 56, 0.48);
+  --theme-surface-2: rgba(255, 255, 255, 0.08);
+  --theme-card-bg: rgba(11, 29, 72, 0.78);
+  --theme-card-border: rgba(125, 211, 252, 0.24);
+  --theme-card-hover-border: rgba(34, 211, 238, 0.65);
+  --theme-card-shadow: 0 16px 36px -8px rgba(0, 10, 45, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.22);
   --theme-text-title: #ffffff;
   --theme-text-body: #e2e8f0;
-  --theme-brand: #00d2ff;
-  --theme-brand-dark: #0284c7;
-  --theme-brand-soft: rgba(0, 210, 255, 0.16);
-}
-
-html[data-theme='sunset-peach'] {
-  color-scheme: dark;
-  --theme-bg-solid: #181113;
-  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.35), transparent 45%),
-                       radial-gradient(circle at 20% 80%, rgba(220, 38, 38, 0.3), transparent 50%),
-                       linear-gradient(135deg, #181113 0%, #351a20 50%, #451a1a 100%);
-  --theme-card-bg: rgba(45, 24, 28, 0.75);
-  --theme-card-border: rgba(255, 255, 255, 0.18);
-  --theme-card-hover-border: rgba(249, 115, 22, 0.6);
-  --theme-card-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.8);
-  --theme-text-title: #ffffff;
-  --theme-text-body: #ffedd5;
-  --theme-brand: #f97316;
-  --theme-brand-dark: #ea580c;
-  --theme-brand-soft: rgba(249, 115, 22, 0.15);
-}
-
-html[data-theme='pure-frost'] {
-  color-scheme: dark;
-  --theme-bg-solid: #0f172a;
-  --theme-bg-gradient: radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.2), transparent 50%),
-                       linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  --theme-card-bg: rgba(30, 41, 59, 0.7);
-  --theme-card-border: rgba(255, 255, 255, 0.2);
-  --theme-card-hover-border: rgba(255, 255, 255, 0.5);
-  --theme-card-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.6);
-  --theme-text-title: #ffffff;
-  --theme-text-body: #f1f5f9;
-  --theme-brand: #38bdf8;
-  --theme-brand-dark: #0284c7;
-  --theme-brand-soft: rgba(56, 189, 248, 0.15);
-}
-
-html[data-theme='midnight-neon'] {
-  color-scheme: dark;
-  --theme-bg-solid: #030712;
-  --theme-bg-gradient: radial-gradient(circle at 75% 20%, rgba(34, 197, 94, 0.25), transparent 45%),
-                       radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.25), transparent 50%),
-                       linear-gradient(135deg, #030712 0%, #0f172a 100%);
-  --theme-card-bg: rgba(15, 23, 42, 0.75);
-  --theme-card-border: rgba(34, 197, 94, 0.3);
-  --theme-card-hover-border: rgba(34, 197, 94, 0.7);
-  --theme-card-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.9), 0 0 15px rgba(34, 197, 94, 0.15);
-  --theme-text-title: #ffffff;
-  --theme-text-body: #e2e8f0;
-  --theme-brand: #22c55e;
-  --theme-brand-dark: #16a34a;
-  --theme-brand-soft: rgba(34, 197, 94, 0.15);
+  --theme-text-muted: #cbd5e1;
+  --theme-brand: #22d3ee;
+  --theme-brand-dark: #06b6d4;
+  --theme-brand-contrast: #04152f;
+  --theme-brand-soft: rgba(34, 211, 238, 0.16);
+  --theme-header-bg: rgba(7, 17, 48, 0.92);
+  --theme-topbar-bg: rgba(5, 13, 38, 0.96);
+  --theme-nav-bg: rgba(9, 22, 60, 0.92);
+  --theme-footer-bg: #050c21;
+  --theme-footer-bottom-bg: #030816;
+  --theme-drawer-bg: rgba(8, 18, 48, 0.97);
+  --theme-input-bg: rgba(5, 13, 38, 0.75);
+  --theme-input-border: rgba(148, 163, 184, 0.35);
+  --theme-input-text: #f8fafc;
+  --theme-input-placeholder: #94a3b8;
+  --theme-media-bg: #040b1e;
 }
 
 /* ========================================================
-   ৫ম থিম: সত্যিকারের লাইট মোড (Daylight Light Mode)
+   থিম ২: গোধূলি আভা (Sunset Peach)
+   ======================================================== */
+html[data-theme='sunset-peach'] {
+  color-scheme: dark;
+  --theme-bg-solid: #180d12;
+  --theme-bg-gradient: radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.32), transparent 45%),
+                       radial-gradient(circle at 20% 80%, rgba(220, 38, 38, 0.28), transparent 50%),
+                       linear-gradient(135deg, #180d12 0%, #36171d 50%, #4a1c17 100%);
+  --theme-surface-1: rgba(38, 16, 20, 0.50);
+  --theme-surface-2: rgba(255, 237, 213, 0.08);
+  --theme-card-bg: rgba(46, 21, 25, 0.82);
+  --theme-card-border: rgba(253, 186, 116, 0.24);
+  --theme-card-hover-border: rgba(251, 146, 60, 0.70);
+  --theme-card-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.75);
+  --theme-text-title: #ffffff;
+  --theme-text-body: #ffedd5;
+  --theme-text-muted: #fed7aa;
+  --theme-brand: #fb923c;
+  --theme-brand-dark: #f97316;
+  --theme-brand-contrast: #1f0b05;
+  --theme-brand-soft: rgba(251, 146, 60, 0.16);
+  --theme-header-bg: rgba(28, 13, 16, 0.92);
+  --theme-topbar-bg: rgba(22, 10, 12, 0.96);
+  --theme-nav-bg: rgba(36, 17, 20, 0.92);
+  --theme-footer-bg: #14090b;
+  --theme-footer-bottom-bg: #0d0507;
+  --theme-drawer-bg: rgba(28, 13, 16, 0.97);
+  --theme-input-bg: rgba(20, 9, 11, 0.75);
+  --theme-input-border: rgba(253, 186, 116, 0.35);
+  --theme-input-text: #fff7ed;
+  --theme-input-placeholder: #fdba74;
+  --theme-media-bg: #14080a;
+}
+
+/* ========================================================
+   থিম ৩: শুভ্র কাচের আবহ (Pure Frost - Clean Frosted Ice Light)
+   ======================================================== */
+html[data-theme='pure-frost'] {
+  color-scheme: light;
+  --theme-bg-solid: #f1f5f9;
+  --theme-bg-gradient: radial-gradient(circle at 80% 10%, rgba(56, 189, 248, 0.22), transparent 45%),
+                       radial-gradient(circle at 15% 85%, rgba(165, 180, 252, 0.20), transparent 50%),
+                       linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #f1f5f9 100%);
+  --theme-surface-1: rgba(255, 255, 255, 0.58);
+  --theme-surface-2: rgba(226, 232, 240, 0.65);
+  --theme-card-bg: rgba(255, 255, 255, 0.88);
+  --theme-card-border: rgba(148, 163, 184, 0.42);
+  --theme-card-hover-border: #0284c7;
+  --theme-card-shadow: 0 12px 30px -10px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --theme-text-title: #0f172a;
+  --theme-text-body: #1e293b;
+  --theme-text-muted: #475569;
+  --theme-brand: #0369a1;
+  --theme-brand-dark: #075985;
+  --theme-brand-contrast: #ffffff;
+  --theme-brand-soft: rgba(3, 105, 161, 0.10);
+  --theme-header-bg: rgba(255, 255, 255, 0.92);
+  --theme-topbar-bg: rgba(241, 245, 249, 0.96);
+  --theme-nav-bg: rgba(255, 255, 255, 0.95);
+  --theme-footer-bg: #e2e8f0;
+  --theme-footer-bottom-bg: #cbd5e1;
+  --theme-drawer-bg: rgba(255, 255, 255, 0.98);
+  --theme-input-bg: #ffffff;
+  --theme-input-border: #94a3b8;
+  --theme-input-text: #0f172a;
+  --theme-input-placeholder: #64748b;
+  --theme-media-bg: #e2e8f0;
+}
+
+/* ========================================================
+   থিম ৪: মধ্যরাত্রির আভা (Midnight Neon)
+   ======================================================== */
+html[data-theme='midnight-neon'] {
+  color-scheme: dark;
+  --theme-bg-solid: #030712;
+  --theme-bg-gradient: radial-gradient(circle at 75% 20%, rgba(34, 197, 94, 0.22), transparent 45%),
+                       radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.22), transparent 50%),
+                       linear-gradient(135deg, #030712 0%, #091326 60%, #041513 100%);
+  --theme-surface-1: rgba(9, 17, 32, 0.55);
+  --theme-surface-2: rgba(52, 211, 153, 0.08);
+  --theme-card-bg: rgba(12, 20, 36, 0.86);
+  --theme-card-border: rgba(52, 211, 153, 0.30);
+  --theme-card-hover-border: rgba(52, 211, 153, 0.78);
+  --theme-card-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.9), 0 0 16px rgba(34, 197, 94, 0.12);
+  --theme-text-title: #f8fafc;
+  --theme-text-body: #e2e8f0;
+  --theme-text-muted: #94a3b8;
+  --theme-brand: #34d399;
+  --theme-brand-dark: #10b981;
+  --theme-brand-contrast: #022c22;
+  --theme-brand-soft: rgba(52, 211, 153, 0.14);
+  --theme-header-bg: rgba(5, 10, 22, 0.94);
+  --theme-topbar-bg: rgba(3, 7, 18, 0.97);
+  --theme-nav-bg: rgba(9, 16, 32, 0.92);
+  --theme-footer-bg: #030712;
+  --theme-footer-bottom-bg: #010409;
+  --theme-drawer-bg: rgba(7, 12, 26, 0.97);
+  --theme-input-bg: rgba(3, 7, 18, 0.85);
+  --theme-input-border: rgba(52, 211, 153, 0.35);
+  --theme-input-text: #f8fafc;
+  --theme-input-placeholder: #94a3b8;
+  --theme-media-bg: #020617;
+}
+
+/* ========================================================
+   থিম ৫: দিবালোক (Daylight Light - Editorial Newspaper)
    ======================================================== */
 html[data-theme='daylight-light'] {
   color-scheme: light;
   --theme-bg-solid: #ffffff;
   --theme-bg-gradient: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --theme-surface-1: #ffffff;
+  --theme-surface-2: #f1f5f9;
   --theme-card-bg: #ffffff;
   --theme-card-border: #e2e8f0;
   --theme-card-hover-border: #c8102e;
-  --theme-card-shadow: 0 8px 24px -12px rgba(17, 24, 39, 0.2);
+  --theme-card-shadow: 0 8px 24px -12px rgba(17, 24, 39, 0.16);
   --theme-text-title: #111827;
   --theme-text-body: #374151;
+  --theme-text-muted: #4b5563;
   --theme-brand: #c8102e;
   --theme-brand-dark: #a50d25;
+  --theme-brand-contrast: #ffffff;
   --theme-brand-soft: rgba(200, 16, 46, 0.08);
+  --theme-header-bg: #ffffff;
+  --theme-topbar-bg: #f8fafc;
+  --theme-nav-bg: #ffffff;
+  --theme-footer-bg: #f1f5f9;
+  --theme-footer-bottom-bg: #e2e8f0;
+  --theme-drawer-bg: #ffffff;
   --theme-input-bg: #ffffff;
+  --theme-input-border: #94a3b8;
+  --theme-input-text: #111827;
+  --theme-input-placeholder: #64748b;
+  --theme-media-bg: #f1f5f9;
 }
 
-html[data-theme='daylight-light'] body {
-  color: #1e293b;
+/* ========================================================
+   হালকা থিম (Daylight + Pure Frost) নিরাপদ কনট্রাস্ট নিয়ম
+   ======================================================== */
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) body {
+  color: var(--theme-text-body);
 }
 
-html[data-theme='daylight-light'] main h1,
-html[data-theme='daylight-light'] main h2,
-html[data-theme='daylight-light'] main h3,
-html[data-theme='daylight-light'] main h4,
-html[data-theme='daylight-light'] main [class*="text-white"],
-html[data-theme='daylight-light'] main [class*="text-"][class*="-100"],
-html[data-theme='daylight-light'] main [class*="text-"][class*="-200"],
-html[data-theme='daylight-light'] main [class*="text-"][class*="-300"],
-html[data-theme='daylight-light'] .glass-card [class*="text-white"],
-html[data-theme='daylight-light'] .glass-card [class*="text-"][class*="-100"],
-html[data-theme='daylight-light'] .glass-card [class*="text-"][class*="-200"],
-html[data-theme='daylight-light'] .glass-card [class*="text-"][class*="-300"],
-html[data-theme='daylight-light'] [role="dialog"] [class*="text-white"],
-html[data-theme='daylight-light'] [role="dialog"] [class*="text-"][class*="-100"],
-html[data-theme='daylight-light'] [role="dialog"] [class*="text-"][class*="-200"],
-html[data-theme='daylight-light'] [role="dialog"] [class*="text-"][class*="-300"] {
-  color: #1e293b !important;
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) .site-header,
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) .site-top-bar {
+  backdrop-filter: blur(14px);
 }
 
-html[data-theme='daylight-light'] main :not(svg)[class*="text-slate-400"],
-html[data-theme='daylight-light'] main :not(svg)[class*="text-gray-400"],
-html[data-theme='daylight-light'] main :not(svg)[class*="text-zinc-400"],
-html[data-theme='daylight-light'] main :not(svg)[class*="text-neutral-400"],
-html[data-theme='daylight-light'] .glass-card :not(svg)[class*="text-slate-400"],
-html[data-theme='daylight-light'] .glass-card :not(svg)[class*="text-gray-400"],
-html[data-theme='daylight-light'] [role="dialog"] :not(svg)[class*="text-slate-400"],
-html[data-theme='daylight-light'] [role="dialog"] :not(svg)[class*="text-gray-400"] {
-  color: #475569 !important;
+/* শুধু সাব-পেজগুলোর লিগ্যাসি সাদা টেক্সট স্বয়ংক্রিয়ভাবে গাঢ় রঙে নেওয়া (ডার্ক সারফেস বাদে) */
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) h1:not(.hero-daylight-dark-surface *),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) h2:not(.hero-daylight-dark-surface *),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) h3:not(.hero-daylight-dark-surface *),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) h4:not(.hero-daylight-dark-surface *) {
+  color: var(--theme-text-title);
 }
 
-html[data-theme='daylight-light'] main :not(svg)[class*="text-amber-400"],
-html[data-theme='daylight-light'] main :not(svg)[class*="text-yellow-400"],
-html[data-theme='daylight-light'] .glass-card :not(svg)[class*="text-amber-400"],
-html[data-theme='daylight-light'] [role="dialog"] :not(svg)[class*="text-amber-400"] {
-  color: #92400e !important;
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) .glass-card [class*="text-white"],
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) .glass-card [class*="text-slate-100"],
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) .glass-card [class*="text-slate-200"],
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) .glass-card [class*="text-slate-300"],
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-white"]:not(.hero-daylight-dark-surface):not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *):not([class*="bg-cyan-6"]):not([class*="bg-blue-6"]):not([class*="bg-emerald-6"]):not([class*="bg-red-6"]):not([class*="bg-rose-6"]):not([class*="bg-slate-9"]):not([class*="bg-black"]),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-slate-100"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-slate-200"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-slate-300"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *) {
+  color: var(--theme-text-body) !important;
 }
 
-html[data-theme='daylight-light'] main [class*="bg-white/"],
-html[data-theme='daylight-light'] .glass-card [class*="bg-white/"],
-html[data-theme='daylight-light'] [role="dialog"] [class*="bg-white/"] {
-  background-color: rgba(15, 23, 42, 0.06);
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-cyan-200"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-cyan-300"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-cyan-100"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *) {
+  color: #0369a1 !important;
 }
 
-html[data-theme='daylight-light'] main [class*="border-white/"],
-html[data-theme='daylight-light'] .glass-card [class*="border-white/"],
-html[data-theme='daylight-light'] [role="dialog"] [class*="border-white/"] {
-  border-color: rgba(15, 23, 42, 0.16);
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-amber-300"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-amber-200"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *) {
+  color: #b45309 !important;
 }
 
-html[data-theme='daylight-light'] main input,
-html[data-theme='daylight-light'] main textarea,
-html[data-theme='daylight-light'] main select,
-html[data-theme='daylight-light'] .site-footer input,
-html[data-theme='daylight-light'] .site-footer textarea,
-html[data-theme='daylight-light'] [role="dialog"] input,
-html[data-theme='daylight-light'] [role="dialog"] textarea,
-html[data-theme='daylight-light'] [role="dialog"] select {
-  color: #0f172a;
-  background-color: #ffffff;
-  border-color: #94a3b8;
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-emerald-300"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-emerald-200"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *) {
+  color: #047857 !important;
 }
 
-html[data-theme='daylight-light'] main input::placeholder,
-html[data-theme='daylight-light'] main textarea::placeholder,
-html[data-theme='daylight-light'] .site-footer input::placeholder,
-html[data-theme='daylight-light'] .site-footer textarea::placeholder,
-html[data-theme='daylight-light'] [role="dialog"] input::placeholder,
-html[data-theme='daylight-light'] [role="dialog"] textarea::placeholder {
-  color: #475569;
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-rose-300"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-rose-200"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *) {
+  color: #be123c !important;
+}
+
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-purple-300"]:not(.hero-daylight-dark-surface *),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="text-violet-300"]:not(.hero-daylight-dark-surface *) {
+  color: #6d28d9 !important;
+}
+
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="bg-white/"]:not(.hero-daylight-dark-surface *):not([class*="bg-gradient-"] *) {
+  background-color: rgba(15, 23, 42, 0.05);
+}
+
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) [class*="border-white/"]:not(.hero-daylight-dark-surface *) {
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+/* ডার্ক থিমগুলোতে (ocean-glass, sunset-peach, midnight-neon) কালো বা স্লেট ইনপুট/সিলেক্ট সুরক্ষা */
+html:not([data-theme='daylight-light']):not([data-theme='pure-frost']) main:not(.admin-shell) input:not([type="checkbox"]):not([type="radio"]),
+html:not([data-theme='daylight-light']):not([data-theme='pure-frost']) main:not(.admin-shell) textarea,
+html:not([data-theme='daylight-light']):not([data-theme='pure-frost']) main:not(.admin-shell) select {
+  color: var(--theme-input-text);
+  background-color: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+}
+
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) input:not([type="checkbox"]):not([type="radio"]),
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) textarea,
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) main:not(.admin-shell) select {
+  color: var(--theme-input-text);
+  background-color: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+}
+
+main:not(.admin-shell) input::placeholder,
+main:not(.admin-shell) textarea::placeholder {
+  color: var(--theme-input-placeholder);
   opacity: 1;
 }
 
-html[data-theme='daylight-light'] .site-top-bar,
-html[data-theme='daylight-light'] .site-header,
-html[data-theme='daylight-light'] .site-footer {
-  color: #1e293b !important;
-  background-color: #f8fafc !important;
-  border-color: #cbd5e1 !important;
+/* ডার্ক সারফেস, মিডিয়া ওভারলে ও ডার্ক মডালগুলো সব থিমে সাদা লেখা বজায় রাখবে */
+.hero-daylight-dark-surface,
+.hero-daylight-dark-surface h1,
+.hero-daylight-dark-surface h2,
+.hero-daylight-dark-surface h3,
+.hero-daylight-dark-surface h4,
+.hero-daylight-dark-surface [class*="text-white"] {
+  color: #ffffff !important;
 }
 
-html[data-theme='daylight-light'] .site-header {
-  background-color: #ffffff !important;
+.hero-daylight-dark-surface [class*="text-slate-200"],
+.hero-daylight-dark-surface [class*="text-slate-300"] {
+  color: #e2e8f0 !important;
 }
 
-html[data-theme='daylight-light'] .site-top-bar [class*="text-white"],
-html[data-theme='daylight-light'] .site-top-bar [class*="text-slate-"],
-html[data-theme='daylight-light'] .site-top-bar [class*="text-cyan-"],
-html[data-theme='daylight-light'] .site-header [class*="text-white"],
-html[data-theme='daylight-light'] .site-header [class*="text-slate-"],
-html[data-theme='daylight-light'] .site-header [class*="text-cyan-"],
-html[data-theme='daylight-light'] .site-footer [class*="text-white"],
-html[data-theme='daylight-light'] .site-footer [class*="text-slate-"],
-html[data-theme='daylight-light'] .site-footer [class*="text-cyan-"] {
-  color: #1e293b !important;
+.hero-daylight-dark-surface [class*="text-cyan-200"],
+.hero-daylight-dark-surface [class*="text-cyan-300"] {
+  color: #67e8f9 !important;
 }
 
-html[data-theme='daylight-light'] .site-top-bar [class*="bg-white/"],
-html[data-theme='daylight-light'] .site-header [class*="bg-white/"],
-html[data-theme='daylight-light'] .site-footer [class*="bg-white/"] {
-  background-color: rgba(15, 23, 42, 0.06) !important;
+.hero-daylight-dark-surface [class*="text-amber-300"] {
+  color: #fcd34d !important;
 }
 
-html[data-theme='daylight-light'] .site-top-bar [class*="border-white/"],
-html[data-theme='daylight-light'] .site-header [class*="border-white/"],
-html[data-theme='daylight-light'] .site-footer [class*="border-white/"] {
-  border-color: rgba(15, 23, 42, 0.16) !important;
+.hero-daylight-dark-surface [class*="bg-white"][class*="text-red-700"] {
+  color: #b91c1c !important;
 }
 
-html[data-theme='daylight-light'] .site-announcement {
+.hero-daylight-dark-surface [class*="text-slate-950"] {
+  color: #020617 !important;
+}
+
+.site-announcement {
   color: #78350f !important;
   background: #fef3c7 !important;
   border-color: #fcd34d !important;
 }
 
-html[data-theme='daylight-light'] .site-announcement [class*="text-amber-"] {
+.site-announcement [class*="text-amber-"] {
   color: #78350f !important;
 }
 
-html[data-theme='daylight-light'] .site-location-pill {
-  color: #0c4a6e !important;
-  background-color: #dbeafe !important;
-  border-color: #93c5fd !important;
-}
-
-html[data-theme='daylight-light'] .site-location-pill svg {
-  color: #075985 !important;
-}
-
-html[data-theme='daylight-light'] .site-footer > div:last-child {
-  background-color: #e2e8f0 !important;
-}
-
-html[data-theme='daylight-light'] aside[class*="bg-[#0a132e]/95"] {
-  color: #1e293b !important;
-  background: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.24) !important;
-}
-
-html[data-theme='daylight-light'] aside[class*="bg-[#0a132e]/95"] [class*="text-white"],
-html[data-theme='daylight-light'] aside[class*="bg-[#0a132e]/95"] [class*="text-slate-"],
-html[data-theme='daylight-light'] aside[class*="bg-[#0a132e]/95"] [class*="text-cyan-"],
-html[data-theme='daylight-light'] aside[class*="bg-[#0a132e]/95"] [class*="text-amber-"] {
-  color: #334155 !important;
-}
-
-html[data-theme='daylight-light'] aside[class*="bg-[#0a132e]/95"] ul > li span[class*="bg-"][class*="text-white"] {
-  color: #ffffff !important;
-}
-
-html[data-theme='daylight-light'] .site-top-bar [role="menu"] {
-  color: #f8fafc;
-  background-color: rgba(15, 23, 42, 0.96);
-}
-
-html[data-theme='daylight-light'] .site-top-bar [role="menu"] [class*="text-white"],
-html[data-theme='daylight-light'] .site-top-bar [role="menu"] [class*="text-slate-"],
-html[data-theme='daylight-light'] .site-top-bar [role="menu"] [class*="text-cyan-"] {
-  color: #f8fafc !important;
-}
-
-html[data-theme='daylight-light'] main [class*="bg-gradient"][class*="text-white"],
-html[data-theme='daylight-light'] main [class*="bg-gradient"] [class*="text-white"],
-html[data-theme='daylight-light'] main [class*="bg-cyan-600"][class*="text-white"],
-html[data-theme='daylight-light'] main [class*="bg-blue-600"][class*="text-white"],
-html[data-theme='daylight-light'] main [class*="bg-emerald-600"][class*="text-white"],
-html[data-theme='daylight-light'] main [class*="bg-red-600"][class*="text-white"],
-html[data-theme='daylight-light'] main [class*="bg-rose-600"][class*="text-white"],
-html[data-theme='daylight-light'] main [class*="bg-slate-900"][class*="text-white"],
-html[data-theme='daylight-light'] main [class*="bg-slate-950"][class*="text-white"],
-html[data-theme='daylight-light'] main [class*="bg-[#"][class*="text-white"],
-html[data-theme='daylight-light'] main [class*="bg-[#"] [class*="text-white"] {
-  color: #ffffff !important;
-}
-
-html[data-theme='daylight-light'] .glass-card:hover {
-  box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.2) !important;
-}
-
-html[data-theme='daylight-light'] main .hero-daylight-dark-surface,
-html[data-theme='daylight-light'] .hero-daylight-dark-surface,
-html[data-theme='daylight-light'] main .hero-daylight-dark-surface [class*="text-"],
-html[data-theme='daylight-light'] main .hero-daylight-dark-surface [style*="color"],
-html[data-theme='daylight-light'] .hero-daylight-dark-surface [class*="text-"],
-html[data-theme='daylight-light'] .hero-daylight-dark-surface [style*="color"] {
-  color: #f8fafc !important;
-}
-
-html[data-theme='daylight-light'] .hero-daylight-dark-surface [class*="bg-white"][class*="text-red-700"] {
-  color: #b91c1c !important;
-}
-
-html[data-theme='daylight-light'] main .news-card .news-card-title[class*="text-"],
-html[data-theme='daylight-light'] main .news-card .news-card-author-name[class*="text-"],
-html[data-theme='daylight-light'] main .section-heading .section-heading-title[class*="text-"] {
-  color: #030712 !important;
-  filter: none !important;
-  opacity: 1 !important;
-  text-shadow: none !important;
-  -webkit-font-smoothing: auto;
-  -moz-osx-font-smoothing: auto;
-}
-
-html[data-theme='daylight-light'] main .news-card .news-card-body,
-html[data-theme='daylight-light'] main .news-card .news-card-body :not(svg),
-html[data-theme='daylight-light'] main .news-card .news-card-meta,
-html[data-theme='daylight-light'] main .news-card .news-card-meta :not(svg),
-html[data-theme='daylight-light'] main .section-heading .section-heading-subtitle {
-  color: #111827 !important;
-  filter: none !important;
-  opacity: 1 !important;
-  text-shadow: none !important;
-  -webkit-font-smoothing: auto;
-  -moz-osx-font-smoothing: auto;
-}
-
-html[data-theme='daylight-light'] main .news-card .news-card-meta svg[class*="text-"] {
-  color: #374151 !important;
-  filter: none !important;
-  opacity: 1 !important;
-}
-
 /* ========================================================
-   গ্লাস কার্ড কমন ইউটিলিটি
+   গ্লাস কার্ড কমন ইউটিলিটি (সব ৫টি থিমের সাথে সামঞ্জস্যপূর্ণ)
    ======================================================== */
 .glass-card,
 .newspaper-card {
   background: var(--theme-card-bg, #ffffff) !important;
   border: 1px solid var(--theme-card-border, #e2e8f0) !important;
   box-shadow: var(--theme-card-shadow, 0 1px 3px rgba(15, 23, 42, 0.06)) !important;
-  border-radius: 0.875rem !important;
+  border-radius: 1rem !important;
   color: var(--theme-text-body, #374151) !important;
+  backdrop-filter: blur(16px);
   transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .glass-card:hover,
 .newspaper-card:hover {
   border-color: var(--theme-card-hover-border, rgba(0, 210, 255, 0.6)) !important;
-  box-shadow: 0 4px 8px rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.22) !important;
   transform: translateY(-2px);
 }
 
@@ -492,49 +495,49 @@ html[data-theme='daylight-light'] main .news-card .news-card-meta svg[class*="te
   --category-badge-border: #475569;
 }
 
-html[data-theme='daylight-light'] .news-card-category[data-category-palette='sky'] {
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) .news-card-category[data-category-palette='sky'] {
   --category-badge-bg: #dbeafe;
   --category-badge-text: #172554;
   --category-badge-border: #93c5fd;
 }
 
-html[data-theme='daylight-light'] .news-card-category[data-category-palette='amber'] {
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) .news-card-category[data-category-palette='amber'] {
   --category-badge-bg: #fef3c7;
   --category-badge-text: #78350f;
   --category-badge-border: #fcd34d;
 }
 
-html[data-theme='daylight-light'] .news-card-category[data-category-palette='indigo'] {
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) .news-card-category[data-category-palette='indigo'] {
   --category-badge-bg: #e0e7ff;
   --category-badge-text: #312e81;
   --category-badge-border: #a5b4fc;
 }
 
-html[data-theme='daylight-light'] .news-card-category[data-category-palette='violet'] {
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) .news-card-category[data-category-palette='violet'] {
   --category-badge-bg: #f3e8ff;
   --category-badge-text: #581c87;
   --category-badge-border: #d8b4fe;
 }
 
-html[data-theme='daylight-light'] .news-card-category[data-category-palette='emerald'] {
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) .news-card-category[data-category-palette='emerald'] {
   --category-badge-bg: #dcfce7;
   --category-badge-text: #14532d;
   --category-badge-border: #86efac;
 }
 
-html[data-theme='daylight-light'] .news-card-category[data-category-palette='rose'] {
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) .news-card-category[data-category-palette='rose'] {
   --category-badge-bg: #ffe4e6;
   --category-badge-text: #881337;
   --category-badge-border: #fda4af;
 }
 
-html[data-theme='daylight-light'] .news-card-category[data-category-palette='teal'] {
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) .news-card-category[data-category-palette='teal'] {
   --category-badge-bg: #ccfbf1;
   --category-badge-text: #134e4a;
   --category-badge-border: #5eead4;
 }
 
-html[data-theme='daylight-light'] .news-card-category[data-category-palette='slate'] {
+html:is([data-theme='daylight-light'], [data-theme='pure-frost']) .news-card-category[data-category-palette='slate'] {
   --category-badge-bg: #e2e8f0;
   --category-badge-text: #0f172a;
   --category-badge-border: #94a3b8;
@@ -646,10 +649,8 @@ html[data-theme='daylight-light'] .news-card-category[data-category-palette='sla
 }
 
 /* ========================================================
-   পেজ ট্রানজিশন অ্যানিমেশন — Next.js App Router View Transition
+   পেজ ট্রানজিশন অ্যানিমেশন
    ======================================================== */
-
-/* প্রতিটি পেজ প্রথম রেন্ডারে এই কীফ্রেমে প্রবেশ করবে */
 @keyframes pageEnter {
   from {
     opacity: 0;
@@ -661,7 +662,6 @@ html[data-theme='daylight-light'] .news-card-category[data-category-palette='sla
   }
 }
 
-/* পেজ বের হওয়ার অ্যানিমেশন */
 @keyframes pageExit {
   from {
     opacity: 1;
@@ -673,7 +673,6 @@ html[data-theme='daylight-light'] .news-card-category[data-category-palette='sla
   }
 }
 
-/* Next.js পেজ ট্রানজিশন সমর্থিত ব্রাউজারে এই CSS ব্যবহার হয় */
 @supports (view-transition-name: none) {
   ::view-transition-old(root) {
     animation: pageExit 220ms ease forwards;
@@ -689,7 +688,6 @@ html[data-theme='daylight-light'] .news-card-category[data-category-palette='sla
   }
 }
 
-/* ফলব্যাক: Next.js main কন্টেন্টে এন্টার অ্যানিমেশন */
 main {
   animation: pageEnter 300ms ease both;
 }
@@ -700,78 +698,19 @@ main {
   }
 }
 
-/* ========================================================
-   স্মুথ ফোকাস রিং — সব ইন্টারেক্টিভ এলিমেন্টে
-   ======================================================== */
 :focus-visible {
   outline: 2px solid var(--theme-brand, #00d2ff);
   outline-offset: 3px;
   border-radius: 0.375rem;
 }
 
-/* ========================================================
-   টাচ টার্গেট সাইজ — মোবাইলে সহজ নেভিগেশনের জন্য
-   ======================================================== */
 button, a, [role="button"] {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
 
-/* ফিড রোটেটর সেকশনে টাচ সোয়াইপ কাজ করতে দেওয়া */
 .touch-pan-y {
   touch-action: pan-y;
-}
-
-/* ========================================================
-   ক্যাটাগরি ব্যাজ — হোম পেজে সেকশন হেডার রং
-   ======================================================== */
-
-/* সব ক্যাটাগরি ব্যাজের বেজ স্টাইল — উচ্চ কনট্রাস্ট নিশ্চিত */
-[data-cat-badge] {
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-
-/* Daylight Light থিমে ক্যাটাগরি সেকশন ব্যাজের রং সমন্বয় */
-html[data-theme='daylight-light'] .category-section-badge-sky {
-  background-color: #0369a1;
-  color: #ffffff;
-  border-color: #0284c7;
-}
-html[data-theme='daylight-light'] .category-section-badge-amber {
-  background-color: #b45309;
-  color: #ffffff;
-  border-color: #d97706;
-}
-html[data-theme='daylight-light'] .category-section-badge-indigo {
-  background-color: #4338ca;
-  color: #ffffff;
-  border-color: #4f46e5;
-}
-html[data-theme='daylight-light'] .category-section-badge-violet {
-  background-color: #7c3aed;
-  color: #ffffff;
-  border-color: #8b5cf6;
-}
-html[data-theme='daylight-light'] .category-section-badge-emerald {
-  background-color: #15803d;
-  color: #ffffff;
-  border-color: #16a34a;
-}
-html[data-theme='daylight-light'] .category-section-badge-rose {
-  background-color: #be123c;
-  color: #ffffff;
-  border-color: #e11d48;
-}
-html[data-theme='daylight-light'] .category-section-badge-teal {
-  background-color: #0f766e;
-  color: #ffffff;
-  border-color: #0d9488;
-}
-html[data-theme='daylight-light'] .category-section-badge-slate {
-  background-color: #334155;
-  color: #ffffff;
-  border-color: #475569;
 }
 
 .formatted-text,
@@ -809,132 +748,26 @@ html[data-theme='daylight-light'] .category-section-badge-slate {
 }
 
 .article-contact-cta {
-  color: #ffffff !important;
+  color: var(--theme-brand-contrast, #ffffff) !important;
 }
 
 .article-engagement {
   color: var(--theme-text-body);
 }
 
-html[data-theme='daylight-light'] .article-engagement [class~='text-white'],
-html[data-theme='daylight-light'] .article-engagement [class~='text-white/85'],
-html[data-theme='daylight-light'] .article-engagement [class~='text-white/80'],
-html[data-theme='daylight-light'] .article-engagement [class~='text-white/70'],
-html[data-theme='daylight-light'] .article-engagement [class~='text-white/60'],
-html[data-theme='daylight-light'] .article-engagement [class~='text-white/50'],
-html[data-theme='daylight-light'] .article-engagement [class~='text-white/45'],
-html[data-theme='daylight-light'] .article-engagement [class~='text-white/40'],
-html[data-theme='daylight-light'] .article-engagement [class~='text-slate-100'],
-html[data-theme='daylight-light'] .article-engagement [class~='text-slate-200'] {
-  color: #334155 !important;
-}
-
-html[data-theme='daylight-light'] .article-engagement [class~='text-cyan-200'],
-html[data-theme='daylight-light'] .article-engagement [class~='text-cyan-300'],
-html[data-theme='daylight-light'] .article-engagement [class~='text-cyan-400'] {
-  color: #0e7490 !important;
-}
-
-html[data-theme='daylight-light'] .article-engagement [class~='text-emerald-400'] {
-  color: #047857 !important;
-}
-
-html[data-theme='daylight-light'] .article-engagement [class~='text-rose-300'],
-html[data-theme='daylight-light'] .article-engagement [class~='text-rose-400'] {
-  color: #be123c !important;
-}
-
-html[data-theme='daylight-light'] .article-engagement [class~='bg-white/5'],
-html[data-theme='daylight-light'] .article-engagement [class~='bg-white/10'],
-html[data-theme='daylight-light'] .article-engagement [class~='bg-white/15'],
-html[data-theme='daylight-light'] .article-engagement [class~='bg-white/20'],
-html[data-theme='daylight-light'] .article-engagement [class~='bg-white/25'],
-html[data-theme='daylight-light'] .article-engagement [class~='bg-black/25'],
-html[data-theme='daylight-light'] .article-engagement [class~='bg-black/30'],
-html[data-theme='daylight-light'] .article-engagement [class~='bg-black/40'],
-html[data-theme='daylight-light'] .article-engagement [class~='bg-black/50'] {
-  background-color: #f8fafc !important;
-}
-
-html[data-theme='daylight-light'] .article-engagement [class~='border-white/10'],
-html[data-theme='daylight-light'] .article-engagement [class~='border-white/15'],
-html[data-theme='daylight-light'] .article-engagement [class~='border-white/20'],
-html[data-theme='daylight-light'] .article-engagement [class~='border-white/25'] {
-  border-color: #e2e8f0 !important;
-}
-
-html[data-theme='daylight-light'] .article-engagement [class*='border-cyan-400/'] {
-  border-color: #bae6fd !important;
-}
-
-html[data-theme='daylight-light'] .article-engagement input[class*='placeholder-white']::placeholder,
-html[data-theme='daylight-light'] .article-engagement textarea[class*='placeholder-white']::placeholder {
-  color: #64748b !important;
-}
-
-html[data-theme='daylight-light'] .article-engagement button[class*='bg-cyan-']:not([class*='/20']),
-html[data-theme='daylight-light'] .article-engagement button[class*='bg-gradient-to-r'] {
-  color: #ffffff !important;
-}
-
-html[data-theme='daylight-light'] .article-engagement [class*='bg-slate-900/95'] [class*='text-white'] {
-  color: #ffffff !important;
-}
-
-html[data-theme='daylight-light'] body {
-  color: #374151;
-  background-color: #ffffff;
-  background-image: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-}
-
-html[data-theme='daylight-light'] main {
-  color: #374151;
-}
-
-html[data-theme='daylight-light'] main .news-card {
-  background-color: #ffffff;
-  border-color: #e2e8f0;
-  box-shadow: 0 8px 24px -12px rgba(17, 24, 39, 0.2);
-}
-
-html[data-theme='daylight-light'] main h1,
-html[data-theme='daylight-light'] main h2,
-html[data-theme='daylight-light'] main h3,
-html[data-theme='daylight-light'] main h4,
-html[data-theme='daylight-light'] main .news-card .news-card-title[class*="text-"],
-html[data-theme='daylight-light'] main .section-heading .section-heading-title[class*="text-"] {
-  color: #111827 !important;
-}
-
-html[data-theme='daylight-light'] main .news-card .news-card-body,
-html[data-theme='daylight-light'] main .news-card .news-card-body :not(svg),
-html[data-theme='daylight-light'] main .news-card .news-card-meta,
-html[data-theme='daylight-light'] main .section-heading .section-heading-subtitle {
-  color: #374151 !important;
-}
-
-html[data-theme='daylight-light'] main .news-card-category {
-  color: #b91c1c;
-  border-color: #fecaca;
-  background-color: #fef2f2;
-}
-
-html[data-theme='daylight-light'] .site-header .home-category-nav {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-}
-
-html[data-theme='daylight-light'] .site-header .home-category-nav-link {
-  color: #1f2937 !important;
-}
-
-html[data-theme='daylight-light'] .site-header .home-category-nav-link:hover {
-  background-color: #f8fafc !important;
-  color: #b91c1c !important;
+.site-header .home-category-nav {
+  background-color: var(--theme-nav-bg) !important;
+  border-color: var(--theme-card-border) !important;
 }
 
 .site-header .home-category-nav-link {
   position: relative;
+  color: var(--theme-text-title) !important;
+}
+
+.site-header .home-category-nav-link:hover {
+  background-color: var(--theme-brand-soft) !important;
+  color: var(--theme-brand) !important;
 }
 
 .site-header .home-category-nav-link::after {
