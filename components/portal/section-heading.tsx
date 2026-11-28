@@ -36,7 +36,7 @@ export function SectionHeading({
       <div>
         {eyebrow && (
           <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--theme-brand)]">
-            <span className="h-0.5 w-4 bg-[var(--theme-brand)] rounded-full" aria-hidden="true" />
+            <span className="h-0.5 w-4 rounded-full bg-[var(--theme-brand)]" aria-hidden="true" />
             <Tr text={eyebrow} eyebrow />
           </p>
         )}
@@ -46,7 +46,7 @@ export function SectionHeading({
         </h2>
 
         {renderedSubtitle && (
-          <p className="section-heading-subtitle mt-0.5 text-xs sm:text-sm leading-relaxed text-[var(--theme-text-body)] opacity-90">
+          <p className="section-heading-subtitle mt-0.5 text-xs sm:text-sm leading-relaxed text-[var(--theme-text-body)]">
             {renderedSubtitle}
           </p>
         )}
