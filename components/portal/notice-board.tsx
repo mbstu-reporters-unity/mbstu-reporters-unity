@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowRight, Download, ExternalLink, FileText, Megaphone, Pin } from "lucide-react"
+import { ArrowRight, Download, ExternalLink, FileText, Bell, Pin } from "lucide-react"
 import { BRANCHES, getNotices, downloadUrl, timeAgo } from "@/lib/notices"
 import type { Notice } from "@/lib/notices"
 import { SectionHeading } from "./section-heading"
@@ -55,111 +55,95 @@ export function NoticeBoard({
   const list = currentRows.slice(0, limit)
 
   return (
-    <section id="notices" className="py-16 sm:py-20">
-      <div className="mx-auto max-w-5xl px-4">
+    <section id="notices" className="border-b border-slate-200 py-6 sm:py-9 bg-white">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
         <SectionHeading
-          inverted
+          inverted={false}
           eyebrow={sec?.eyebrow ?? "Digital Notice Board"}
           title={sec?.titleBn || "ডিজিটাল নোটিশ বোর্ড"}
           titleEn={sec?.titleEn || "Digital Notice Board"}
           subtitle={
             sec?.subtitleBn ||
-            "বিশ্ববিদ্যালয়, বিভিন্ন হল, বিভাগ ও মাভাবিপ্রবি রিপোর্টার্স ইউনিটির সর্বশেষ নোটিশসমূহ।"
+            "বিশ্ববিদ্যালয়, হল, বিভাগ ও রিপোর্টার্স ইউনিটির সর্বশেষ নোটিশসমূহ।"
           }
           subtitleEn={sec?.subtitleEn || "Latest notices from MBSTU & MBSTURU."}
         />
 
-        <div className="glass-card">
-          <div className="flex items-center gap-2 bg-gradient-to-r from-blue-700/80 to-indigo-800/80 px-5 py-3 text-sm font-bold text-white border-b border-white/20 backdrop-blur">
-            <Megaphone className="size-4 text-cyan-300" aria-hidden="true" />
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <div className="flex items-center gap-2 bg-slate-50 border-b border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-800">
+            <Bell className="size-4 text-[#c8102e]" aria-hidden="true" />
             <span>{pick('সাম্প্রতিক নোটিশ', 'Recent Notices')}</span>
           </div>
 
-          {loading && <p className="p-5 text-sm text-slate-300">{pick('লোড হচ্ছে…', 'Loading…')}</p>}
+          {loading && <p className="p-4 text-xs text-slate-500">{pick('লোড হচ্ছে…', 'Loading…')}</p>}
           {!loading && list.length === 0 && (
-            <p className="p-5 text-sm text-slate-300">{pick('এখনো কোনো নোটিশ প্রকাশিত হয়নি।', 'No notices have been published yet.')}</p>
+            <p className="p-4 text-xs text-slate-500">{pick('এখনো কোনো নোটিশ প্রকাশিত হয়নি।', 'No notices have been published yet.')}</p>
           )}
 
-          <ul className="divide-y divide-white/10">
+          <ul className="divide-y divide-slate-100">
             {list.map((n) => {
               const branch = BRANCHES.find((b) => b.key === n.branch)?.bn || n.branch
               return (
                 <li
                   key={n.id}
-                  className="flex flex-col gap-4 p-5 transition-colors hover:bg-white/10"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 hover:bg-slate-50 transition"
                 >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-2xl border border-white/30 bg-white/15 text-white shadow-md">
-                      <span className="font-serif text-lg font-bold leading-none">{day(n.created_at)}</span>
-                      <span className="text-[10px] font-bold uppercase text-cyan-300">{month(n.created_at)}</span>
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-800">
+                      <span className="font-serif text-base font-bold leading-none">{day(n.created_at)}</span>
+                      <span className="text-[9px] font-bold uppercase text-[#c8102e]">{month(n.created_at)}</span>
                     </div>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         {n.is_pinned && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 border border-amber-400/40 px-2 py-0.5 text-[11px] font-bold text-amber-300">
-                            <Pin className="size-3" aria-hidden="true" />
-                            {pick('গুরুত্বপূর্ণ', 'Pinned')}
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-50 border border-rose-200 px-2 py-0.2 text-[10px] font-bold text-[#c8102e]">
+                            <Pin className="size-2.5" />
+                            {pick('পিন করা', 'Pinned')}
                           </span>
                         )}
-                        <span className="rounded-full bg-white/15 border border-white/25 px-2.5 py-0.5 text-[11px] font-bold text-cyan-200">
+                        <span className="rounded-full bg-slate-100 px-2 py-0.2 text-[10px] font-bold text-slate-700">
                           {branch}
                         </span>
                         {n.ref_number && (
-                          <p className="inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2.5 py-0.5 font-mono text-[11px] text-slate-300">
-                            <FileText className="size-3" aria-hidden="true" />
-                            {pick('স্মারক নম্বর:', 'Reference:')} {n.ref_number}
-                          </p>
+                          <span className="font-mono text-[10px] text-slate-400">
+                            {n.ref_number}
+                          </span>
                         )}
                       </div>
 
                       <Link
                         href={`/notices?n=${n.id}`}
-                        className="mt-1.5 block font-serif font-bold text-base text-white hover:text-cyan-300 transition-colors"
+                        className="block font-serif font-bold text-sm sm:text-base text-slate-900 hover:text-[#c8102e] transition leading-snug truncate"
                       >
                         {n.title}
                       </Link>
 
-                      {n.heading && <p className="text-xs text-slate-300 mt-0.5">{n.heading}</p>}
-                      <p className="text-[11px] text-cyan-200/80 mt-1">
-                        {n.updated_at && n.updated_at !== n.created_at ? `${pick('হালনাগাদ: ', 'Updated: ')}` : ""}
+                      <p className="text-[11px] text-slate-400">
                         {timeAgo(noticeActivityAt(n))}
                       </p>
                     </div>
-
-                    {n.file_url ? (
-                      <a
-                        href={downloadUrl(n.file_url, n.file_name)}
-                        className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white border border-white/30 px-4 py-2 text-xs font-bold transition-all shadow-md active:scale-95"
-                      >
-                        <Download className="size-3.5" aria-hidden="true" />
-                        <span>{pick('ফাইল ডাউনলোড', 'Download file')}</span>
-                      </a>
-                    ) : safeUrl(n.link_url) ? (
-                      <a
-                        href={n.link_url!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white border border-white/30 px-4 py-2 text-xs font-bold transition-all shadow-md active:scale-95 backdrop-blur"
-                      >
-                        <ExternalLink className="size-3.5" aria-hidden="true" />
-                        <span>{pick('লিংক খুলুন', 'Open link')}</span>
-                      </a>
-                    ) : null}
                   </div>
 
-                  {(n.image_urls?.length || n.file_url) && (
-                    <div className="-mx-9 sm:-mx-5">
-                      <NoticeMediaPreview
-                        title={n.title}
-                        imageUrls={n.image_urls}
-                        fileUrl={n.file_url}
-                        fileName={n.file_name}
-                        fileType={n.file_type}
-                        postDate={n.created_at}
-                      />
-                    </div>
-                  )}
+                  {n.file_url ? (
+                    <a
+                      href={downloadUrl(n.file_url, n.file_name)}
+                      className="inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-[#c8102e] hover:bg-[#a50d25] text-white px-3.5 py-1.5 text-xs font-bold transition shadow-xs self-start sm:self-auto"
+                    >
+                      <Download className="size-3" />
+                      <span>{pick('ডাউনলোড', 'Download')}</span>
+                    </a>
+                  ) : safeUrl(n.link_url) ? (
+                    <a
+                      href={n.link_url!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex shrink-0 items-center justify-center gap-1 rounded-full border border-slate-300 bg-white text-slate-800 px-3 py-1.5 text-xs font-semibold hover:border-[#c8102e] hover:text-[#c8102e] transition self-start sm:self-auto"
+                    >
+                      <ExternalLink className="size-3" />
+                      <span>{pick('লিংক', 'Link')}</span>
+                    </a>
+                  ) : null}
                 </li>
               )
             })}
@@ -167,10 +151,10 @@ export function NoticeBoard({
 
           <Link
             href="/notices"
-            className="flex items-center justify-center gap-2 border-t border-white/15 bg-white/10 px-5 py-3.5 text-xs font-bold text-cyan-300 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-1.5 border-t border-slate-200 bg-slate-50 py-2.5 text-xs font-bold text-[#c8102e] hover:bg-slate-100 transition"
           >
             <span>{pick('সকল নোটিশ দেখুন', 'View all notices')}</span>
-            <ArrowRight className="size-3.5" aria-hidden="true" />
+            <ArrowRight className="size-3" />
           </Link>
         </div>
       </div>
