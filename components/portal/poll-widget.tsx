@@ -1,29 +1,29 @@
-'use client'
+"use client"
 
-import React, { useEffect, useState } from 'react'
-import { BarChart3, CheckCircle2, Copy, Share2 } from 'lucide-react'
+import React, { useEffect, useState } from "react"
+import { BarChart3, CheckCircle2, Copy, Share2 } from "lucide-react"
 import {
   getCampusPolls,
   getPollVotes,
   castPollVote,
   type CampusPoll,
   type PollVoteRow,
-} from '@/lib/polls-podcasts'
+} from "@/lib/polls-podcasts"
 
 function getDeviceId(): string {
   try {
-    let id = localStorage.getItem('mbstu_device')
+    let id = localStorage.getItem("mbstu_device")
     if (!id) {
       id = crypto.randomUUID()
-      localStorage.setItem('mbstu_device', id)
+      localStorage.setItem("mbstu_device", id)
     }
     return id
   } catch {
-    return 'guest-' + Math.random().toString(36).slice(2)
+    return "guest-" + Math.random().toString(36).slice(2)
   }
 }
 
-const bn = (n: number) => n.toLocaleString('bn-BD')
+const bn = (n: number) => n.toLocaleString("bn-BD")
 
 export function PollWidget({
   standalone = false,
@@ -36,22 +36,22 @@ export function PollWidget({
 }) {
   const [polls, setPolls] = useState<CampusPoll[]>([])
   const [votes, setVotes] = useState<PollVoteRow[]>([])
-  const [devId, setDevId] = useState('')
+  const [devId, setDevId] = useState("")
   const [busyPoll, setBusyPoll] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
-  const [shareStatus, setShareStatus] = useState('')
-  const [todayLabel, setTodayLabel] = useState('')
+  const [shareStatus, setShareStatus] = useState("")
+  const [todayLabel, setTodayLabel] = useState("")
 
   async function sharePoll(poll: CampusPoll) {
     const url = `${window.location.origin}/polls#${encodeURIComponent(poll.id)}`
     if (navigator.share) {
       try {
         await navigator.share({ title: poll.question, url })
-        setShareStatus('')
+        setShareStatus("")
         return
       } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return
-        setShareStatus('শেয়ার করা যায়নি।')
+        if (error instanceof DOMException && error.name === "AbortError") return
+        setShareStatus("শেয়ার করা যায়নি।")
         return
       }
     }
@@ -61,14 +61,14 @@ export function PollWidget({
   async function copyPollLink(poll: CampusPoll) {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/polls#${encodeURIComponent(poll.id)}`)
-      setShareStatus('জরিপের লিংক কপি হয়েছে!')
-      setTimeout(() => setShareStatus(''), 2500)
+      setShareStatus("জরিপের লিংক কপি হয়েছে!")
+      setTimeout(() => setShareStatus(""), 2500)
     } catch {
-      setShareStatus('লিংক কপি করা যায়নি।')
+      setShareStatus("লিংক কপি করা যায়নি।")
     }
   }
 
-  function openSocialShare(service: 'facebook' | 'whatsapp' | 'x', poll: CampusPoll) {
+  function openSocialShare(service: "facebook" | "whatsapp" | "x", poll: CampusPoll) {
     const url = encodeURIComponent(`${window.location.origin}/polls#${encodeURIComponent(poll.id)}`)
     const text = encodeURIComponent(poll.question)
     const targets = {
@@ -76,16 +76,16 @@ export function PollWidget({
       whatsapp: `https://wa.me/?text=${text}%20${url}`,
       x: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
     }
-    window.open(targets[service], '_blank', 'noopener,noreferrer')
+    window.open(targets[service], "_blank", "noopener,noreferrer")
   }
 
   useEffect(() => {
     setTodayLabel(
-      new Intl.DateTimeFormat('bn-BD', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        timeZone: 'Asia/Dhaka',
+      new Intl.DateTimeFormat("bn-BD", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "Asia/Dhaka",
       }).format(new Date())
     )
     const id = getDeviceId()
@@ -124,7 +124,7 @@ export function PollWidget({
     if (!standalone && !kalbela) return null
     return (
       <div className="glass-card w-full rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-6 text-center text-sm text-[var(--theme-text-body)] shadow-xs">
-        {loaded ? 'এখনো কোনো সক্রিয় জরিপ নেই।' : 'জরিপ লোড হচ্ছে…'}
+        {loaded ? "এখনো কোনো সক্রিয় জরিপ নেই।" : "জরিপ লোড হচ্ছে…"}
       </div>
     )
   }
@@ -140,8 +140,9 @@ export function PollWidget({
         return (
           <div
             key={poll.id}
-            className="glass-card w-full space-y-3.5 rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-4 text-[var(--theme-text-body)] shadow-xs sm:p-5"
+            className="glass-card w-full rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-4 sm:p-5 shadow-xs text-[var(--theme-text-body)] space-y-3.5"
           >
+            {/* হেডার */}
             <div className="flex items-center justify-between gap-3 border-b border-[var(--theme-card-border)] pb-3">
               <div className="flex items-center gap-2">
                 <span className="flex size-7 items-center justify-center rounded-lg border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] text-[var(--theme-brand)]">
@@ -151,7 +152,7 @@ export function PollWidget({
                   <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--theme-brand)]">
                     অনলাইন জরিপ
                   </h3>
-                  <time className="text-[10px] font-medium text-[var(--theme-text-body)] opacity-80">
+                  <time className="text-[10px] font-medium text-[var(--theme-text-body)] opacity-75">
                     {todayLabel}
                   </time>
                 </div>
@@ -161,18 +162,20 @@ export function PollWidget({
                 type="button"
                 onClick={() => sharePoll(poll)}
                 aria-label="জরিপ শেয়ার করুন"
-                className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] text-[var(--theme-text-body)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)]"
+                className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] cursor-pointer"
               >
                 <Share2 className="size-3.5" aria-hidden="true" />
               </button>
             </div>
 
+            {/* জরিপের মূল প্রশ্ন */}
             <div className="space-y-1">
-              <p className="font-serif text-sm font-bold leading-snug text-[var(--theme-text-title)] sm:text-base">
+              <p className="font-serif text-sm sm:text-base font-bold text-[var(--theme-text-title)] leading-snug">
                 {poll.question}
               </p>
             </div>
 
+            {/* অপশনসমূহ */}
             <div className="space-y-2">
               {opts.map((opt) => {
                 const count = pollVotes.filter((v) => v.option_id === opt.id).length
@@ -185,12 +188,12 @@ export function PollWidget({
                     type="button"
                     disabled={Boolean(myVote) || busyPoll === poll.id}
                     onClick={() => handleVote(poll.id, opt.id)}
-                    className={`relative w-full overflow-hidden rounded-xl border p-2.5 text-left transition sm:p-3 ${
+                    className={`relative w-full overflow-hidden rounded-xl border p-2.5 sm:p-3 text-left transition ${
                       isMine
-                        ? 'border-[var(--theme-brand)] bg-[var(--theme-brand-soft)] font-bold text-[var(--theme-text-title)]'
+                        ? "border-[var(--theme-brand)] bg-[var(--theme-brand-soft)] text-[var(--theme-text-title)] font-bold"
                         : myVote
-                          ? 'cursor-default border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] text-[var(--theme-text-body)]'
-                          : 'cursor-pointer border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] text-[var(--theme-text-title)] hover:border-[var(--theme-brand)] hover:bg-[var(--theme-brand-soft)] active:scale-[0.99]'
+                          ? "border-[var(--theme-card-border)] bg-transparent text-[var(--theme-text-body)] cursor-default"
+                          : "border-[var(--theme-card-border)] bg-transparent text-[var(--theme-text-title)] hover:border-[var(--theme-brand)] hover:bg-[var(--theme-brand-soft)] cursor-pointer active:scale-[0.99]"
                     }`}
                   >
                     {myVote && (
@@ -198,9 +201,8 @@ export function PollWidget({
                         className="absolute inset-y-0 left-0 transition-all duration-700"
                         style={{
                           width: `${pct}%`,
-                          backgroundColor: isMine
-                            ? 'var(--theme-brand-soft)'
-                            : 'rgba(148, 163, 184, 0.16)',
+                          backgroundColor: isMine ? "var(--theme-brand)" : "var(--theme-text-body)",
+                          opacity: isMine ? 0.22 : 0.12,
                         }}
                       />
                     )}
@@ -211,10 +213,8 @@ export function PollWidget({
                           <CheckCircle2 className="size-4 shrink-0 text-[var(--theme-brand)]" />
                         ) : (
                           <span
-                            className={`size-3.5 shrink-0 rounded-full border-2 ${
-                              myVote
-                                ? 'border-[var(--theme-card-border)]'
-                                : 'border-[var(--theme-text-body)] opacity-60'
+                            className={`size-3.5 rounded-full border-2 shrink-0 ${
+                              myVote ? "border-[var(--theme-card-border)]" : "border-[var(--theme-text-body)] opacity-60"
                             }`}
                           />
                         )}
@@ -232,45 +232,47 @@ export function PollWidget({
               })}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--theme-card-border)] pt-2 text-[11px] font-medium text-[var(--theme-text-body)]">
+            {/* নিচের মেটা ও ফলাফল */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--theme-card-border)] pt-2 text-[11px] text-[var(--theme-text-body)] font-medium">
               <span>
                 মোট ভোট: <b className="font-bold text-[var(--theme-brand)]">{bn(totalVotes)} জন</b>
               </span>
               <span>
                 {myVote ? (
-                  <span className="inline-flex items-center gap-1 font-bold text-emerald-500">
+                  <span className="inline-flex items-center gap-1 font-bold text-[var(--theme-brand)]">
                     <CheckCircle2 className="size-3.5" />
                     আপনার ভোট গৃহীত হয়েছে
                   </span>
                 ) : (
-                  'বিকল্পটিতে ক্লিক করে ভোট দিন'
+                  "বিকল্পটিতে ক্লিক করে ভোট দিন"
                 )}
               </span>
             </div>
 
+            {/* সোশ্যাল শেয়ার স্ট্রিপ */}
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--theme-card-border)] pt-2.5">
               <div className="flex items-center gap-1.5" aria-label="জরিপ শেয়ার করুন">
                 <button
                   type="button"
-                  onClick={() => openSocialShare('facebook', poll)}
+                  onClick={() => openSocialShare("facebook", poll)}
                   aria-label="Facebook"
-                  className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-[#1877f2] text-xs font-bold text-white hover:opacity-90"
+                  className="hero-daylight-dark-surface flex size-7 items-center justify-center rounded-full bg-[#1877f2] text-xs font-bold text-white hover:opacity-90 cursor-pointer"
                 >
                   f
                 </button>
                 <button
                   type="button"
-                  onClick={() => openSocialShare('whatsapp', poll)}
+                  onClick={() => openSocialShare("whatsapp", poll)}
                   aria-label="WhatsApp"
-                  className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-[#25d366] text-[10px] font-bold text-white hover:opacity-90"
+                  className="hero-daylight-dark-surface flex size-7 items-center justify-center rounded-full bg-[#25d366] text-[10px] font-bold text-white hover:opacity-90 cursor-pointer"
                 >
                   WA
                 </button>
                 <button
                   type="button"
-                  onClick={() => openSocialShare('x', poll)}
+                  onClick={() => openSocialShare("x", poll)}
                   aria-label="X"
-                  className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white hover:opacity-90"
+                  className="hero-daylight-dark-surface flex size-7 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white hover:opacity-90 cursor-pointer"
                 >
                   X
                 </button>
@@ -278,14 +280,14 @@ export function PollWidget({
                   type="button"
                   onClick={() => copyPollLink(poll)}
                   aria-label="লিংক কপি"
-                  className="flex size-7 cursor-pointer items-center justify-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] text-[var(--theme-text-title)] hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)]"
+                  className="flex size-7 items-center justify-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] text-[var(--theme-text-title)] hover:border-[var(--theme-brand)] cursor-pointer"
                 >
                   <Copy className="size-3" aria-hidden="true" />
                 </button>
               </div>
 
               {shareStatus && (
-                <span className="text-[10px] font-bold text-emerald-500">
+                <span className="text-[10px] font-bold text-[var(--theme-brand)]">
                   {shareStatus}
                 </span>
               )}
