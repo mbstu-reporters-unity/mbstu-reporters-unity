@@ -37,11 +37,12 @@ export function LeadershipSection() {
   const statsConfig = settings.stats
 
   return (
-    <section id="leadership" className="relative py-12 sm:py-16">
+    <section id="leadership" className="py-16 sm:py-20 relative">
       <div className="mx-auto max-w-7xl px-4">
         <div id="about" className="-mt-20 pt-20" />
 
         <SectionHeading
+          inverted
           eyebrow={sec?.eyebrow ?? "Executive Council & At a Glance"}
           title={sec?.titleBn || "কার্যনির্বাহী পরিষদ"}
           titleEn={sec?.titleEn || "Executive Council"}
@@ -73,10 +74,7 @@ export function LeadershipSection() {
                       active ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-4 opacity-0"
                     }`}
                   >
-                    <Quote
-                      className="pointer-events-none absolute right-6 top-6 size-12 text-[var(--theme-text-body)] opacity-15"
-                      aria-hidden="true"
-                    />
+                    <Quote className="absolute right-6 top-6 size-12 text-[var(--theme-text-title)] opacity-10 pointer-events-none" aria-hidden="true" />
 
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-4">
                       <div className="relative min-w-0 max-w-full">
@@ -86,27 +84,27 @@ export function LeadershipSection() {
                           style={ps}
                           fallback={
                             <div
-                              className="flex h-full w-full items-center justify-center bg-[var(--theme-brand)] font-serif text-2xl font-bold text-[var(--theme-brand-contrast,var(--theme-bg-solid))] shadow-inner"
+                              className="flex h-full w-full items-center justify-center bg-[var(--theme-brand)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] font-serif text-2xl font-bold shadow-inner"
                               role="img"
                             >
                               {initials(leader.display_name)}
                             </div>
                           }
                         />
-                        <span className="absolute -bottom-2 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand)] px-3 py-0.5 text-[11px] font-bold text-[var(--theme-brand-contrast,var(--theme-bg-solid))] shadow-md">
+                        <span className="absolute -bottom-2 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--theme-brand)] px-3 py-0.5 text-[11px] font-bold text-[var(--theme-brand-contrast,var(--theme-bg-solid))] shadow-md border border-[var(--theme-card-border)]">
                           {pos?.bn}
                         </span>
                       </div>
 
                       <div className="min-w-0 flex-1 basis-40">
-                        <span className="mb-1 inline-block rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[var(--theme-brand)]">
+                        <span className="inline-block rounded-full bg-[var(--theme-brand-soft)] px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[var(--theme-brand)] border border-[var(--theme-card-border)] mb-1">
                           {pos?.en}
                         </span>
-                        <h3 className="font-serif text-xl font-bold text-[var(--theme-text-title)] sm:text-2xl">
+                        <h3 className="font-serif text-xl sm:text-2xl font-bold text-[var(--theme-text-title)]">
                           {leader.display_name}
                         </h3>
                         {leader.department && (
-                          <p className="mt-0.5 text-xs font-medium text-[var(--theme-text-body)] sm:text-sm">
+                          <p className="text-xs sm:text-sm text-[var(--theme-brand)] font-medium mt-0.5">
                             {leader.department}
                           </p>
                         )}
@@ -114,16 +112,14 @@ export function LeadershipSection() {
                     </div>
 
                     {leader.message && (
-                      <p className="mt-6 whitespace-pre-line text-justify text-sm leading-relaxed text-[var(--theme-text-body)] sm:text-base">
+                      <p className="mt-6 whitespace-pre-line text-sm sm:text-base leading-relaxed text-[var(--theme-text-body)] text-justify">
                         {leader.message}
                       </p>
                     )}
 
-                    <div className="mt-6 flex items-center justify-between border-t border-[var(--theme-card-border)] pt-4">
+                    <div className="mt-6 border-t border-[var(--theme-card-border)] pt-4 flex items-center justify-between">
                       <div>
-                        <p className="font-serif text-base font-bold italic text-[var(--theme-brand)]">
-                          — {leader.display_name}
-                        </p>
+                        <p className="font-serif text-base font-bold italic text-[var(--theme-brand)]">— {leader.display_name}</p>
                         <p className="text-xs text-[var(--theme-text-body)] opacity-85">
                           {pos?.en}, {settings.branding.orgNameEn}
                         </p>
@@ -135,7 +131,7 @@ export function LeadershipSection() {
             </div>
             {leaders.length > 1 && (
               <div className="mt-4 flex items-center justify-between gap-3">
-                <span className="text-xs font-semibold text-[var(--theme-text-body)]">
+                <span className="text-xs font-medium text-[var(--theme-text-body)]">
                   {autoplay.index + 1} / {leaders.length}
                 </span>
                 <div className="flex gap-2">
@@ -143,7 +139,7 @@ export function LeadershipSection() {
                     type="button"
                     onClick={autoplay.previous}
                     aria-label="আগের কার্যনির্বাহী সদস্য"
-                    className="cursor-pointer rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-2 text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)]"
+                    className="rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-2 text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] cursor-pointer"
                   >
                     <ArrowLeft className="size-4" aria-hidden="true" />
                   </button>
@@ -151,7 +147,7 @@ export function LeadershipSection() {
                     type="button"
                     onClick={autoplay.next}
                     aria-label="পরের কার্যনির্বাহী সদস্য"
-                    className="cursor-pointer rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-2 text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)]"
+                    className="rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-2 text-[var(--theme-text-title)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] cursor-pointer"
                   >
                     <ArrowRight className="size-4" aria-hidden="true" />
                   </button>
@@ -170,11 +166,11 @@ export function LeadershipSection() {
                   key={stat.id}
                   className="glass-card p-5 sm:p-6"
                 >
-                  <span className="flex size-11 items-center justify-center rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] text-[var(--theme-brand)] shadow-xs">
+                  <span className="flex size-11 items-center justify-center rounded-xl bg-[var(--theme-brand-soft)] border border-[var(--theme-card-border)] text-[var(--theme-brand)] shadow-sm">
                     <Icon className="size-5" aria-hidden="true" />
                   </span>
 
-                  <p className="mt-4 font-serif text-3xl font-extrabold text-[var(--theme-text-title)] sm:text-4xl">
+                  <p className="mt-4 font-serif text-3xl sm:text-4xl font-extrabold text-[var(--theme-text-title)]">
                     {stat.value}
                   </p>
                   <p className="mt-1 text-sm font-bold text-[var(--theme-text-title)]">{stat.labelEn}</p>
