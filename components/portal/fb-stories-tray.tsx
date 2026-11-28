@@ -188,126 +188,146 @@ export function FbStoriesTray({
     <div id="stories" className="w-full my-4">
       {!standalone && showHeading && (
         <div className="mx-auto mb-2 flex max-w-7xl items-center justify-between gap-3 px-4">
-          <h2 className="font-serif text-base font-bold text-white">
-            {pick(sec?.titleBn || 'গল্পসমূহ', sec?.titleEn || 'Stories')}
+          <h2 className="font-serif text-base font-bold text-[var(--theme-text-title)]">
+            {pick(sec?.titleBn || "গল্পসমূহ", sec?.titleEn || "Stories")}
           </h2>
-          <Link href="/stories" className="text-xs font-bold text-cyan-300 hover:underline">
-            {pick('সকল গল্প দেখুন', 'View all stories')}
+          <Link href="/stories" className="text-xs font-bold text-[var(--theme-brand)] hover:underline">
+            {pick("সকল গল্প দেখুন", "View all stories")}
           </Link>
         </div>
       )}
       <div className="relative">
         <div ref={storyTrayRef} className="w-full overflow-x-auto py-1 px-3 sm:px-4 scrollbar-none select-none">
           <div className="flex min-w-max items-center gap-2 sm:gap-2.5">
-          {!hideAddStory && <Link
-            href="/admin"
-            className={`group relative ${portrait ? 'aspect-[9/16] w-[155px] sm:w-[180px]' : 'h-[175px] w-[105px] sm:h-[205px] sm:w-[125px]'} shrink-0 overflow-hidden rounded-2xl border text-center transition-all active:scale-95 ${
-              newspaper
-                ? "border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] shadow-md"
-                : "border-white/20 bg-slate-900/90 shadow-lg"
-            }`}
-          >
-            <div className="h-[65%] w-full bg-slate-800 flex items-center justify-center overflow-hidden">
-              {me?.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={me.avatar_url} alt="" className="size-full object-cover group-hover:scale-105 transition" />
-              ) : (
-                <div className="size-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center font-bold text-2xl text-white">
-                  {me ? me.full_name.charAt(0) : "M"}
+            {!hideAddStory && (
+              <Link
+                href="/admin"
+                className={`group relative ${
+                  portrait ? "aspect-[9/16] w-[155px] sm:w-[180px]" : "h-[175px] w-[105px] sm:h-[205px] sm:w-[125px]"
+                } shrink-0 overflow-hidden rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-center shadow-md transition-all active:scale-95`}
+              >
+                <div className="h-[65%] w-full bg-slate-800 flex items-center justify-center overflow-hidden">
+                  {me?.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={me.avatar_url} alt="" className="size-full object-cover group-hover:scale-105 transition" />
+                  ) : (
+                    <div className="hero-daylight-dark-surface size-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center font-bold text-2xl text-white">
+                      {me ? me.full_name.charAt(0) : "M"}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className={`relative flex h-[35%] flex-col items-center justify-end px-1 pb-2 ${newspaper ? "bg-[var(--theme-card-bg)]" : "bg-slate-950"}`}>
-              <span className={`absolute -top-4 flex size-8 items-center justify-center rounded-full text-white shadow-lg ring-4 transition group-hover:scale-110 ${newspaper ? "bg-sky-600 ring-[var(--theme-card-bg)]" : "bg-blue-600 ring-slate-950"}`}>
-                <Plus className="size-5" />
-              </span>
-              <span className={`text-[10px] font-bold leading-tight ${newspaper ? "text-[var(--theme-text-title)]" : "text-white"}`}>{addStoryLabel}</span>
-            </div>
-          </Link>}
-
-          {stories.map((st, idx) => (
-            <div
-              key={st.id}
-              onClick={() => openStory(idx)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault()
-                  openStory(idx)
-                }
-              }}
-              aria-label={st.highlight_title || st.caption || st.author_name}
-              className={`group relative ${portrait ? "aspect-[9/16] w-[155px] sm:w-[180px]" : "h-[175px] w-[105px] sm:h-[205px] sm:w-[125px]"} shrink-0 cursor-pointer overflow-hidden rounded-2xl border transition-all active:scale-95 ${
-                newspaper
-                  ? "border-[var(--theme-card-border)] shadow-md"
-                  : "border-white/20 shadow-lg"
-              }`}
-            >
-              {st.media_type === "video" ? (
-                <video src={st.media_url} className="size-full object-cover" muted playsInline />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={st.media_url}
-                  alt=""
-                  className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              )}
-
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-
-              <div className="absolute top-2 left-2 size-8 rounded-full p-0.5 bg-blue-600 ring-2 ring-white/60 overflow-hidden shadow">
-                {st.author_avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={st.author_avatar} alt="" className="size-full rounded-full object-cover" />
-                ) : (
-                  <div className="size-full bg-slate-800 text-white flex items-center justify-center text-xs font-bold">
-                    {st.author_name.charAt(0)}
-                  </div>
-                )}
-              </div>
-
-              {st.is_highlight && (
-                <span className={`absolute right-2 flex items-center gap-0.5 rounded-full bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold text-black shadow ${typeof st.view_count === "number" ? "top-10" : "top-2"}`}>
-                  <Sparkles className="size-2.5" />
-                </span>
-              )}
-
-              {typeof st.view_count === "number" && (
-                <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 font-mono text-[10px] font-semibold text-white backdrop-blur-md">
-                  <Eye className="size-3" aria-hidden="true" />
-                  {st.view_count.toLocaleString("bn-BD")}
-                </span>
-              )}
-
-              {st.media_type === "video" && (
-                <span className="absolute inset-0 flex items-center justify-center text-white">
-                  <span className="flex size-11 items-center justify-center rounded-full border border-white/40 bg-white/20 shadow-lg backdrop-blur-md">
-                    <Play className="ml-0.5 size-5 fill-current" aria-hidden="true" />
+                <div className="relative flex h-[35%] flex-col items-center justify-end bg-[var(--theme-card-bg)] px-1 pb-2">
+                  <span
+                    className="absolute -top-4 flex size-8 items-center justify-center rounded-full shadow-lg ring-4 ring-[var(--theme-card-bg)] transition group-hover:scale-110"
+                    style={{
+                      backgroundColor: "var(--theme-brand)",
+                      color: "var(--theme-bg-solid)",
+                    }}
+                  >
+                    <Plus className="size-5" />
                   </span>
-                </span>
-              )}
+                  <span className="text-[10px] font-bold leading-tight text-[var(--theme-text-title)]">
+                    {addStoryLabel}
+                  </span>
+                </div>
+              </Link>
+            )}
 
-              <div className="absolute bottom-2.5 inset-x-2">
-                <p className="line-clamp-2 text-xs font-bold leading-snug text-white drop-shadow-md sm:text-sm">
-                  {st.highlight_title || st.caption || st.author_name}
-                </p>
-                {(st.highlight_title || st.caption) && (
-                  <p className="mt-1 truncate text-[10px] text-white/80">{st.author_name}</p>
+            {stories.map((st, idx) => (
+              <div
+                key={st.id}
+                onClick={() => openStory(idx)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault()
+                    openStory(idx)
+                  }
+                }}
+                aria-label={st.highlight_title || st.caption || st.author_name}
+                className={`hero-daylight-dark-surface group relative ${
+                  portrait ? "aspect-[9/16] w-[155px] sm:w-[180px]" : "h-[175px] w-[105px] sm:h-[205px] sm:w-[125px]"
+                } shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-[var(--theme-card-border)] bg-slate-950 shadow-lg transition-all active:scale-95`}
+              >
+                {st.media_type === "video" ? (
+                  <video src={st.media_url} className="size-full object-cover" muted playsInline />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={st.media_url}
+                    alt=""
+                    className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
                 )}
+
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+
+                <div className="absolute top-2 left-2 size-8 rounded-full p-0.5 bg-blue-600 ring-2 ring-white/70 overflow-hidden shadow">
+                  {st.author_avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={st.author_avatar} alt="" className="size-full rounded-full object-cover" />
+                  ) : (
+                    <div className="size-full bg-slate-800 text-white flex items-center justify-center text-xs font-bold">
+                      {st.author_name.charAt(0)}
+                    </div>
+                  )}
+                </div>
+
+                {st.is_highlight && (
+                  <span
+                    className={`absolute right-2 flex items-center gap-0.5 rounded-full bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold text-black shadow ${
+                      typeof st.view_count === "number" ? "top-10" : "top-2"
+                    }`}
+                  >
+                    <Sparkles className="size-2.5" />
+                  </span>
+                )}
+
+                {typeof st.view_count === "number" && (
+                  <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/65 px-2 py-0.5 font-mono text-[10px] font-semibold text-white backdrop-blur-md">
+                    <Eye className="size-3" aria-hidden="true" />
+                    {st.view_count.toLocaleString("bn-BD")}
+                  </span>
+                )}
+
+                {st.media_type === "video" && (
+                  <span className="absolute inset-0 flex items-center justify-center text-white">
+                    <span className="flex size-11 items-center justify-center rounded-full border border-white/40 bg-black/50 shadow-lg backdrop-blur-md">
+                      <Play className="ml-0.5 size-5 fill-current" aria-hidden="true" />
+                    </span>
+                  </span>
+                )}
+
+                <div className="absolute bottom-2.5 inset-x-2">
+                  <p className="line-clamp-2 text-xs font-bold leading-snug text-white drop-shadow-md sm:text-sm">
+                    {st.highlight_title || st.caption || st.author_name}
+                  </p>
+                  {(st.highlight_title || st.caption) && (
+                    <p className="mt-1 truncate text-[10px] text-white/85">{st.author_name}</p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
           </div>
         </div>
         {newspaper && stories.length > 2 && (
           <>
-            <button type="button" onClick={() => scrollStories(-1)} aria-label="আগের ফটো স্টোরি" className="absolute left-1 top-1/2 z-10 hidden size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:bg-slate-50 sm:flex">
+            <button
+              type="button"
+              onClick={() => scrollStories(-1)}
+              aria-label="আগের ফটো স্টোরি"
+              className="absolute left-1 top-1/2 z-10 hidden size-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-title)] shadow-md transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] sm:flex cursor-pointer"
+            >
               <ChevronLeft className="size-5" aria-hidden="true" />
             </button>
-            <button type="button" onClick={() => scrollStories(1)} aria-label="পরের ফটো স্টোরি" className="absolute right-1 top-1/2 z-10 hidden size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:bg-slate-50 sm:flex">
+            <button
+              type="button"
+              onClick={() => scrollStories(1)}
+              aria-label="পরের ফটো স্টোরি"
+              className="absolute right-1 top-1/2 z-10 hidden size-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-title)] shadow-md transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)] sm:flex cursor-pointer"
+            >
               <ChevronRight className="size-5" aria-hidden="true" />
             </button>
           </>
@@ -315,18 +335,21 @@ export function FbStoriesTray({
       </div>
 
       {standalone && (
-        <p className={`mx-4 mt-2 rounded-xl border px-4 py-3 text-center text-xs ${newspaper ? "border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)]" : "border-white/15 bg-white/10 text-slate-300"}`} aria-live="polite">
+        <p
+          className="mx-4 mt-2 rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] px-4 py-3 text-center text-xs text-[var(--theme-text-body)]"
+          aria-live="polite"
+        >
           {!loaded
-            ? 'স্টোরি লোড হচ্ছে...'
+            ? "স্টোরি লোড হচ্ছে..."
             : stories.length === 0
-              ? 'এখনো কোনো সক্রিয় স্টোরি নেই।'
-              : `${stories.length.toLocaleString('bn-BD')}টি স্টোরি`}
+              ? "এখনো কোনো সক্রিয় স্টোরি নেই।"
+              : `${stories.length.toLocaleString("bn-BD")}টি স্টোরি`}
         </p>
       )}
 
       {currentActiveStory && (
         <div
-          className="fixed inset-0 z-[999999] bg-black/95 flex flex-col items-center justify-center p-0 sm:p-4 backdrop-blur-xl animate-in fade-in select-none"
+          className="hero-daylight-dark-surface fixed inset-0 z-[999999] bg-black/95 flex flex-col items-center justify-center p-0 sm:p-4 backdrop-blur-xl animate-in fade-in select-none text-white"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
@@ -357,7 +380,7 @@ export function FbStoriesTray({
                   )}
                 </div>
                 <div>
-                  <p className="text-xs font-bold drop-shadow leading-tight">{currentActiveStory.author_name}</p>
+                  <p className="text-xs font-bold drop-shadow leading-tight text-white">{currentActiveStory.author_name}</p>
                   <p className="text-[10px] text-slate-300">
                     {activeStoryIdx! + 1} of {stories.length}
                   </p>
@@ -435,7 +458,7 @@ export function FbStoriesTray({
 
             {(currentActiveStory.caption || currentActiveStory.link_url) && (
               <div className="absolute bottom-5 inset-x-4 z-30 p-3 rounded-2xl bg-black/75 backdrop-blur-md text-white text-xs text-center border border-white/10 space-y-1.5">
-                {currentActiveStory.caption && <p>{currentActiveStory.caption}</p>}
+                {currentActiveStory.caption && <p className="text-white">{currentActiveStory.caption}</p>}
                 {currentActiveStory.link_url && (
                   <a
                     href={currentActiveStory.link_url}
