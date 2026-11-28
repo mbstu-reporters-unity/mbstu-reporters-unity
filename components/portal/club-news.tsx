@@ -261,43 +261,48 @@ export function ClubNews({
     const activityMediaList = parseActivityMedia(raw?.embed_media_url)
 
     return (
-      <div className={`flex flex-col justify-between p-4 sm:p-5 select-none text-white h-full ${compact ? 'min-h-[240px] sm:min-h-[280px]' : 'min-h-[300px]'} w-full border-b border-white/15 transition-all`}>
+      <div
+        className={cn(
+          'glass-card flex flex-col justify-between p-4 sm:p-5 select-none text-[var(--theme-text-body)] h-full w-full transition-all',
+          compact ? 'min-h-[240px] sm:min-h-[280px]' : 'min-h-[300px]'
+        )}
+      >
         <div className="space-y-3">
-          <div className="flex items-start justify-between gap-2 border-b border-white/15 pb-2.5">
+          <div className="flex items-start justify-between gap-2 border-b border-[var(--theme-card-border)] pb-2.5">
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
               {raw?.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={raw.logo_url}
                   alt={club.name}
-                  className="size-10 rounded-full object-cover border border-white/30 p-0.5 bg-white shadow-sm shrink-0"
+                  className="size-10 rounded-full object-cover border border-[var(--theme-card-border)] p-0.5 bg-white shadow-sm shrink-0"
                   onError={(e) => { (e.target as HTMLElement).style.display = 'none' }}
                 />
               ) : (
-                <div className="size-10 rounded-full bg-white/15 text-cyan-300 border border-white/20 flex items-center justify-center shrink-0">
+                <div className="size-10 rounded-full bg-[var(--theme-brand-soft)] text-[var(--theme-brand)] border border-[var(--theme-card-border)] flex items-center justify-center shrink-0">
                   <Icon className="size-4" aria-hidden="true" />
                 </div>
               )}
-              <span className="font-bold text-xs sm:text-sm text-white line-clamp-2 break-words leading-tight drop-shadow-sm flex-1">
+              <span className="font-bold text-xs sm:text-sm text-[var(--theme-text-title)] line-clamp-2 break-words leading-tight flex-1">
                 {club.nameBn || club.name}
               </span>
             </div>
 
-            <span className="rounded-full bg-white/15 border border-white/20 px-2.5 py-1 text-[10px] font-bold text-cyan-200 shrink-0 whitespace-nowrap">
+            <span className="rounded-full bg-[var(--theme-brand-soft)] border border-[var(--theme-card-border)] px-2.5 py-1 text-[10px] font-bold text-[var(--theme-brand)] shrink-0 whitespace-nowrap">
               {club.tag}
             </span>
           </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] text-cyan-200/80 gap-1">
+            <div className="flex items-center justify-between text-[11px] text-[var(--theme-brand)] gap-1">
               <span className="font-semibold flex items-center gap-1 shrink-0">
-                <Sparkles className="size-3 text-amber-300" />
+                <Sparkles className="size-3 text-amber-500" />
                 <span>{pick('সাম্প্রতিক কার্যক্রম', 'Recent activities')}</span>
               </span>
-              {club.date && <span className="font-mono text-[10px] opacity-80 shrink-0">{club.date}</span>}
+              {club.date && <span className="font-mono text-[10px] opacity-85 shrink-0">{club.date}</span>}
             </div>
 
-            <p className="text-xs leading-relaxed text-slate-200 line-clamp-2 break-words">
+            <p className="text-xs leading-relaxed text-[var(--theme-text-body)] line-clamp-2 break-words">
               {club.activityBn || club.activity}
             </p>
 
@@ -306,7 +311,7 @@ export function ClubNews({
                 {activityMediaList[0].url.includes('youtube') ||
                 activityMediaList[0].url.includes('facebook') ||
                 activityMediaList[0].url.includes('.mp4') ? (
-                  <div className="flex min-h-24 w-full items-center justify-center bg-black/60 text-white gap-1 text-[11px] font-semibold">
+                  <div className="hero-daylight-dark-surface flex min-h-24 w-full items-center justify-center bg-slate-900/90 text-white gap-1 text-[11px] font-semibold">
                     <Play className="size-4 fill-current text-cyan-400" />
                     <span>{pick('ভিডিও', 'Video')}</span>
                   </div>
@@ -325,7 +330,7 @@ export function ClubNews({
           </div>
         </div>
 
-        <div className="mt-4 pt-2.5 border-t border-white/15 space-y-2">
+        <div className="mt-4 pt-2.5 border-t border-[var(--theme-card-border)] space-y-2">
           <div className="flex items-center justify-between gap-1 text-[11px]">
             <div className="flex items-center gap-1.5">
               {raw?.fb_url && (
@@ -333,7 +338,7 @@ export function ClubNews({
                   href={safeExternalUrl(raw.fb_url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-2.5 py-0.5 rounded-full bg-blue-600/80 border border-blue-400/40 text-white font-bold hover:bg-blue-600 transition"
+                  className="px-2.5 py-0.5 rounded-full bg-[#1877f2] text-white font-bold hover:opacity-90 transition"
                 >
                   FB
                 </a>
@@ -343,7 +348,7 @@ export function ClubNews({
                   href={safeExternalUrl(raw.web_url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1 rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+                  className="p-1 rounded-full bg-[var(--theme-brand-soft)] text-[var(--theme-text-title)] border border-[var(--theme-card-border)] hover:border-[var(--theme-brand)] transition"
                   title="Website"
                 >
                   <Globe className="size-3" />
@@ -352,8 +357,8 @@ export function ClubNews({
             </div>
 
             {raw?.committee_members && raw.committee_members.length > 0 && (
-              <span className="text-[11px] text-cyan-200/90 font-medium flex items-center gap-1">
-                <Users className="size-3 text-cyan-400" />
+              <span className="text-[11px] text-[var(--theme-brand)] font-semibold flex items-center gap-1">
+                <Users className="size-3" />
                 <span>{raw.committee_members.length} {pick('জন', raw.committee_members.length === 1 ? 'member' : 'members')}</span>
               </span>
             )}
@@ -362,7 +367,7 @@ export function ClubNews({
           <button
             type="button"
             onClick={() => handleOpenClub(club)}
-            className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 py-2.5 text-xs font-bold text-white transition active:scale-95 cursor-pointer shadow-md border border-white/20"
+            className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--theme-brand)] hover:bg-[var(--theme-brand-dark)] py-2.5 text-xs font-bold text-[var(--theme-brand-contrast,var(--theme-bg-solid))] transition active:scale-95 cursor-pointer shadow-sm"
           >
             <FileText className="size-3.5" />
             <span>{pick('প্রতিবেদন ও কমিটির তথ্য দেখুন', 'View reports and committee information')}</span>
@@ -408,7 +413,7 @@ export function ClubNews({
 
   if (compact) {
     return (
-      <section id="club-news" className="relative border-b border-white/10 py-8 sm:py-10">
+      <section id="club-news" className="relative border-b border-[var(--theme-card-border)] py-8 sm:py-10">
         <div
           className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8"
           onMouseEnter={() => setIsPaused(true)}
@@ -432,7 +437,7 @@ export function ClubNews({
               !standalone ? (
                 <Link
                   href="/clubs"
-                  className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
+                  className="inline-flex shrink-0 items-center rounded-full bg-[var(--theme-brand)] px-4 py-2 text-xs font-bold text-[var(--theme-brand-contrast,var(--theme-bg-solid))] transition hover:bg-[var(--theme-brand-dark)]"
                 >
                   {pick('সব দেখুন', 'View all')}
                 </Link>
@@ -454,8 +459,8 @@ export function ClubNews({
                 className={cn(
                   'shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap',
                   filter === tag
-                    ? 'border-cyan-300/60 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md'
-                    : 'border-white/20 bg-white/10 text-white/80 hover:bg-white/20',
+                    ? 'border-[var(--theme-brand)] bg-[var(--theme-brand)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] shadow-md font-bold'
+                    : 'border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] hover:border-[var(--theme-brand)] hover:text-[var(--theme-text-title)]',
                 )}
               >
                 {tag === 'All' ? pick('সকল ক্লাব', 'All clubs') : tag}
@@ -484,7 +489,7 @@ export function ClubNews({
   }
 
   return (
-    <section id="club-news" className="relative py-14 sm:py-20 border-b border-white/10 overflow-hidden">
+    <section id="club-news" className="relative py-14 sm:py-20 border-b border-[var(--theme-card-border)] overflow-hidden">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         <SectionHeading
@@ -500,7 +505,7 @@ export function ClubNews({
             !standalone ? (
               <Link
                 href="/clubs"
-                className="inline-flex shrink-0 items-center rounded-full bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-cyan-500"
+                className="inline-flex shrink-0 items-center rounded-full bg-[var(--theme-brand)] px-4 py-2 text-xs font-bold text-[var(--theme-brand-contrast,var(--theme-bg-solid))] transition hover:bg-[var(--theme-brand-dark)]"
               >
                 {compact ? pick('সব দেখুন', 'View all') : pick('সকল ক্লাব দেখুন', 'View all clubs')}
               </Link>
@@ -520,12 +525,12 @@ export function ClubNews({
               className={cn(
                 'shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap',
                 filter === tag
-                  ? 'border-cyan-300/60 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md font-bold'
-                  : 'border-white/20 bg-white/10 text-white/80 hover:bg-white/20',
+                  ? 'border-[var(--theme-brand)] bg-[var(--theme-brand)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] shadow-md font-bold'
+                  : 'border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] hover:border-[var(--theme-brand)] hover:text-[var(--theme-text-title)]',
               )}
             >
               <span>{tag === 'All' ? pick('সকল ক্লাব', 'All clubs') : tag}</span>
-              <span className={cn('text-[10px] px-1.5 py-0.2 rounded-full', filter === tag ? 'bg-white/20 text-white font-bold' : 'bg-white/10 text-white/70')}>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/15 font-bold">
                 {tag === 'All' ? list.length : list.filter((c) => c.tag === tag).length}
               </span>
             </button>
@@ -545,7 +550,7 @@ export function ClubNews({
         >
           {total === 0 ? (
             <div className="px-4">
-              <p className="text-center text-xs text-white/60 py-10 glass-card">
+              <p className="text-center text-xs text-[var(--theme-text-body)] py-10 glass-card">
                 {pick('কোনো ক্লাব পাওয়া যায়নি।', 'No clubs were found.')}
               </p>
             </div>
@@ -603,14 +608,14 @@ export function ClubNews({
         </div>
 
         {total > itemsPerView && (
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--theme-card-border)] pt-4">
             {config.enabled && (
               <button
                 type="button"
                 onClick={() => setIsPaused(!isPaused)}
-                className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 text-xs font-semibold border border-white/20 transition cursor-pointer active:scale-95"
+                className="h-8 px-3 rounded-full bg-[var(--theme-card-bg)] hover:border-[var(--theme-brand)] text-[var(--theme-text-title)] flex items-center gap-1.5 text-xs font-semibold border border-[var(--theme-card-border)] transition cursor-pointer active:scale-95"
               >
-                {isPaused ? <Play className="size-3 text-cyan-400" /> : <Pause className="size-3 text-amber-400" />}
+                {isPaused ? <Play className="size-3 text-[var(--theme-brand)]" /> : <Pause className="size-3 text-amber-500" />}
                 <span>{isPaused ? pick('চালু করুন', 'Resume') : pick('বিরতি দিন', 'Pause')}</span>
               </button>
             )}
@@ -624,7 +629,7 @@ export function ClubNews({
                     onClick={() => setCurrentIndex(idx)}
                     aria-label={pick(`স্লাইড ${idx + 1}`, `Slide ${idx + 1}`)}
                     className={`h-2 rounded-full transition-all cursor-pointer ${
-                      idx === safeIndex ? 'w-5 bg-cyan-400 shadow-sm' : 'w-2 bg-white/30 hover:bg-white/60'
+                      idx === safeIndex ? 'w-5 bg-[var(--theme-brand)] shadow-sm' : 'w-2 bg-[var(--theme-card-border)] hover:opacity-80'
                     }`}
                   />
                 ))}
@@ -632,20 +637,20 @@ export function ClubNews({
             )}
 
             {isContinuous && (
-              <span className="text-xs font-bold text-cyan-300 bg-white/10 px-3 py-1 rounded-full border border-white/15">
+              <span className="text-xs font-bold text-[var(--theme-brand)] bg-[var(--theme-brand-soft)] px-3 py-1 rounded-full border border-[var(--theme-card-border)]">
                 {pick(`মোট ${bn(total)}টি ক্লাব`, `${total} clubs total`)}
               </span>
             )}
 
             {config.show_arrows !== false && !isContinuous && (
               <div className="flex items-center gap-2 ml-auto">
-                <span className="text-xs font-bold text-cyan-300 bg-white/10 px-3 py-1 rounded-full border border-white/15">
+                <span className="text-xs font-bold text-[var(--theme-brand)] bg-[var(--theme-brand-soft)] px-3 py-1 rounded-full border border-[var(--theme-card-border)]">
                   {pick(`ক্লাব ${bn(safeIndex + 1)} / ${bn(total)}`, `Club ${safeIndex + 1} of ${total}`)}
                 </span>
                 <button
                   type="button"
                   onClick={prevSlide}
-                  className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
+                  className="size-8 rounded-full bg-[var(--theme-card-bg)] hover:border-[var(--theme-brand)] text-[var(--theme-text-title)] flex items-center justify-center border border-[var(--theme-card-border)] transition cursor-pointer active:scale-95"
                   aria-label={pick('পূর্ববর্তী ক্লাব', 'Previous club')}
                 >
                   <ChevronLeft className="size-4" />
@@ -653,7 +658,7 @@ export function ClubNews({
                 <button
                   type="button"
                   onClick={nextSlide}
-                  className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/20 transition cursor-pointer active:scale-95"
+                  className="size-8 rounded-full bg-[var(--theme-card-bg)] hover:border-[var(--theme-brand)] text-[var(--theme-text-title)] flex items-center justify-center border border-[var(--theme-card-border)] transition cursor-pointer active:scale-95"
                   aria-label={pick('পরবর্তী ক্লাব', 'Next club')}
                 >
                   <ChevronRight className="size-4" />
