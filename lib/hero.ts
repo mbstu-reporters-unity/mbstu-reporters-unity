@@ -23,24 +23,22 @@ export interface GradientStop {
   stop: number
 }
 
-// দৈর্ঘ্য ও প্রস্থ উভয়ের ব্যানার কনফিগারেশন
 export interface BannerConfig {
   mode: "solid" | "gradient"
   angle: number
   stops: GradientStop[]
-  height_px: number // দৈর্ঘ্য / উচ্চতা
-  width_pct: number // প্রস্থ (৫০% থেকে ১০০%)
+  height_px: number
+  width_pct: number
 }
 
-// প্রতিটি লেখার স্বাধীন আইটেম (শিরোনাম, সাবহেডিং, বিস্তারিত, তারিখ, রিপোর্টার)
 export interface IndependentTextItem {
   id: string
-  label: string // 'শিরোনাম' | 'সাব-হেডিং' | 'বিস্তারিত' | 'তারিখ' | 'প্রতিবেদক'
+  label: string
   text: string
   enabled: boolean
-  x: number // ০ - ১০০%
-  y: number // ০ - ১০০%
-  size_scale: number // ফন্ট সাইজ স্কেলিং
+  x: number
+  y: number
+  size_scale: number
   color: string
   bg_color?: string
   weight: "normal" | "semibold" | "bold"
@@ -83,8 +81,6 @@ export const TEXT_EFFECTS_35 = [
   { label: "২৩. রাবার ব্যান্ড পপ (Rubber Band)", value: "rubber-band" },
   { label: "২৪. পালস রিং এক্সপ্যান্ড (Pulse)", value: "pulse-expand" },
   { label: "২৫. পার্সপেক্টিভ টিল্ট (Tilt 3D)", value: "tilt-in" },
-
-  // অটো-লুপ অ্যানিমেশন
   { label: "২৬. [অটো] স্মুথ ফ্লোটিং লুপ (Float)", value: "auto-float" },
   { label: "২৭. [অটো] হার্টবিট থাম্প লুপ (Heartbeat)", value: "auto-heartbeat" },
   { label: "২৮. [অটো] নিয়ন গ্লো লুপ (Neon Pulse)", value: "auto-neon" },
@@ -113,7 +109,6 @@ export const TEXT_STYLES = [
   { label: "ইটালিক (Italic)", value: "italic" },
 ]
 
-// ৩০টি বাস্তব ট্রানজিশন
 export const TRANSITIONS_30 = [
   { label: "১. স্লাইড বামে (Slide Left)", value: "slide-left" },
   { label: "২. স্লাইড ডানে (Slide Right)", value: "slide-right" },
@@ -152,7 +147,7 @@ export interface HeroSlide {
   link_url: string | null
   slide_type?: HeroPostType
   banner_config?: BannerConfig
-  text_layers?: any[] // স্বাধীন টেক্সট বক্সগুলোর তালিকা
+  text_layers?: any[]
   video_config?: VideoConfig
   transition_effect?: string
   slide_duration?: number
@@ -185,6 +180,9 @@ function hdr(token?: string, json = false): Record<string, string> {
   return h
 }
 
+/**
+ * ইউটিউব ও ফেসবুকের সব ধরনের ভিডিও লিংক নিখুঁতভাবে পার্স করার ফাংশন
+ */
 export function parseVideoUrl(rawUrl: string): {
   isEmbed: boolean
   embedSrc?: string
@@ -194,21 +192,38 @@ export function parseVideoUrl(rawUrl: string): {
     return { isEmbed: false, platform: "direct" }
   }
   const url = rawUrl.trim()
-  const ytMatch = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/)
-  if (ytMatch && ytMatch[2]?.length === 11) {
+
+  // ১. ইউটিউব লিংক ডিটেকশন (Shorts, Live, Watch, youtu.be)
+  const ytMatch = url.match(
+    /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v|shorts|live)\/))([^?&"'>#]+)/i
+  )
+  if (ytMatch && ytMatch[1] && ytMatch[1].length >= 10) {
+    const videoId = ytMatch[1]
     return {
       isEmbed: true,
       platform: "youtube",
-      embedSrc: `https://www.youtube.com/embed/${ytMatch[2]}?enablejsapi=1&rel=0&modestbranding=1&controls=1`,
+      embedSrc: `https://www.youtube.com/embed/${videoId}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1&controls=1`,
     }
   }
-  if (url.includes("facebook.com") || url.includes("fb.watch")) {
+
+  // ২. ফেসবুক ভিডিও ও রিলস লিংক ডিটেকশন (Facebook Watch, Reels, Videos, Share Links)
+  if (
+    url.includes("facebook.com") ||
+    url.includes("fb.watch") ||
+    url.includes("fb.com")
+  ) {
+    // মোবাইল লিংক (m.facebook.com) কে ক্লিন ওয়েব লিংকে রূপান্তর
+    let cleanFbUrl = url.replace("m.facebook.com", "www.facebook.com")
     return {
       isEmbed: true,
       platform: "facebook",
-      embedSrc: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`,
+      embedSrc: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
+        cleanFbUrl
+      )}&show_text=0&allowfullscreen=true`,
     }
   }
+
+  // ৩. ডিরেক্ট ভিডিও ফাইল (.mp4, .webm, ইত্যাদি)
   return { isEmbed: false, platform: "direct" }
 }
 
@@ -294,17 +309,4 @@ export async function saveHeroSettings(token: string, data: Partial<HeroSettings
     headers: { ...hdr(token, true), Prefer: "return=minimal" },
     body: JSON.stringify({ ...data, updated_at: new Date().toISOString() }),
   })
-}
-
-export async function getRecentPosts(): Promise<Array<{ id: string; title: string; image_url?: string }>> {
-  try {
-    const res = await fetch(
-      `${SB_URL}/rest/v1/posts?select=id,title,image_url&order=created_at.desc&limit=30`,
-      { headers: hdr(), cache: "no-store" }
-    )
-    if (!res.ok) return []
-    return await res.json()
-  } catch {
-    return []
-  }
 }
