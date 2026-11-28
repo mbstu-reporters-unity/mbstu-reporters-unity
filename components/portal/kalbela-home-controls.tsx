@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Camera, Images, Search, TrendingUp, Clock3 } from "lucide-react"
+import { Camera, Images, Search } from "lucide-react"
 import { FbReelsSection } from "./fb-reels-section"
 import { FbStoriesTray } from "./fb-stories-tray"
 import type { FacultyWithDepartments } from "@/lib/faculties"
@@ -14,7 +14,7 @@ import { CAT_CAMPUS, type Post } from "@/lib/sb"
 const bn = (value: number) => value.toLocaleString("bn-BD")
 
 /* ========================================================
-   ১. কালবেলা ১, ২, ৩... নাম্বারিং তালিকা (সর্বশেষ ও জনপ্রিয়)
+   ১. নাম্বারিং হেডলাইন তালিকা (সর্বশেষ ও জনপ্রিয়)
    ======================================================== */
 export function NumberedHeadlines({
   latestPosts,
@@ -27,19 +27,26 @@ export function NumberedHeadlines({
   const posts = (activeTab === "latest" ? latestPosts : popularPosts).slice(0, 15)
 
   return (
-    <section className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-4 sm:py-6" aria-labelledby="numbered-headlines-title">
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        {/* কালবেলা স্টাইল ট্যাব হেডার */}
-        <div className="flex items-center gap-6 border-b border-slate-200 px-4 sm:px-6 pt-3">
+    <section
+      className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8"
+      aria-labelledby="numbered-headlines-title"
+    >
+      <div className="glass-card overflow-hidden rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] shadow-sm">
+        <div
+          id="numbered-headlines-title"
+          className="flex items-center gap-6 border-b border-[var(--theme-card-border)] px-4 pt-3 sm:px-6"
+          role="tablist"
+          aria-label="সংবাদ তালিকা"
+        >
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === "latest"}
             onClick={() => setActiveTab("latest")}
-            className={`pb-3 font-serif text-base sm:text-lg font-bold transition-all relative cursor-pointer ${
+            className={`relative cursor-pointer pb-3 font-serif text-base font-bold transition-all sm:text-lg ${
               activeTab === "latest"
-                ? "text-[#c8102e] border-b-2 border-[#c8102e]"
-                : "text-slate-700 hover:text-[#c8102e]"
+                ? "border-b-2 border-[var(--theme-brand)] text-[var(--theme-brand)]"
+                : "text-[var(--theme-text-body)] hover:text-[var(--theme-brand)]"
             }`}
           >
             সর্বশেষ
@@ -49,30 +56,32 @@ export function NumberedHeadlines({
             role="tab"
             aria-selected={activeTab === "popular"}
             onClick={() => setActiveTab("popular")}
-            className={`pb-3 font-serif text-base sm:text-lg font-bold transition-all relative cursor-pointer ${
+            className={`relative cursor-pointer pb-3 font-serif text-base font-bold transition-all sm:text-lg ${
               activeTab === "popular"
-                ? "text-[#c8102e] border-b-2 border-[#c8102e]"
-                : "text-slate-700 hover:text-[#c8102e]"
+                ? "border-b-2 border-[var(--theme-brand)] text-[var(--theme-brand)]"
+                : "text-[var(--theme-text-body)] hover:text-[var(--theme-brand)]"
             }`}
           >
             জনপ্রিয়
           </button>
         </div>
 
-        {/* কালবেলা স্টাইল বৃত্তাকার নাম্বারিং তালিকা */}
         {posts.length > 0 ? (
-          <ol className="divide-y divide-slate-100 px-3 sm:px-5">
+          <ol className="divide-y divide-[var(--theme-card-border)] px-3 sm:px-5">
             {posts.map((post, index) => (
-              <li key={post.id} className="flex items-start gap-3 sm:gap-4 py-3 sm:py-3.5 hover:bg-slate-50/80 transition-colors rounded-xl px-1.5">
-                <span className="mt-0.5 flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 border border-slate-200/80 text-xs sm:text-sm font-bold tabular-nums text-slate-700">
+              <li
+                key={post.id}
+                className="flex items-start gap-3 rounded-xl px-1.5 py-3 transition-colors hover:bg-[var(--theme-brand-soft)] sm:gap-4 sm:py-3.5"
+              >
+                <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] text-xs font-bold tabular-nums text-[var(--theme-brand)] sm:size-8 sm:text-sm">
                   {bn(index + 1)}
                 </span>
                 <Link
                   href={`/post/${post.id}`}
-                  className="min-w-0 flex-1 font-serif text-sm sm:text-base font-bold leading-snug text-slate-900 transition-colors hover:text-[#c8102e]"
+                  className="min-w-0 flex-1 font-serif text-sm font-bold leading-snug text-[var(--theme-text-title)] transition-colors hover:text-[var(--theme-brand)] sm:text-base"
                 >
                   {post.category && (
-                    <span className="text-[#c8102e] font-semibold mr-1.5 inline-block">
+                    <span className="mr-1.5 inline-block font-semibold text-[var(--theme-brand)]">
                       {post.category} /
                     </span>
                   )}
@@ -82,14 +91,14 @@ export function NumberedHeadlines({
             ))}
           </ol>
         ) : (
-          <p className="px-5 py-8 text-center text-sm text-slate-500" role="status">
+          <p className="px-5 py-8 text-center text-sm text-[var(--theme-text-body)]" role="status">
             এই তালিকায় এখনো কোনো সংবাদ নেই।
           </p>
         )}
 
         <Link
           href="/news"
-          className="flex w-full items-center justify-center border-t border-slate-200 bg-slate-50/80 px-4 py-3 text-xs sm:text-sm font-bold text-[#c8102e] transition hover:bg-slate-100"
+          className="flex w-full items-center justify-center border-t border-[var(--theme-card-border)] bg-[var(--theme-brand-soft)] px-4 py-3 text-xs font-bold text-[var(--theme-brand)] transition hover:opacity-90 sm:text-sm"
         >
           সব সংবাদ দেখুন →
         </Link>
@@ -99,7 +108,7 @@ export function NumberedHeadlines({
 }
 
 /* ========================================================
-   ২. অনুষদ ও বিভাগ সার্চ ফিল্টার বক্স
+   ২. অনুষদ ও বিভাগ সার্চ ফিল্টার বক্স (মোবাইল নেটিভ <select> কনট্রাস্টসহ)
    ======================================================== */
 export function DepartmentQuickFilter({
   faculties,
@@ -155,6 +164,10 @@ export function DepartmentQuickFilter({
         .slice(0, 4)
     : campusPosts.slice(0, 4)
 
+  const selectClass =
+    "w-full rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] px-3 py-2 text-xs font-semibold text-[var(--theme-text-title)] outline-none focus:border-[var(--theme-brand)] sm:text-sm"
+  const optionClass = "bg-[var(--theme-bg-solid)] text-[var(--theme-text-title)]"
+
   return (
     <div className="space-y-4">
       <form
@@ -162,7 +175,7 @@ export function DepartmentQuickFilter({
           event.preventDefault()
           setHasSearched(true)
         }}
-        className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs"
+        className="glass-card rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-3.5 shadow-xs sm:p-5"
       >
         <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
           <label className="min-w-0">
@@ -174,11 +187,13 @@ export function DepartmentQuickFilter({
                 setDepartmentId("")
                 setHasSearched(false)
               }}
-              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 outline-none focus:border-[#c8102e] focus:bg-white"
+              className={selectClass}
             >
-              <option value="">অনুষদ / ফ্যাকাল্টি</option>
+              <option value="" className={optionClass}>
+                অনুষদ / ফ্যাকাল্টি
+              </option>
               {faculties.map((faculty) => (
-                <option key={faculty.id} value={faculty.id}>
+                <option key={faculty.id} value={faculty.id} className={optionClass}>
                   {faculty.name}
                 </option>
               ))}
@@ -194,9 +209,9 @@ export function DepartmentQuickFilter({
                 setDepartmentId(event.target.value)
                 setHasSearched(false)
               }}
-              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 outline-none focus:border-[#c8102e] focus:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              className={`${selectClass} disabled:cursor-not-allowed disabled:opacity-50`}
             >
-              <option value="">
+              <option value="" className={optionClass}>
                 {!selectedFaculty
                   ? "আগে অনুষদ বাছুন"
                   : selectedFaculty.departments.length
@@ -204,7 +219,7 @@ export function DepartmentQuickFilter({
                     : "বিভাগ পাওয়া যায়নি"}
               </option>
               {selectedFaculty?.departments.map((department) => (
-                <option key={department.id} value={department.id}>
+                <option key={department.id} value={department.id} className={optionClass}>
                   {department.name}
                 </option>
               ))}
@@ -219,11 +234,13 @@ export function DepartmentQuickFilter({
                 setBranch(event.target.value)
                 setHasSearched(false)
               }}
-              className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 outline-none focus:border-[#c8102e] focus:bg-white"
+              className={selectClass}
             >
-              <option value="">হল / শাখা</option>
+              <option value="" className={optionClass}>
+                হল / শাখা
+              </option>
               {BRANCHES.map((entry) => (
-                <option key={entry.key} value={entry.key}>
+                <option key={entry.key} value={entry.key} className={optionClass}>
                   {entry.bn}
                 </option>
               ))}
@@ -232,7 +249,7 @@ export function DepartmentQuickFilter({
 
           <button
             type="submit"
-            className="col-span-2 inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8102e] hover:bg-[#a50d25] px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs transition lg:col-span-1 cursor-pointer active:scale-95"
+            className="col-span-2 inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--theme-brand)] px-4 py-2 text-xs font-bold text-[var(--theme-brand-contrast,#ffffff)] shadow-xs transition hover:bg-[var(--theme-brand-dark)] active:scale-95 sm:text-sm lg:col-span-1"
           >
             <Search className="size-4" aria-hidden="true" />
             সার্চ
@@ -240,16 +257,15 @@ export function DepartmentQuickFilter({
         </div>
       </form>
 
-      {/* সার্চের ফলাফল গ্রিড */}
       {searchablePosts.length > 0 && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {searchablePosts.map((post) => (
             <Link
               key={post.id}
               href={`/post/${post.id}`}
-              className="group min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs transition hover:border-[#c8102e]"
+              className="glass-card group min-w-0 overflow-hidden rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] shadow-xs transition hover:border-[var(--theme-brand)]"
             >
-              <span className="block aspect-[16/10] overflow-hidden bg-slate-100">
+              <span className="block aspect-[16/10] overflow-hidden bg-slate-900/20">
                 {post.image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -259,16 +275,16 @@ export function DepartmentQuickFilter({
                     loading="lazy"
                   />
                 ) : (
-                  <span className="flex size-full items-center justify-center text-slate-400">
+                  <span className="flex size-full items-center justify-center text-[var(--theme-text-body)] opacity-50">
                     <Images className="size-7" />
                   </span>
                 )}
               </span>
               <span className="block p-2.5 sm:p-3">
-                <span className="line-clamp-2 block font-serif text-xs sm:text-sm font-bold leading-snug text-slate-900 group-hover:text-[#c8102e] transition-colors">
+                <span className="line-clamp-2 block font-serif text-xs font-bold leading-snug text-[var(--theme-text-title)] transition-colors group-hover:text-[var(--theme-brand)] sm:text-sm">
                   {post.title}
                 </span>
-                <span className="mt-1.5 block text-[10px] font-semibold text-[#c8102e]">
+                <span className="mt-1.5 block text-[10px] font-semibold text-[var(--theme-brand)]">
                   {post.category || "ক্যাম্পাস"}
                 </span>
               </span>
@@ -302,12 +318,15 @@ export function StoryMediaTabs({
   if (!hasVideos && !hasPhotos) return null
 
   return (
-    <section id="video-photo-stories" className="border-b border-slate-200 py-6 sm:py-8 bg-white">
+    <section
+      id="video-photo-stories"
+      className="border-b border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] py-6 sm:py-8"
+    >
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-2">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--theme-card-border)] pb-2">
           <div className="flex items-center gap-2">
-            <span className="size-2.5 rounded-full bg-[#c8102e]" />
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-slate-900">
+            <span className="size-2.5 rounded-full bg-[var(--theme-brand)]" />
+            <h2 className="font-serif text-lg font-bold text-[var(--theme-text-title)] sm:text-xl">
               ভিডিও ও ফটো স্টোরি
             </h2>
           </div>
@@ -318,10 +337,10 @@ export function StoryMediaTabs({
               aria-selected={activeTab === "video"}
               disabled={!hasVideos}
               onClick={() => setActiveTab("video")}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition ${
+              className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition disabled:opacity-40 ${
                 activeTab === "video"
-                  ? "bg-[#c8102e] text-white shadow-xs"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  ? "bg-[var(--theme-brand)] text-[var(--theme-brand-contrast,#ffffff)] shadow-xs"
+                  : "border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] hover:bg-[var(--theme-brand-soft)]"
               }`}
             >
               <Camera className="size-3.5" aria-hidden="true" />
@@ -333,10 +352,10 @@ export function StoryMediaTabs({
               aria-selected={activeTab === "photo"}
               disabled={!hasPhotos}
               onClick={() => setActiveTab("photo")}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition ${
+              className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition disabled:opacity-40 ${
                 activeTab === "photo"
-                  ? "bg-[#c8102e] text-white shadow-xs"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  ? "bg-[var(--theme-brand)] text-[var(--theme-brand-contrast,#ffffff)] shadow-xs"
+                  : "border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] hover:bg-[var(--theme-brand-soft)]"
               }`}
             >
               <Images className="size-3.5" aria-hidden="true" />
