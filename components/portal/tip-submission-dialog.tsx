@@ -6,12 +6,9 @@ import {
   Send,
   Lock,
   EyeOff,
-  User,
   CheckCircle2,
   X,
   AlertCircle,
-  Sparkles,
-  HelpCircle,
 } from 'lucide-react'
 import { HumanVerification, useHumanVerification } from '@/components/portal/human-verification'
 import { useLang } from '@/lib/i18n'
@@ -152,23 +149,23 @@ export function TipSubmissionDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="tip-modal-title"
-        className="relative z-10 w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl border border-white/20 bg-slate-900/95 text-white shadow-2xl backdrop-blur-2xl overflow-hidden glass-card my-auto"
+        className="relative z-10 w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] text-[var(--theme-text-body)] shadow-2xl backdrop-blur-2xl overflow-hidden glass-card my-auto"
       >
         {/* হেডার */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--theme-card-border)] shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 border border-amber-400/30">
-              <Send className="size-4.5 text-amber-400" />
+            <div className="flex size-9 items-center justify-center rounded-xl bg-amber-500/20 text-amber-500 border border-amber-300">
+              <Send className="size-4.5" />
             </div>
             <div>
-              <h2 id="tip-modal-title" className="font-serif text-base sm:text-lg font-bold leading-tight flex items-center gap-1.5">
+              <h2 id="tip-modal-title" className="font-serif text-base sm:text-lg font-bold leading-tight flex items-center gap-1.5 text-[var(--theme-text-title)]">
                 <span>{pick('সংবাদ-তথ্য পাঠান', 'Submit a News Tip')}</span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--theme-brand-soft)] text-[var(--theme-brand)] border border-[var(--theme-card-border)]">
                   <Lock className="size-2.5" />
                   <span>{pick('গোপনীয়', 'Confidential')}</span>
                 </span>
               </h2>
-              <p className="text-[11px] text-slate-300">
+              <p className="text-[11px] text-[var(--theme-text-body)] opacity-75">
                 {pick('ক্যাম্পাস-সম্পর্কিত সংবাদ বা তথ্য সম্পাদকীয় ডেস্কে পাঠান।', 'Send campus-related news or information to the editorial desk.')}
               </p>
             </div>
@@ -178,7 +175,7 @@ export function TipSubmissionDialog({
             type="button"
             onClick={onClose}
             aria-label={pick('বন্ধ করুন', 'Close')}
-            className="flex size-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition cursor-pointer"
+            className="flex size-8 items-center justify-center rounded-full bg-[var(--theme-brand-soft)] text-[var(--theme-text-title)] hover:bg-[var(--theme-brand)] hover:text-white transition cursor-pointer"
           >
             <X className="size-4" />
           </button>
@@ -188,14 +185,14 @@ export function TipSubmissionDialog({
         <div className="flex-1 overflow-y-auto p-5 scrollbar-thin">
           {submitted ? (
             <div className="text-center py-8 space-y-4 animate-in fade-in">
-              <div className="size-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-400/40 flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(52,211,153,0.3)]">
+              <div className="size-16 rounded-full bg-emerald-500/20 text-emerald-600 border border-emerald-400 flex items-center justify-center mx-auto shadow-sm">
                 <CheckCircle2 className="size-9" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-lg font-bold text-emerald-300">
+                <h3 className="text-lg font-bold text-emerald-600">
                   {pick('আপনার পাঠানো তথ্য গ্রহণ করা হয়েছে।', 'Your information has been received.')}
                 </h3>
-                <p className="text-xs text-slate-200 max-w-sm mx-auto leading-relaxed">
+                <p className="text-xs text-[var(--theme-text-body)] max-w-sm mx-auto leading-relaxed">
                   {pick(
                     'মাভাবিপ্রবি রিপোর্টার্স ইউনিটির সম্পাদকীয় ডেস্ক তথ্যটি যাচাই করে প্রয়োজনীয় অনুসন্ধান ও প্রতিবেদন তৈরির উদ্যোগ নেবে। দায়িত্বশীল সাংবাদিকতায় সহযোগিতার জন্য ধন্যবাদ।',
                     'The editorial desk of MBSTU Reporters’ Unity will assess the information and undertake any necessary verification and reporting. Thank you for supporting responsible journalism.'
@@ -205,7 +202,7 @@ export function TipSubmissionDialog({
               <button
                 type="button"
                 onClick={handleReset}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg transition active:scale-95 cursor-pointer mt-2"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[var(--theme-brand)] hover:bg-[var(--theme-brand-dark)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] text-xs font-bold shadow-sm transition active:scale-95 cursor-pointer mt-2"
               >
                 <span>{pick('বন্ধ করুন', 'Close')}</span>
               </button>
@@ -213,16 +210,16 @@ export function TipSubmissionDialog({
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* অ্যানোনিমাস টগল */}
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--theme-brand-soft)] border border-[var(--theme-card-border)]">
                 <div className="flex items-center gap-2.5">
-                  <div className={`flex size-8 items-center justify-center rounded-xl transition ${isAnonymous ? 'bg-rose-500/25 text-rose-300 border border-rose-400/30' : 'bg-white/10 text-white/60'}`}>
+                  <div className={`flex size-8 items-center justify-center rounded-xl transition ${isAnonymous ? 'bg-rose-500/20 text-rose-600 border border-rose-300' : 'bg-[var(--theme-card-bg)] text-[var(--theme-text-body)]'}`}>
                     <EyeOff className="size-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold leading-tight text-white">
+                    <p className="text-xs font-bold leading-tight text-[var(--theme-text-title)]">
                       {pick('পরিচয় গোপন রাখুন', 'Remain anonymous')}
                     </p>
-                    <p className="text-[10px] text-slate-300">
+                    <p className="text-[10px] text-[var(--theme-text-body)] opacity-75">
                       {isAnonymous
                         ? pick('আপনার পরিচয় প্রকাশ করা হবে না।', 'Your identity will not be disclosed.')
                         : pick('প্রয়োজনে প্রতিবেদক আপনার সঙ্গে যোগাযোগ করতে পারবেন।', 'A reporter may contact you if necessary.')}
@@ -237,16 +234,16 @@ export function TipSubmissionDialog({
                     onChange={(e) => setIsAnonymous(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+                  <div className="w-11 h-6 bg-slate-400 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--theme-brand)]"></div>
                 </label>
               </div>
 
-              {/* নাম ও যোগাযোগ (যদি পরিচয় গোপন না থাকে) */}
+              {/* নাম ও যোগাযোগ */}
               {!isAnonymous && (
-                <div className="space-y-3 p-3.5 rounded-2xl bg-white/5 border border-white/10 animate-in fade-in">
+                <div className="space-y-3 p-3.5 rounded-2xl bg-[var(--theme-brand-soft)] border border-[var(--theme-card-border)] animate-in fade-in">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                      <label className="block text-[11px] font-bold text-[var(--theme-text-title)] mb-1">
                         {pick('আপনার নাম *', 'Your Name *')}
                       </label>
                       <input
@@ -254,11 +251,11 @@ export function TipSubmissionDialog({
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder={pick('উদাহরণ: আরিফুল ইসলাম', 'For example: Ariful Islam')}
-                        className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-xs text-white placeholder-slate-400 focus:outline-hidden focus:border-cyan-400"
+                        className="w-full px-3 py-2 rounded-xl bg-[var(--theme-card-bg)] border border-[var(--theme-card-border)] text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)]/50 focus:outline-hidden focus:border-[var(--theme-brand)]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                      <label className="block text-[11px] font-bold text-[var(--theme-text-title)] mb-1">
                         {pick('বিভাগ / ব্যাচ', 'Department / Batch')}
                       </label>
                       <input
@@ -266,12 +263,12 @@ export function TipSubmissionDialog({
                         value={dept}
                         onChange={(e) => setDept(e.target.value)}
                         placeholder={pick('উদাহরণ: সিএসই, ১৮তম ব্যাচ', 'For example: CSE, 18th batch')}
-                        className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-xs text-white placeholder-slate-400 focus:outline-hidden focus:border-cyan-400"
+                        className="w-full px-3 py-2 rounded-xl bg-[var(--theme-card-bg)] border border-[var(--theme-card-border)] text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)]/50 focus:outline-hidden focus:border-[var(--theme-brand)]"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                    <label className="block text-[11px] font-bold text-[var(--theme-text-title)] mb-1">
                       {pick('ফোন বা ইমেইল (যাচাইয়ের জন্য)', 'Phone or Email (for verification)')}
                     </label>
                     <input
@@ -279,15 +276,15 @@ export function TipSubmissionDialog({
                       value={contact}
                       onChange={(e) => setContact(e.target.value)}
                       placeholder={pick('উদাহরণ: 017XXXXXXXX অথবা user@example.com', 'For example: 017XXXXXXXX or user@example.com')}
-                      className="w-full px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-xs text-white placeholder-slate-400 focus:outline-hidden focus:border-cyan-400"
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--theme-card-bg)] border border-[var(--theme-card-border)] text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)]/50 focus:outline-hidden focus:border-[var(--theme-brand)]"
                     />
                   </div>
                 </div>
               )}
 
-              {/* ক্যাটাগরি / ডেস্ক নির্বাচন */}
+              {/* তথ্যের ধরন */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-300 mb-1.5">
+                <label className="block text-[11px] font-bold text-[var(--theme-text-title)] mb-1.5">
                   {pick('তথ্যের ধরন *', 'Information category *')}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -298,8 +295,8 @@ export function TipSubmissionDialog({
                       onClick={() => setBeat(b)}
                       className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold border transition cursor-pointer ${
                         beat === b
-                          ? 'bg-cyan-500/30 border-cyan-400 text-cyan-200 shadow-xs'
-                          : 'bg-white/5 border-white/15 text-white/70 hover:bg-white/10'
+                          ? 'bg-[var(--theme-brand)] border-[var(--theme-brand)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] shadow-xs'
+                          : 'bg-[var(--theme-card-bg)] border-[var(--theme-card-border)] text-[var(--theme-text-body)] hover:border-[var(--theme-brand)]'
                       }`}
                     >
                       {pick(b, TIP_BEATS_EN[b] || b)}
@@ -308,9 +305,9 @@ export function TipSubmissionDialog({
                 </div>
               </div>
 
-              {/* সংবাদের সংক্ষিপ্ত শিরোনাম */}
+              {/* শিরোনাম */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-[var(--theme-text-title)] mb-1">
                   {pick('বিষয় বা শিরোনাম *', 'Subject or headline *')}
                 </label>
                 <input
@@ -319,13 +316,13 @@ export function TipSubmissionDialog({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder={pick('উদাহরণ: বঙ্গবন্ধু হলের পানির ফিল্টার-সংক্রান্ত সমস্যা', 'For example: A water-filter issue at Bangabandhu Hall')}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/15 text-xs text-white placeholder-slate-400 focus:outline-hidden focus:border-cyan-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--theme-card-bg)] border border-[var(--theme-card-border)] text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)]/50 focus:outline-hidden focus:border-[var(--theme-brand)]"
                 />
               </div>
 
-              {/* বিস্তারিত বিবরণ */}
+              {/* বিবরণ */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-[var(--theme-text-title)] mb-1">
                   {pick('বিস্তারিত তথ্য *', 'Detailed information *')}
                 </label>
                 <textarea
@@ -337,13 +334,13 @@ export function TipSubmissionDialog({
                     'কী ঘটেছে, কখন ও কোথায় ঘটেছে এবং এ বিষয়ে কী প্রমাণ বা সূত্র রয়েছে—বিস্তারিত লিখুন।',
                     'Describe what happened, when and where it occurred, and any available evidence or sources.'
                   )}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/15 text-xs text-white placeholder-slate-400 focus:outline-hidden focus:border-cyan-400 leading-relaxed resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--theme-card-bg)] border border-[var(--theme-card-border)] text-xs text-[var(--theme-text-title)] placeholder:text-[var(--theme-text-body)]/50 focus:outline-hidden focus:border-[var(--theme-brand)] leading-relaxed resize-none"
                 />
               </div>
 
-              {/* সহজ মানব যাচাই (Captcha) */}
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
-                <label className="block text-[11px] font-bold text-slate-300">
+              {/* মানব যাচাই */}
+              <div className="p-3 rounded-2xl bg-[var(--theme-brand-soft)] border border-[var(--theme-card-border)] space-y-1.5">
+                <label className="block text-[11px] font-bold text-[var(--theme-text-title)]">
                   {pick('স্বয়ংক্রিয় জমা প্রতিরোধে যাচাই *', 'Verification to prevent automated submissions *')}
                 </label>
                 <HumanVerification
@@ -358,20 +355,18 @@ export function TipSubmissionDialog({
                 />
               </div>
 
-              {/* ত্রুটি বার্তা */}
               {errMsg && (
-                <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-400/30 text-rose-300 text-xs flex items-center gap-2">
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-600 text-xs flex items-center gap-2">
                   <AlertCircle className="size-4 shrink-0" />
                   <span>{errMsg}</span>
                 </div>
               )}
 
-              {/* সাবমিট বাটন */}
               <div className="pt-1">
                 <button
                   type="submit"
                   disabled={busy}
-                  className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-cyan-500 hover:from-amber-400 hover:to-cyan-400 text-slate-950 font-bold text-xs sm:text-sm shadow-xl transition active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[var(--theme-brand)] hover:bg-[var(--theme-brand-dark)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] font-bold text-xs sm:text-sm shadow-md transition active:scale-[0.98] cursor-pointer disabled:opacity-50"
                 >
                   <Send className="size-4" />
                   <span>{busy ? pick('জমা দেওয়া হচ্ছে…', 'Submitting…') : pick('তথ্য জমা দিন', 'Submit information')}</span>
