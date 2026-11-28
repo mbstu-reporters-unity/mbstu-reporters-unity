@@ -105,7 +105,7 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
       .catch(() => setLoaded(true))
   }, [])
 
-  // স্ক্রল আউট হলে ব্যাকগ্রাউন্ড অডিও/ভিডিও বন্ধ করার জন্য IntersectionObserver
+  // স্ক্রল আউট হলে ব্যাকগ্রাউন্ড অডিও/ভিডিও থামানোর জন্য
   useEffect(() => {
     const el = sectionRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
@@ -136,9 +136,13 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
     setCurrentIndex((prev) => (prev - 1 + total) % total)
   }, [total])
 
-  // স্লাইড অটো-রোটেশন
+  const isVideoSlide = currentSlide?.slide_type === 'video'
+
+  // ⭐ সমাধান: ব্যানারে ভিডিও থাকলে টাইমার স্লাইডকে নিজে নিজে বদলাবে না
   useEffect(() => {
     if (total <= 1) return
+    if (isVideoSlide) return // ভিডিও দেখতে থাকলে অটো-স্লাইড বন্ধ থাকবে
+
     const rawDur = Number(currentSlide?.slide_duration) || 5000
     const safeDuration = rawDur < 100 ? rawDur * 1000 : rawDur
 
@@ -149,9 +153,9 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
     }, safeDuration)
 
     return () => clearInterval(interval)
-  }, [total, currentSlide?.id, currentSlide?.slide_duration, isPaused])
+  }, [total, currentSlide?.id, currentSlide?.slide_duration, isPaused, isVideoSlide])
 
-  // ব্যানার স্ক্রিনে না থাকলে ভিডিও বন্ধ করা
+  // ব্যানার স্ক্রিনের বাইরে গেলে ভিডিও পজ
   useEffect(() => {
     if (!isInViewport) {
       if (videoRef.current) {
@@ -192,7 +196,6 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
   if (!loaded || !slides || slides.length === 0) return null
 
   const slideType = currentSlide.slide_type || 'color'
-  const isVideoSlide = slideType === 'video'
   const videoUrl = currentSlide.video_config?.url || ''
   const parsedVideo = parseVideoUrl(videoUrl)
   const imageUrl = currentSlide.media_items?.[0]?.url || ''
@@ -243,42 +246,36 @@ export function HeroBreakingBanner({ settings }: HeroBreakingBannerProps) {
         </div>
       )}
 
-      {/* ২. ভিডিও স্লাইড (ইউটিউব, ফেসবুক ও ডিরেক্ট ফাইল) - রেসপন্সিভ ও ঝাপসা মুক্ত */}
+      {/* ২. ভিডিও স্লাইড (ইউটিউব ও ফেসবুক প্লেয়ার ফুল রেশিওতে চলবে) */}
       {isVideoSlide && (
         <div className="w-full flex items-center justify-center bg-black overflow-hidden relative">
           <div className="w-full max-w-4xl aspect-video max-h-[380px] sm:max-h-[460px]">
-            {isInViewport ? (
-              parsedVideo.isEmbed ? (
-                <iframe
-                  ref={iframeRef}
-                  src={`${parsedVideo.embedSrc}&autoplay=1&mute=1`}
-                  className="w-full h-full border-0 pointer-events-auto"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                  allowFullScreen
-                  title="Banner Video"
-                />
-              ) : (
-                <video
-                  ref={videoRef}
-                  src={videoUrl}
-                  controls
-                  playsInline
-                  autoPlay
-                  muted
-                  loop
-                  className="w-full h-full object-contain pointer-events-auto"
-                />
-              )
+            {parsedVideo.isEmbed ? (
+              <iframe
+                ref={iframeRef}
+                src={`${parsedVideo.embedSrc}&autoplay=1&mute=1`}
+                className="w-full h-full border-0 pointer-events-auto"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                allowFullScreen
+                title="Banner Video"
+              />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-white/50 text-xs">
-                ভিডিও পজ করা হয়েছে
-              </div>
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                controls
+                playsInline
+                autoPlay
+                muted
+                loop
+                className="w-full h-full object-contain pointer-events-auto"
+              />
             )}
           </div>
         </div>
       )}
 
-      {/* ৩. টেক্সট ওভারলে (শুধুমাত্র কালার বা ইমেজ স্লাইড হলে সম্পূর্ণ দেখা যাবে) */}
+      {/* ৩. টেক্সট ওভারলে (শুধুমাত্র কালার বা ইমেজ স্লাইড হলে দেখা যাবে) */}
       {!isVideoSlide && (
         <div className="hero-banner-inner max-w-7xl mx-auto px-4 sm:px-8 py-5 sm:py-7 relative z-10 flex flex-col justify-center min-h-[160px] sm:min-h-[200px]">
           {/* মোবাইল ভিউ */}
