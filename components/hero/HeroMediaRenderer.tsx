@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import type { HeroSlide, SubMediaItem } from '@/lib/hero'
 import { parseVideoUrl } from '@/lib/hero'
-import { Volume2, VolumeX, Play, Pause, Calendar, User, ExternalLink } from 'lucide-react'
+import { Calendar, User, ExternalLink } from 'lucide-react'
 
 interface HeroMediaRendererProps {
   slide?: HeroSlide | null
@@ -58,8 +58,6 @@ export function HeroMediaRenderer({
   const videoRef = useRef<HTMLVideoElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
-  const [muted, setMuted] = useState(true)
-  const [isPlaying, setIsPlaying] = useState(false)
   const [inViewport, setInViewport] = useState(true)
 
   const type = slide?.slide_type || item?.type || 'color'
@@ -71,7 +69,7 @@ export function HeroMediaRenderer({
   const bannerWidth = slide?.banner_config?.width_pct ?? 100
   const bannerHeight = slide?.banner_config?.height_px ?? 480
 
-  // ১. ভিউপোর্ট অবজারভার: ইউজার যখন স্ক্রল করে নিচের দিকে যাবে, তখন ভিডিও পজ হবে
+  // ভিউপোর্ট ডিটেকশন: স্ক্রল করে নিচে গেলে ভিডিও বন্ধ হবে
   useEffect(() => {
     const el = containerRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
@@ -89,7 +87,7 @@ export function HeroMediaRenderer({
     return () => observer.disconnect()
   }, [])
 
-  // ২. ইউটিউব আইফ্রেমের স্টেট ডিটেকশন (Play/Pause/End ট্র্যাক করা)
+  // ইউটিউব প্লেয়ারের মেসেজ ইভেন্ট ডিটেকশন (Play/Pause/End ট্র্যাক করা)
   useEffect(() => {
     const handleYouTubeMessages = (e: MessageEvent) => {
       try {
@@ -97,16 +95,10 @@ export function HeroMediaRenderer({
         if (data && (data.event === 'onStateChange' || data.event === 'infoDelivery')) {
           const state = data.info?.playerState ?? data.info
           if (state === 1 || state === 3) {
-            // ১ = Playing, ৩ = Buffering
-            setIsPlaying(true)
             onVideoStateChange?.(true)
           } else if (state === 2) {
-            // ২ = Paused
-            setIsPlaying(false)
             onVideoStateChange?.(false)
           } else if (state === 0) {
-            // ০ = Ended
-            setIsPlaying(false)
             onVideoStateChange?.(false)
             onVideoEnd?.()
           }
@@ -118,14 +110,12 @@ export function HeroMediaRenderer({
     return () => window.removeEventListener('message', handleYouTubeMessages)
   }, [onVideoStateChange, onVideoEnd])
 
-  // ৩. স্লাইড পরিবর্তন বা ভিউপোর্টের বাইরে গেলে ভিডিও নিয়ন্ত্রণ
   const shouldAutoPlay = isActive && inViewport && autoPlayVideo
 
   useEffect(() => {
     if (!inViewport || !isActive) {
       if (videoRef.current) {
         videoRef.current.pause()
-        setIsPlaying(false)
       }
       if (iframeRef.current?.contentWindow && parsedVideo.platform === 'youtube') {
         iframeRef.current.contentWindow.postMessage(
@@ -139,82 +129,12 @@ export function HeroMediaRenderer({
         videoRef.current
           .play()
           .then(() => {
-            setIsPlaying(true)
             onVideoStateChange?.(true)
           })
           .catch(() => {})
       }
     }
   }, [shouldAutoPlay, inViewport, isActive, onVideoStateChange, parsedVideo.platform])
-
-  const togglePlayPause = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    const v = videoRef.current
-    if (!v) return
-    if (v.paused) {
-      v.play()
-        .then(() => {
-          setIsPlaying(true)
-          onVideoStateChange?.(true)
-        })
-        .catch(() => {})
-    } else {
-      v.pause()
-      setIsPlaying(false)
-      onVideoStateChange?.(false)
-    }
-  }
-
-  const toggleSound = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    const v = videoRef.current
-    if (v) {
-      v.muted = !v.muted
-      setMuted(v.muted)
-    }
-  }
-
-  const toggleEmbedPlayPause = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    const iframe = iframeRef.current
-    if (!iframe?.contentWindow || parsedVideo.platform !== 'youtube') return
-
-    if (isPlaying) {
-      iframe.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
-        '*'
-      )
-      setIsPlaying(false)
-      onVideoStateChange?.(false)
-    } else {
-      iframe.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
-        '*'
-      )
-      setIsPlaying(true)
-      onVideoStateChange?.(true)
-    }
-  }
-
-  const toggleEmbedSound = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    const iframe = iframeRef.current
-    if (!iframe?.contentWindow || parsedVideo.platform !== 'youtube') return
-
-    if (muted) {
-      iframe.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'unMute', args: [] }),
-        '*'
-      )
-      setMuted(false)
-    } else {
-      iframe.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'mute', args: [] }),
-        '*'
-      )
-      setMuted(true)
-    }
-  }
 
   const layers = slide?.text_layers || []
   const titleLayer =
@@ -232,7 +152,6 @@ export function HeroMediaRenderer({
 
   const hasCustomLayers = layers.some((l: any) => l.enabled && l.text?.trim())
 
-  // আইফ্রেম সোর্স URL তৈরি (অটো-প্লে বা স্বাভাবিক মোড)
   const getEmbedSource = () => {
     if (!parsedVideo.embedSrc) return ''
     const base = parsedVideo.embedSrc
@@ -280,7 +199,7 @@ export function HeroMediaRenderer({
           </div>
         )}
 
-        {/* ৩. ভিডিও ব্যানার (ইউটিউব, ফেসবুক এবং ডিরেক্ট ফাইল) - সবসময় সম্পূর্ণ সক্রিয় ও দৃশ্যমান */}
+        {/* ৩. ভিডিও ব্যানার (ইউটিউব, ফেসবুক ও ডিরেক্ট ফাইল) - কোনো কৃত্রিম বাটন ছাড়া শুধুমাত্র অফিসিয়াল প্লেয়ার */}
         {isVideo && (
           <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
             {parsedVideo.isEmbed ? (
@@ -293,90 +212,30 @@ export function HeroMediaRenderer({
                   allowFullScreen
                   title={slide?.title || 'Video Player'}
                 />
-
-                {parsedVideo.platform === 'youtube' && (
-                  <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5 pointer-events-auto">
-                    <button
-                      type="button"
-                      onClick={toggleEmbedPlayPause}
-                      className="px-2.5 py-1 rounded-full bg-black/75 hover:bg-black text-white transition-all border border-white/20 shadow-lg flex items-center gap-1 text-[11px] font-semibold cursor-pointer active:scale-95"
-                    >
-                      {isPlaying ? (
-                        <Pause className="size-3 text-yellow-400" />
-                      ) : (
-                        <Play className="size-3 text-green-400" />
-                      )}
-                      <span>{isPlaying ? 'পজ' : 'চালান'}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={toggleEmbedSound}
-                      className="p-1.5 rounded-full bg-black/75 hover:bg-black text-white transition-all border border-white/20 shadow-lg cursor-pointer active:scale-95"
-                    >
-                      {muted ? (
-                        <VolumeX className="size-3 text-red-400" />
-                      ) : (
-                        <Volume2 className="size-3 text-green-400" />
-                      )}
-                    </button>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="relative w-full h-full flex items-center justify-center">
                 <video
                   ref={videoRef}
                   src={videoUrl}
+                  controls
                   playsInline
                   loop
-                  muted={muted}
-                  onPlay={() => {
-                    setIsPlaying(true)
-                    onVideoStateChange?.(true)
-                  }}
-                  onPause={() => {
-                    setIsPlaying(false)
-                    onVideoStateChange?.(false)
-                  }}
+                  muted
+                  onPlay={() => onVideoStateChange?.(true)}
+                  onPause={() => onVideoStateChange?.(false)}
                   onEnded={() => {
-                    setIsPlaying(false)
                     onVideoStateChange?.(false)
                     onVideoEnd?.()
                   }}
                   className="w-full h-full object-contain pointer-events-auto z-10"
-                  onClick={togglePlayPause}
                 />
-                <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5 pointer-events-auto">
-                  <button
-                    type="button"
-                    onClick={togglePlayPause}
-                    className="px-2.5 py-1 rounded-full bg-black/75 hover:bg-black text-white transition-all border border-white/20 shadow-lg flex items-center gap-1 text-[11px] font-semibold cursor-pointer active:scale-95"
-                  >
-                    {isPlaying ? (
-                      <Pause className="size-3 text-yellow-400" />
-                    ) : (
-                      <Play className="size-3 text-green-400" />
-                    )}
-                    <span>{isPlaying ? 'পজ' : 'চালান'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={toggleSound}
-                    className="p-1.5 rounded-full bg-black/75 hover:bg-black text-white transition-all border border-white/20 shadow-lg cursor-pointer active:scale-95"
-                  >
-                    {muted ? (
-                      <VolumeX className="size-3 text-red-400" />
-                    ) : (
-                      <Volume2 className="size-3 text-green-400" />
-                    )}
-                  </button>
-                </div>
               </div>
             )}
           </div>
         )}
 
-        {/* ৪. টেক্সট লেয়ারসমূহ: ভিডিও চলাকালীন স্ক্রিনে কোনো বিশৃঙ্খলা না ঘটিয়ে নিচে অবস্থান নিশ্চিত করা */}
+        {/* ৪. টেক্সট লেয়ারসমূহ: শুধুমাত্র ছবি বা কালার স্লাইডে দেখাবে, ভিডিওর ওপর কোনো টেক্সট ওভারল্যাপ করবে না */}
         {hasCustomLayers && !isVideo && (
           isCompact ? (
             <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between z-20 pointer-events-none">
