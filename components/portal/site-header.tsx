@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Award,
   Bell,
   Bookmark,
   BookOpen,
@@ -32,7 +31,6 @@ import {
   Mail,
   Menu,
   Newspaper,
-  Phone,
   Scale,
   Search,
   Send,
@@ -70,7 +68,6 @@ import { useSiteSettings } from './site-settings-context'
 import { DEFAULT_SITE_SETTINGS, normalizeUniversityLogoUrl } from '@/lib/site-settings'
 import { BookmarksDialog } from './bookmarks-dialog'
 import { TipSubmissionDialog } from './tip-submission-dialog'
-import { useBookmarks } from '@/lib/bookmarks'
 
 const HEADER_CACHE_KEY = 'mbstu_header_cache_v2'
 const HEADER_CACHE_TTL = 3 * 60 * 1000
@@ -157,7 +154,6 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [bookmarksOpen, setBookmarksOpen] = useState(false)
   const [tipOpen, setTipOpen] = useState(false)
-  const { count: bookmarkCount } = useBookmarks()
 
   const [clubsList, setClubsList] = useState<ClubItem[]>([])
   const [categoriesList, setCategoriesList] = useState<string[]>([])
@@ -967,19 +963,13 @@ export function SiteHeader() {
 
   return (
     <>
-      <header className="site-header sticky top-0 z-50 w-full border-b border-[var(--theme-card-border)] bg-[var(--theme-bg-solid)] text-[var(--theme-text-title)] shadow-sm">
-        {/* সারি ২: লোগো ও প্রয়োজনীয় অ্যাকশন বাটনসমূহ (একই লাইনে সাজানো) */}
+      <header className="site-header sticky top-0 z-50 w-full border-b border-[var(--theme-card-border)] bg-[var(--theme-header-bg,var(--theme-bg-solid))] text-[var(--theme-text-title)] shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:px-4">
-          
-          {/* বামে: সংগঠনের লোগো ও নাম */}
           <div className="min-w-0 max-w-[55%] sm:max-w-none shrink">
             <Logo />
           </div>
 
-          {/* ডানে: সার্চ, ই-পেপার, বিশ্ববিদ্যালয়ের লোগো ও মেনু বাটন */}
           <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
-            
-            {/* সার্চ বাটন */}
             <Link
               href="/search"
               aria-label="Search"
@@ -989,24 +979,22 @@ export function SiteHeader() {
               <Search className="size-4" />
             </Link>
 
-            {/* ই-পেপার বাটন */}
             <Link
               href="/publications"
               aria-label={pick('প্রকাশনা ও ই-পেপার', 'Publications and e-paper')}
               title={pick('প্রকাশনা ও ই-পেপার', 'Publications and e-paper')}
-              className="inline-flex size-8.5 sm:size-auto items-center justify-center gap-1.5 rounded-lg border border-[var(--theme-card-border)] px-2 sm:px-2.5 py-1 text-xs font-bold text-[var(--theme-text-body)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)]"
+              className="inline-flex size-8.5 sm:size-auto items-center justify-center gap-1.5 rounded-lg border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] px-2 sm:px-2.5 py-1 text-xs font-bold text-[var(--theme-text-body)] transition hover:border-[var(--theme-brand)] hover:text-[var(--theme-brand)]"
             >
               <Newspaper className="size-4" aria-hidden="true" />
               <span className="hidden sm:inline">{pick('ই-পেপার', 'E-paper')}</span>
             </Link>
 
-            {/* বিশ্ববিদ্যালয়ের মনোগ্রাম */}
             <a
               href={activeUnivLink}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 shrink-0"
-              title={activeUnivText || "মাভাবিপ্রবি"}
+              title={activeUnivText || 'মাভাবিপ্রবি'}
             >
               {activeUnivText && (
                 <span className="hidden xl:inline text-xs font-bold text-[var(--theme-text-body)] truncate max-w-[130px]">
@@ -1025,13 +1013,12 @@ export function SiteHeader() {
 
             <span className="h-5 w-px bg-[var(--theme-card-border)] shrink-0" aria-hidden="true" />
 
-            {/* মেনু বাটন */}
             <button
               type="button"
               onClick={() => setMenuOpen((prev) => !prev)}
               aria-expanded={menuOpen}
               aria-label="Toggle Navigation Menu"
-              className="inline-flex items-center gap-1.5 h-8.5 sm:h-9 px-2.5 sm:px-3 rounded-lg bg-[var(--theme-brand)] hover:bg-[var(--theme-brand-dark)] text-[var(--theme-bg-solid)] border border-[var(--theme-brand)] cursor-pointer shrink-0 active:scale-95 transition shadow-xs"
+              className="inline-flex items-center gap-1.5 h-8.5 sm:h-9 px-2.5 sm:px-3 rounded-lg bg-[var(--theme-brand)] hover:bg-[var(--theme-brand-dark)] text-[var(--theme-brand-contrast,var(--theme-bg-solid))] border border-[var(--theme-brand)] cursor-pointer shrink-0 active:scale-95 transition shadow-xs"
             >
               <Menu className="size-4 sm:size-4.5" />
               <span className="hidden sm:inline text-xs font-bold">
@@ -1041,7 +1028,6 @@ export function SiteHeader() {
           </div>
         </div>
 
-        {/* সারি ৩: স্ক্রলেবল ক্যাটাগরি মেনুবার */}
         <nav className="home-category-nav border-t border-[var(--theme-card-border)] bg-[var(--theme-card-bg)]" aria-label="সংবাদ বিভাগ">
           <div className="mx-auto flex max-w-7xl items-center gap-0 overflow-x-auto px-2 sm:px-4 scrollbar-none">
             <Link
@@ -1098,7 +1084,6 @@ export function SiteHeader() {
         userBanner={userBanner}
       />
 
-      {/* সংরক্ষিত সংবাদ ও টিপস সাবমিশন ডায়ালগ */}
       <BookmarksDialog open={bookmarksOpen} onClose={() => setBookmarksOpen(false)} />
       <TipSubmissionDialog open={tipOpen} onClose={() => setTipOpen(false)} />
     </>
