@@ -45,7 +45,7 @@ export function HeroCarousel() {
       .catch(() => setLoaded(true))
   }, [])
 
-  // স্ক্রিন সাইজ পর্যবেক্ষণ: মোবাইলে ১টি করে স্লাইড পূর্ণাঙ্গভাবে দেখাতে হবে যাতে টাচ সোয়াইপ এবং ভিডিও ভালো থাকে
+  // মোবাইলে স্লাইডার যেন সবসময় ১টি করে বড় ও পরিষ্কার ভিডিও দেখায়
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
@@ -55,7 +55,7 @@ export function HeroCarousel() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // স্ক্রল আউট ডিটেকশন
+  // স্ক্রল আউট হলে পজ করা
   useEffect(() => {
     const el = sliderRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
@@ -76,7 +76,6 @@ export function HeroCarousel() {
   const total = slides.length
   const configuredSplits = settings?.desktop_splits || 1
 
-  // মোবাইলে সবসময় ১টি স্লাইড, ডেস্কটপে সেটিং অনুযায়ী স্প্লিট
   const activeSplits = useMemo(() => {
     if (total <= 1) return 1
     if (isMobile) return 1
@@ -86,7 +85,6 @@ export function HeroCarousel() {
   const currentSlide = slides[currentIndex] || slides[0] || null
   const duration = currentSlide?.slide_duration || settings?.default_duration || 5000
 
-  // ভিডিও স্লাইড কি না যাচাই
   const isCurrentVideo =
     currentSlide?.slide_type === 'video' ||
     currentSlide?.media_items?.[0]?.type === 'video'
@@ -105,7 +103,7 @@ export function HeroCarousel() {
     setCurrentIndex(idx % total)
   }
 
-  // ⭐ ভিডিও স্লাইডে থাকলে ভিউয়ারের জন্য অটো-স্লাইড বন্ধ থাকবে
+  // ভিডিও স্লাইড থাকলে বা ভিডিও চললে অটো-স্লাইড বন্ধ থাকবে
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
 
@@ -130,7 +128,7 @@ export function HeroCarousel() {
     }
   }, [nextSlide, duration, isPaused, isHovered, isVideoPlaying, isCurrentVideo, isInViewport, total, currentIndex])
 
-  // ⭐ নির্ভরযোগ্য আঙুলের সোয়াইপ হ্যান্ডলার (React State ল্যাগ ছাড়া সরাসরি Ref দিয়ে)
+  // আঙুলের টাচ সোয়াইপ হ্যান্ডলার
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartRef.current = {
       x: e.touches[0].clientX,
@@ -144,8 +142,7 @@ export function HeroCarousel() {
     const diffY = e.changedTouches[0].clientY - touchStartRef.current.y
     touchStartRef.current = null
 
-    // আনুভূমিক সোয়াইপ যাচাই
-    if (Math.abs(diffX) > 35 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+    if (Math.abs(diffX) > 30 && Math.abs(diffX) > Math.abs(diffY) * 1.1) {
       if (diffX < 0) nextSlide()
       else prevSlide()
     }
@@ -184,14 +181,13 @@ export function HeroCarousel() {
           onTouchEnd={handleTouchEnd}
           className="relative w-full overflow-hidden select-none bg-black border-b border-white/10"
         >
-          {/* ================= ১টি SPLIT (মোবাইলে সবসময় এবং সিঙ্গেল ভিউতে) ================= */}
+          {/* ================= ১টি SPLIT (মোবাইলে সবসময় ১টি স্লাইড পূর্ণাঙ্গভাবে আসবে) ================= */}
           {activeSplits === 1 && visibleSlides[0] && (
-            <div className="relative h-[260px] sm:h-[480px] lg:h-[560px] w-full overflow-hidden bg-slate-900">
+            <div className="relative h-[250px] sm:h-[480px] lg:h-[560px] w-full overflow-hidden bg-slate-900">
               <div key={`${visibleSlides[0].id}_${currentIndex}`} className={`w-full h-full tr_${effect0}`}>
                 <HeroMediaRenderer
                   slide={visibleSlides[0]}
                   isActive={isInViewport}
-                  autoPlayVideo={isInViewport}
                   isCompact={false}
                   onVideoStateChange={setIsVideoPlaying}
                   onVideoEnd={nextSlide}
@@ -200,7 +196,7 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ================= ২টি SPLIT (ডেস্কটপ ভিউ) ================= */}
+          {/* ================= ২টি SPLIT (ডেস্কটপে) ================= */}
           {activeSplits === 2 && visibleSlides.length >= 2 && (
             <div className="flex flex-col divide-y divide-white/10 w-full">
               <div className="relative h-[250px] sm:h-[300px] w-full overflow-hidden bg-slate-900">
@@ -208,7 +204,6 @@ export function HeroCarousel() {
                   <HeroMediaRenderer
                     slide={visibleSlides[0]}
                     isActive={isInViewport}
-                    autoPlayVideo={isInViewport}
                     isCompact={false}
                     onVideoStateChange={setIsVideoPlaying}
                     onVideoEnd={nextSlide}
@@ -221,7 +216,6 @@ export function HeroCarousel() {
                   <HeroMediaRenderer
                     slide={visibleSlides[1]}
                     isActive={isInViewport}
-                    autoPlayVideo={false}
                     isCompact={false}
                     onVideoStateChange={setIsVideoPlaying}
                     onVideoEnd={nextSlide}
@@ -231,7 +225,7 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* ================= ৩টি SPLIT (ডেস্কটপ ভিউ) ================= */}
+          {/* ================= ৩টি SPLIT (ডেস্কটপে) ================= */}
           {activeSplits === 3 && visibleSlides.length >= 3 && (
             <div className="flex flex-col divide-y divide-white/10 w-full">
               <div className="relative h-[260px] sm:h-[320px] w-full overflow-hidden bg-slate-900">
@@ -239,7 +233,6 @@ export function HeroCarousel() {
                   <HeroMediaRenderer
                     slide={visibleSlides[0]}
                     isActive={isInViewport}
-                    autoPlayVideo={isInViewport}
                     isCompact={false}
                     onVideoStateChange={setIsVideoPlaying}
                     onVideoEnd={nextSlide}
@@ -253,7 +246,6 @@ export function HeroCarousel() {
                     <HeroMediaRenderer
                       slide={visibleSlides[1]}
                       isActive={isInViewport}
-                      autoPlayVideo={false}
                       isCompact={true}
                       onVideoStateChange={setIsVideoPlaying}
                       onVideoEnd={nextSlide}
@@ -266,7 +258,6 @@ export function HeroCarousel() {
                     <HeroMediaRenderer
                       slide={visibleSlides[2]}
                       isActive={isInViewport}
-                      autoPlayVideo={false}
                       isCompact={true}
                       onVideoStateChange={setIsVideoPlaying}
                       onVideoEnd={nextSlide}
@@ -277,14 +268,14 @@ export function HeroCarousel() {
             </div>
           )}
 
-          {/* স্ক্রিনের দুই পাশে বড় টাচ সোয়াইপ বাটন (যেকোনো সময় সহজে নেক্সট/প্রিভিয়াস করার জন্য) */}
+          {/* স্ক্রিনের দুই পাশে বড় টাচ নেভিগেশন তীর */}
           {total > 1 && (
             <>
               <button
                 type="button"
                 onClick={prevSlide}
                 aria-label="আগের স্লাইড"
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-30 flex size-9 items-center justify-center rounded-full bg-black/60 hover:bg-black/85 text-white border border-white/25 shadow-lg active:scale-95 transition"
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-30 flex size-9 items-center justify-center rounded-full bg-black/60 hover:bg-black/85 text-white border border-white/25 shadow-lg active:scale-95 transition cursor-pointer"
               >
                 <ChevronLeft className="size-5" />
               </button>
@@ -292,7 +283,7 @@ export function HeroCarousel() {
                 type="button"
                 onClick={nextSlide}
                 aria-label="পরের স্লাইড"
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-30 flex size-9 items-center justify-center rounded-full bg-black/60 hover:bg-black/85 text-white border border-white/25 shadow-lg active:scale-95 transition"
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-30 flex size-9 items-center justify-center rounded-full bg-black/60 hover:bg-black/85 text-white border border-white/25 shadow-lg active:scale-95 transition cursor-pointer"
               >
                 <ChevronRight className="size-5" />
               </button>
@@ -302,7 +293,6 @@ export function HeroCarousel() {
           {/* কন্ট্রোল বার (যেখানে পোস্ট কাউন্টার সুন্দরভাবে স্থানান্তরিত হয়েছে) */}
           {total > 1 && (
             <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950/95 border-t border-white/10">
-              {/* ডটস */}
               <div className="flex items-center gap-1.5">
                 {slides.map((_, idx) => (
                   <button
@@ -317,7 +307,6 @@ export function HeroCarousel() {
                 ))}
               </div>
 
-              {/* মাঝখানে বা ডানপাশে পোস্টের নম্বর (যা আগে ভিডিওর ওপর সাবটাইটেল ঢেকে রেখেছিল) */}
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold text-cyan-300 bg-white/10 px-2.5 py-1 rounded-full border border-white/15 flex items-center gap-1 shadow-xs">
                   <Layers className="size-3 text-yellow-400" />
