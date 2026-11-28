@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Clock3,
   Newspaper,
+  ChevronRight,
 } from "lucide-react"
 import { AdSlot } from "@/components/portal/ad-slot"
 import { ClubNews } from "@/components/portal/club-news"
@@ -39,7 +40,7 @@ function postExcerpt(post: Post): string {
     .replace(/&nbsp;/gi, " ")
     .replace(/\s+/g, " ")
     .trim()
-  return text.length > 220 ? `${text.slice(0, 217).trimEnd()}…` : text
+  return text.length > 200 ? `${text.slice(0, 197).trimEnd()}…` : text
 }
 
 function formatBanglaDate(value: string): string {
@@ -67,28 +68,9 @@ function formatBanglaDateTime(value: string): string {
   })
 }
 
-function PostImage({
-  post,
-  className,
-  fit,
-  zoomOnHover,
-}: {
-  post: Post
-  className: string
-  fit?: "contain" | "cover"
-  zoomOnHover?: boolean
-}) {
-  return (
-    <KalbelaPostImage
-      src={post.image_url}
-      alt={post.title}
-      className={className}
-      fit={fit}
-      zoomOnHover={zoomOnHover}
-    />
-  )
-}
-
+/* ========================================================
+   কালবেলা কার্ড ১: গ্রিড পোস্ট কার্ড
+   ======================================================== */
 function GridPostCard({
   post,
   compact = false,
@@ -99,18 +81,26 @@ function GridPostCard({
   return (
     <Link
       href={`/post/${post.id}`}
-      className="group block min-w-0 overflow-hidden rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] shadow-sm transition hover:border-[var(--theme-brand)]"
+      className="group block min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs transition hover:border-[#c8102e]"
     >
-      <PostImage post={post} className={compact ? "aspect-[16/10]" : "aspect-[16/9]"} />
+      <KalbelaPostImage
+        src={post.image_url}
+        alt={post.title}
+        className={compact ? "aspect-[16/10]" : "aspect-[16/9]"}
+        fit="cover"
+        zoomOnHover
+      />
       <span className={`block ${compact ? "p-2.5 sm:p-3" : "p-3 sm:p-4"}`}>
-        <span className={`line-clamp-3 block font-bold leading-snug text-[var(--theme-text-title)] transition-colors group-hover:text-[var(--theme-brand)] ${
-          compact ? "text-sm sm:text-base" : "text-base sm:text-lg"
-        }`}>
+        <span
+          className={`line-clamp-2 sm:line-clamp-3 block font-serif font-bold leading-snug text-slate-900 transition-colors group-hover:text-[#c8102e] ${
+            compact ? "text-sm sm:text-base" : "text-base sm:text-lg"
+          }`}
+        >
           {post.title}
         </span>
-        <span className="mt-2 flex min-w-0 items-center justify-between gap-2 text-[10px] font-semibold">
-          <span className="truncate text-[var(--theme-brand)]">{post.category || "সর্বশেষ সংবাদ"}</span>
-          <span className="inline-flex shrink-0 items-center gap-1 text-[var(--theme-text-body)]">
+        <span className="mt-2 flex min-w-0 items-center justify-between gap-2 text-[10px] font-semibold text-slate-500">
+          <span className="truncate text-[#c8102e]">{post.category || "ক্যাম্পাস"}</span>
+          <span className="inline-flex shrink-0 items-center gap-1">
             <CalendarDays className="size-3" aria-hidden="true" />
             {formatBanglaDate(post.created_at)}
           </span>
@@ -120,45 +110,59 @@ function GridPostCard({
   )
 }
 
+/* ========================================================
+   কালবেলা কার্ড ২: হরাইজন্টাল রো (বামে ছোট ছবি, ডানে লেখা)
+   ======================================================== */
 function HorizontalPostRow({ post }: { post: Post }) {
   return (
     <Link
       href={`/post/${post.id}`}
-      className="group flex min-w-0 items-center gap-3 border-b border-[var(--theme-card-border)] py-3 last:border-b-0"
+      className="group flex min-w-0 items-center gap-3 border-b border-slate-100 py-2.5 sm:py-3 last:border-b-0 hover:bg-slate-50/60 rounded-lg px-1 transition-colors"
     >
-      <PostImage post={post} className="aspect-[16/10] w-28 shrink-0 rounded-lg sm:w-32" />
-      <span className="min-w-0">
-        <span className="line-clamp-3 block text-sm font-bold leading-snug text-[var(--theme-text-title)] transition-colors group-hover:text-[var(--theme-brand)]">
+      <KalbelaPostImage
+        src={post.image_url}
+        alt={post.title}
+        className="aspect-[16/10] w-24 sm:w-28 shrink-0 rounded-lg overflow-hidden bg-slate-100"
+        fit="cover"
+      />
+      <span className="min-w-0 flex-1">
+        <span className="line-clamp-2 block font-serif text-xs sm:text-sm font-bold leading-snug text-slate-900 transition-colors group-hover:text-[#c8102e]">
           {post.title}
         </span>
-        <span className="mt-1 block truncate text-[10px] font-semibold text-[var(--theme-brand)]">
-          {post.category || "সর্বশেষ সংবাদ"} · {formatBanglaDate(post.created_at)}
+        <span className="mt-1 block truncate text-[10px] font-semibold text-[#c8102e]">
+          {post.category || "সংবাদ"} · {formatBanglaDate(post.created_at)}
         </span>
       </span>
     </Link>
   )
 }
 
+/* ========================================================
+   কালবেলা সেকশন হেডার (বামে লাল দাগ বা আইকন + ডানে তীর)
+   ======================================================== */
 function CategoryHeader({ category }: { category: string }) {
   return (
-    <div className="mb-5 flex items-center justify-between gap-3 border-b border-[var(--theme-card-border)] pb-3">
-      <div className="flex min-w-0 items-center gap-2.5">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--theme-brand-soft)] text-[var(--theme-brand)]">
-          <Newspaper className="size-4" aria-hidden="true" />
-        </span>
-        <h2 className="truncate font-serif text-lg font-bold text-[var(--theme-text-title)] sm:text-xl">{category}</h2>
+    <div className="mb-4 sm:mb-5 flex items-center justify-between gap-3 border-b border-slate-200 pb-2.5">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="w-1.5 h-5 rounded-full bg-[#c8102e]" />
+        <h2 className="truncate font-serif text-lg sm:text-xl font-bold text-slate-900">
+          {category}
+        </h2>
       </div>
       <Link
         href={`/category/${encodeURIComponent(category)}`}
         aria-label={`${category} বিভাগের সব সংবাদ`}
-        className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--theme-card-border)] text-[var(--theme-brand)] transition hover:bg-[var(--theme-brand)] hover:text-[var(--theme-bg-solid)]"
+        className="flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:bg-[#c8102e] hover:border-[#c8102e] hover:text-white"
       >
-        <ArrowRight className="size-4" aria-hidden="true" />
+        <ChevronRight className="size-4" aria-hidden="true" />
       </Link>
     </div>
   )
 }
 
+/* ========================================================
+   কালবেলা ক্যাটাগরি ব্লক
+   ======================================================== */
 function CategoryBlock({
   category,
   posts,
@@ -171,53 +175,62 @@ function CategoryBlock({
   const layout = index % 3
 
   return (
-    <section className="border-b border-[var(--theme-card-border)] py-8 sm:py-11" aria-label={`${category} বিভাগের সংবাদ`}>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="border-b border-slate-200 py-6 sm:py-9 bg-white" aria-label={`${category} বিভাগের সংবাদ`}>
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
         <CategoryHeader category={category} />
+
+        {/* লেআউট ১: ১টি বড় লিড + ২টি গ্রিড */}
         {layout === 0 && (
-          <>
-            <div className="mb-4">
-              <Link href={`/post/${posts[0].id}`} className="group block overflow-hidden rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] shadow-sm">
-                <PostImage post={posts[0]} className="aspect-[16/9]" />
-                <span className="block p-3 sm:p-4">
-                  <span className="line-clamp-3 block font-serif text-lg font-bold leading-snug text-[var(--theme-text-title)] group-hover:text-[var(--theme-brand)] sm:text-xl">
+          <div className="grid gap-4 lg:grid-cols-12 items-start">
+            <div className="lg:col-span-7">
+              <Link
+                href={`/post/${posts[0].id}`}
+                className="group block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs hover:border-[#c8102e] transition"
+              >
+                <KalbelaPostImage
+                  src={posts[0].image_url}
+                  alt={posts[0].title}
+                  className="aspect-[16/9] w-full"
+                  fit="cover"
+                  zoomOnHover
+                />
+                <span className="block p-3.5 sm:p-4">
+                  <span className="line-clamp-2 block font-serif text-base sm:text-xl font-bold leading-snug text-slate-900 group-hover:text-[#c8102e]">
                     {posts[0].title}
                   </span>
-                  {postExcerpt(posts[0]) && <span className="mt-2 line-clamp-3 block text-sm leading-relaxed text-[var(--theme-text-body)]">{postExcerpt(posts[0])}</span>}
+                  {postExcerpt(posts[0]) && (
+                    <span className="mt-1.5 line-clamp-2 block text-xs sm:text-sm leading-relaxed text-slate-600">
+                      {postExcerpt(posts[0])}
+                    </span>
+                  )}
                 </span>
               </Link>
             </div>
+
             {posts.length > 1 && (
-              <div className="grid grid-cols-2 gap-3">
-                {posts.slice(1, 5).map((post) => <GridPostCard key={post.id} post={post} compact />)}
+              <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
+                {posts.slice(1, 5).map((post) => (
+                  <HorizontalPostRow key={post.id} post={post} />
+                ))}
               </div>
             )}
-          </>
-        )}
-        {layout === 1 && (
-          <div className="grid gap-4 lg:grid-cols-2">
-            <GridPostCard post={posts[0]} />
-            <div className="divide-y divide-[var(--theme-card-border)]">
-              {posts.slice(1, 5).map((post) => <HorizontalPostRow key={post.id} post={post} />)}
-            </div>
           </div>
         )}
+
+        {/* লেআউট ২: পাশাপাশি ২টি প্রধান কার্ড ও নিচে লিস্ট */}
+        {layout === 1 && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {posts.slice(0, 4).map((post) => (
+              <GridPostCard key={post.id} post={post} compact />
+            ))}
+          </div>
+        )}
+
+        {/* লেআউট ৩: হরাইজন্টাল লিস্ট ভিউ */}
         {layout === 2 && (
-          <div className="divide-y divide-[var(--theme-card-border)]">
-            {posts.slice(0, 3).map((post) => (
-              <article key={post.id} className="py-4 first:pt-0 last:pb-0">
-                <Link href={`/post/${post.id}`} className="mb-2 block font-serif text-base font-bold leading-snug text-[var(--theme-text-title)] hover:text-[var(--theme-brand)] sm:text-lg">
-                  {post.title}
-                </Link>
-                <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-center gap-3">
-                  <Link href={`/post/${post.id}`} aria-label={post.title}>
-                    <PostImage post={post} className="aspect-[16/10] rounded-lg" />
-                  </Link>
-                  <p className="line-clamp-4 text-xs leading-relaxed text-[var(--theme-text-body)] sm:text-sm">
-                    {postExcerpt(post) || post.category || "সর্বশেষ ক্যাম্পাস সংবাদ"}
-                  </p>
-                </div>
-              </article>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {posts.slice(0, 6).map((post) => (
+              <HorizontalPostRow key={post.id} post={post} />
             ))}
           </div>
         )}
@@ -226,6 +239,9 @@ function CategoryBlock({
   )
 }
 
+/* ========================================================
+   মূল কালবেলা হোম সেকশন অর্কেস্ট্রেশন
+   ======================================================== */
 export function KalbelaHomeSections({
   settings,
   posts,
@@ -254,33 +270,28 @@ export function KalbelaHomeSections({
   const latestPosts = [...visiblePosts].sort(
     (a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)
   )
+
   const postViews = latestPosts.reduce((views, post) => {
     if (typeof post.view_count === "number") views.set(post.id, post.view_count)
     return views
   }, new Map<string, number>())
+
   const storiesWithViews = stories.map((story) => ({
     ...story,
     view_count: story.view_count ?? (story.post_id ? postViews.get(story.post_id) : undefined),
   }))
+
   const reelsWithViews = reels.map((reel) => ({
     ...reel,
     view_count: reel.view_count ?? (reel.post_id ? postViews.get(reel.post_id) : undefined),
   }))
-  const popular = popularPosts.filter((post) => !post.hidden && !post.page_id)
-  const featuredSource = [
-    ...latestPosts.filter((post) => post.is_featured),
-    ...popular,
-    ...latestPosts,
-  ]
-  const seenFeatured = new Set<string>()
-  const featuredPosts = featuredSource.filter((post) => {
-    if (seenFeatured.has(post.id)) return false
-    seenFeatured.add(post.id)
-    return true
-  }).slice(0, 4)
 
+  const popular = popularPosts.filter((post) => !post.hidden && !post.page_id)
+
+  // লিড নিউজ ও সাব-নিউজ
   const leadPost = latestPosts.find((post) => post.is_featured) || latestPosts[0]
   const remainingPosts = leadPost ? latestPosts.filter((post) => post.id !== leadPost.id) : []
+
   const categoryBlocks = categories
     .filter((category) => category !== CAT_CLUB && category !== CAT_STUDENT)
     .map((category) => ({
@@ -288,116 +299,105 @@ export function KalbelaHomeSections({
       posts: latestPosts.filter((post) => post.category === category),
     }))
     .filter((entry) => entry.posts.length > 0)
+
   const photoPosts = latestPosts.filter((post) => Boolean(post.image_url)).slice(0, 10)
-  const firstCategoryAdIndex = Math.max(1, Math.ceil(categoryBlocks.length / 3) - 1)
-  const secondCategoryAdIndex = Math.min(
-    categoryBlocks.length - 1,
-    Math.max(firstCategoryAdIndex + 2, Math.ceil((categoryBlocks.length * 2) / 3) - 1)
-  )
-  const categoryAdPlacements = categoryBlocks.length > 1
-    ? [
-        { slot: "home_mid_3" as const, afterIndex: firstCategoryAdIndex },
-        { slot: "home_mid_4" as const, afterIndex: secondCategoryAdIndex },
-      ].filter((placement, index, placements) =>
-        placements.findIndex((candidate) => candidate.afterIndex === placement.afterIndex) === index
-      )
-    : []
-  const latestLimit = latestPosts.slice(0, 15)
   const initialNow = Date.now()
 
   return (
-    <>
+    <div className="bg-[#fcfdfd] text-slate-800">
+      
+      {/* ==================== ১. কালবেলা লিড নিউজ সেকশন ==================== */}
       {isSectionVisible(sections, "general_news") && (
-        <section id="general-news" className="border-b border-[var(--theme-card-border)] py-8 sm:py-12">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-5 flex items-end justify-between gap-4">
+        <section id="general-news" className="border-b border-slate-200 py-5 sm:py-8 bg-white">
+          <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+            <div className="mb-4 flex items-end justify-between gap-4 border-b border-slate-200 pb-2">
               <div>
-                <p className="text-xs font-extrabold tracking-[0.08em] text-[var(--theme-brand)]">মাভাবিপ্রবি সংবাদ</p>
-                <h1 className="mt-1 font-serif text-2xl font-extrabold leading-tight text-[var(--theme-text-title)] sm:text-3xl">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#c8102e]">
+                  মাভাবিপ্রবি সংবাদ
+                </p>
+                <h1 className="font-serif text-xl sm:text-2xl font-bold text-slate-900">
                   {settings.homeSections.sections.find((section) => section.key === "general_news")?.titleBn || "সর্বশেষ সংবাদ"}
                 </h1>
               </div>
-              <Link href="/news" className="shrink-0 text-xs font-bold text-[var(--theme-brand)] hover:underline sm:text-sm">
-                সব সংবাদ →
+              <Link href="/news" className="shrink-0 text-xs font-bold text-[#c8102e] hover:underline">
+                সব সংবাদ দেখুন →
               </Link>
             </div>
 
+            {/* লিড নিউজ কার্ড (কালবেলা স্টাইল) */}
             {leadPost ? (
-              <Link href={`/post/${leadPost.id}`} className="group block overflow-hidden rounded-2xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] shadow-sm">
-                <PostImage post={leadPost} className="aspect-[16/9] max-h-[500px] bg-slate-50" fit="cover" zoomOnHover />
-                <span className="block p-4 sm:p-6">
-                  <span className="inline-flex rounded-full bg-[var(--theme-brand)] px-3 py-1 text-xs font-bold text-[var(--theme-bg-solid)]">
-                    {leadPost.category || "সর্বশেষ সংবাদ"}
-                  </span>
-                  <span className="mt-3 block font-serif text-2xl font-extrabold leading-tight text-[var(--theme-text-title)] transition-colors group-hover:text-[var(--theme-brand)] sm:text-3xl md:text-4xl">
-                    {leadPost.title}
-                  </span>
-                  {postExcerpt(leadPost) && (
-                    <span className="mt-2 line-clamp-3 block max-w-4xl text-sm leading-relaxed text-[var(--theme-text-body)] sm:text-base">
-                      {postExcerpt(leadPost)}
+              <div className="grid gap-5 lg:grid-cols-12 items-start">
+                <div className="lg:col-span-8">
+                  <Link
+                    href={`/post/${leadPost.id}`}
+                    className="group block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs transition hover:border-[#c8102e]"
+                  >
+                    <KalbelaPostImage
+                      src={leadPost.image_url}
+                      alt={leadPost.title}
+                      className="aspect-[16/9] max-h-[460px] w-full"
+                      fit="cover"
+                      zoomOnHover
+                    />
+                    <span className="block p-4 sm:p-5">
+                      <span className="inline-block rounded-full bg-[#c8102e] px-2.5 py-0.5 text-[10px] font-bold text-white mb-2">
+                        {leadPost.category || "প্রধান সংবাদ"}
+                      </span>
+                      <span className="block font-serif text-xl sm:text-3xl font-bold leading-tight text-slate-900 transition-colors group-hover:text-[#c8102e]">
+                        {leadPost.title}
+                      </span>
+                      {postExcerpt(leadPost) && (
+                        <span className="mt-2 line-clamp-3 block text-xs sm:text-sm leading-relaxed text-slate-600">
+                          {postExcerpt(leadPost)}
+                        </span>
+                      )}
+                      <span className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 border-t border-slate-100 pt-2.5">
+                        <span className="inline-flex items-center gap-1">
+                          <Clock3 className="size-3.5 text-[#c8102e]" />
+                          <time dateTime={leadPost.created_at}>{formatBanglaDateTime(leadPost.created_at)}</time>
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Newspaper className="size-3.5 text-[#c8102e]" />
+                          <span>{leadPost.author?.trim() || "মাভাবিপ্রবি প্রতিনিধি"}</span>
+                        </span>
+                      </span>
                     </span>
-                  )}
-                  <span className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium text-[var(--theme-text-body)]">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Clock3 className="size-3.5 text-[var(--theme-brand)]" aria-hidden="true" />
-                      <time dateTime={leadPost.created_at}>{formatBanglaDateTime(leadPost.created_at)}</time>
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Newspaper className="size-3.5 text-[var(--theme-brand)]" aria-hidden="true" />
-                      {leadPost.author?.trim() || "মাভাবিপ্রবি প্রতিনিধি"}
-                    </span>
-                  </span>
-                </span>
-              </Link>
-            ) : (
-              <p className="rounded-xl border border-[var(--theme-card-border)] bg-[var(--theme-card-bg)] p-6 text-center text-sm text-[var(--theme-text-body)]" role="status">
-                এখনো কোনো সংবাদ প্রকাশিত হয়নি।
-              </p>
-            )}
+                  </Link>
+                </div>
 
-            {remainingPosts.length > 0 && (
-              <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-                {remainingPosts.slice(0, 4).map((post) => <GridPostCard key={post.id} post={post} compact />)}
-              </div>
-            )}
-
-            <AdSlot slot="home_mid_1" prefetchedAds={adBanners} />
-
-            {remainingPosts.length > 4 && (
-              <div className="mt-5 grid gap-5 lg:grid-cols-2 lg:gap-8">
-                <GridPostCard post={remainingPosts[4]} />
-                <div className="divide-y divide-[var(--theme-card-border)]">
-                  {remainingPosts.slice(5, 10).map((post) => <HorizontalPostRow key={post.id} post={post} />)}
+                {/* লিড নিউজের ডানের ছোট সংবাদ তালিকা */}
+                <div className="lg:col-span-4 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white p-2 sm:p-3 shadow-xs">
+                  <p className="px-2 py-1 font-serif text-sm font-bold text-slate-900 border-b border-slate-100 mb-1">
+                    তাজা খবর
+                  </p>
+                  {remainingPosts.slice(0, 5).map((post) => (
+                    <HorizontalPostRow key={post.id} post={post} />
+                  ))}
                 </div>
               </div>
+            ) : null}
+
+            {/* ৪টি গ্রিড কার্ডের দ্বিতীয় সারি */}
+            {remainingPosts.length > 5 && (
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                {remainingPosts.slice(5, 9).map((post) => (
+                  <GridPostCard key={post.id} post={post} compact />
+                ))}
+              </div>
             )}
           </div>
         </section>
       )}
 
+      {/* স্পন্সর ব্যানার ১ */}
+      <AdSlot slot="home_mid_1" prefetchedAds={adBanners} />
+
+      {/* ==================== ২. ১, ২, ৩... নাম্বারিং হেডলাইন তালিকা ==================== */}
       {isSectionVisible(sections, "events_popular") && (
-        <NumberedHeadlines latestPosts={latestLimit} popularPosts={popular.slice(0, 15)} />
+        <NumberedHeadlines latestPosts={latestPosts} popularPosts={popular} />
       )}
 
-      {isSectionVisible(sections, "departments") && (
-        <section className="border-b border-[var(--theme-card-border)] py-8 sm:py-10" aria-labelledby="department-quick-filter-title">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <Building2 className="size-5 text-[var(--theme-brand)]" aria-hidden="true" />
-                <h2 id="department-quick-filter-title" className="font-serif text-xl font-bold text-[var(--theme-text-title)] sm:text-2xl">
-                  ক্যাম্পাস ও বিভাগসমূহ
-                </h2>
-              </div>
-              <Link href="/administration" aria-label="প্রশাসন বিভাগ দেখুন" className="flex size-9 items-center justify-center rounded-full border border-[var(--theme-card-border)] text-[var(--theme-brand)] hover:bg-[var(--theme-brand)] hover:text-[var(--theme-bg-solid)]">
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
-            </div>
-            <DepartmentQuickFilter faculties={faculties} posts={latestPosts} />
-          </div>
-        </section>
-      )}
-
+      {/* ==================== ৩. ভিডিও ও ফটো স্টোরি ট্যাব ==================== */}
       {(isSectionVisible(sections, "stories") || isSectionVisible(sections, "reels")) && (
         <StoryMediaTabs
           stories={storiesWithViews}
@@ -407,9 +407,10 @@ export function KalbelaHomeSections({
         />
       )}
 
+      {/* ==================== ৪. অনলাইন জরিপ ও রিলস হাব ==================== */}
       {(isSectionVisible(sections, "polls") || isSectionVisible(sections, "reels")) && (
-        <section className="border-b border-[var(--theme-card-border)] py-8 sm:py-10">
-          <div className="mx-auto grid max-w-7xl gap-2 px-4 sm:px-6 lg:grid-cols-2 lg:gap-6 lg:px-8">
+        <section className="border-b border-slate-200 py-6 sm:py-8 bg-white">
+          <div className="mx-auto grid max-w-7xl gap-6 px-3 sm:px-6 lg:grid-cols-2 lg:px-8">
             {isSectionVisible(sections, "polls") && <PollWidget kalbela />}
             {isSectionVisible(sections, "reels") && (
               <FbReelsSection
@@ -425,47 +426,41 @@ export function KalbelaHomeSections({
         </section>
       )}
 
-      {isSectionVisible(sections, "general_news") && featuredPosts.length > 0 && (
-        <section className="border-b border-[var(--theme-card-border)] py-8 sm:py-10" aria-labelledby="featured-news-title">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <span className="flex size-10 items-center justify-center rounded-xl bg-[var(--theme-brand)] text-[var(--theme-bg-solid)]">
-                  <Bookmark className="size-5" aria-hidden="true" />
-                </span>
-                <h2 id="featured-news-title" className="font-serif text-xl font-bold text-[var(--theme-text-title)] sm:text-2xl">বাছাইকৃত</h2>
+      {/* ==================== ৫. অনুষদ ও বিভাগ সার্চ ফিল্টার ==================== */}
+      {isSectionVisible(sections, "departments") && (
+        <section className="border-b border-slate-200 py-6 sm:py-8 bg-slate-50/60" aria-labelledby="department-quick-filter-title">
+          <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+            <div className="mb-4 flex items-center justify-between gap-3 border-b border-slate-200 pb-2">
+              <div className="flex items-center gap-2">
+                <Building2 className="size-5 text-[#c8102e]" aria-hidden="true" />
+                <h2 id="department-quick-filter-title" className="font-serif text-lg sm:text-xl font-bold text-slate-900">
+                  ক্যাম্পাস অনুষদ ও বিভাগসমূহ
+                </h2>
               </div>
-              <Link
-                href="/search?sort=popular"
-                aria-label="জনপ্রিয় সংবাদ দেখুন"
-                className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--theme-card-border)] text-[var(--theme-brand)] transition hover:bg-[var(--theme-brand)] hover:text-[var(--theme-bg-solid)]"
-              >
-                <ArrowRight className="size-4" aria-hidden="true" />
+              <Link href="/administration" className="text-xs font-bold text-[#c8102e] hover:underline">
+                প্রশাসন দেখুন →
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              {featuredPosts.map((post) => <GridPostCard key={post.id} post={post} compact />)}
-            </div>
+            <DepartmentQuickFilter faculties={faculties} posts={latestPosts} />
           </div>
-          <AdSlot slot="home_mid_2" prefetchedAds={adBanners} />
         </section>
       )}
 
-      {isSectionVisible(sections, "category_sections") && categoryBlocks.map((entry, index) => (
-        <div key={entry.category}>
-          <CategoryBlock category={entry.category} posts={entry.posts} index={index} />
-          {categoryAdPlacements
-            .filter((placement) => placement.afterIndex === index)
-            .map((placement) => (
-              <AdSlot key={placement.slot} slot={placement.slot} prefetchedAds={adBanners} />
-            ))}
-        </div>
-      ))}
+      {/* স্পন্সর ব্যানার ২ */}
+      <AdSlot slot="home_mid_2" prefetchedAds={adBanners} />
 
+      {/* ==================== ৬. ক্যাটাগরিভিত্তিক সংবাদ ব্লকসমূহ ==================== */}
+      {isSectionVisible(sections, "category_sections") &&
+        categoryBlocks.map((entry, index) => (
+          <CategoryBlock key={entry.category} category={entry.category} posts={entry.posts} index={index} />
+        ))}
+
+      {/* ==================== ৭. কালবেলা ফটোগ্যালারি ==================== */}
       {isSectionVisible(sections, "general_news") && photoPosts.length > 0 && (
         <KalbelaPhotoGallery posts={photoPosts} />
       )}
 
+      {/* ==================== ৮. কমিউনিটি ফিড, নোটিশ ও ক্লাব ==================== */}
       {isSectionVisible(sections, "community_feed") && <CommunityFeed />}
       {isSectionVisible(sections, "notice_board") && (
         <NoticeBoard prefetchedNotices={notices} initialNow={initialNow} />
@@ -481,11 +476,13 @@ export function KalbelaHomeSections({
       )}
       {isSectionVisible(sections, "community_pages") && <CommunityPagesSection mode="directory" />}
       {isSectionVisible(sections, "leadership") && <LeadershipSection />}
+
+      {/* ==================== ৯. টাইমলাইন, ফ্যাক্ট-চেক ও প্রকাশনা ==================== */}
       {(["social_sites", "timeline", "fact_check", "publications"] as const).map((key) => {
         const sectionConfig = sections.find((section) => section.key === key)
         if (!sectionConfig?.visible) return null
         return <HomepageTransitionSection key={key} kind={key} sectionConfig={sectionConfig} />
       })}
-    </>
+    </div>
   )
 }
