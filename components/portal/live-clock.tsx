@@ -9,19 +9,14 @@ function makeFormatters(lang: 'bn' | 'en') {
   return {
     date: new Intl.DateTimeFormat(locale, {
       timeZone: 'Asia/Dhaka',
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }),
-    shortDate: new Intl.DateTimeFormat(locale, {
-      timeZone: 'Asia/Dhaka',
+      weekday: 'short',
       day: 'numeric',
       month: 'short',
+      year: 'numeric',
     }),
     time: new Intl.DateTimeFormat(lang === 'bn' ? 'bn-BD' : 'en-US', {
       timeZone: 'Asia/Dhaka',
-      hour: '2-digit',
+      hour: 'numeric',
       minute: '2-digit',
       hour12: true,
     }),
@@ -40,18 +35,19 @@ export function LiveClock() {
   }, [])
 
   return (
-    <div className="flex min-w-0 items-center justify-between gap-2 text-[var(--theme-text-body)] text-[11px] sm:text-xs font-medium" aria-live="off">
-      {/* বামে: ক্যালেন্ডার আইকন ও তারিখ */}
-      <span className="inline-flex min-w-0 items-center gap-1.5">
-        <CalendarDays className="size-3.5 text-[var(--theme-brand)] shrink-0" aria-hidden="true" />
-        <span className="hidden truncate sm:inline">{now ? fmt.date.format(now) : 'লোড হচ্ছে...'}</span>
-        <span className="truncate sm:hidden">{now ? fmt.shortDate.format(now) : 'লোড হচ্ছে...'}</span>
+    <div className="flex items-center gap-2 text-[var(--theme-text-body)] text-[11px] sm:text-xs font-semibold whitespace-nowrap overflow-hidden" aria-live="off">
+      {/* ঘড়ির আইকন ও লাইভ সময় */}
+      <span className="inline-flex shrink-0 items-center gap-1 text-[var(--theme-text-title)]">
+        <Clock className="size-3.5 text-[var(--theme-brand)] shrink-0" aria-hidden="true" />
+        <time className="tabular-nums font-bold">{now ? fmt.time.format(now) : '--:--'}</time>
       </span>
 
-      {/* ডানে: ঘড়ির আইকন ও সময় */}
-      <span className="inline-flex shrink-0 items-center gap-1.5 tabular-nums text-[var(--theme-text-title)] font-semibold">
-        <Clock className="size-3.5 text-[var(--theme-brand)] shrink-0" aria-hidden="true" />
-        <time>{now ? fmt.time.format(now) : '--:--'}</time>
+      <span className="text-[var(--theme-card-border)] hidden sm:inline" aria-hidden="true">|</span>
+
+      {/* তারিখ */}
+      <span className="hidden sm:inline-flex items-center gap-1 text-slate-500 truncate">
+        <CalendarDays className="size-3.5 text-slate-400 shrink-0" aria-hidden="true" />
+        <span>{now ? fmt.date.format(now) : '...'}</span>
       </span>
     </div>
   )
